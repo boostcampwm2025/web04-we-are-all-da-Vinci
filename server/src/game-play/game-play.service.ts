@@ -86,10 +86,7 @@ export class GamePlayService {
     const p = room.players.get(socketId);
     if (!p) return { ok: false as const, message: 'You are not in this room.' };
 
-    if (!p.isHost) {
-      return { ok: false as const, message: 'Only host can start the game.' };
-    }
-
+    // MVP: 모든 플레이어가 게임 시작 가능
     if (room.state !== 'WAITING') {
       return {
         ok: false as const,
@@ -97,7 +94,7 @@ export class GamePlayService {
       };
     }
 
-    room.state = 'PLAYING'; // ✅ 게임 시작 상태 전환
+    room.state = 'PLAYING';
     return { ok: true as const };
   }
 
