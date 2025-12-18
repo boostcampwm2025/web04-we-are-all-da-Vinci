@@ -4,6 +4,8 @@ export function Canvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+  const currentStrokeRef = useRef<[number[], number[]] | null>(null); // 현재 그리고 있는 stroke
+  const strokesRef = useRef<[number[], number[]][]>([]); // 모든 stroke
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -38,6 +40,7 @@ export function Canvas() {
     };
   };
 
+  // 그리기 시작
   const handleMouseDown = (e: React.MouseEvent) => {
     const ctx = ctxRef.current;
     if (!ctx) return;
@@ -46,8 +49,11 @@ export function Canvas() {
     ctx.beginPath();
     ctx.moveTo(x, y);
     setIsDrawing(true);
+
+    currentStrokeRef.current = [[x], [y]];
   };
 
+  // 그리기 진행
   const handleMouseMove = (e: React.MouseEvent) => {
     const ctx = ctxRef.current;
     if (!ctx) return;
@@ -56,19 +62,31 @@ export function Canvas() {
     if (!isDrawing) return;
     ctx.lineTo(x, y);
     ctx.stroke();
+
+    currentStrokeRef.current?.[0].push(x);
+    currentStrokeRef.current?.[1].push(y);
   };
 
+  // 그리기 종료
   const handleMouseUp = () => {
     const ctx = ctxRef.current;
     if (!ctx) return;
     if (!isDrawing) return;
     ctx.closePath();
     setIsDrawing(false);
+    console.log('현재까지 그린 데이터:', strokesRef.current);
+    // 현재 스트로크를 전체 스트로크에 저장
+    if (currentStrokeRef.current) {
+      strokesRef.current.push(currentStrokeRef.current);
+      currentStrokeRef.current = null;
+    }
   };
 
+  // 마우스가 캔버스 밖으로 나갔을 때 그리기 종료
   const handleMouseOut = () => {
     if (isDrawing) handleMouseUp();
   };
+
   return (
     <canvas
       ref={canvasRef}
