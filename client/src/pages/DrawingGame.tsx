@@ -74,20 +74,18 @@ export default function DrawingGame() {
             <div className="flex min-h-0 flex-1 flex-col">
               <div className="flex h-full flex-col overflow-hidden rounded-2xl border-4 border-gray-800 bg-white shadow-2xl">
                 <div className="relative min-h-0 flex-1 bg-white">
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 rounded-full bg-indigo-600 px-6 py-2 text-white shadow-lg">
-                    <span className="font-handwriting text-lg font-bold">
-                      주제: 웃는 얼굴
-                    </span>
-                  </div>
-
                   {/* 임시 유사도 표시 */}
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-lg bg-black/80 px-6 py-3 text-white shadow-lg">
+                  <div className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-lg bg-black/80 px-6 py-3 text-white shadow-lg">
                     <div className="text-center">
-                      <div className="text-sm font-medium mb-1">현재 유사도</div>
+                      <div className="mb-1 text-sm font-medium">
+                        현재 유사도
+                      </div>
                       <div className="text-3xl font-bold text-yellow-300">
                         {similarity.toFixed(1)}%
                       </div>
-                      <div className="text-lg font-bold mt-1">등급: {grade}</div>
+                      <div className="mt-1 text-lg font-bold">
+                        등급: {grade}
+                      </div>
                     </div>
                   </div>
 
