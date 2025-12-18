@@ -1,0 +1,48 @@
+name: Deploy Backend to NCP
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - mvp
+      - dev
+    paths:
+      - "server/**"
+      - ".github/workflows/deploy-backend.yml"
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Pull latest changes
+        run: |
+          cd ~/web04-we-are-all-da-Vinci
+          git pull origin ${{ github.ref_name }}
+
+      - name: Build and deploy with Docker Compose
+        run: |
+          cd ~/deploy
+          docker compose down
+          docker compose up -d --build
+
+      - name: Wait for container to be healthy
+        run: |
+          echo "Waiting for container to start..."
+          sleep 10
+
+      - name: Check container status
+        run: |
+          docker ps
+          echo "Checking API health..."
+          curl -f http://localhost:3000 || exit 1
+
+      - name: Show container logs
+        if: always()
+        run: |
+          cd ~/deploy
+          docker compose logs --tail=50
