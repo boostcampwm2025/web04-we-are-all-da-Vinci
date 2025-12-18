@@ -1,11 +1,11 @@
 /**
  * 점수를 비선형으로 변환 (차이를 극대화)
  */
-export function applyNonLinearScale(
+export const applyNonLinearScale = (
   score: number,
   threshold = 70,
   steepness = 2,
-) {
+): number => {
   // threshold 기준으로 낮은 점수는 더 낮게, 높은 점수는 더 높게
   if (score < threshold) {
     // 낮은 점수는 제곱으로 더 낮춤
@@ -15,4 +15,4 @@ export function applyNonLinearScale(
     const normalized = (score - threshold) / (100 - threshold);
     return threshold + normalized * (100 - threshold);
   }
-}
+};

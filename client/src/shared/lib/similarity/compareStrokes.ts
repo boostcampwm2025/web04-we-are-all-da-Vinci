@@ -1,13 +1,11 @@
 import type { Stroke } from '@/entities/drawing/model/types';
-import { getStrokeBoundingBox, getStrokeLength } from './geometry';
+import {
+  getStrokeBoundingBox,
+  getStrokeLength,
+} from '@/shared/lib/similarity/geometry/strokeGeometry';
 
-/**
- * 두 stroke의 유사도 계산
- * @param {Array} stroke1 - [x[], y[]]
- * @param {Array} stroke2 - [x[], y[]]
- * @returns {number} - 유사도 (0~100)
- */
-export const compareStrokes = (stroke1: Stroke, stroke2: Stroke) => {
+// 두 stroke의 유사도 계산
+export const compareStrokes = (stroke1: Stroke, stroke2: Stroke): number => {
   // 1. 길이 유사도
   const len1 = getStrokeLength(stroke1);
   const len2 = getStrokeLength(stroke2);
@@ -33,10 +31,8 @@ export const compareStrokes = (stroke1: Stroke, stroke2: Stroke) => {
   return similarity * 100;
 };
 
-/**
- * 개선된 방향 유사도 - 전체 세그먼트의 평균 방향 사용
- */
-const getStrokeDirection = (stroke: Stroke) => {
+// 방향 유사도 - 전체 세그먼트의 평균 방향 사용
+const getStrokeDirection = (stroke: Stroke): number => {
   const [xArr, yArr] = stroke;
   if (xArr.length < 2) return 0;
 
@@ -61,10 +57,8 @@ const getStrokeDirection = (stroke: Stroke) => {
   return Math.atan2(sumDy / totalWeight, sumDx / totalWeight);
 };
 
-/**
- * 위치 유사도 - 바운딩 박스 기반 상대 위치 비교
- */
-const getPositionSimilarity = (stroke1: Stroke, stroke2: Stroke) => {
+// 위치 유사도 - 바운딩 박스 기반 상대 위치 비교
+const getPositionSimilarity = (stroke1: Stroke, stroke2: Stroke): number => {
   // 각 스트로크의 바운딩 박스
   const bbox1 = getStrokeBoundingBox(stroke1);
   const bbox2 = getStrokeBoundingBox(stroke2);

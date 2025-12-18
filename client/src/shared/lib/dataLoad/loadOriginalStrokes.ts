@@ -1,3 +1,5 @@
+// TODO: 원본 이미지 로딩 방식에 따라 스트로크 로딩 전처리 수정하기
+
 // import fs from 'fs/promises';
 // import path from 'path';
 // import { fileURLToPath } from 'url';

@@ -1,10 +1,6 @@
 import type { Stroke } from '@/entities/drawing/model/types';
 
-/**
- * Stroke를 정규화 (0~1 범위로)
- * @param {Array} strokes - [[x[], y[]], ...]
- * @returns {Array} - 정규화된 strokes
- */
+// Stroke를 정규화 (0~1 범위로)
 export const normalizeStrokes = (strokes: Stroke[]): Stroke[] => {
   if (strokes.length === 0) return [];
 

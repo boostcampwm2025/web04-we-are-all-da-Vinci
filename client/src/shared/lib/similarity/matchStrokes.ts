@@ -1,13 +1,11 @@
 import type { Stroke } from '@/entities/drawing/model/types';
-import { compareStrokes } from './compareStrokes';
+import { compareStrokes } from '@/shared/lib/similarity/compareStrokes';
 
-/**
- * 두 stroke 집합 간의 최적 매칭 찾기 (Hungarian Algorithm 간소화)
- * @param {Array} strokes1 - 원본 strokes
- * @param {Array} strokes2 - 사용자 strokes
- * @returns {number} - 평균 유사도 (0~100)
- */
-export const matchStrokes = (strokes1: Stroke[], strokes2: Stroke[]) => {
+// 두 stroke 집합 간의 최적 매칭 찾기
+export const matchStrokes = (
+  strokes1: Stroke[],
+  strokes2: Stroke[],
+): number => {
   if (strokes1.length === 0 && strokes2.length === 0) return 100;
   if (strokes1.length === 0 || strokes2.length === 0) return 0;
 

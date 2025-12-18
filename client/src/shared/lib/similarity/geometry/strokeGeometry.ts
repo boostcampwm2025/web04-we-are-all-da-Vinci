@@ -1,11 +1,7 @@
 import type { Stroke } from '@/entities/drawing/model/types';
 
-/**
- * Stroke의 전체 길이 계산
- * @param {Array} stroke - [x[], y[]]
- * @returns {number} - 총 길이
- */
-export const getStrokeLength = (stroke: Stroke) => {
+// Stroke의 전체 길이 계산
+export const getStrokeLength = (stroke: Stroke): number => {
   const [xArr, yArr] = stroke;
   let length = 0;
 

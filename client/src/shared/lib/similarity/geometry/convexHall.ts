@@ -34,7 +34,7 @@ export const calculateHullSimilarity = (
   return hullScore;
 };
 
-function strokesToPoints(strokes: Stroke[]) {
+const strokesToPoints = (strokes: Stroke[]): Point[] => {
   const points: Point[] = [];
 
   for (const [xs, ys] of strokes) {
@@ -44,9 +44,9 @@ function strokesToPoints(strokes: Stroke[]) {
   }
 
   return points;
-}
+};
 
-function hullArea(hull: Point[]): number {
+const hullArea = (hull: Point[]): number => {
   if (hull.length < 3) return 0;
 
   let area = 0;
@@ -57,9 +57,9 @@ function hullArea(hull: Point[]): number {
   }
 
   return Math.abs(area) / 2;
-}
+};
 
-function hullPerimeter(hull: Point[]): number {
+const hullPerimeter = (hull: Point[]): number => {
   if (hull.length < 2) return 0;
 
   let length = 0;
@@ -71,9 +71,9 @@ function hullPerimeter(hull: Point[]): number {
   }
 
   return length;
-}
+};
 
-function convexHull(points: Point[]): Point[] {
+const convexHull = (points: Point[]): Point[] => {
   points.sort(function (a, b) {
     return a.x != b.x ? a.x - b.x : a.y - b.y;
   });
@@ -95,24 +95,25 @@ function convexHull(points: Point[]): Point[] {
 
   hull.pop();
   return hull;
-}
+};
 
-function removeMiddle(a: Point, b: Point, c: Point) {
+const removeMiddle = (a: Point, b: Point, c: Point): boolean => {
   const cross = (a.x - b.x) * (c.y - b.y) - (a.y - b.y) * (c.x - b.x);
   const dot = (a.x - b.x) * (c.x - b.x) + (a.y - b.y) * (c.y - b.y);
   return cross < 0 || (cross == 0 && dot <= 0);
-}
+};
 
-function calculateAreaSimilarity(area1: number, area2: number) {
+// 두 convex hall의 면적/둘레 유사도 비교
+const calculateAreaSimilarity = (area1: number, area2: number): number => {
   if (area1 === 0 && area2 === 0) return 1;
   if (area1 === 0 || area2 === 0) return 0;
 
   return 1 - Math.abs(area1 - area2) / Math.max(area1, area2);
-}
+};
 
-function calculatePerimeterSimilarity(p1: number, p2: number) {
+const calculatePerimeterSimilarity = (p1: number, p2: number): number => {
   if (p1 === 0 && p2 === 0) return 1;
   if (p1 === 0 || p2 === 0) return 0;
 
   return 1 - Math.abs(p1 - p2) / Math.max(p1, p2);
-}
+};
