@@ -4,10 +4,9 @@ type Stroke = [x: number[], y: number[]];
 
 interface CanvasProps {
   onStrokesChange?: (strokes: Stroke[]) => void;
-  clearTrigger?: number; // 이 값이 변경되면 캔버스 초기화
 }
 
-export function Canvas({ onStrokesChange, clearTrigger }: CanvasProps) {
+export function Canvas({ onStrokesChange }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -107,28 +106,30 @@ export function Canvas({ onStrokesChange, clearTrigger }: CanvasProps) {
     onStrokesChange?.([]);
   };
 
-  // clearTrigger가 변경되면 캔버스 초기화
-  useEffect(() => {
-    if (clearTrigger !== undefined && clearTrigger > 0) {
-      clearCanvas();
-    }
-  }, [clearTrigger]);
-
   // 마우스가 캔버스 밖으로 나갔을 때 그리기 종료
   const handleMouseOut = () => {
     if (isDrawing) handleMouseUp();
   };
 
   return (
-    <canvas
-      className="border-6 border-gray-300"
-      ref={canvasRef}
-      width={500}
-      height={500}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseOut={handleMouseOut}
-    />
+    <div className="relative">
+      <canvas
+        className="border-6 border-gray-300"
+        ref={canvasRef}
+        width={500}
+        height={500}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseOut={handleMouseOut}
+      />
+      <button
+        onClick={clearCanvas}
+        className="absolute top-4 right-4 flex items-center gap-1 rounded-lg bg-red-600 p-2 text-white shadow-lg transition-colors hover:bg-red-700"
+      >
+        <span className="material-symbols-outlined text-sm">delete</span>
+        <span className="font-handwriting text-sm font-bold">지우기</span>
+      </button>
+    </div>
   );
 }

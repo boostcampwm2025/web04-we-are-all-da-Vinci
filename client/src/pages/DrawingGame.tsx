@@ -10,7 +10,6 @@ export default function DrawingGame() {
   const [timeLeft, setTimeLeft] = useState(30000000000000000);
   const [similarity, setSimilarity] = useState(0);
   const [grade, setGrade] = useState('F');
-  const [clearTrigger, setClearTrigger] = useState(0);
 
   // 타이머 useEffect
   useEffect(() => {
@@ -26,7 +25,6 @@ export default function DrawingGame() {
 
   // Canvas에서 strokes가 업데이트될 때 호출 (마우스를 뗄 때마다)
   const handleStrokesChange = (strokes: Stroke[]) => {
-    // 즉시 유사도 계산
     if (strokes.length > 0) {
       const result = calculateSimilarityVector(strokes);
       setSimilarity(result.similarity);
@@ -36,14 +34,11 @@ export default function DrawingGame() {
         grade: result.grade,
         strokeCount: strokes.length,
       });
+    } else {
+      // Canvas에서 clear되면 빈 배열이 전달됨
+      setSimilarity(0);
+      setGrade('F');
     }
-  };
-
-  // 캔버스 지우기 버튼 핸들러
-  const handleClearCanvas = () => {
-    setClearTrigger((prev) => prev + 1);
-    setSimilarity(0);
-    setGrade('F');
   };
 
   return (
@@ -78,43 +73,6 @@ export default function DrawingGame() {
           <div className="flex min-h-0 flex-1 gap-4">
             <div className="flex min-h-0 flex-1 flex-col">
               <div className="flex h-full flex-col overflow-hidden rounded-2xl border-4 border-gray-800 bg-white shadow-2xl">
-                <div className="flex shrink-0 items-center gap-4 border-b-2 border-gray-300 bg-gray-100 px-4 py-3">
-                  {/* <div className="flex items-center gap-2">
-                    <button className="h-8 w-8 rounded-full border-2 border-gray-400 bg-black transition-transform hover:scale-110"></button>
-                    <button className="h-8 w-8 rounded-full border-2 border-gray-300 bg-red-500 transition-transform hover:scale-110"></button>
-                    <button className="h-8 w-8 rounded-full border-2 border-gray-300 bg-blue-500 transition-transform hover:scale-110"></button>
-                    <button className="h-8 w-8 rounded-full border-2 border-gray-300 bg-green-500 transition-transform hover:scale-110"></button>
-                    <button className="h-8 w-8 rounded-full border-2 border-gray-300 bg-yellow-400 transition-transform hover:scale-110"></button>
-                  </div>
-
-                  <div className="h-6 w-px bg-gray-400"></div>
-
-                  <div className="flex items-center gap-2">
-                    <button className="rounded-lg p-2 transition-colors hover:bg-gray-200">
-                      <span className="material-symbols-outlined text-gray-700">
-                        edit
-                      </span>
-                    </button>
-                    <button className="rounded-lg p-2 transition-colors hover:bg-gray-200">
-                      <span className="material-symbols-outlined text-gray-700">
-                        ink_eraser
-                      </span>
-                    </button>
-                  </div>
-
-                  <div className="h-6 w-px bg-gray-400"></div> */}
-
-                  <button
-                    onClick={handleClearCanvas}
-                    className="flex items-center gap-1 rounded-lg p-2 text-red-600 transition-colors hover:bg-red-100"
-                  >
-                    <span className="material-symbols-outlined">delete</span>
-                    <span className="font-handwriting text-sm font-bold">
-                      지우기
-                    </span>
-                  </button>
-                </div>
-
                 <div className="relative min-h-0 flex-1 bg-white">
                   <div className="absolute top-4 left-1/2 -translate-x-1/2 rounded-full bg-indigo-600 px-6 py-2 text-white shadow-lg">
                     <span className="font-handwriting text-lg font-bold">
@@ -134,10 +92,7 @@ export default function DrawingGame() {
                   </div>
 
                   <div className="flex h-full w-full items-center justify-center">
-                    <Canvas
-                      onStrokesChange={handleStrokesChange}
-                      clearTrigger={clearTrigger}
-                    />
+                    <Canvas onStrokesChange={handleStrokesChange} />
                   </div>
                 </div>
               </div>
