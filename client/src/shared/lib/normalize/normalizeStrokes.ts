@@ -5,7 +5,7 @@ import type { Stroke } from '@/entities/drawing/model/types';
  * @param {Array} strokes - [[x[], y[]], ...]
  * @returns {Array} - 정규화된 strokes
  */
-export const normalizeStrokes = (strokes: Stroke[]) => {
+export const normalizeStrokes = (strokes: Stroke[]): Stroke[] => {
   if (strokes.length === 0) return [];
 
   // 모든 점의 min/max 찾기
@@ -31,7 +31,7 @@ export const normalizeStrokes = (strokes: Stroke[]) => {
   const scale = Math.max(width, height);
 
   // 정규화 (0~1 범위, 중앙 기준)
-  const normalized = strokes.map((stroke) => {
+  const normalized = strokes.map((stroke): Stroke => {
     const [xArr, yArr] = stroke;
     const normalizedX = xArr.map((x) => (x - minX) / scale);
     const normalizedY = yArr.map((y) => (y - minY) / scale);

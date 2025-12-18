@@ -15,7 +15,7 @@ export const matchStrokes = (strokes1: Stroke[], strokes2: Stroke[]) => {
   const n2 = strokes2.length;
 
   // 유사도 행렬 계산
-  const similarityMatrix = [];
+  const similarityMatrix: number[][] = [];
   for (let i = 0; i < n1; i++) {
     similarityMatrix[i] = [];
     for (let j = 0; j < n2; j++) {

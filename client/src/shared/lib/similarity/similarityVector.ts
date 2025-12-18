@@ -1,15 +1,16 @@
-import type { Stroke } from '@/entities/drawing/model/types';
+import type { SimilarityResult, Stroke } from '@/entities/drawing/model/types';
 import { normalizeStrokes } from '../normalize/normalizeStrokes';
 import { matchStrokes } from './matchStrokes';
 import { applyNonLinearScale } from '../normalize/applyNonlinearScale';
+import { calculateHullSimilarity } from './convexHall';
 
 /**
  * 최종 유사도 계산 (벡터 기반)
  */
-export async function calculateSimilarityVector(
+export const calculateSimilarityVector = (
   originalStrokes: Stroke[],
   drawnStrokes: Stroke[],
-) {
+): SimilarityResult => {
   try {
     // TODO: 원본 전송 방식에 따라 전처리 수정하기
     // 우선 원본도 스트로크를 받는다고 가정합니다
@@ -42,24 +43,11 @@ export async function calculateSimilarityVector(
       normalizedDrawn,
     );
 
-    // convex hall
-    const userPoints = strokesToPoints(normalizedDrawn);
-    const userHull = convexHull(userPoints);
-    const originalPoints = strokesToPoints(normalizedOriginal);
-    const originalHull = convexHull(originalPoints);
-    // 면적 / 둘레
-    const userArea = hullArea(userHull);
-    const originalArea = hullArea(originalHull);
-
-    const userPerimeter = hullPerimeter(userHull);
-    const originalPerimeter = hullPerimeter(originalHull);
-
-    // 유사도
-    const areaSim = areaSimilarity(userArea, originalArea);
-    const perimeterSim = perimeterSimilarity(userPerimeter, originalPerimeter);
-
     // hull 기반 점수 (0~100)
-    const hullScore = (areaSim * 0.5 + perimeterSim * 0.5) * 100;
+    const hullScore = calculateHullSimilarity(
+      normalizedOriginal,
+      normalizedDrawn,
+    );
 
     const scaledHull = applyNonLinearScale(hullScore);
     let weights;
@@ -111,8 +99,10 @@ export async function calculateSimilarityVector(
       },
     };
   } catch (error) {
-    console.error('[벡터 유사도] 오류 발생:', error.message);
-    console.error(error.stack);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error('[벡터 유사도] 오류 발생:', errorMessage);
+    if (errorStack) console.error(errorStack);
 
     return {
       similarity: 0,
@@ -120,10 +110,11 @@ export async function calculateSimilarityVector(
       details: {
         strokeCountSimilarity: 0,
         strokeMatchSimilarity: 0,
+        hullSimilarity: 0,
       },
     };
   }
-}
+};
 
 /**
  * 유사도 점수를 기반으로 등급 계산
