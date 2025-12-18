@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PATHS } from '@/constants/paths';
+import house from '@/assets/images/house.png';
 
 export default function GameStart() {
   const navigate = useNavigate();
@@ -51,16 +52,12 @@ export default function GameStart() {
 
           <div className="flex min-h-0 flex-1 items-center justify-center">
             <div className="relative w-full max-w-2xl rounded-2xl border-4 border-gray-800 bg-white p-3 shadow-2xl">
-              <div className="relative flex aspect-4/3 items-center justify-center overflow-hidden rounded-lg bg-[#4a5f5a]">
-                <div className="h-40 w-40 rounded-lg bg-gray-300 shadow-lg"></div>
-
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-lg border-2 border-gray-300 bg-white/90 px-4 py-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-sm text-gray-600">
-                      draw
-                    </span>
-                  </div>
-                </div>
+              <div className="relative flex aspect-4/3 items-center justify-center overflow-hidden rounded-lg">
+                <img
+                  src={house}
+                  alt="Drawing Prompt"
+                  className="absolute h-full w-full object-contain"
+                />
               </div>
             </div>
           </div>

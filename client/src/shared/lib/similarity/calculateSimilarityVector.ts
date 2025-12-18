@@ -4,9 +4,31 @@ import { matchStrokes } from '@/shared/lib/similarity/matchStrokes';
 import { applyNonLinearScale } from '@/shared/lib/normalize/applyNonlinearScale';
 import { calculateHullSimilarity } from '@/shared/lib/similarity/geometry/convexHall';
 
+const originalStrokes: Stroke[] = [
+  [
+    [9, 9, 13, 19, 23, 41, 62, 129, 145, 164, 166, 161, 141, 132, 0],
+    [108, 212, 239, 252, 255, 255, 253, 236, 231, 220, 189, 164, 100, 85, 108],
+  ],
+  [
+    [3, 3, 14, 44, 63, 75, 100, 135],
+    [107, 92, 68, 22, 1, 0, 16, 72],
+  ],
+  [
+    [27, 22, 25, 37, 60, 65, 63, 22],
+    [157, 162, 203, 210, 210, 203, 148, 148],
+  ],
+  [
+    [13, 49, 74],
+    [185, 187, 184],
+  ],
+  [
+    [38, 42],
+    [156, 212],
+  ],
+];
+
 // 두 스트로크의 최종 유사도 점수 계산
 export const calculateSimilarityVector = (
-  originalStrokes: Stroke[],
   drawnStrokes: Stroke[],
 ): SimilarityResult => {
   try {

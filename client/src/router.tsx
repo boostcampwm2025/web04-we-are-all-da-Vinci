@@ -1,4 +1,5 @@
 import type { RouteObject } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { PATHS } from '@/constants/paths';
 import LandingPage from '@/pages/Landingpage';
 import CreateRoom from '@/pages/CreateRoom';
@@ -31,5 +32,9 @@ export const routes: RouteObject[] = [
   {
     path: PATHS.FINAL_RESULTS,
     element: <FinalResults />,
+  },
+  {
+    path: '*',
+    element: <Navigate to={PATHS.HOME} replace />,
   },
 ];

@@ -1,11 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PATHS } from '@/constants/paths';
+import { Canvas } from '@/features/canvasDraw/ui/Canvas';
+import { calculateSimilarityVector } from '@/shared/lib/similarity/calculateSimilarityVector';
+import type { Stroke } from '@/entities/drawing/model/types';
 
 export default function DrawingGame() {
   const navigate = useNavigate();
-  const [timeLeft, setTimeLeft] = useState(30);
+  const [timeLeft, setTimeLeft] = useState(30000000000000000);
+  const [similarity, setSimilarity] = useState(0);
+  const [grade, setGrade] = useState('F');
 
+  // 타이머 useEffect
   useEffect(() => {
     if (timeLeft > 0) {
       const timer = setTimeout(() => {
@@ -16,6 +22,24 @@ export default function DrawingGame() {
       navigate(PATHS.FINAL_RESULTS);
     }
   }, [timeLeft, navigate]);
+
+  // Canvas에서 strokes가 업데이트될 때 호출 (마우스를 뗄 때마다)
+  const handleStrokesChange = (strokes: Stroke[]) => {
+    if (strokes.length > 0) {
+      const result = calculateSimilarityVector(strokes);
+      setSimilarity(result.similarity);
+      setGrade(result.grade);
+      console.log('[유사도 계산]', {
+        similarity: result.similarity,
+        grade: result.grade,
+        strokeCount: strokes.length,
+      });
+    } else {
+      // Canvas에서 clear되면 빈 배열이 전달됨
+      setSimilarity(0);
+      setGrade('F');
+    }
+  };
 
   return (
     <>
@@ -49,51 +73,24 @@ export default function DrawingGame() {
           <div className="flex min-h-0 flex-1 gap-4">
             <div className="flex min-h-0 flex-1 flex-col">
               <div className="flex h-full flex-col overflow-hidden rounded-2xl border-4 border-gray-800 bg-white shadow-2xl">
-                <div className="flex shrink-0 items-center gap-4 border-b-2 border-gray-300 bg-gray-100 px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <button className="h-8 w-8 rounded-full border-2 border-gray-400 bg-black transition-transform hover:scale-110"></button>
-                    <button className="h-8 w-8 rounded-full border-2 border-gray-300 bg-red-500 transition-transform hover:scale-110"></button>
-                    <button className="h-8 w-8 rounded-full border-2 border-gray-300 bg-blue-500 transition-transform hover:scale-110"></button>
-                    <button className="h-8 w-8 rounded-full border-2 border-gray-300 bg-green-500 transition-transform hover:scale-110"></button>
-                    <button className="h-8 w-8 rounded-full border-2 border-gray-300 bg-yellow-400 transition-transform hover:scale-110"></button>
-                  </div>
-
-                  <div className="h-6 w-px bg-gray-400"></div>
-
-                  <div className="flex items-center gap-2">
-                    <button className="rounded-lg p-2 transition-colors hover:bg-gray-200">
-                      <span className="material-symbols-outlined text-gray-700">
-                        edit
-                      </span>
-                    </button>
-                    <button className="rounded-lg p-2 transition-colors hover:bg-gray-200">
-                      <span className="material-symbols-outlined text-gray-700">
-                        ink_eraser
-                      </span>
-                    </button>
-                  </div>
-
-                  <div className="h-6 w-px bg-gray-400"></div>
-
-                  <button className="flex items-center gap-1 rounded-lg p-2 text-red-600 transition-colors hover:bg-red-100">
-                    <span className="material-symbols-outlined">delete</span>
-                    <span className="font-handwriting text-sm font-bold">
-                      지우기
-                    </span>
-                  </button>
-                </div>
-
                 <div className="relative min-h-0 flex-1 bg-white">
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 rounded-full bg-indigo-600 px-6 py-2 text-white shadow-lg">
-                    <span className="font-handwriting text-lg font-bold">
-                      주제: 웃는 얼굴
-                    </span>
+                  {/* 임시 유사도 표시 */}
+                  <div className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-lg bg-black/80 px-6 py-3 text-white shadow-lg">
+                    <div className="text-center">
+                      <div className="mb-1 text-sm font-medium">
+                        현재 유사도
+                      </div>
+                      <div className="text-3xl font-bold text-yellow-300">
+                        {similarity.toFixed(1)}%
+                      </div>
+                      <div className="mt-1 text-lg font-bold">
+                        등급: {grade}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex h-full w-full items-center justify-center">
-                    <p className="font-handwriting text-xl text-gray-400">
-                      여기에 그림을 그리세요
-                    </p>
+                    <Canvas onStrokesChange={handleStrokesChange} />
                   </div>
                 </div>
               </div>
@@ -120,17 +117,17 @@ export default function DrawingGame() {
                           </span>
                         </div>
                         <span className="font-handwriting text-sm font-bold">
-                          User 1
+                          나 ({grade})
                         </span>
                       </div>
                       <span className="text-lg font-bold text-blue-600">
-                        82%
+                        {similarity.toFixed(1)}%
                       </span>
                     </div>
                     <div className="h-2 w-full rounded-full bg-blue-200">
                       <div
                         className="h-2 rounded-full bg-blue-600"
-                        style={{ width: '82%' }}
+                        style={{ width: `${Math.min(similarity, 100)}%` }}
                       ></div>
                     </div>
                   </div>

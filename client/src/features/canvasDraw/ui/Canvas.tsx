@@ -2,12 +2,16 @@ import { useRef, useState, useEffect } from 'react';
 
 type Stroke = [x: number[], y: number[]];
 
-export function Canvas() {
+interface CanvasProps {
+  onStrokesChange?: (strokes: Stroke[]) => void;
+}
+
+export function Canvas({ onStrokesChange }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const currentStrokeRef = useRef<Stroke | null>(null); // 현재 그리고 있는 stroke
-  const strokesRef = useRef<Stroke[]>([]); // 모든 stroke
+  const allStrokesRef = useRef<Stroke[]>([]); // 모든 stroke
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -77,9 +81,29 @@ export function Canvas() {
     setIsDrawing(false);
     // 현재 스트로크를 전체 스트로크에 저장
     if (currentStrokeRef.current) {
-      strokesRef.current.push(currentStrokeRef.current);
+      allStrokesRef.current.push(currentStrokeRef.current);
       currentStrokeRef.current = null;
+      // 부모 컴포넌트에 strokes 전달
+      onStrokesChange?.(allStrokesRef.current);
     }
+  };
+
+  // 캔버스 초기화 함수
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+    if (!canvas || !ctx) return;
+
+    // 캔버스 지우기
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // strokes 초기화
+    allStrokesRef.current = [];
+    currentStrokeRef.current = null;
+
+    // 부모 컴포넌트에 초기화 알림
+    onStrokesChange?.([]);
   };
 
   // 마우스가 캔버스 밖으로 나갔을 때 그리기 종료
@@ -88,14 +112,24 @@ export function Canvas() {
   };
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={500}
-      height={500}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseOut={handleMouseOut}
-    />
+    <div className="relative">
+      <canvas
+        className="border-6 border-gray-300"
+        ref={canvasRef}
+        width={500}
+        height={500}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseOut={handleMouseOut}
+      />
+      <button
+        onClick={clearCanvas}
+        className="absolute top-4 right-4 flex items-center gap-1 rounded-lg bg-red-600 p-2 text-white shadow-lg transition-colors hover:bg-red-700"
+      >
+        <span className="material-symbols-outlined text-sm">delete</span>
+        <span className="font-handwriting text-sm font-bold">지우기</span>
+      </button>
+    </div>
   );
 }
