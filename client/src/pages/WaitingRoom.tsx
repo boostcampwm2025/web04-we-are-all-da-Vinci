@@ -1,42 +1,69 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PATHS } from '@/constants/paths';
 import PlayerCard from '@/components/card/PlayerCard';
 import NicknameModal from '@/components/NicknameModal';
+import { useSocket } from '@/contexts/SocketContext';
 
 export default function WaitingRoom() {
   const navigate = useNavigate();
-  const [players, setPlayers] = useState([
-    {
-      id: 1,
-      name: localStorage.getItem('nickname') || 'WHOAMI',
-      ready: true,
-      isHost: true,
-    },
-  ]);
+  const {
+    players: socketPlayers,
+    roomState,
+    joinRoom,
+    startGame,
+  } = useSocket();
+
   const [showNicknameModal, setShowNicknameModal] = useState(
     () => !localStorage.getItem('nickname'),
   );
   const [nickname, setNickname] = useState('');
 
+  // 닉네임 입력 후 방 입장
   const handleNicknameSubmit = () => {
     if (nickname.trim()) {
       localStorage.setItem('nickname', nickname.trim());
-      setPlayers((prevPlayers) =>
-        prevPlayers.map((player) =>
-          player.id === 1 ? { ...player, name: nickname.trim() } : player,
-        ),
-      );
       setShowNicknameModal(false);
+      joinRoom(nickname.trim());
     }
   };
 
+  // 컴포넌트 마운트 시 닉네임이 있으면 자동 입장
+  useEffect(() => {
+    const savedNickname = localStorage.getItem('nickname');
+    if (savedNickname && !showNicknameModal) {
+      joinRoom(savedNickname);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showNicknameModal]);
+
+  // 게임 상태가 PLAYING으로 변경되면 GameStart로 이동
+  useEffect(() => {
+    if (roomState === 'PLAYING') {
+      navigate(PATHS.GAME_START);
+    }
+  }, [roomState, navigate]);
+
+  // PlayerCard가 기대하는 형태로 변환
+  const players = socketPlayers.map((p) => ({
+    name: p.userId,
+    ready: true,
+    isHost: p.isHost,
+  }));
+
   const emptySlots = 8 - players.length;
-  const roomId = 'ABC-1234';
+  const roomId = 'room-1';
 
   const copyRoomId = () => {
     navigator.clipboard.writeText(roomId);
     alert('방 코드가 복사되었습니다!');
+  };
+
+  // 게임 시작 핸들러 (MVP: 모든 플레이어가 시작 가능)
+  const handleStartGame = () => {
+    if (roomState === 'WAITING') {
+      startGame();
+    }
   };
 
   return (
@@ -89,8 +116,11 @@ export default function WaitingRoom() {
                 {/* 참가자 그리드 */}
                 <div className="grid grid-cols-4 gap-5">
                   {/* 기존 참가자들 */}
-                  {players.map((player) => (
-                    <PlayerCard key={player.id} player={player} />
+                  {players.map((player, index) => (
+                    <PlayerCard
+                      key={`${player.name}-${index}`}
+                      player={player}
+                    />
                   ))}
 
                   {Array.from({ length: emptySlots }).map((_, i) => (
@@ -139,7 +169,7 @@ export default function WaitingRoom() {
                       </span>
                       <span className="font-handwriting text-xl">라운드</span>
                     </div>
-                    <span className="text-xl font-bold">5 라운드</span>
+                    <span className="text-xl font-bold">1 라운드 (MVP)</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -159,14 +189,15 @@ export default function WaitingRoom() {
                       </span>
                       <span className="font-handwriting text-xl">주제</span>
                     </div>
-                    <span className="text-xl font-bold">랜덤</span>
+                    <span className="text-xl font-bold">집 (House)</span>
                   </div>
                 </div>
               </div>
 
               <button
-                onClick={() => navigate(PATHS.GAME_START)}
-                className="font-handwriting flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-500 py-5 text-3xl font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-indigo-600 hover:shadow-xl"
+                onClick={handleStartGame}
+                disabled={roomState !== 'WAITING'}
+                className="font-handwriting flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-500 py-5 text-3xl font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-indigo-600 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
               >
                 <span className="material-symbols-outlined text-4xl">
                   play_arrow
@@ -181,7 +212,10 @@ export default function WaitingRoom() {
                   </span>
                   설정 변경
                 </button>
-                <button className="font-handwriting flex items-center justify-center gap-1 rounded-xl border-2 border-red-400 bg-white py-5 text-xl font-bold text-red-600 transition-colors hover:bg-red-50">
+                <button
+                  onClick={() => navigate(PATHS.HOME)}
+                  className="font-handwriting flex items-center justify-center gap-1 rounded-xl border-2 border-red-400 bg-white py-5 text-xl font-bold text-red-600 transition-colors hover:bg-red-50"
+                >
                   <span className="material-symbols-outlined text-2xl">
                     logout
                   </span>
