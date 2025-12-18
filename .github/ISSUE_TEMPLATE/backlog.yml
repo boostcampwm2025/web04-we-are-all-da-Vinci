@@ -1,0 +1,58 @@
+name: 백로그 이슈
+description: 새로운 기능, 개선사항, 버그 등을 백로그에 추가합니다
+title: "[Backlog] "
+labels: ["backlog"]
+body:
+  - type: textarea
+    id: user-story
+    attributes:
+      label: 사용자 스토리
+      description: "사용자 관점에서 이 기능이 왜 필요한지 작성해주세요"
+      placeholder: |
+        As a [사용자 유형],
+        I want [목표/의도],
+        So that [이유/혜택].
+
+        예시:
+        As a 프로젝트 관리자,
+        I want 이슈를 드래그 앤 드롭으로 상태를 변경하고 싶다,
+        So that 작업 흐름을 더 빠르게 관리할 수 있다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 부가 설명
+      description: 필요하다면 이슈에 대한 구체적인 설명을 작성해주세요
+      placeholder: |
+        - 현재 상황
+        - 해결하고자 하는 문제
+        - 제안하는 해결 방법
+    validations:
+      required: false
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: 완료 조건 (Acceptance Criteria)
+      description: 이 이슈가 완료되었다고 판단할 수 있는 조건들을 체크리스트로 작성해주세요
+      placeholder: |
+        - [ ] 조건 1
+        - [ ] 조건 2
+        - [ ] 조건 3
+      value: |
+        - [ ]
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Blocked By
+      description: 이 이슈가 블로킹 되고 있는 원인이 있다면 알려주세요
+      placeholder: |
+        - #123 (이슈 완료 후 시작 가능)
+        - 외부 API 연동 필요
+    validations:
+      required: false

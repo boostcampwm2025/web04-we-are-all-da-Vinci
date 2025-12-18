@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - main
-      - mvp
+      - MVP
       - dev
     paths:
       - "server/**"
