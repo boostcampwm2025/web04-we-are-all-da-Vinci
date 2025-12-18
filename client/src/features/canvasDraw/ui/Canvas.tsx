@@ -2,12 +2,17 @@ import { useRef, useState, useEffect } from 'react';
 
 type Stroke = [x: number[], y: number[]];
 
-export function Canvas() {
+interface CanvasProps {
+  onStrokesChange?: (strokes: Stroke[]) => void;
+  clearTrigger?: number; // 이 값이 변경되면 캔버스 초기화
+}
+
+export function Canvas({ onStrokesChange, clearTrigger }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const currentStrokeRef = useRef<Stroke | null>(null); // 현재 그리고 있는 stroke
-  const strokesRef = useRef<Stroke[]>([]); // 모든 stroke
+  const allStrokesRef = useRef<Stroke[]>([]); // 모든 stroke
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -77,10 +82,37 @@ export function Canvas() {
     setIsDrawing(false);
     // 현재 스트로크를 전체 스트로크에 저장
     if (currentStrokeRef.current) {
-      strokesRef.current.push(currentStrokeRef.current);
+      allStrokesRef.current.push(currentStrokeRef.current);
       currentStrokeRef.current = null;
+      // 부모 컴포넌트에 strokes 전달
+      onStrokesChange?.(allStrokesRef.current);
     }
   };
+
+  // 캔버스 초기화 함수
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+    if (!canvas || !ctx) return;
+
+    // 캔버스 지우기
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // strokes 초기화
+    allStrokesRef.current = [];
+    currentStrokeRef.current = null;
+
+    // 부모 컴포넌트에 초기화 알림
+    onStrokesChange?.([]);
+  };
+
+  // clearTrigger가 변경되면 캔버스 초기화
+  useEffect(() => {
+    if (clearTrigger !== undefined && clearTrigger > 0) {
+      clearCanvas();
+    }
+  }, [clearTrigger]);
 
   // 마우스가 캔버스 밖으로 나갔을 때 그리기 종료
   const handleMouseOut = () => {
@@ -89,6 +121,7 @@ export function Canvas() {
 
   return (
     <canvas
+      className="border-6 border-gray-300"
       ref={canvasRef}
       width={500}
       height={500}
