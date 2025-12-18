@@ -69,7 +69,10 @@ export default function Landing() {
                 </span>
               </button>
 
-              <button className="scribble-border group flex h-16 flex-1 items-center justify-center rounded-full bg-white/90 px-6 text-gray-800 transition-all hover:scale-105 hover:bg-white">
+              <button
+                onClick={() => navigate(PATHS.WAITING_ROOM)}
+                className="scribble-border group flex h-16 flex-1 items-center justify-center rounded-full bg-white/90 px-6 text-gray-800 transition-all hover:scale-105 hover:bg-white"
+              >
                 <span className="material-symbols-outlined mr-2 text-3xl transition-transform group-hover:scale-110">
                   login
                 </span>

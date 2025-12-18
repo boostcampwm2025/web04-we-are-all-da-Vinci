@@ -20,14 +20,13 @@ import { RoomState } from './game-play.types';
   },
 })
 export class GamePlayGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
-{
+  implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  constructor(private readonly gamePlayService: GamePlayService) {}
+  constructor(private readonly gamePlayService: GamePlayService) { }
 
-  handleConnection(client: Socket) {}
+  handleConnection(client: Socket) { }
 
   handleDisconnect(client: Socket) {
     const rid = this.gamePlayService.leave(client.id);
