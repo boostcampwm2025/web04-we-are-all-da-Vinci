@@ -9,9 +9,14 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { GamePlayService } from './game-play.service';
+import { getCorsOrigins } from 'src/utils';
 
 @WebSocketGateway({
   transports: ['websocket'],
+  cors: {
+    origin: getCorsOrigins(process.env.CORS_ORIGIN),
+    credentials: true,
+  },
 })
 export class GamePlayGateway
   implements OnGatewayConnection, OnGatewayDisconnect
