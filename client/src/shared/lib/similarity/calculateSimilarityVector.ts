@@ -1,0 +1,125 @@
+import type { SimilarityResult, Stroke } from '@/entities/drawing/model/types';
+import { normalizeStrokes } from '@/shared/lib/normalize/normalizeStrokes';
+import { matchStrokes } from '@/shared/lib/similarity/matchStrokes';
+import { applyNonLinearScale } from '@/shared/lib/normalize/applyNonlinearScale';
+import { calculateHullSimilarity } from '@/shared/lib/similarity/geometry/convexHall';
+
+// 두 스트로크의 최종 유사도 점수 계산
+export const calculateSimilarityVector = (
+  originalStrokes: Stroke[],
+  drawnStrokes: Stroke[],
+): SimilarityResult => {
+  try {
+    // TODO: 원본 전송 방식에 따라 전처리 수정하기
+    // 우선 원본도 스트로크를 받는다고 가정합니다
+    // 1. 원본 stroke 로드
+    // const originalStrokes = await loadOriginalStrokes(imageName);
+    // console.log(`[벡터 유사도] 원본 stroke 개수: ${originalStrokes.length}`);
+
+    // if (originalStrokes.length === 0) {
+    //   throw new Error("원본 stroke 데이터를 찾을 수 없습니다.");
+    // }
+
+    // 2. 정규화
+    const normalizedOriginal = normalizeStrokes(originalStrokes);
+    const normalizedDrawn = normalizeStrokes(drawnStrokes);
+
+    // 3. Stroke 개수 유사도
+    // 아무것도 안 그렸으면 0으로 명확히 처리
+    const strokeCountSimilarity =
+      normalizedDrawn.length === 0
+        ? 0
+        : Math.max(
+            0,
+            100 -
+              Math.abs(normalizedOriginal.length - normalizedDrawn.length) * 10,
+          );
+
+    // 4. Stroke 매칭 유사도
+    const strokeMatchSimilarity = matchStrokes(
+      normalizedOriginal,
+      normalizedDrawn,
+    );
+
+    // hull 기반 점수
+    const hullScore = calculateHullSimilarity(
+      normalizedOriginal,
+      normalizedDrawn,
+    );
+
+    // 비선형 스케일링
+    const scaledHull = applyNonLinearScale(hullScore);
+    let weights;
+
+    if (scaledHull >= 92) {
+      // Hull 점수가 높으면 -> 형태 중심 평가
+      weights = {
+        strokeCount: 0.05,
+        strokeMatch: 0.15, // 비중 감소
+        hull: 0.8, // Hull 비중 증가
+      };
+      // console.log("[가중치] Hull 점수 높음 -> 형태 중심 평가");
+    } else if (scaledHull >= 60) {
+      // Hull 중간 -> 균형
+      weights = {
+        strokeCount: 0.08,
+        strokeMatch: 0.32,
+        hull: 0.6,
+      };
+      // console.log("[가중치] 균형 평가");
+    } else {
+      // Hull 낮음 -> Stroke 중요
+      weights = {
+        strokeCount: 0.1,
+        strokeMatch: 0.5,
+        hull: 0.4,
+      };
+      // console.log("[가중치] Hull 점수 낮음 -> Stroke 중심 평가");
+    }
+
+    // 최종 유사도 계산
+    const similarity =
+      strokeCountSimilarity * weights.strokeCount +
+      strokeMatchSimilarity * weights.strokeMatch +
+      scaledHull * weights.hull;
+
+    const roundedSimilarity = Math.round(similarity * 100) / 100;
+
+    // 8. 등급 계산
+    const grade = calculateGrade(roundedSimilarity);
+
+    return {
+      similarity: roundedSimilarity,
+      grade: grade,
+      details: {
+        strokeCountSimilarity: Math.round(strokeCountSimilarity * 100) / 100,
+        strokeMatchSimilarity: Math.round(strokeMatchSimilarity * 100) / 100,
+        hullSimilarity: Math.round(hullScore * 100) / 100,
+      },
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error('[벡터 유사도] 오류 발생:', errorMessage);
+    if (errorStack) console.error(errorStack);
+
+    return {
+      similarity: 0,
+      grade: 'F',
+      details: {
+        strokeCountSimilarity: 0,
+        strokeMatchSimilarity: 0,
+        hullSimilarity: 0,
+      },
+    };
+  }
+};
+
+// 최종 유사도 점수 기반으로 등급 산출
+const calculateGrade = (similarity: number): string => {
+  if (similarity >= 90) return 'S';
+  if (similarity >= 80) return 'A';
+  if (similarity >= 70) return 'B';
+  if (similarity >= 60) return 'C';
+  return 'D';
+};
