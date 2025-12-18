@@ -1,15 +1,35 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PATHS } from '@/constants/paths';
+import PlayerCard from '@/components/card/PlayerCard';
+import NicknameModal from '@/components/NicknameModal';
 
 export default function WaitingRoom() {
   const navigate = useNavigate();
-  const [players] = useState([
-    { id: 1, name: '나(방장)', status: '준비완료', isHost: true },
-    { id: 2, name: '김그림', status: '대기중', isHost: false },
-    { id: 3, name: 'ArtMaster', status: '대기중', isHost: false },
-    { id: 4, name: '낙서왕', status: '대기중', isHost: false },
+  const [players, setPlayers] = useState([
+    {
+      id: 1,
+      name: localStorage.getItem('nickname') || 'WHOAMI',
+      ready: true,
+      isHost: true,
+    },
   ]);
+  const [showNicknameModal, setShowNicknameModal] = useState(
+    () => !localStorage.getItem('nickname'),
+  );
+  const [nickname, setNickname] = useState('');
+
+  const handleNicknameSubmit = () => {
+    if (nickname.trim()) {
+      localStorage.setItem('nickname', nickname.trim());
+      setPlayers((prevPlayers) =>
+        prevPlayers.map((player) =>
+          player.id === 1 ? { ...player, name: nickname.trim() } : player,
+        ),
+      );
+      setShowNicknameModal(false);
+    }
+  };
 
   const emptySlots = 8 - players.length;
   const roomId = 'ABC-1234';
@@ -21,6 +41,14 @@ export default function WaitingRoom() {
 
   return (
     <>
+      {showNicknameModal && (
+        <NicknameModal
+          nickname={nickname}
+          setNickname={setNickname}
+          onSubmit={handleNicknameSubmit}
+        />
+      )}
+
       <div className="flex h-full w-full items-center justify-center px-4 py-6">
         <div className="flex w-full max-w-7xl flex-col">
           <div className="mb-5 shrink-0 text-center">
@@ -62,31 +90,7 @@ export default function WaitingRoom() {
                 <div className="grid grid-cols-4 gap-5">
                   {/* 기존 참가자들 */}
                   {players.map((player) => (
-                    <div
-                      key={player.id}
-                      className={`relative flex flex-col items-center justify-center rounded-xl border-2 p-4 text-center ${
-                        player.isHost
-                          ? 'border-blue-400 bg-blue-50'
-                          : 'border-gray-300 bg-gray-50'
-                      }`}
-                    >
-                      {player.isHost && (
-                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-yellow-400 px-2 py-1 text-sm font-bold text-yellow-900">
-                          👑
-                        </div>
-                      )}
-                      <div className="mx-auto mb-2 flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gray-200">
-                        <span className="material-symbols-outlined text-4xl text-gray-400">
-                          account_circle
-                        </span>
-                      </div>
-                      <div className="font-handwriting mb-1 text-lg font-bold">
-                        {player.name}
-                      </div>
-                      <div className="font-handwriting text-sm text-gray-500">
-                        {player.status}
-                      </div>
-                    </div>
+                    <PlayerCard key={player.id} player={player} />
                   ))}
 
                   {Array.from({ length: emptySlots }).map((_, i) => (

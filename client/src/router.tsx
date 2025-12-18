@@ -1,7 +1,7 @@
 import type { RouteObject } from 'react-router-dom';
 import { Navigate } from 'react-router-dom';
 import { PATHS } from '@/constants/paths';
-import LandingPage from '@/pages/Landingpage';
+import Landing from '@/pages/Landing';
 import CreateRoom from '@/pages/CreateRoom';
 import WaitingRoom from '@/pages/WaitingRoom';
 import GameStart from '@/pages/GameStart';
@@ -11,7 +11,7 @@ import FinalResults from '@/pages/FinalResult';
 export const routes: RouteObject[] = [
   {
     path: PATHS.HOME,
-    element: <LandingPage />,
+    element: <Landing />,
   },
   {
     path: PATHS.CREATE_ROOM,
