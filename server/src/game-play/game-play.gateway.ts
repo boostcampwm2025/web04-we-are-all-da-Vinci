@@ -78,7 +78,7 @@ export class GamePlayGateway
   submitDrawingResult(
     @ConnectedSocket() client: Socket,
     @MessageBody()
-    payload: { userId: string; score: number; drawing: number[][] },
+    payload: { userId: string; score: number; drawing: [[number[], number[]]] },
   ) {
     const roomId = 'room-1';
     const { score, drawing } = payload;
@@ -160,7 +160,7 @@ export class GamePlayGateway
       userId: string;
       score: number;
       rank: number;
-      drawing: number[][];
+      drawing: [[number[], number[]]];
     }[] = [];
 
     for (let i = 0; i < players.length; ++i) {
@@ -169,7 +169,7 @@ export class GamePlayGateway
         userId: string;
         score: number;
         rank: number;
-        drawing: number[][];
+        drawing: [[number[], number[]]];
       } = {
         userId: p.userId,
         score: p.score,

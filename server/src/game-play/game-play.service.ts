@@ -36,7 +36,7 @@ export class GamePlayService {
       id: socketId,
       userId,
       score: 0,
-      drawing: [[]],
+      drawing: [[[], []]],
       isHost: isFirst,
     });
 
@@ -133,7 +133,7 @@ export class GamePlayService {
       r.submitCount = 0;
 
       for (const p of r.players.values()) {
-        p.drawing = [];
+        p.drawing = [[[], []]];
         // score를 라운드 누적이 아닌 "라운드 점수"로 쓰면 0으로 초기화하세요.
         // p.score = 0;
         r.players.set(p.id, p);
@@ -162,7 +162,7 @@ export class GamePlayService {
     roomId: string,
     socketId: string,
     score: number,
-    drawing: number[][],
+    drawing: [[number[], number[]]],
   ) {
     const room = this.rooms.get(roomId);
     if (!room) return { ok: false as const, message: 'Room not found.' };

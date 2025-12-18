@@ -4,7 +4,7 @@ export type Player = {
   id: string;
   userId: string;
   score: number;
-  drawing: number[][];
+  drawing: [[number[], number[]]];
   isHost: boolean;
 };
 
