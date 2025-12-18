@@ -10,6 +10,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { GamePlayService } from './game-play.service';
 import { getCorsOrigins } from 'src/utils';
+import { RoomState } from './game-play.types';
 
 @WebSocketGateway({
   transports: ['websocket'],
@@ -118,6 +119,14 @@ export class GamePlayGateway
 
     const roomState = room?.state ?? 'WAITING';
 
+    const data: {
+      userId: string;
+      score: number;
+      isHost: boolean;
+      rank: number;
+      roomState: RoomState;
+    }[] = [];
+
     for (let i = 0; i < players.length; ++i) {
       const p = players[i];
       const payload: {
@@ -125,7 +134,7 @@ export class GamePlayGateway
         score: number;
         isHost: boolean;
         rank: number;
-        roomState: 'WAITING' | 'PLAYING' | 'ENDED';
+        roomState: RoomState;
       } = {
         userId: p.userId,
         score: p.score,
@@ -134,7 +143,11 @@ export class GamePlayGateway
         roomState,
       };
 
-      this.server.to(p.id).emit('leaderboard:update', payload);
+      data.push(payload);
+    }
+
+    for (const p of players) {
+      this.server.to(p.id).emit('leaderboard:update', { players: data });
     }
   }
 
@@ -142,6 +155,13 @@ export class GamePlayGateway
     const players = this.gamePlayService
       .getPlayers(roomId)
       .sort((a, b) => b.score - a.score);
+
+    const data: {
+      userId: string;
+      score: number;
+      rank: number;
+      drawing: number[][];
+    }[] = [];
 
     for (let i = 0; i < players.length; ++i) {
       const p = players[i];
@@ -156,7 +176,11 @@ export class GamePlayGateway
         rank: i + 1,
         drawing: p.drawing,
       };
-      this.server.to(p.id).emit('round:end', payload);
+      data.push(payload);
+    }
+
+    for (const p of players) {
+      this.server.to(p.id).emit('round:end', { results: data });
     }
   }
 }
