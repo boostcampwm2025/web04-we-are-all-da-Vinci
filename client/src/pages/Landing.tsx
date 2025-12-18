@@ -1,11 +1,32 @@
 import { useNavigate } from 'react-router-dom';
 import { PATHS } from '@/constants/paths';
+import { useState } from 'react';
+import NicknameModal from '@/components/NicknameModal';
 
-export default function LandingPage() {
+export default function Landing() {
   const navigate = useNavigate();
+
+  const [showNicknameModal, setShowNicknameModal] = useState(
+    () => !localStorage.getItem('nickname'),
+  );
+  const [nickname, setNickname] = useState('');
+
+  const handleNicknameSubmit = () => {
+    if (nickname.trim()) {
+      localStorage.setItem('nickname', nickname.trim());
+      setShowNicknameModal(false);
+    }
+  };
 
   return (
     <>
+      {showNicknameModal && (
+        <NicknameModal
+          nickname={nickname}
+          setNickname={setNickname}
+          onSubmit={handleNicknameSubmit}
+        />
+      )}
       <div className="flex h-full w-full items-center justify-center px-4">
         <div className="flex max-w-3xl flex-col items-center justify-center text-center">
           <div className="mb-4 inline-block -rotate-1 rounded-full border-2 border-dashed border-orange-400 bg-orange-50 px-5 py-2 text-sm font-bold tracking-wide text-orange-600">
