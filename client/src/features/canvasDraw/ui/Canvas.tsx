@@ -1,11 +1,13 @@
 import { useRef, useState, useEffect } from 'react';
 
+type Stroke = [x: number[], y: number[]];
+
 export function Canvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const currentStrokeRef = useRef<[number[], number[]] | null>(null); // 현재 그리고 있는 stroke
-  const strokesRef = useRef<[number[], number[]][]>([]); // 모든 stroke
+  const currentStrokeRef = useRef<Stroke | null>(null); // 현재 그리고 있는 stroke
+  const strokesRef = useRef<Stroke[]>([]); // 모든 stroke
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -57,9 +59,8 @@ export function Canvas() {
   const handleMouseMove = (e: React.MouseEvent) => {
     const ctx = ctxRef.current;
     if (!ctx) return;
-
-    const { x, y } = getMousePosOnCanvas(e);
     if (!isDrawing) return;
+    const { x, y } = getMousePosOnCanvas(e);
     ctx.lineTo(x, y);
     ctx.stroke();
 
@@ -74,7 +75,6 @@ export function Canvas() {
     if (!isDrawing) return;
     ctx.closePath();
     setIsDrawing(false);
-    console.log('현재까지 그린 데이터:', strokesRef.current);
     // 현재 스트로크를 전체 스트로크에 저장
     if (currentStrokeRef.current) {
       strokesRef.current.push(currentStrokeRef.current);
