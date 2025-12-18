@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - mvp
+      - deploy/be
     paths:
       - "server/**"
       - ".github/workflows/deploy-backend.yml"
