@@ -5,6 +5,8 @@ interface DrawingReplayProps {
   strokes: Stroke[];
   width?: number;
   height?: number;
+  originalWidth?: number; // FIX: 크기 스케일링 추가
+  originalHeight?: number; // FIX
   strokeColor?: string;
   strokeWidth?: number;
   replaySpeed?: number;
@@ -16,6 +18,8 @@ const DrawingReplay = ({
   strokes,
   width = 500,
   height = 500,
+  originalWidth = 500, // FIX
+  originalHeight = 500, // FIX
   strokeColor = 'black',
   strokeWidth = 3,
   replaySpeed = 3,
@@ -31,6 +35,10 @@ const DrawingReplay = ({
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // FIX: 스케일 비율 계산
+    const scaleX = width / originalWidth;
+    const scaleY = height / originalHeight;
 
     // 캔버스 설정
     ctx.lineCap = 'round';
@@ -73,13 +81,19 @@ const DrawingReplay = ({
 
       // 획 시작
       if (pointIndex === 0) {
+        // FIX: 리플레이 겹침 수정
+        if (strokeIndex === 0) {
+          ctx.clearRect(0, 0, width, height);
+        }
         ctx.beginPath();
-        ctx.moveTo(xCoords[0], yCoords[0]);
+        // FIX: 스케일링 추가
+        ctx.moveTo(xCoords[0] * scaleX, yCoords[0] * scaleY);
         pointIndex++;
       }
       // 점 그리기
       else if (pointIndex < xCoords.length) {
-        ctx.lineTo(xCoords[pointIndex], yCoords[pointIndex]);
+        // FIX: 스케일링 추가
+        ctx.lineTo(xCoords[pointIndex] * scaleX, yCoords[pointIndex] * scaleY);
         ctx.stroke();
         pointIndex++;
       }
@@ -101,6 +115,8 @@ const DrawingReplay = ({
     strokes,
     width,
     height,
+    originalWidth,
+    originalHeight,
     strokeColor,
     strokeWidth,
     replaySpeed,

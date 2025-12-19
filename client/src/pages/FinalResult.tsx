@@ -136,6 +136,8 @@ export default function FinalResults() {
                       strokes={selectedResult.drawing as Stroke[]}
                       width={280}
                       height={280}
+                      originalWidth={500}
+                      originalHeight={500}
                       replaySpeed={2}
                       loop={true}
                     />

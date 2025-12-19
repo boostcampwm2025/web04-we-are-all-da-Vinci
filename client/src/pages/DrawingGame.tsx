@@ -91,11 +91,11 @@ export default function DrawingGame() {
       const strokes = currentStrokesRef.current;
       if (strokes.length > 0) {
         // Stroke 형식을 서버 형식으로 변환
-        const formattedStrokes = strokes.map((stroke) => [
-          stroke[0], // x 좌표 배열
-          stroke[1], // y 좌표 배열
-        ]);
-        submitDrawing(similarity, formattedStrokes);
+        // const formattedStrokes = strokes.map((stroke) => [
+        //   stroke[0], // x 좌표 배열
+        //   stroke[1], // y 좌표 배열
+        // ]);
+        submitDrawing(similarity, strokes);
       }
       navigate(PATHS.FINAL_RESULTS);
     }

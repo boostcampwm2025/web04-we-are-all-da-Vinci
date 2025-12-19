@@ -183,16 +183,10 @@ export function SocketProvider({ children }: SocketProviderProps) {
   const submitDrawing = (score: number, strokes: number[][][]) => {
     if (!socketRef.current?.connected || !currentNicknameRef.current) return;
 
-    // strokes를 서버가 기대하는 형식으로 변환
-    const drawing: [[number[], number[]]] = strokes.map((stroke) => [
-      stroke.map((point) => point[0]), // x 좌표 배열
-      stroke.map((point) => point[1]), // y 좌표 배열
-    ]) as [[number[], number[]]];
-
     socketRef.current.emit('drawing:result', {
       userId: currentNicknameRef.current,
       score,
-      drawing,
+      drawing: strokes, // 스트로크 전처리 삭제 (그대로 주면 됨)
     });
   };
 
