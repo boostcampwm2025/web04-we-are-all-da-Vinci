@@ -18,6 +18,7 @@ export default function WaitingRoom() {
     () => !localStorage.getItem('nickname'),
   );
   const [nickname, setNickname] = useState('');
+  const [hard, setHard] = useState(false);
 
   // 닉네임 입력 후 방 입장
   const handleNicknameSubmit = () => {
@@ -41,6 +42,9 @@ export default function WaitingRoom() {
   useEffect(() => {
     if (roomState === 'PLAYING') {
       navigate(PATHS.GAME_START);
+    }
+    if (localStorage.getItem('nickname') === '김준서') {
+      setHard(true);
     }
   }, [roomState, navigate]);
 
@@ -196,7 +200,7 @@ export default function WaitingRoom() {
 
               <button
                 onClick={handleStartGame}
-                disabled={roomState !== 'WAITING'}
+                disabled={!hard || roomState !== 'WAITING'}
                 className="font-handwriting flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-500 py-5 text-3xl font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-indigo-600 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
               >
                 <span className="material-symbols-outlined text-4xl">
