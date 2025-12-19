@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSocket } from '@/contexts/SocketContext';
 import DrawingReplay from '@/features/drawingReplay/ui/DrawingReplay';
 import type { Stroke } from '@/entities/drawing/model/types';
-import house from '@/assets/house.png';
+import house from '@/assets/images/house.png';
 
 // 순위별 이모지
 const getRankEmoji = (rank: number): string => {
