@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSocket } from '@/contexts/SocketContext';
 import DrawingReplay from '@/features/drawingReplay/ui/DrawingReplay';
 import type { Stroke } from '@/entities/drawing/model/types';
+import house from '@/assets/house.png';
 
 // 순위별 이모지
 const getRankEmoji = (rank: number): string => {
@@ -105,7 +106,7 @@ export default function FinalResults() {
                 </div>
                 <div className="flex flex-1 items-center justify-center rounded-lg border-2 border-gray-300 bg-gray-50 p-4">
                   <img
-                    src="/house.png"
+                    src={house}
                     alt="원본"
                     className="max-h-full max-w-full object-contain"
                     onError={(e) => {
