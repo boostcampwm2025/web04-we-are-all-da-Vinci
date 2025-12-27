@@ -1,9 +1,31 @@
+import RankingCard from '@/components/common/RankingCard';
+
 export default function FinalResults() {
   const rankings = [
-    { rank: 1, name: 'User 1 (You)', score: 92, emoji: '🥇' },
-    { rank: 2, name: 'Player 2', score: 78, emoji: '🥈' },
-    { rank: 3, name: 'Player 3', score: 45, emoji: '🥉' },
-    { rank: 4, name: 'Player 4', score: 0, emoji: '' },
+    {
+      rank: 1,
+      name: 'User 1 (You)',
+      score: 92,
+      color: 'yellow' as const,
+    },
+    {
+      rank: 2,
+      name: 'Player 2',
+      score: 78,
+      color: 'indigo' as const,
+    },
+    {
+      rank: 3,
+      name: 'Player 3',
+      score: 45,
+      color: 'red' as const,
+    },
+    {
+      rank: 4,
+      name: 'Player 4',
+      score: 0,
+      color: 'yellow' as const,
+    },
   ];
 
   const totalRounds = 10;
@@ -112,79 +134,13 @@ export default function FinalResults() {
 
                 <div className="space-y-2">
                   {rankings.map((player) => (
-                    <div
+                    <RankingCard
                       key={player.rank}
-                      className={`rounded-lg border-2 p-2 ${
-                        player.rank === 1
-                          ? 'border-yellow-400 bg-yellow-50'
-                          : player.rank === 2
-                            ? 'border-gray-400 bg-gray-50'
-                            : player.rank === 3
-                              ? 'border-orange-400 bg-orange-50'
-                              : 'border-gray-300 bg-gray-50'
-                      }`}
-                    >
-                      <div className="mb-1 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <div
-                            className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                              player.rank === 1
-                                ? 'bg-yellow-400 text-yellow-900'
-                                : player.rank === 2
-                                  ? 'bg-gray-400 text-gray-900'
-                                  : player.rank === 3
-                                    ? 'bg-orange-400 text-orange-900'
-                                    : 'bg-gray-300 text-gray-700'
-                            }`}
-                          >
-                            {player.rank}
-                          </div>
-                          <span className="font-handwriting text-xs font-bold">
-                            {player.name}
-                          </span>
-                          {player.emoji && (
-                            <span className="text-sm">{player.emoji}</span>
-                          )}
-                        </div>
-                        <span
-                          className={`text-sm font-bold ${
-                            player.rank === 1
-                              ? 'text-yellow-600'
-                              : player.rank === 2
-                                ? 'text-gray-600'
-                                : player.rank === 3
-                                  ? 'text-orange-600'
-                                  : 'text-gray-500'
-                          }`}
-                        >
-                          {player.score}%
-                        </span>
-                      </div>
-                      <div
-                        className={`h-1.5 w-full rounded-full ${
-                          player.rank === 1
-                            ? 'bg-yellow-200'
-                            : player.rank === 2
-                              ? 'bg-gray-200'
-                              : player.rank === 3
-                                ? 'bg-orange-200'
-                                : 'bg-gray-200'
-                        }`}
-                      >
-                        <div
-                          className={`h-1.5 rounded-full ${
-                            player.rank === 1
-                              ? 'bg-yellow-600'
-                              : player.rank === 2
-                                ? 'bg-gray-600'
-                                : player.rank === 3
-                                  ? 'bg-orange-600'
-                                  : 'bg-gray-500'
-                          }`}
-                          style={{ width: `${player.score}%` }}
-                        ></div>
-                      </div>
-                    </div>
+                      rank={player.rank}
+                      username={player.name}
+                      percent={player.score}
+                      color={player.color}
+                    />
                   ))}
                 </div>
               </div>

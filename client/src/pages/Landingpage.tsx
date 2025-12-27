@@ -3,17 +3,28 @@ import { TITLES } from '@/constants/titles';
 
 import Title from '@/components/common/Title';
 import CommonBtn from '@/components/common/CommonBtn';
+import Modal from '@/components/common/Modal';
+import { useState } from 'react';
 
 export default function LandingPage() {
+  const [showModal, setShowModal] = useState(() => {
+    return !localStorage.getItem('username');
+  });
+  const [nickname, setNickname] = useState('');
+
+  const handleNicknameSubmit = () => {
+    localStorage.setItem('username', nickname);
+  };
+
   return (
     <>
       <div className="flex h-full w-full items-center justify-center px-4">
-        <div className="flex max-w-3xl flex-col items-center justify-center text-center">
+        <div className="w-l flex flex-col items-center justify-center text-center">
           <div className="mb-4 inline-block -rotate-1 rounded-full border-2 border-dashed border-orange-400 bg-orange-50 px-5 py-2 text-sm font-bold tracking-wide text-orange-600">
             ✨ 친구들과 함께하는 실시간 그림 퀴즈
           </div>
 
-          <Title title={TITLES.MAIN} fontSize={'9xl'} />
+          <Title title={TITLES.MAIN} fontSize={'text-9xl'} />
           <svg
             className="w-full text-blue-400"
             fill="none"
@@ -58,6 +69,18 @@ export default function LandingPage() {
           </div>
         </div>
       </div>
+
+      <Modal
+        modalType="input"
+        title="닉네임을 입력해주세요"
+        nickname={nickname}
+        setNickname={setNickname}
+        placeholder="닉네임 (최대 10자)"
+        maxLength={10}
+        onSubmit={handleNicknameSubmit}
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+      />
     </>
   );
 }

@@ -5,7 +5,7 @@ import Timer from '@/components/common/Timer';
 
 export default function GameStart() {
   const navigate = useNavigate();
-  const [countdown, setCountdown] = useState(606606);
+  const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
     if (countdown > 0) {
@@ -22,7 +22,7 @@ export default function GameStart() {
     <>
       <div className="absolute top-8 right-8 z-20">
         <div className="relative inline-block">
-          <Timer time={66000} />
+          <Timer time={5} />
         </div>
       </div>
 

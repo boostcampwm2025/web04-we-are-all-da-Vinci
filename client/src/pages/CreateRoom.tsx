@@ -15,7 +15,7 @@ export default function CreateRoom() {
     <>
       <div className="flex h-full w-full items-center justify-center px-4">
         <div className="flex flex-col items-center justify-center text-center">
-          <Title title={TITLES.CREATE} fontSize={'6xl'} />
+          <Title title={TITLES.CREATE} fontSize={'text-6xl'} />
           <div className="w-100 rounded-2xl border-2 border-gray-800 bg-white p-6 shadow-lg">
             <div className="mb-5">
               <div className="mb-2 flex w-full items-center justify-between">
