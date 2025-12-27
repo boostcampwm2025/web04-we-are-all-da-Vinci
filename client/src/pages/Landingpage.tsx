@@ -1,9 +1,10 @@
-import { useNavigate } from 'react-router-dom';
 import { PATHS } from '@/constants/paths';
+import { TITLES } from '@/constants/titles';
+
+import Title from '@/components/common/Title';
+import CommonBtn from '@/components/common/CommonBtn';
 
 export default function LandingPage() {
-  const navigate = useNavigate();
-
   return (
     <>
       <div className="flex h-full w-full items-center justify-center px-4">
@@ -12,22 +13,19 @@ export default function LandingPage() {
             ✨ 친구들과 함께하는 실시간 그림 퀴즈
           </div>
 
-          <div className="font-handwriting relative mb-4 inline-block text-9xl leading-tight font-black tracking-tight md:text-9xl">
-            우리 모두 다빈치
-            <svg
-              className="absolute -bottom-2 left-0 h-5 w-full text-blue-500 opacity-70"
-              fill="none"
-              viewBox="0 0 400 12"
-            >
-              <path
-                d="M 5 6 Q 100 2, 200 6 T 395 6"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeWidth={4}
-              />
-            </svg>
-          </div>
-
+          <Title title={TITLES.MAIN} fontSize={'9xl'} />
+          <svg
+            className="w-full text-blue-400"
+            fill="none"
+            viewBox={`0 0 400 12`}
+          >
+            <path
+              d="M 5 6 Q 100 2, 200 6 T 395 6"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeWidth={4}
+            />
+          </svg>
           <p className="font-handwriting mt-4 max-w-2xl text-xl leading-relaxed font-medium text-gray-700 md:text-2xl">
             연필로 쓱쓱, 당신의 상상력을 보여주세요!
             <br />
@@ -36,26 +34,19 @@ export default function LandingPage() {
 
           <div className="mt-10 flex w-full max-w-2xl flex-col items-center gap-4">
             <div className="flex w-full flex-col justify-center gap-4 sm:flex-row">
-              <button
-                onClick={() => navigate(PATHS.CREATE_ROOM)}
-                className="scribble-border group flex h-16 flex-1 items-center justify-center rounded-full bg-white/90 px-6 text-gray-800 transition-all hover:scale-105 hover:bg-white"
-              >
-                <span className="material-symbols-outlined mr-2 text-3xl transition-transform group-hover:scale-110">
-                  add_circle
-                </span>
-                <span className="font-handwriting text-3xl font-bold">
-                  방 만들기
-                </span>
-              </button>
+              <CommonBtn
+                variant="scribble"
+                icon="add_circle"
+                text="방 만들기"
+                path={PATHS.CREATE_ROOM}
+              />
 
-              <button className="scribble-border group flex h-16 flex-1 items-center justify-center rounded-full bg-white/90 px-6 text-gray-800 transition-all hover:scale-105 hover:bg-white">
-                <span className="material-symbols-outlined mr-2 text-3xl transition-transform group-hover:scale-110">
-                  login
-                </span>
-                <span className="font-handwriting text-3xl font-bold">
-                  입장하기
-                </span>
-              </button>
+              <CommonBtn
+                variant="scribble"
+                icon="login"
+                text="입장하기"
+                path={PATHS.WAITING_ROOM}
+              />
             </div>
 
             <a

@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { PATHS } from '@/constants/paths';
+import Title from '@/components/common/Title';
+import { TITLES } from '@/constants/titles';
+import UserCard from '@/components/common/UserCard';
+import CommonBtn from '@/components/common/CommonBtn';
 
 export default function WaitingRoom() {
-  const navigate = useNavigate();
   const [players] = useState([
     { id: 1, name: '나(방장)', status: '준비완료', isHost: true },
     { id: 2, name: '김그림', status: '대기중', isHost: false },
@@ -24,9 +26,7 @@ export default function WaitingRoom() {
       <div className="flex h-full w-full items-center justify-center px-4 py-6">
         <div className="flex w-full max-w-7xl flex-col">
           <div className="mb-5 shrink-0 text-center">
-            <h1 className="font-handwriting mb-2 text-5xl font-black md:text-6xl">
-              게임방
-            </h1>
+            <Title title={TITLES.ROOM} fontSize="6xl" />
             <p className="font-handwriting text-lg text-gray-600">
               친구들이 모일 때까지 기다려주세요!
             </p>
@@ -62,31 +62,12 @@ export default function WaitingRoom() {
                 <div className="grid grid-cols-4 gap-5">
                   {/* 기존 참가자들 */}
                   {players.map((player) => (
-                    <div
-                      key={player.id}
-                      className={`relative flex flex-col items-center justify-center rounded-xl border-2 p-4 text-center ${
-                        player.isHost
-                          ? 'border-blue-400 bg-blue-50'
-                          : 'border-gray-300 bg-gray-50'
-                      }`}
-                    >
-                      {player.isHost && (
-                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-yellow-400 px-2 py-1 text-sm font-bold text-yellow-900">
-                          👑
-                        </div>
-                      )}
-                      <div className="mx-auto mb-2 flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gray-200">
-                        <span className="material-symbols-outlined text-4xl text-gray-400">
-                          account_circle
-                        </span>
-                      </div>
-                      <div className="font-handwriting mb-1 text-lg font-bold">
-                        {player.name}
-                      </div>
-                      <div className="font-handwriting text-sm text-gray-500">
-                        {player.status}
-                      </div>
-                    </div>
+                    <UserCard
+                      id={player.id}
+                      username={player.name}
+                      isHost={player.isHost}
+                      status={player.status}
+                    />
                   ))}
 
                   {Array.from({ length: emptySlots }).map((_, i) => (
@@ -160,29 +141,28 @@ export default function WaitingRoom() {
                 </div>
               </div>
 
-              <button
-                onClick={() => navigate(PATHS.GAME_START)}
-                className="font-handwriting flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-500 py-5 text-3xl font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-indigo-600 hover:shadow-xl"
-              >
-                <span className="material-symbols-outlined text-4xl">
-                  play_arrow
-                </span>
-                게임 시작
-              </button>
+              <CommonBtn
+                variant="radius"
+                icon="play_arrow"
+                text="게임 시작"
+                color="blue"
+                path={PATHS.GAME_START}
+              />
 
               <div className="grid grid-cols-2 gap-4">
-                <button className="font-handwriting flex items-center justify-center gap-1 rounded-xl border-2 border-gray-800 bg-white py-5 text-xl font-bold transition-colors hover:bg-gray-50">
-                  <span className="material-symbols-outlined text-2xl">
-                    settings
-                  </span>
-                  설정 변경
-                </button>
-                <button className="font-handwriting flex items-center justify-center gap-1 rounded-xl border-2 border-red-400 bg-white py-5 text-xl font-bold text-red-600 transition-colors hover:bg-red-50">
-                  <span className="material-symbols-outlined text-2xl">
-                    logout
-                  </span>
-                  나가기
-                </button>
+                <CommonBtn
+                  variant="radius"
+                  icon="settings"
+                  text="설정 변경"
+                  color="gray"
+                />
+                <CommonBtn
+                  variant="radius"
+                  icon="logout"
+                  text="나가기"
+                  path={PATHS.HOME}
+                  color="red"
+                />
               </div>
             </div>
           </div>

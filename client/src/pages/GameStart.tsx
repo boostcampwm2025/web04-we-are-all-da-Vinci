@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PATHS } from '@/constants/paths';
+import Timer from '@/components/common/Timer';
 
 export default function GameStart() {
   const navigate = useNavigate();
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState(606606);
 
   useEffect(() => {
     if (countdown > 0) {
@@ -21,16 +22,7 @@ export default function GameStart() {
     <>
       <div className="absolute top-8 right-8 z-20">
         <div className="relative inline-block">
-          <div className="relative flex h-32 w-32 items-center justify-center rounded-full border-4 border-red-500 bg-white shadow-xl">
-            <div className="absolute -top-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-yellow-400">
-              <span className="material-symbols-outlined text-lg text-yellow-900">
-                schedule
-              </span>
-            </div>
-            <span className="font-handwriting animate-pulse text-6xl font-black text-red-500">
-              {countdown}
-            </span>
-          </div>
+          <Timer time={66000} />
         </div>
       </div>
 
