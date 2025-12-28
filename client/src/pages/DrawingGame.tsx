@@ -114,21 +114,21 @@ export default function DrawingGame() {
                 <div className="flex flex-1 flex-col justify-center space-y-3">
                   <RankingCard
                     icon="account_circle"
-                    username="User 1"
+                    nickname="User 1"
                     percent={82}
                     color="blue"
                   />
 
                   <RankingCard
                     icon="account_circle"
-                    username="Player 2"
+                    nickname="Player 2"
                     percent={45}
                     color="yellow"
                   />
 
                   <RankingCard
                     icon="account_circle"
-                    username="Player 3"
+                    nickname="Player 3"
                     percent={12}
                     color="purple"
                   />

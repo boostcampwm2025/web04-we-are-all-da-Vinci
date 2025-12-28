@@ -4,25 +4,25 @@ export default function FinalResults() {
   const rankings = [
     {
       rank: 1,
-      name: 'User 1 (You)',
+      nickname: 'User 1 (You)',
       score: 92,
       color: 'yellow' as const,
     },
     {
       rank: 2,
-      name: 'Player 2',
+      nickname: 'Player 2',
       score: 78,
       color: 'indigo' as const,
     },
     {
       rank: 3,
-      name: 'Player 3',
+      nickname: 'Player 3',
       score: 45,
       color: 'red' as const,
     },
     {
       rank: 4,
-      name: 'Player 4',
+      nickname: 'Player 4',
       score: 0,
       color: 'yellow' as const,
     },
@@ -137,7 +137,7 @@ export default function FinalResults() {
                     <RankingCard
                       key={player.rank}
                       rank={player.rank}
-                      username={player.name}
+                      nickname={player.nickname}
                       percent={player.score}
                       color={player.color}
                     />

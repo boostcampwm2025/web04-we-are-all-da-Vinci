@@ -7,10 +7,10 @@ import CommonBtn from '@/components/common/CommonBtn';
 
 export default function WaitingRoom() {
   const [players] = useState([
-    { id: 1, name: '나(방장)', status: '준비완료', isHost: true },
-    { id: 2, name: '김그림', status: '대기중', isHost: false },
-    { id: 3, name: 'ArtMaster', status: '대기중', isHost: false },
-    { id: 4, name: '낙서왕', status: '대기중', isHost: false },
+    { id: 1, nickname: '나(방장)', status: '준비완료', isHost: true },
+    { id: 2, nickname: '김그림', status: '대기중', isHost: false },
+    { id: 3, nickname: 'ArtMaster', status: '대기중', isHost: false },
+    { id: 4, nickname: '낙서왕', status: '대기중', isHost: false },
   ]);
 
   const emptySlots = 8 - players.length;
@@ -64,7 +64,7 @@ export default function WaitingRoom() {
                   {players.map((player) => (
                     <UserCard
                       id={player.id}
-                      username={player.name}
+                      nickname={player.nickname}
                       isHost={player.isHost}
                       status={player.status}
                     />

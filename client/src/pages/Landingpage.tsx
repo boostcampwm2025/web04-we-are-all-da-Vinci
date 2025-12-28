@@ -8,12 +8,12 @@ import { useState } from 'react';
 
 export default function LandingPage() {
   const [showModal, setShowModal] = useState(() => {
-    return !localStorage.getItem('username');
+    return !localStorage.getItem('nickname');
   });
   const [nickname, setNickname] = useState('');
 
   const handleNicknameSubmit = () => {
-    localStorage.setItem('username', nickname);
+    localStorage.setItem('nickname', nickname);
   };
 
   return (

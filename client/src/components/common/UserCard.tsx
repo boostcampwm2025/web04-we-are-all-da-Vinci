@@ -1,11 +1,11 @@
 interface UserCardProps {
   id: number;
-  username: string;
+  nickname: string;
   status: string;
   isHost: boolean;
 }
 
-const UserCard = ({ id, isHost, username, status }: UserCardProps) => {
+const UserCard = ({ id, isHost, nickname, status }: UserCardProps) => {
   return (
     <div
       key={id}
@@ -29,7 +29,7 @@ const UserCard = ({ id, isHost, username, status }: UserCardProps) => {
           <path d="M2480 3109 c-19 -12 -39 -29 -44 -38 -39 -68 -121 -95 -202 -67 -64 22 -99 20 -145 -6 -40 -22 -79 -84 -79 -126 0 -160 281 -235 494 -132 l58 28 42 -24 c132 -74 357 -65 451 17 67 60 67 158 0 218 -46 40 -94 48 -163 26 -88 -27 -135 -15 -197 50 -27 29 -60 58 -72 64 -36 18 -105 13 -143 -10z" />
         </g>
       </svg>
-      <div className="font-handwriting mb-1 text-lg font-bold">{username}</div>
+      <div className="font-handwriting mb-1 text-lg font-bold">{nickname}</div>
       <div className="font-handwriting text-sm text-gray-500">{status}</div>
     </div>
   );

@@ -4,7 +4,7 @@ type Color = 'blue' | 'red' | 'green' | 'purple' | 'yellow' | 'indigo' | 'gray';
 
 interface RankingCardProps {
   icon?: string;
-  username: string;
+  nickname: string;
   percent: number;
   color?: Color;
   rank?: number;
@@ -12,7 +12,7 @@ interface RankingCardProps {
 
 const RankingCard = ({
   icon,
-  username,
+  nickname,
   percent,
   color = 'blue',
   rank,
@@ -98,7 +98,7 @@ const RankingCard = ({
               </span>
             </div>
           )}
-          <span className="font-handwriting text-sm font-bold">{username}</span>
+          <span className="font-handwriting text-sm font-bold">{nickname}</span>
         </div>
         <span className={`text-lg font-bold ${colors.text}`}>{percent}%</span>
       </div>
