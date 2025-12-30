@@ -5,7 +5,7 @@ interface UserCardProps {
   isHost: boolean;
 }
 
-const UserCard = ({ id, isHost, nickname, status }: UserCardProps) => {
+const PlayerCard = ({ id, isHost, nickname, status }: UserCardProps) => {
   return (
     <div
       key={id}
@@ -35,4 +35,4 @@ const UserCard = ({ id, isHost, nickname, status }: UserCardProps) => {
   );
 };
 
-export default UserCard;
+export default PlayerCard;

@@ -1,4 +1,4 @@
-import SimilarityProgressBar from '@/components/common/SimilarityProgressBar';
+import { SimilarityProgressBar } from '@/entities/similarity/ui/progress-bar';
 
 type Color = 'blue' | 'red' | 'green' | 'purple' | 'yellow' | 'indigo' | 'gray';
 
