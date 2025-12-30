@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { PATHS } from '@/constants/paths';
-import Title from '@/components/common/Title';
-import { TITLES } from '@/constants/titles';
-import UserCard from '@/components/common/UserCard';
-import CommonBtn from '@/components/common/CommonBtn';
+import { PATHS } from '@/shared/config';
+import Title from '@/entities/components/common/Title';
+import { TITLES } from '@/shared/config/titles';
+import UserCard from '@/entities/components/common/UserCard';
+import CommonBtn from '@/entities/components/common/CommonBtn';
 
 export default function WaitingRoom() {
   const [players] = useState([

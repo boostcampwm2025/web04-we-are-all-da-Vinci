@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PATHS } from '@/constants/paths';
-import Timer from '@/components/common/Timer';
+import { PATHS } from '@/shared/config';
+import Timer from '@/entities/components/common/Timer';
 
 export default function GameStart() {
   const navigate = useNavigate();

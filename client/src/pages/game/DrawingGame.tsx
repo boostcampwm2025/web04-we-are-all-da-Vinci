@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PATHS } from '@/constants/paths';
-import RankingCard from '@/components/common/RankingCard';
+import { PATHS } from '@/shared/config';
+import RankingCard from '@/entities/components/common/RankingCard';
 
 export default function DrawingGame() {
   const navigate = useNavigate();

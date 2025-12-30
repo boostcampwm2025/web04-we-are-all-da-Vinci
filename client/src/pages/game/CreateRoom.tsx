@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { PATHS } from '@/constants/paths';
-import Title from '@/components/common/Title';
-import { TITLES } from '@/constants/titles';
-import CommonBtn from '@/components/common/CommonBtn';
+import { PATHS } from '@/shared/config';
+import Title from '@/entities/components/common/Title';
+import { TITLES } from '@/shared/config/titles';
+import CommonBtn from '@/entities/components/common/CommonBtn';
 
 export default function CreateRoom() {
   const [selectedRounds, setSelectedRounds] = useState(5);
