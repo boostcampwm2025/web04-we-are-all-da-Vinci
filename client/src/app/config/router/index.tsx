@@ -1,11 +1,11 @@
 import type { RouteObject } from 'react-router-dom';
-import { PATHS } from '@/constants/paths';
-import LandingPage from '@/pages/Landingpage';
-import CreateRoom from '@/pages/CreateRoom';
-import WaitingRoom from '@/pages/WaitingRoom';
-import GameStart from '@/pages/GameStart';
-import DrawingGame from '@/pages/DrawingGame';
-import FinalResults from '@/pages/FinalResult';
+import { PATHS } from '@/shared/config';
+import LandingPage from '@/pages/main/Landingpage';
+import CreateRoom from '@/pages/game/CreateRoom';
+import WaitingRoom from '@/pages/game/WaitingRoom';
+import GameStart from '@/pages/game/GameStart';
+import DrawingGame from '@/pages/game/DrawingGame';
+import FinalResults from '@/pages/game/FinalResult';
 
 export const routes: RouteObject[] = [
   {

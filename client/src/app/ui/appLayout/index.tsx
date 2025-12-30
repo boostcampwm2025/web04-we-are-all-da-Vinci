@@ -5,13 +5,13 @@ import {
   StarDoodle,
   BrushDoodle,
   PaletteDoodle,
-} from '@/components/doodles/Doodles';
+} from '@/shared/ui/doodles';
 
-interface DoodleLayoutProps {
+interface AppLayoutProps {
   children: ReactNode;
 }
 
-export default function DoodleLayout({ children }: DoodleLayoutProps) {
+const AppLayout = ({ children }: AppLayoutProps) => {
   return (
     <div className="font-display relative h-screen w-full overflow-hidden bg-white text-[#111318]">
       <svg width="0" height="0" className="invisible absolute" aria-hidden>
@@ -41,4 +41,6 @@ export default function DoodleLayout({ children }: DoodleLayoutProps) {
       <div className="relative z-10 h-full w-full">{children}</div>
     </div>
   );
-}
+};
+
+export default AppLayout;

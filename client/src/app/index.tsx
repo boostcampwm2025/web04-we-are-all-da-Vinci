@@ -1,14 +1,14 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { routes } from '@/router';
-import DoodleLayout from '@/components/layouts/DoodleLayout';
+import { routes } from '@/app/config/router';
+import AppLayout from '@/app/ui/appLayout';
 
 const router = createBrowserRouter(routes);
 
 function App() {
   return (
-    <DoodleLayout>
+    <AppLayout>
       <RouterProvider router={router} />
-    </DoodleLayout>
+    </AppLayout>
   );
 }
 
