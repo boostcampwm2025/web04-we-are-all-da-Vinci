@@ -1,4 +1,4 @@
-import Input from '@/components/common/Input';
+import { Input } from '@/shared/ui/input';
 
 interface BaseModalProps {
   title: string;

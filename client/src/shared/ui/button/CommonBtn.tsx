@@ -16,7 +16,7 @@ const CommonBtn = ({
   text,
   path,
   variant,
-  color = 'blue', // 기본값 추가
+  color = 'blue',
   onClick,
 }: CommonBtnProps) => {
   const navigate = useNavigate();
@@ -46,7 +46,7 @@ const CommonBtn = ({
   const variantClasses = {
     scribble:
       'scribble-border group h-16 w-full rounded-full bg-white/90 px-6 text-gray-800 transition-all hover:scale-105 hover:bg-white',
-    radius: `gap-1 rounded-xl border-2 bg-white py-5 text-xl font-bold transition-colors ${getColorClasses(color)}`, // 👈 수정
+    radius: `gap-1 rounded-xl border-2 bg-white py-5 text-xl font-bold transition-colors ${getColorClasses(color)}`,
   };
 
   const iconClasses = {
