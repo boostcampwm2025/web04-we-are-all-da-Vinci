@@ -1,11 +1,11 @@
-interface UserCardProps {
+interface PlayerCardProps {
   id: number;
   nickname: string;
   status: string;
   isHost: boolean;
 }
 
-const PlayerCard = ({ id, isHost, nickname, status }: UserCardProps) => {
+const PlayerCard = ({ id, isHost, nickname, status }: PlayerCardProps) => {
   return (
     <div
       key={id}
