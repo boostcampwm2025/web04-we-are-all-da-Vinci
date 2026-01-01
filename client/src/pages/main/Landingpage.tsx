@@ -1,9 +1,9 @@
 import { PATHS } from '@/shared/config';
 import { TITLES } from '@/shared/config/titles';
 
-import Title from '@/entities/components/common/Title';
-import CommonBtn from '@/entities/components/common/CommonBtn';
-import Modal from '@/entities/components/common/Modal';
+import { Title } from '@/shared/ui';
+import { CommonBtn } from '@/shared/ui';
+import { Modal } from '@/shared/ui';
 import { useState } from 'react';
 
 export default function LandingPage() {

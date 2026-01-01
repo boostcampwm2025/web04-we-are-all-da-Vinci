@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PATHS } from '@/shared/config';
-import RankingCard from '@/entities/components/common/RankingCard';
+import { RankingCard } from '@/entities/ranking';
 
 export default function DrawingGame() {
   const navigate = useNavigate();
@@ -113,6 +113,7 @@ export default function DrawingGame() {
 
                 <div className="flex flex-1 flex-col justify-center space-y-3">
                   <RankingCard
+                    rank={1}
                     icon="account_circle"
                     nickname="User 1"
                     percent={82}
@@ -120,6 +121,7 @@ export default function DrawingGame() {
                   />
 
                   <RankingCard
+                    rank={2}
                     icon="account_circle"
                     nickname="Player 2"
                     percent={45}
@@ -127,6 +129,7 @@ export default function DrawingGame() {
                   />
 
                   <RankingCard
+                    rank={3}
                     icon="account_circle"
                     nickname="Player 3"
                     percent={12}

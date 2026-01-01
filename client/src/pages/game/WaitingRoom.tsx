@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { PATHS } from '@/shared/config';
-import Title from '@/entities/components/common/Title';
+import { Title } from '@/shared/ui';
 import { TITLES } from '@/shared/config/titles';
-import UserCard from '@/entities/components/common/UserCard';
-import CommonBtn from '@/entities/components/common/CommonBtn';
+import { PlayerCard } from '@/entities/player';
+import { CommonBtn } from '@/shared/ui';
 
 export default function WaitingRoom() {
   const [players] = useState([
@@ -62,7 +62,8 @@ export default function WaitingRoom() {
                 <div className="grid grid-cols-4 gap-5">
                   {/* 기존 참가자들 */}
                   {players.map((player) => (
-                    <UserCard
+                    <PlayerCard
+                      key={player.id}
                       id={player.id}
                       nickname={player.nickname}
                       isHost={player.isHost}

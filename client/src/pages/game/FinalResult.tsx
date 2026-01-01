@@ -1,4 +1,4 @@
-import RankingCard from '@/entities/components/common/RankingCard';
+import { RankingCard } from '@/entities/ranking';
 
 export default function FinalResults() {
   const rankings = [

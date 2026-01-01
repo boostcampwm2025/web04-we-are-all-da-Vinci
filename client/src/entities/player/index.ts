@@ -1,1 +1,1 @@
-export { UserCard } from './ui/playerCard';
+export { PlayerCard } from './ui/playerCard';

@@ -1,1 +1,1 @@
-export { default as UserCard } from './PlayerCard';
+export { default as PlayerCard } from './PlayerCard';
