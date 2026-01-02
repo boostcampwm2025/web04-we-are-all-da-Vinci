@@ -40,4 +40,28 @@ export class GameRoomCacheService {
     await client.expire(key, 3600);
     await client.sAdd('active:rooms', roomId);
   }
+
+  async getRoom(roomId: string) {
+    const client = this.redisService.getClient();
+    const key = `room:${roomId}`;
+    const data = await client.hGetAll(key);
+
+    if (!data || Object.keys(data).length === 0) {
+      return null;
+    }
+
+    return {
+      roomId: data.roomId,
+      players: JSON.parse(data.players),
+      phase: data.phase,
+      currentRound: parseInt(data.currentRound),
+      settings: JSON.parse(data.settings),
+    };
+  }
+
+  async deleteRoom(roomId: string) {
+    const client = this.redisService.getClient();
+    await client.sRem('active:rooms', roomId);
+    await client.del(`room:${roomId}`);
+  }
 }

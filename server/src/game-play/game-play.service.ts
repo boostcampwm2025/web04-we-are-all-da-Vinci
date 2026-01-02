@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Player, Room } from './game-play.types';
+import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 
 @Injectable()
 export class GamePlayService {
@@ -7,6 +8,8 @@ export class GamePlayService {
   private socketToRoom = new Map<string, string>();
 
   private resetTimers = new Map<string, NodeJS.Timeout>();
+
+  constructor(private readonly gameRoomCacheService: GameRoomCacheService) {}
 
   getRoom(roomId: string) {
     return this.rooms.get(roomId) ?? null;
@@ -18,7 +21,7 @@ export class GamePlayService {
     return Array.from(room.players.values());
   }
 
-  join(roomId: string, socketId: string, userId: string) {
+  async join(roomId: string, socketId: string, userId: string) {
     this.socketToRoom.set(socketId, roomId);
 
     if (!this.rooms.has(roomId)) {
@@ -28,6 +31,29 @@ export class GamePlayService {
         submitCount: 0,
         state: 'WAITING',
       });
+
+      try {
+        await this.gameRoomCacheService.saveRoom(roomId, {
+          roomId,
+          players: [
+            {
+              socketId,
+              nickname: userId,
+              isHost: true,
+            },
+          ],
+          phase: 'WAITING',
+          currentRound: 0,
+          settings: {
+            drawingTime: 40,
+            totalRounds: 3,
+            maxPlayer: 8,
+          },
+        });
+        console.log(`✅ Room ${roomId} created in Redis`);
+      } catch (error) {
+        console.error(`❌ Failed to save room to Redis:`, error);
+      }
     }
 
     const room = this.rooms.get(roomId);
@@ -64,6 +90,12 @@ export class GamePlayService {
 
       this.rooms.delete(roomId);
       this.socketToRoom.delete(socketId);
+
+      try {
+        this.gameRoomCacheService.deleteRoom(roomId);
+      } catch (error) {
+        console.error(`❌ Failed to delete room from Redis:`, error);
+      }
       return roomId;
     }
 

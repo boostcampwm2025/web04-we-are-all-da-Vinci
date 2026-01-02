@@ -20,13 +20,14 @@ import { RoomState } from './game-play.types';
   },
 })
 export class GamePlayGateway
-  implements OnGatewayConnection, OnGatewayDisconnect {
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
-  constructor(private readonly gamePlayService: GamePlayService) { }
+  constructor(private readonly gamePlayService: GamePlayService) {}
 
-  handleConnection(client: Socket) { }
+  handleConnection(client: Socket) {}
 
   handleDisconnect(client: Socket) {
     const rid = this.gamePlayService.leave(client.id);
@@ -34,7 +35,7 @@ export class GamePlayGateway
   }
 
   @SubscribeMessage('room:join')
-  joinRoom(
+  async joinRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { userId: string },
   ) {
@@ -42,7 +43,7 @@ export class GamePlayGateway
     const roomId = 'room-1';
     const { userId } = payload;
 
-    const rid = this.gamePlayService.join(roomId, client.id, userId);
+    const rid = await this.gamePlayService.join(roomId, client.id, userId);
     client.join(rid);
     this.broadcastLeaderboard(rid);
   }
