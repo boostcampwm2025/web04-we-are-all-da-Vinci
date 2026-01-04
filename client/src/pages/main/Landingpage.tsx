@@ -1,12 +1,11 @@
 import { PATHS, TITLES } from '@/shared/config';
 import { Title } from '@/shared/ui';
 import { CommonBtn } from '@/shared/ui';
-import { NicknameInputModal } from '@/features/user-input';
-import { SettingsModal } from '@/features/room-settings';
 import { AlertModal } from '@/entities';
-import type { RoomSettings } from '@/features/room-settings';
+import { RoomSettingsModal, type RoomSettings } from '@/features/roomSettings';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { NicknameInputModal } from '@/features/nickname';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -99,7 +98,7 @@ export default function LandingPage() {
         onClose={() => setShowNicknameModal(false)}
       />
 
-      <SettingsModal
+      <RoomSettingsModal
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
         onComplete={handleSettingsComplete}
