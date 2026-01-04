@@ -4,6 +4,8 @@ import { Title } from '@/shared/ui';
 import { TITLES } from '@/shared/config/titles';
 import { PlayerCard } from '@/entities/player';
 import { CommonBtn } from '@/shared/ui';
+import { SettingsModal } from '@/features/room-settings';
+import type { RoomSettings } from '@/features/room-settings';
 
 export default function WaitingRoom() {
   const [players] = useState([
@@ -12,13 +14,29 @@ export default function WaitingRoom() {
     { id: 3, nickname: 'ArtMaster', status: '대기중', isHost: false },
     { id: 4, nickname: '낙서왕', status: '대기중', isHost: false },
   ]);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [roomSettings, setRoomSettings] = useState<RoomSettings>({
+    players: 8,
+    rounds: 5,
+    timeLimit: 90,
+  });
 
-  const emptySlots = 8 - players.length;
+  const emptySlots = Math.max(0, roomSettings.players - players.length);
   const roomId = 'ABC-1234';
 
   const copyRoomId = () => {
     navigator.clipboard.writeText(roomId);
     alert('방 코드가 복사되었습니다!');
+  };
+
+  const handleSettingsChange = () => {
+    setShowSettingsModal(true);
+  };
+
+  const handleSettingsComplete = (settings: RoomSettings) => {
+    setRoomSettings(settings);
+    console.log('Updated room settings:', settings);
+    // TODO: 방 설정 업데이트 API 호출
   };
 
   return (
@@ -39,7 +57,7 @@ export default function WaitingRoom() {
                   <h2 className="font-handwriting flex items-center gap-2 text-2xl font-bold">
                     인원
                     <span className="text-lg text-gray-500">
-                      ({players.length}/8)
+                      ({players.length}/{roomSettings.players})
                     </span>
                   </h2>
                   <div className="flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-4 py-2">
@@ -59,7 +77,7 @@ export default function WaitingRoom() {
                 </div>
 
                 {/* 참가자 그리드 */}
-                <div className="grid grid-cols-4 gap-5">
+                <div className="grid max-h-80 grid-cols-4 gap-5 overflow-y-scroll">
                   {/* 기존 참가자들 */}
                   {players.map((player) => (
                     <PlayerCard
@@ -108,7 +126,9 @@ export default function WaitingRoom() {
                         최대 인원
                       </span>
                     </div>
-                    <span className="text-xl font-bold">8명</span>
+                    <span className="text-xl font-bold">
+                      {roomSettings.players}명
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -117,7 +137,9 @@ export default function WaitingRoom() {
                       </span>
                       <span className="font-handwriting text-xl">라운드</span>
                     </div>
-                    <span className="text-xl font-bold">5 라운드</span>
+                    <span className="text-xl font-bold">
+                      {roomSettings.rounds} 라운드
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -128,7 +150,9 @@ export default function WaitingRoom() {
                         그리기 시간
                       </span>
                     </div>
-                    <span className="text-xl font-bold">90초</span>
+                    <span className="text-xl font-bold">
+                      {roomSettings.timeLimit}초
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -156,6 +180,7 @@ export default function WaitingRoom() {
                   icon="settings"
                   text="설정 변경"
                   color="gray"
+                  onClick={handleSettingsChange}
                 />
                 <CommonBtn
                   variant="radius"
@@ -169,6 +194,12 @@ export default function WaitingRoom() {
           </div>
         </div>
       </div>
+
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        onComplete={handleSettingsComplete}
+      />
     </>
   );
 }

@@ -3,17 +3,38 @@ import { TITLES } from '@/shared/config/titles';
 
 import { Title } from '@/shared/ui';
 import { CommonBtn } from '@/shared/ui';
-import { Modal } from '@/shared/ui';
+import { NicknameInputModal } from '@/features/user-input';
+import { SettingsModal } from '@/features/room-settings';
+import { AlertModal } from '@/entities';
+import type { RoomSettings } from '@/features/room-settings';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function LandingPage() {
-  const [showModal, setShowModal] = useState(() => {
+  const navigate = useNavigate();
+  const [showNicknameModal, setShowNicknameModal] = useState(() => {
     return !localStorage.getItem('nickname');
   });
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showGuideModal, setShowGuideModal] = useState(false);
   const [nickname, setNickname] = useState('');
 
   const handleNicknameSubmit = () => {
     localStorage.setItem('nickname', nickname);
+  };
+
+  const handleCreateRoom = () => {
+    setShowSettingsModal(true);
+  };
+
+  const handleSettingsComplete = (settings: RoomSettings) => {
+    console.log('Room settings:', settings);
+    // TODO: 방 생성 API 호출 후 대기실로 이동
+    navigate(PATHS.WAITING_ROOM);
+  };
+
+  const handleShowGuide = () => {
+    setShowGuideModal(true);
   };
 
   return (
@@ -49,7 +70,7 @@ export default function LandingPage() {
                 variant="scribble"
                 icon="add_circle"
                 text="방 만들기"
-                path={PATHS.CREATE_ROOM}
+                onClick={handleCreateRoom}
               />
 
               <CommonBtn
@@ -60,26 +81,37 @@ export default function LandingPage() {
               />
             </div>
 
-            <a
-              href="#"
+            <button
+              onClick={handleShowGuide}
               className="font-handwriting mt-2 cursor-pointer text-xl text-gray-600 underline decoration-gray-400 decoration-2 underline-offset-4 transition-colors hover:text-gray-800"
             >
               설명서
-            </a>
+            </button>
           </div>
         </div>
       </div>
 
-      <Modal
-        modalType="input"
-        title="닉네임을 입력해주세요"
+      <NicknameInputModal
         nickname={nickname}
         setNickname={setNickname}
         placeholder="닉네임 (최대 10자)"
         maxLength={10}
         onSubmit={handleNicknameSubmit}
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        isOpen={showNicknameModal}
+        onClose={() => setShowNicknameModal(false)}
+      />
+
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        onComplete={handleSettingsComplete}
+      />
+
+      <AlertModal
+        isOpen={showGuideModal}
+        onClose={() => setShowGuideModal(false)}
+        title="게임 설명서"
+        message="1. 방을 만들거나 입장하세요. 2. 주어진 주제에 맞는 그림을 그리세요. 3. 다른 사람의 그림을 보고 정답을 맞춰보세요. 4. 가장 많은 점수를 얻은 사람이 승리합니다!"
       />
     </>
   );
