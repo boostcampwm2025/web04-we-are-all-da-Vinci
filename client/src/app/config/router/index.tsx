@@ -4,7 +4,7 @@ import LandingPage from '@/pages/main/Landingpage';
 import CreateRoom from '@/pages/game/CreateRoom';
 import WaitingRoom from '@/pages/game/WaitingRoom';
 import GameStart from '@/pages/game/GameStart';
-import DrawingGame from '@/pages/game/DrawingGame';
+import DrawingGame from '@/pages/game/Drawing';
 import FinalResults from '@/pages/game/FinalResult';
 
 export const routes: RouteObject[] = [
