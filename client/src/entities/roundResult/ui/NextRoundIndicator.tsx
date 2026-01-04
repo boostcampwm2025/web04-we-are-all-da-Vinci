@@ -6,7 +6,7 @@ interface NextRoundIndicatorProps {
 export const NextRoundIndicator = ({
   currentRound,
   totalRounds,
-}: NextRoundIndicatorProps) {
+}: NextRoundIndicatorProps) => {
   return (
     <div className="shrink-0 rounded-xl border-2 border-pink-400 bg-pink-50 p-3 shadow-lg">
       <div className="text-center">
@@ -27,4 +27,4 @@ export const NextRoundIndicator = ({
       </div>
     </div>
   );
-}
+};

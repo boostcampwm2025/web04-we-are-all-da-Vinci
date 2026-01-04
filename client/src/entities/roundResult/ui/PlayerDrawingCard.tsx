@@ -8,7 +8,7 @@ export const PlayerDrawingCard = ({
   similarity,
   imageUrl,
   onClose,
-}: PlayerDrawingCardProps) {
+}: PlayerDrawingCardProps) => {
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex h-full flex-col rounded-xl border-2 border-gray-800 bg-white p-3 shadow-lg">
@@ -48,4 +48,4 @@ export const PlayerDrawingCard = ({
       </div>
     </div>
   );
-}
+};

@@ -4,7 +4,7 @@ interface RankingListProps {
   children: ReactNode;
 }
 
-export const RankingList = ({ children }: RankingListProps) {
+export const RankingList = ({ children }: RankingListProps) => {
   return (
     <div className="min-h-0 flex-1 overflow-auto rounded-xl border-2 border-gray-800 bg-white p-3 shadow-lg">
       <div className="mb-3 flex items-center justify-center gap-1">
@@ -20,4 +20,4 @@ export const RankingList = ({ children }: RankingListProps) {
       <div className="space-y-2">{children}</div>
     </div>
   );
-}
+};
