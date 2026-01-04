@@ -5,8 +5,8 @@
   "scripts": {
     "dev:client": "pnpm -F client dev",
     "dev:server": "pnpm -F server start:dev",
-    "dev:infra": "docker compose -f infra/local/compose.yaml up -d",
-    "dev:infra:stop": "docker compose -f infra/local/compose.yaml down"
+    "infra:up": "docker compose -f infra/local/compose.yaml up -d",
+    "infra:down": "docker compose -f infra/local/compose.yaml down"
   },
   "keywords": [],
   "author": "",
