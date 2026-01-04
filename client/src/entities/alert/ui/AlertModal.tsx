@@ -7,12 +7,7 @@ interface AlertModalProps {
   message: string;
 }
 
-const AlertModal = ({
-  isOpen,
-  onClose,
-  title,
-  message,
-}: AlertModalProps) => {
+const AlertModal = ({ isOpen, onClose, title, message }: AlertModalProps) => {
   return (
     <BaseModal
       isOpen={isOpen}
