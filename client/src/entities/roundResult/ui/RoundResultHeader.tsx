@@ -2,7 +2,7 @@ interface RoundResultHeaderProps {
   title: string;
 }
 
-export function RoundResultHeader({ title }: RoundResultHeaderProps) {
+export const RoundResultHeader = ({ title }: RoundResultHeaderProps) {
   return (
     <div className="mb-4 shrink-0 text-center">
       <h1 className="font-handwriting mb-2 text-3xl font-black">{title}</h1>

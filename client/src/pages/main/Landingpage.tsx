@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NicknameInputModal } from '@/features/nickname';
 
-export default function LandingPage() {
+export const LandingPage = () => {
   const navigate = useNavigate();
   const [showNicknameModal, setShowNicknameModal] = useState(() => {
     return !localStorage.getItem('nickname');
@@ -112,4 +112,4 @@ export default function LandingPage() {
       />
     </>
   );
-}
+};

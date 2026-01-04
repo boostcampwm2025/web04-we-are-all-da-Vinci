@@ -1,4 +1,4 @@
-export function EmptySlot() {
+export const EmptySlot = () => {
   return (
     <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 p-4 text-center opacity-50">
       <div className="mx-auto mb-2 flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gray-100">
@@ -12,4 +12,4 @@ export function EmptySlot() {
       </div>
     </div>
   );
-}
+};

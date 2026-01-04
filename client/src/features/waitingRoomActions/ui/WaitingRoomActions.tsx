@@ -5,7 +5,7 @@ interface WaitingRoomActionsProps {
   onSettingsClick: () => void;
 }
 
-export function WaitingRoomActions({
+export const WaitingRoomActions = ({
   onSettingsClick,
 }: WaitingRoomActionsProps) {
   return (

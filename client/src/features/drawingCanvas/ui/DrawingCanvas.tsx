@@ -5,10 +5,10 @@ interface DrawingCanvasProps {
   placeholder?: string;
 }
 
-export function DrawingCanvas({
+export const DrawingCanvas = ({
   topic,
   placeholder = '여기에 그림을 그리세요',
-}: DrawingCanvasProps) {
+}: DrawingCanvasProps) => {
   return (
     <div className="relative min-h-0 flex-1 bg-white">
       {topic}
@@ -18,4 +18,4 @@ export function DrawingCanvas({
       </div>
     </div>
   );
-}
+};

@@ -12,7 +12,7 @@ import { DrawingToolbar } from '@/features/drawingToolbar';
 import { DrawingCanvas } from '@/features/drawingCanvas';
 import { RoundBadge } from '@/shared/ui/round';
 
-export function Drawing() {
+export const Drawing = () {
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(5);
 

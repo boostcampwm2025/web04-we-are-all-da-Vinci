@@ -5,7 +5,7 @@ interface GameSettingsCardProps {
   settings: RoomSettings;
 }
 
-export function GameSettingsCard({ settings }: GameSettingsCardProps) {
+export const GameSettingsCard = ({ settings }: GameSettingsCardProps) => {
   return (
     <div className="rounded-2xl border-2 border-gray-800 bg-yellow-50 p-5 shadow-lg">
       <h3 className="font-handwriting mb-5 text-center text-2xl font-bold">
@@ -31,4 +31,4 @@ export function GameSettingsCard({ settings }: GameSettingsCardProps) {
       </div>
     </div>
   );
-}
+};

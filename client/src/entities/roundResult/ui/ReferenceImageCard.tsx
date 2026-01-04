@@ -4,7 +4,7 @@ interface ReferenceImageCardProps {
   imageUrl?: string;
 }
 
-export function ReferenceImageCard({
+export const ReferenceImageCard = ({
   playerName,
   rank,
   imageUrl,

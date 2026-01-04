@@ -5,7 +5,7 @@ import { Timer } from '@/shared/ui';
 import { RoundBadge } from '@/shared/ui/round';
 import { GameStartHeader, ImagePreviewCard } from '@/entities/gameStart';
 
-export function Prompt() {
+export const Prompt = () => {
   const navigate = useNavigate();
   const [countdown, setCountdown] = useState(5);
 
@@ -42,4 +42,4 @@ export function Prompt() {
       </div>
     </>
   );
-}
+};

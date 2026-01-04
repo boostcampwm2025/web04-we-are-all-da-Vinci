@@ -3,7 +3,7 @@ interface DrawingHeaderProps {
   title: string;
 }
 
-export function DrawingHeader({ roundBadge, title }: DrawingHeaderProps) {
+export const DrawingHeader = ({ roundBadge, title }: DrawingHeaderProps) => {
   return (
     <div className="mb-4 shrink-0 text-center">
       {roundBadge}
@@ -11,4 +11,4 @@ export function DrawingHeader({ roundBadge, title }: DrawingHeaderProps) {
       <div className="mx-auto h-1.5 w-48 rounded-full bg-yellow-300" />
     </div>
   );
-}
+};

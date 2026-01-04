@@ -4,7 +4,7 @@ interface PlayerDrawingCardProps {
   onClose?: () => void;
 }
 
-export function PlayerDrawingCard({
+export const PlayerDrawingCard = ({
   similarity,
   imageUrl,
   onClose,

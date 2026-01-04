@@ -4,7 +4,7 @@ interface RankingPanelProps {
   children: ReactNode;
 }
 
-export function RankingPanel({ children }: RankingPanelProps) {
+export const RankingPanel = ({ children }: RankingPanelProps) => {
   return (
     <div className="flex w-72 flex-col">
       <div className="flex h-full flex-col rounded-2xl border-2 border-gray-800 bg-white p-4 shadow-lg">
@@ -21,4 +21,4 @@ export function RankingPanel({ children }: RankingPanelProps) {
       </div>
     </div>
   );
-}
+};

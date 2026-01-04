@@ -3,7 +3,7 @@ interface NextRoundIndicatorProps {
   totalRounds: number;
 }
 
-export function NextRoundIndicator({
+export const NextRoundIndicator = ({
   currentRound,
   totalRounds,
 }: NextRoundIndicatorProps) {

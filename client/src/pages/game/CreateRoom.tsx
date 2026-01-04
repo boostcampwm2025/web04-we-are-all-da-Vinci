@@ -3,7 +3,7 @@ import { PATHS, TITLES } from '@/shared/config';
 import { Title } from '@/shared/ui';
 import { CommonBtn } from '@/shared/ui';
 
-export default function CreateRoom() {
+export default () => {
   const [selectedRounds, setSelectedRounds] = useState(5);
   const [selectedTime, setSelectedTime] = useState(90);
 
@@ -105,4 +105,4 @@ export default function CreateRoom() {
       </div>
     </>
   );
-}
+};

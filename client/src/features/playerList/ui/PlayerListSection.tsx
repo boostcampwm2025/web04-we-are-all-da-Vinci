@@ -14,11 +14,11 @@ interface PlayerListSectionProps {
   roomCode?: ReactNode;
 }
 
-export function PlayerListSection({
+export const PlayerListSection = ({
   players,
   maxPlayers,
   roomCode,
-}: PlayerListSectionProps) {
+}: PlayerListSectionProps) => {
   const emptySlots = Math.max(0, maxPlayers - players.length);
 
   return (
@@ -50,4 +50,4 @@ export function PlayerListSection({
       </div>
     </div>
   );
-}
+};

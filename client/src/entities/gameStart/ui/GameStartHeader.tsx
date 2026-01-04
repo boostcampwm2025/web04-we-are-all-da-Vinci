@@ -5,7 +5,10 @@ interface GameStartHeaderProps {
   title: string;
 }
 
-export function GameStartHeader({ roundBadge, title }: GameStartHeaderProps) {
+export const GameStartHeader = ({
+  roundBadge,
+  title,
+}: GameStartHeaderProps) => {
   return (
     <div className="mb-4 shrink-0 text-center">
       {roundBadge}
@@ -15,4 +18,4 @@ export function GameStartHeader({ roundBadge, title }: GameStartHeaderProps) {
       <div className="mx-auto mt-1 h-1.5 w-40 rounded-full bg-yellow-300" />
     </div>
   );
-}
+};

@@ -4,7 +4,7 @@ interface SettingItemProps {
   value: string;
 }
 
-export function SettingItem({ icon, label, value }: SettingItemProps) {
+export const SettingItem = ({ icon, label, value }: SettingItemProps) => {
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
@@ -16,4 +16,4 @@ export function SettingItem({ icon, label, value }: SettingItemProps) {
       <span className="text-xl font-bold">{value}</span>
     </div>
   );
-}
+};

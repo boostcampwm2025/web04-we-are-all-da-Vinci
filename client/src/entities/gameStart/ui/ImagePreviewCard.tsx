@@ -3,7 +3,10 @@ interface ImagePreviewCardProps {
   label?: string;
 }
 
-export function ImagePreviewCard({ imageUrl, label }: ImagePreviewCardProps) {
+export const ImagePreviewCard = ({
+  imageUrl,
+  label,
+}: ImagePreviewCardProps) => {
   return (
     <div className="relative w-full max-w-2xl rounded-2xl border-4 border-gray-800 bg-white p-3 shadow-2xl">
       <div className="relative flex aspect-4/3 items-center justify-center overflow-hidden rounded-lg bg-[#4a5f5a]">
@@ -23,13 +26,11 @@ export function ImagePreviewCard({ imageUrl, label }: ImagePreviewCardProps) {
               <span className="material-symbols-outlined text-sm text-gray-600">
                 draw
               </span>
-              <span className="text-sm font-medium text-gray-700">
-                {label}
-              </span>
+              <span className="text-sm font-medium text-gray-700">{label}</span>
             </div>
           </div>
         )}
       </div>
     </div>
   );
-}
+};

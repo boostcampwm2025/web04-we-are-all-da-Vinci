@@ -4,11 +4,11 @@ interface DrawingToolbarProps {
   onClear?: () => void;
 }
 
-export function DrawingToolbar({
+export const DrawingToolbar = ({
   onColorSelect,
   onToolSelect,
   onClear,
-}: DrawingToolbarProps) {
+}: DrawingToolbarProps) => {
   return (
     <div className="flex shrink-0 items-center gap-4 border-b-2 border-gray-300 bg-gray-100 px-4 py-3">
       <div className="flex items-center gap-2">
@@ -64,4 +64,4 @@ export function DrawingToolbar({
       </button>
     </div>
   );
-}
+};

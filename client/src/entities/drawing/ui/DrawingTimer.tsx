@@ -2,7 +2,7 @@ interface DrawingTimerProps {
   timeLeft: number;
 }
 
-export function DrawingTimer({ timeLeft }: DrawingTimerProps) {
+export const DrawingTimer = ({ timeLeft }: DrawingTimerProps) => {
   return (
     <div className="relative inline-block">
       <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-4 border-red-500 bg-white shadow-xl">
@@ -20,4 +20,4 @@ export function DrawingTimer({ timeLeft }: DrawingTimerProps) {
       </div>
     </div>
   );
-}
+};
