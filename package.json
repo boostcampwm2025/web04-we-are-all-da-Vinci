@@ -1,0 +1,20 @@
+{
+  "name": "we-are-all-da-vinci",
+  "private": true,
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0"
+  },
+  "lint-staged": {
+    "client/**/*.{ts,tsx}": [
+      "pnpm --prefix client run lint -- --fix",
+      "pnpm --prefix client run format"
+    ],
+    "server/**/*.ts": [
+      "pnpm --prefix server run lint -- --fix"
+    ]
+  }
+}
