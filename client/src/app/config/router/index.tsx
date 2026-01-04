@@ -5,7 +5,7 @@ import CreateRoom from '@/pages/game/CreateRoom';
 import WaitingRoom from '@/pages/game/WaitingRoom';
 import GameStart from '@/pages/game/GameStart';
 import DrawingGame from '@/pages/game/Drawing';
-import FinalResults from '@/pages/game/FinalResult';
+import RoundResults from '@/pages/game/RoundResult';
 
 export const routes: RouteObject[] = [
   {
@@ -30,6 +30,6 @@ export const routes: RouteObject[] = [
   },
   {
     path: PATHS.FINAL_RESULTS,
-    element: <FinalResults />,
+    element: <RoundResults />,
   },
 ];

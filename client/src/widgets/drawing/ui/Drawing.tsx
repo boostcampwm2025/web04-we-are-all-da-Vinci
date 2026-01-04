@@ -10,6 +10,7 @@ import {
 } from '@/entities/drawing';
 import { DrawingToolbar } from '@/features/drawingToolbar';
 import { DrawingCanvas } from '@/features/drawingCanvas';
+import { RoundBadge } from '@/shared/ui/round';
 
 export function Drawing() {
   const navigate = useNavigate();
@@ -34,7 +35,10 @@ export function Drawing() {
 
       <div className="flex h-screen w-full items-center justify-center px-4 py-4">
         <div className="flex h-full w-full max-w-7xl flex-col">
-          <DrawingHeader title="그림을 그려주세요!" />
+          <DrawingHeader
+            title="그림을 그려주세요!"
+            roundBadge={<RoundBadge round={1} />}
+          />
 
           <div className="flex min-h-0 flex-1 gap-4">
             <div className="flex min-h-0 flex-1 flex-col">
