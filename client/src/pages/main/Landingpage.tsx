@@ -1,6 +1,4 @@
-import { PATHS } from '@/shared/config';
-import { TITLES } from '@/shared/config/titles';
-
+import { PATHS, TITLES } from '@/shared/config';
 import { Title } from '@/shared/ui';
 import { CommonBtn } from '@/shared/ui';
 import { NicknameInputModal } from '@/features/user-input';

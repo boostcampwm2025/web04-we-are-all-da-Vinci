@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { PATHS } from '@/shared/config';
+import { PATHS, TITLES } from '@/shared/config';
 import { Title } from '@/shared/ui';
-import { TITLES } from '@/shared/config/titles';
 import { PlayerCard } from '@/entities/player';
 import { CommonBtn } from '@/shared/ui';
 import { SettingsModal } from '@/features/room-settings';
