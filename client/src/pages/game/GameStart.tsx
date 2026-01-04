@@ -1,63 +1,7 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { PATHS } from '@/shared/config';
-import { Timer } from '@/shared/ui';
+import { Prompt } from '@/widgets/prompt';
 
-export default function GameStart() {
-  const navigate = useNavigate();
-  const [countdown, setCountdown] = useState(5);
+const GameStart = () => {
+  return <Prompt />;
+};
 
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => {
-        setCountdown(countdown - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else {
-      navigate(PATHS.DRAWING_GAME);
-    }
-  }, [countdown, navigate]);
-
-  return (
-    <>
-      <div className="absolute top-8 right-8 z-20">
-        <div className="relative inline-block">
-          <Timer time={5} />
-        </div>
-      </div>
-
-      <div className="flex h-full w-full items-center justify-center px-4 py-4">
-        <div className="flex h-full w-full max-w-3xl flex-col">
-          <div className="mb-4 shrink-0 text-center">
-            <div className="mb-2 inline-block rounded-full bg-indigo-600 px-4 py-1 text-sm font-bold text-white">
-              ROUND 1
-            </div>
-            <h1 className="font-handwriting mb-1 text-3xl font-black md:text-4xl">
-              기억하세요!
-            </h1>
-            <p className="font-handwriting text-base text-gray-600">
-              곧 그림이 보여집니다
-            </p>
-            <div className="mx-auto mt-1 h-1.5 w-40 rounded-full bg-yellow-300" />
-          </div>
-
-          <div className="flex min-h-0 flex-1 items-center justify-center">
-            <div className="relative w-full max-w-2xl rounded-2xl border-4 border-gray-800 bg-white p-3 shadow-2xl">
-              <div className="relative flex aspect-4/3 items-center justify-center overflow-hidden rounded-lg bg-[#4a5f5a]">
-                <div className="h-40 w-40 rounded-lg bg-gray-300 shadow-lg"></div>
-
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-lg border-2 border-gray-300 bg-white/90 px-4 py-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-sm text-gray-600">
-                      draw
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
+export default GameStart;
