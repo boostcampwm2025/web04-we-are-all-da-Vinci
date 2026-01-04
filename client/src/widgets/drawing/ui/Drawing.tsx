@@ -2,12 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PATHS } from '@/shared/config';
 import { RankingCard } from '@/entities/ranking';
-import {
-  DrawingTimer,
-  DrawingHeader,
-  DrawingTopic,
-  RankingPanel,
-} from '@/entities/drawing';
+import { DrawingHeader, DrawingTopic, RankingPanel } from '@/entities/drawing';
 import { DrawingToolbar } from '@/features/drawingToolbar';
 import { DrawingCanvas } from '@/features/drawingCanvas';
 import { RoundBadge } from '@/shared/ui/round';
