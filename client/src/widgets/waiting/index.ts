@@ -1,1 +1,1 @@
-export { WaitingRoom } from './ui/Waiting';
+export { Waiting } from './ui/Waiting';
