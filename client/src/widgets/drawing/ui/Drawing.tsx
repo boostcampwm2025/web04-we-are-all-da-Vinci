@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PATHS } from '@/shared/config';
 import { RankingCard } from '@/entities/ranking';
-import { DrawingHeader, DrawingTopic, RankingPanel } from '@/entities/drawing';
+import { DrawingHeader, RankingPanel } from '@/entities/drawing';
 import { DrawingToolbar } from '@/features/drawingToolbar';
 import { DrawingCanvas } from '@/features/drawingCanvas';
 import { RoundBadge } from '@/shared/ui/round';
@@ -41,7 +41,7 @@ export const Drawing = () => {
             <div className="flex min-h-0 flex-1 flex-col">
               <div className="flex h-full flex-col overflow-hidden rounded-2xl border-4 border-gray-800 bg-white shadow-2xl">
                 <DrawingToolbar />
-                <DrawingCanvas topic={<DrawingTopic topic="웃는 얼굴" />} />
+                <DrawingCanvas />
               </div>
             </div>
 
