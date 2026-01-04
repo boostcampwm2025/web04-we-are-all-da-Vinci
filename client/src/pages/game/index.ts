@@ -1,4 +1,3 @@
-export { default as CreateRoom } from './CreateRoom';
 export { default as DrawingGame } from './Drawing';
 export { default as FinalResult } from './RoundResult';
 export { default as GameStart } from './GameStart';

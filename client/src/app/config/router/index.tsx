@@ -1,7 +1,6 @@
 import type { RouteObject } from 'react-router-dom';
 import { PATHS } from '@/shared/config';
 import LandingPage from '@/pages/main/Landingpage';
-import CreateRoom from '@/pages/game/CreateRoom';
 import WaitingRoom from '@/pages/game/WaitingRoom';
 import GameStart from '@/pages/game/GameStart';
 import DrawingGame from '@/pages/game/Drawing';
@@ -12,10 +11,7 @@ export const routes: RouteObject[] = [
     path: PATHS.HOME,
     element: <LandingPage />,
   },
-  {
-    path: PATHS.CREATE_ROOM,
-    element: <CreateRoom />,
-  },
+
   {
     path: PATHS.WAITING_ROOM,
     element: <WaitingRoom />,
