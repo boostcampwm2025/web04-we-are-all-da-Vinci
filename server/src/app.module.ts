@@ -10,7 +10,7 @@ import { LoggerModule } from 'nestjs-pino';
     LoggerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => {
+      useFactory: (configService: ConfigService) => {
         const isProduction = configService.get('NODE_ENV') === 'production';
 
         return {
