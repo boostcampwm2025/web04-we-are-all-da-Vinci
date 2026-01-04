@@ -7,7 +7,7 @@ interface WaitingRoomActionsProps {
 
 export const WaitingRoomActions = ({
   onSettingsClick,
-}: WaitingRoomActionsProps) {
+}: WaitingRoomActionsProps) => {
   return (
     <>
       <CommonBtn
@@ -36,4 +36,4 @@ export const WaitingRoomActions = ({
       </div>
     </>
   );
-}
+};

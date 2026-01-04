@@ -7,7 +7,7 @@ import {
   RankingList,
 } from '@/entities/roundResult';
 
-export const RoundEnd = () {
+export const RoundEnd = () => {
   const rankings = [
     {
       rank: 1,
@@ -71,4 +71,4 @@ export const RoundEnd = () {
       </div>
     </>
   );
-}
+};

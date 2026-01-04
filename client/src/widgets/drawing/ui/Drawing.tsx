@@ -11,8 +11,9 @@ import {
 import { DrawingToolbar } from '@/features/drawingToolbar';
 import { DrawingCanvas } from '@/features/drawingCanvas';
 import { RoundBadge } from '@/shared/ui/round';
+import { Timer } from '@/shared/ui';
 
-export const Drawing = () {
+export const Drawing = () => {
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(5);
 
@@ -30,9 +31,10 @@ export const Drawing = () {
   return (
     <>
       <div className="absolute top-8 right-8 z-20">
-        <DrawingTimer timeLeft={timeLeft} />
+        <div className="relative inline-block">
+          <Timer time={5} />
+        </div>
       </div>
-
       <div className="flex h-screen w-full items-center justify-center px-4 py-4">
         <div className="flex h-full w-full max-w-7xl flex-col">
           <DrawingHeader
@@ -76,4 +78,4 @@ export const Drawing = () {
       </div>
     </>
   );
-}
+};

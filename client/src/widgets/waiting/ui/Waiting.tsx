@@ -7,7 +7,7 @@ import { PlayerListSection } from '@/features/playerList';
 import { WaitingRoomActions } from '@/features/waitingRoomActions';
 import { RoomSettingsModal, type RoomSettings } from '@/features/roomSettings';
 
-export const Waiting = () {
+export const Waiting = () => {
   const [players] = useState([
     { id: 1, nickname: '나(방장)', status: '준비완료', isHost: true },
     { id: 2, nickname: '김그림', status: '대기중', isHost: false },
@@ -73,4 +73,4 @@ export const Waiting = () {
       />
     </>
   );
-}
+};
