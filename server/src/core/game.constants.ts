@@ -16,3 +16,11 @@ export const ClientEvents = {
   ROOM_GAME_END: 'room:game_end',
   ROOM_PROMPT: 'room:prompt',
 } as const;
+
+export const GamePhase = {
+  WAITING: 'WAITING',
+  PROMPT: 'PROMPT',
+  DRAWING: 'DRAWING',
+  ROUND_END: 'ROUND_END',
+  GAME_END: 'GAME_END,',
+};
