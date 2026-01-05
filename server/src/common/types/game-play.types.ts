@@ -1,14 +1,6 @@
-import { GamePhase } from './game.constants';
-
 export interface Stroke {
   points: [number[], number[]];
   color: [number, number, number];
-}
-
-export interface Player {
-  socketId: string;
-  nickname: string;
-  isHost: boolean;
 }
 
 export interface PlayerResult {
@@ -26,5 +18,3 @@ export interface GameResultEntry {
   nickname: string;
   score: number;
 }
-
-export type Phase = (typeof GamePhase)[keyof typeof GamePhase];

@@ -1,4 +1,4 @@
-import { Stroke } from 'src/core/game.types';
+import { Stroke } from 'src/common/types';
 
 export class RoomPromptDto {
   promptStrokes: Stroke[];

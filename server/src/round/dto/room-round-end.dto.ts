@@ -1,4 +1,4 @@
-import { RoundResultEntry, Stroke } from 'src/core/game.types';
+import { RoundResultEntry, Stroke } from 'src/common/types';
 
 export class RoomRoundEndDto {
   rankings: RoundResultEntry[];

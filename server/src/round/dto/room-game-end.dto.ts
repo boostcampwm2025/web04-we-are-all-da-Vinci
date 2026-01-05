@@ -1,4 +1,4 @@
-import { GameResultEntry, Stroke } from 'src/core/game.types';
+import { GameResultEntry, Stroke } from 'src/common/types';
 
 export class RoomGameEndDto {
   finalRankings: GameResultEntry[];

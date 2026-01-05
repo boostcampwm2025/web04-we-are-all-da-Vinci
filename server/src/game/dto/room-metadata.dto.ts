@@ -1,4 +1,4 @@
-import { Phase, Player } from 'src/core/game.types';
+import { Phase, Player } from 'src/common/types';
 import { RoomSettingsDto } from './room-settings.dto';
 
 export class RoomMetadata {
