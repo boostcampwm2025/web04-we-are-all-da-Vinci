@@ -5,8 +5,8 @@ import {
   WebSocketGateway,
 } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
-import { UpdateScoreDto } from './dto/update-score.dto';
-import { SubmitDrawingDto } from './dto/submit-drawing.dto';
+import { UpdateScoreDto } from './dto/user-score.dto';
+import { SubmitDrawingDto } from './dto/user-drawing.dto';
 import { ServerEvents } from 'src/core/game.constants';
 
 @WebSocketGateway()

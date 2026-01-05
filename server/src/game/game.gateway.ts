@@ -8,9 +8,9 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { JoinRoomDto } from './dto/join-room.dto';
-import { UpdateSettingsDto } from './dto/update-settings.dto';
-import { StartGameDto } from './dto/start-game.dto';
+import { JoinRoomDto } from './dto/user-join.dto';
+import { UpdateSettingsDto } from './dto/room-settings.dto';
+import { StartGameDto } from './dto/room-start.dto';
 import { ServerEvents } from 'src/core/game.constants';
 
 @WebSocketGateway()
