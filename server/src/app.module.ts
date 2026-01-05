@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 import { RedisModule } from './redis/redis.module';
+import { GameModule } from './game/game.module';
+import { PlayModule } from './play/play.module';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { RedisModule } from './redis/redis.module';
       },
     }),
     RedisModule,
+    GameModule,
+    PlayModule,
   ],
 })
 export class AppModule {}
