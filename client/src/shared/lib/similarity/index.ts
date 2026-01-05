@@ -1,1 +1,1 @@
-export { calculateSimilarity } from './calculateSimilarity';
+export { calculateFinalSimilarity } from './calculateFinalSimilarity';
