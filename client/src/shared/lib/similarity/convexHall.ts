@@ -1,4 +1,5 @@
 import type { Point, Stroke } from '@/entities/similarity/model';
+import { getRelativeSimilarity } from './mathUtils';
 
 export const calculateHullSimilarity = (
   strokes1: Stroke[],
@@ -106,12 +107,12 @@ const calculateAreaSimilarity = (area1: number, area2: number): number => {
   if (area1 === 0 && area2 === 0) return 1;
   if (area1 === 0 || area2 === 0) return 0;
 
-  return 1 - Math.abs(area1 - area2) / Math.max(area1, area2);
+  return getRelativeSimilarity(area1, area2);
 };
 
 const calculatePerimeterSimilarity = (p1: number, p2: number): number => {
   if (p1 === 0 && p2 === 0) return 1;
   if (p1 === 0 || p2 === 0) return 0;
 
-  return 1 - Math.abs(p1 - p2) / Math.max(p1, p2);
+  return getRelativeSimilarity(p1, p2);
 };

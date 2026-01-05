@@ -1,17 +1,10 @@
 import type { Point, Stroke } from '@/entities/similarity/model';
+import { getPathLength } from './mathUtils';
 
 // 스트로크 길이
 export const getStrokeLength = (stroke: Stroke): number => {
   const [xArr, yArr] = stroke.points;
-  let length = 0;
-
-  for (let i = 1; i < xArr.length; i++) {
-    const dx = xArr[i] - xArr[i - 1];
-    const dy = yArr[i] - yArr[i - 1];
-    length += Math.sqrt(dx * dx + dy * dy);
-  }
-
-  return length;
+  return getPathLength(xArr, yArr);
 };
 
 // 스트로크 중심점
@@ -41,4 +34,30 @@ export const getStrokeBoundingBox = (stroke: Stroke) => {
     centerX: (minX + maxX) / 2,
     centerY: (minY + maxY) / 2,
   };
+};
+
+// 전체 세그먼트의 평균 방향
+export const getStrokeDirection = (stroke: Stroke): number => {
+  const [xArr, yArr] = stroke.points;
+  if (xArr.length < 2) return 0;
+
+  let sumDx = 0,
+    sumDy = 0;
+  let totalWeight = 0;
+
+  // 각 세그먼트의 방향 벡터를 길이로 가중 평균
+  for (let i = 1; i < xArr.length; i++) {
+    const dx = xArr[i] - xArr[i - 1];
+    const dy = yArr[i] - yArr[i - 1];
+    const length = Math.sqrt(dx * dx + dy * dy);
+
+    sumDx += dx * length;
+    sumDy += dy * length;
+    totalWeight += length;
+  }
+
+  if (totalWeight === 0) return 0;
+
+  // 가중 평균된 방향
+  return Math.atan2(sumDy / totalWeight, sumDx / totalWeight);
 };
