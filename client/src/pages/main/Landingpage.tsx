@@ -27,7 +27,7 @@ const LandingPage = () => {
   const handleSettingsComplete = (settings: RoomSettings) => {
     console.log('Room settings:', settings);
     // TODO: 방 생성 API 호출 후 대기실로 이동
-    navigate(PATHS.WAITING_ROOM);
+    navigate(PATHS.GAME);
   };
 
   const handleShowGuide = () => {
@@ -74,7 +74,7 @@ const LandingPage = () => {
                 variant="scribble"
                 icon="login"
                 text="입장하기"
-                path={PATHS.WAITING_ROOM}
+                path={PATHS.GAME}
               />
             </div>
 

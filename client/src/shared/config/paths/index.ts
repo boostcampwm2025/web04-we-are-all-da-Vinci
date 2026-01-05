@@ -5,4 +5,5 @@ export const PATHS = {
   GAME_START: '/game-start',
   DRAWING_GAME: '/drawing-game',
   FINAL_RESULTS: '/final-results',
+  GAME: '/game',
 };
