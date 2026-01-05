@@ -1,0 +1,29 @@
+{
+  "name": "da-vinci",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev:client": "pnpm -F client dev",
+    "dev:server": "pnpm -F server start:dev",
+    "infra:up": "docker compose -f infra/local/compose.yaml up -d",
+    "infra:down": "docker compose -f infra/local/compose.yaml down",
+    "prepare": "husky"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.20.0",
+  "devDependencies": {
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0"
+  },
+  "lint-staged": {
+    "client/**/*.{ts,tsx}": [
+      "bash -c 'cd client && npx eslint --fix \"$@\"' _",
+      "bash -c 'cd client && npx prettier --write \"$@\"' _"
+    ],
+    "server/**/*.ts": [
+      "bash -c 'cd server && npx eslint --fix \"$@\"' _"
+    ]
+  }
+}
