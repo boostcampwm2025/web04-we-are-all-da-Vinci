@@ -1,5 +1,10 @@
+output:
+  - summary
+  - execution
+
 pre-commit:
   parallel: true
+  follow: true
   commands:
     client-lint:
       root: "client/"
@@ -13,3 +18,7 @@ pre-commit:
       root: "server/"
       glob: "*.ts"
       run: npx eslint --fix {staged_files}
+    server-format:
+      root: "server/"
+      glob: "*.ts"
+      run: npx prettier --write {staged_files}
