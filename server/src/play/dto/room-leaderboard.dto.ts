@@ -1,3 +1,5 @@
+import { PlayerResult } from 'src/common/types';
+
 export class RoomLeaderboard {
-  rankings: { socketId: string; nickname: string; similarity: number }[];
+  rankings: PlayerResult[];
 }
