@@ -1,6 +1,6 @@
-import { Stroke } from 'src/core/drawing.types';
+import { Stroke } from 'src/core/game.types';
 
-export class SubmitDrawingDto {
+export class UserDrawingDto {
   roomId: string;
   similarity: number;
   strokes: Stroke[];

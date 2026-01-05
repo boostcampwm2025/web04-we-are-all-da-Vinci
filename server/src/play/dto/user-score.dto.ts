@@ -1,4 +1,4 @@
-export class UpdateScoreDto {
+export class UserScoreDto {
   roomId: string;
   similarity: number;
 }

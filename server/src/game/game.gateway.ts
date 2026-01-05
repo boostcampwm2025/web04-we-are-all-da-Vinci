@@ -8,9 +8,9 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { JoinRoomDto } from './dto/user-join.dto';
-import { UpdateSettingsDto } from './dto/room-settings.dto';
-import { StartGameDto } from './dto/room-start.dto';
+import { UserJoinDto } from './dto/user-join.dto';
+import { RoomSettingsDto } from './dto/room-settings.dto';
+import { RoomStartDto } from './dto/room-start.dto';
 import { ServerEvents } from 'src/core/game.constants';
 
 @WebSocketGateway()
@@ -25,7 +25,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage(ServerEvents.USER_JOIN)
   joinRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: JoinRoomDto,
+    @MessageBody() payload: UserJoinDto,
   ): string {
     return 'ok';
   }
@@ -33,7 +33,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage(ServerEvents.ROOM_SETTINGS)
   updateSettings(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: UpdateSettingsDto,
+    @MessageBody() payload: RoomSettingsDto,
   ): string {
     return 'ok';
   }
@@ -41,7 +41,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage(ServerEvents.ROOM_START)
   startGame(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: StartGameDto,
+    @MessageBody() payload: RoomStartDto,
   ): string {
     return 'ok';
   }

@@ -1,3 +1,3 @@
-export class StartGameDto {
+export class RoomStartDto {
   roomId: string;
 }

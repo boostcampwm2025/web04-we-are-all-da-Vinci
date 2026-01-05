@@ -1,4 +1,4 @@
-export class UpdateSettingsDto {
+export class RoomSettingsDto {
   roomId: string;
   maxPlayer: number;
   totalRounds: number;
