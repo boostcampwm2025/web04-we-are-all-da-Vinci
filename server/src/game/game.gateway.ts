@@ -12,15 +12,29 @@ import { UserJoinDto } from './dto/user-join.dto';
 import { RoomSettingsDto } from './dto/room-settings.dto';
 import { RoomStartDto } from './dto/room-start.dto';
 import { ServerEvents } from 'src/core/game.constants';
+import { PinoLogger } from 'nestjs-pino';
 
-@WebSocketGateway()
+@WebSocketGateway({
+  cors: {
+    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [],
+    credentials: true,
+  },
+})
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  handleConnection(client: Socket, ...args: any[]) {}
+  constructor(private readonly logger: PinoLogger) {
+    this.logger.setContext(GameGateway.name);
+  }
 
-  handleDisconnect(client: Socket) {}
+  handleConnection(client: Socket) {
+    this.logger.info({ clientId: client.id }, 'New Client Connected');
+  }
+
+  handleDisconnect(client: Socket) {
+    this.logger.info({ clientId: client.id }, 'Client Disconnected');
+  }
 
   @SubscribeMessage(ServerEvents.USER_JOIN)
   joinRoom(
