@@ -1,0 +1,15 @@
+pre-commit:
+  parallel: true
+  commands:
+    client-lint:
+      root: "client/"
+      glob: "*.{ts,tsx}"
+      run: npx eslint --fix {staged_files}
+    client-format:
+      root: "client/"
+      glob: "*.{ts,tsx}"
+      run: npx prettier --write {staged_files}
+    server-lint:
+      root: "server/"
+      glob: "*.ts"
+      run: npx eslint --fix {staged_files}
