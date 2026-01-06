@@ -1,12 +1,13 @@
-import { Waiting, Drawing, RoundEnd, GameEnd } from '@/widgets';
+import { Waiting, Drawing, RoundEnd, GameEnd, Prompt } from '@/widgets';
 
 // import { useState } from 'react';
 
-// type GamePhase = 'WAITING' | 'DRAWING' | 'ROUND_END' | 'GAME_END';
+// type GamePhase = 'WAITING' | 'DRAWING' | 'PROMPT' | 'ROUND_END' | 'GAME_END';
 
 const GAME_PHASE_COMPONENT_MAP = {
   WAITING: Waiting,
   DRAWING: Drawing,
+  PROMPT: Prompt,
   ROUND_END: RoundEnd,
   GAME_END: GameEnd,
 } as const;
