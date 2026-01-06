@@ -24,5 +24,5 @@ export const GamePhase = {
   PROMPT: 'PROMPT',
   DRAWING: 'DRAWING',
   ROUND_END: 'ROUND_END',
-  GAME_END: 'GAME_END,',
+  GAME_END: 'GAME_END',
 };
