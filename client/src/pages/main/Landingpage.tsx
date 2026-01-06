@@ -1,14 +1,13 @@
 import { PATHS, TITLES } from '@/shared/config';
 import { Title } from '@/shared/ui';
 import { CommonBtn } from '@/shared/ui';
-import { NicknameInputModal } from '@/features/user-input';
-import { SettingsModal } from '@/features/room-settings';
 import { AlertModal } from '@/entities';
-import type { RoomSettings } from '@/features/room-settings';
+import { RoomSettingsModal, type RoomSettings } from '@/features/roomSettings';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { NicknameInputModal } from '@/features/nickname';
 
-export default function LandingPage() {
+const LandingPage = () => {
   const navigate = useNavigate();
   const [showNicknameModal, setShowNicknameModal] = useState(() => {
     return !localStorage.getItem('nickname');
@@ -28,7 +27,7 @@ export default function LandingPage() {
   const handleSettingsComplete = (settings: RoomSettings) => {
     console.log('Room settings:', settings);
     // TODO: 방 생성 API 호출 후 대기실로 이동
-    navigate(PATHS.WAITING_ROOM);
+    navigate(PATHS.GAME);
   };
 
   const handleShowGuide = () => {
@@ -75,7 +74,7 @@ export default function LandingPage() {
                 variant="scribble"
                 icon="login"
                 text="입장하기"
-                path={PATHS.WAITING_ROOM}
+                path={PATHS.GAME}
               />
             </div>
 
@@ -99,7 +98,7 @@ export default function LandingPage() {
         onClose={() => setShowNicknameModal(false)}
       />
 
-      <SettingsModal
+      <RoomSettingsModal
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
         onComplete={handleSettingsComplete}
@@ -113,4 +112,6 @@ export default function LandingPage() {
       />
     </>
   );
-}
+};
+
+export default LandingPage;
