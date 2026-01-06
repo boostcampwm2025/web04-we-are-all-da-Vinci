@@ -8,6 +8,12 @@ async function bootstrap() {
   // 기본 로거를 pino로 교체
   app.useLogger(app.get(Logger));
 
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  });
+
   await app.listen(process.env.PORT ?? 3000);
 }
 void bootstrap();

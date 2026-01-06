@@ -4,12 +4,12 @@ import AppLayout from '@/app/ui/appLayout';
 
 const router = createBrowserRouter(routes);
 
-function App() {
+const App = () => {
   return (
     <AppLayout>
       <RouterProvider router={router} />
     </AppLayout>
   );
-}
+};
 
 export default App;
