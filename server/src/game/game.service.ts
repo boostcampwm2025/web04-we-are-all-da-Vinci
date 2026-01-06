@@ -21,7 +21,7 @@ export class GameService {
     const gameRoom: GameRoom = {
       roomId,
       players: [],
-      phase: 'WAITING',
+      phase: GamePhase.WAITING,
       currentRound: 0,
       settings: { drawingTime: 40, maxPlayer: 8, totalRounds: 4 },
     };
