@@ -11,9 +11,10 @@ import { Server, Socket } from 'socket.io';
 import { UserJoinDto } from './dto/user-join.dto';
 import { RoomSettingsDto } from './dto/room-settings.dto';
 import { RoomStartDto } from './dto/room-start.dto';
-import { ServerEvents } from 'src/common/constants';
+import { ClientEvents, ServerEvents } from 'src/common/constants';
 import { PinoLogger } from 'nestjs-pino';
 import { GameService } from './game.service';
+import { GameRoom } from 'src/common/types';
 
 @WebSocketGateway({
   cors: {
@@ -44,15 +45,17 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async joinRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: UserJoinDto,
-  ): Promise<String> {
+  ): Promise<string> {
     const { nickname, roomId } = payload;
-    const res = await this.gameService.joinRoom(roomId, nickname, client.id);
-    if (res) {
+    const room = await this.gameService.joinRoom(roomId, nickname, client.id);
+    if (room) {
       this.logger.info(
         { clientId: client.id, ...payload },
         'Client Joined Game.',
       );
-      // TODO: 게임 메타데이터 브로드캐스트
+
+      client.join(room.roomId);
+      this.broadcastMetadata(room);
     } else {
       this.logger.info(
         { clientId: client.id, ...payload },
@@ -82,5 +85,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): string {
     this.logger.info({ clientId: client.id, ...payload }, 'Game Started');
     return 'ok';
+  }
+
+  broadcastMetadata(room: GameRoom) {
+    this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
   }
 }

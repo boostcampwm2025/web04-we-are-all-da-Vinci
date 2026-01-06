@@ -36,7 +36,7 @@ export class GameService {
     roomId: string,
     nickname: string,
     socketId: string,
-  ): Promise<boolean> {
+  ): Promise<GameRoom | null> {
     const room = await this.cacheService.getRoom(roomId);
 
     if (!room) {
@@ -47,7 +47,7 @@ export class GameService {
 
     if (phase === GamePhase.DRAWING) {
       // TODO: 대기큐에 등록
-      return false;
+      return null;
     }
 
     room.players.push({
@@ -57,6 +57,6 @@ export class GameService {
     });
 
     this.cacheService.saveRoom(roomId, room);
-    return true;
+    return room;
   }
 }
