@@ -61,6 +61,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         { clientId: client.id, ...payload },
         'Client Pushed Waiting queue',
       );
+      client.emit(ClientEvents.USER_WAITLIST, { roomId });
     }
 
     return 'ok';

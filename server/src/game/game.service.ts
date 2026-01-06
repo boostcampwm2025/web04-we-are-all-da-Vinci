@@ -3,10 +3,14 @@ import { randomUUID } from 'node:crypto';
 import { GameRoom } from 'src/common/types';
 import { GamePhase } from 'src/common/constants';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
+import { RoomWaitlistService } from 'src/redis/cache/room-waitlist.service';
 
 @Injectable()
 export class GameService {
-  constructor(private readonly cacheService: GameRoomCacheService) {}
+  constructor(
+    private readonly cacheService: GameRoomCacheService,
+    private readonly waitlistService: RoomWaitlistService,
+  ) {}
 
   async createRoom() {
     const roomId = await this.generateRoomId();
@@ -43,10 +47,14 @@ export class GameService {
       throw new BadRequestException('방이 존재하지 않습니다.');
     }
 
+    if (room.players.length >= room.settings.maxPlayer) {
+      throw new BadRequestException('방이 꽉 찼습니다.');
+    }
+
     const phase = room.phase;
 
     if (phase === GamePhase.DRAWING) {
-      // TODO: 대기큐에 등록
+      await this.waitlistService.addPlayer(roomId, socketId);
       return null;
     }
 
