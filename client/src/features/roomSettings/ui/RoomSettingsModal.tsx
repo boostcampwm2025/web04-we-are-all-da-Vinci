@@ -13,7 +13,11 @@ export interface RoomSettings {
   timeLimit: number;
 }
 
-const SettingsModal = ({ isOpen, onClose, onComplete }: SettingsModalProps) => {
+const RoomSettingsModal = ({
+  isOpen,
+  onClose,
+  onComplete,
+}: SettingsModalProps) => {
   const [selectedPlayers, setSelectedPlayers] = useState(4);
   const [selectedRounds, setSelectedRounds] = useState(5);
   const [selectedTime, setSelectedTime] = useState(90);
@@ -118,4 +122,4 @@ const SettingsModal = ({ isOpen, onClose, onComplete }: SettingsModalProps) => {
   );
 };
 
-export default SettingsModal;
+export default RoomSettingsModal;
