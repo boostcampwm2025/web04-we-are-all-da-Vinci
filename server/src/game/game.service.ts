@@ -37,22 +37,22 @@ export class GameService {
     return roomId;
   }
 
-  async leaveRoom(socketId: string) {
+  async leaveRoom(socketId: string): Promise<GameRoom | null> {
     const roomId = await this.playerCacheService.getRoomId(socketId);
     if (!roomId) {
-      return;
+      return null;
     }
 
     const room = await this.cacheService.getRoom(roomId);
 
     if (!room) {
-      return;
+      return null;
     }
 
     const target = room.players.find((player) => player.socketId === socketId);
 
     if (!target) {
-      return;
+      return null;
     }
     room.players = room.players.filter(
       (player) => player.socketId !== socketId,
@@ -64,6 +64,8 @@ export class GameService {
 
     await this.cacheService.saveRoom(roomId, room);
     await this.playerCacheService.delete(socketId);
+
+    return room;
   }
 
   private async generateRoomId() {

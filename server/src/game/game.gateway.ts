@@ -43,7 +43,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleDisconnect(client: Socket) {
     this.logger.info({ clientId: client.id }, 'User Disconnected');
 
-    await this.gameService.leaveRoom(client.id);
+    const room = await this.gameService.leaveRoom(client.id);
+
+    if (!room) {
+      return;
+    }
+    this.broadcastMetadata(room);
   }
 
   @SubscribeMessage(ServerEvents.USER_JOIN)
