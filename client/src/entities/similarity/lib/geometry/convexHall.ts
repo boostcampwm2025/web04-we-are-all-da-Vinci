@@ -1,5 +1,5 @@
 import type { Point, Stroke } from '@/entities/similarity/model';
-import { getRelativeSimilarity } from './mathUtils';
+import { getRelativeSimilarity } from '../utils/mathUtils';
 
 export const calculateHullSimilarity = (
   strokes1: Stroke[],

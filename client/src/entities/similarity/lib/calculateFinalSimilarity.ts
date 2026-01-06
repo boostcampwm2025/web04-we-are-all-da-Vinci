@@ -1,7 +1,7 @@
 import type { Stroke } from '@/entities/similarity/model';
-import { normalizeStrokes } from './normalizeStrokes';
-import { calculateGreedyStrokeMatchScore } from './calculateGreedyStrokeMatchScore';
-import { calculateHullSimilarity } from './convexHall';
+import { normalizeStrokes } from './utils/normalizeStrokes';
+import { calculateGreedyStrokeMatchScore } from './strokeSimilarity/calculateGreedyStrokeMatchScore';
+import { calculateHullSimilarity } from './geometry/convexHall';
 
 export const calculateFinalSimilarity = (
   promptStrokes: Stroke[], // 제시 그림 스트로크
