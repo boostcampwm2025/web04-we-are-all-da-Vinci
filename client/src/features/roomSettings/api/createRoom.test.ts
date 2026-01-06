@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createRoom } from './createRoom';
 
 describe('방 생성 API', () => {
   beforeEach(() => {
-    global.fetch = vi.fn();
+    globalThis.fetch = vi.fn();
   });
 
   afterEach(() => {
@@ -13,10 +12,10 @@ describe('방 생성 API', () => {
 
   it('올바른 설정으로 POST 요청을 보낸다', async () => {
     const mockResponse = { roomId: 'abc12345' };
-    (global.fetch as any).mockResolvedValueOnce({
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce({
       ok: true,
       json: async () => mockResponse,
-    });
+    } as Response);
 
     const settings = {
       maxPlayer: 4,
@@ -26,7 +25,7 @@ describe('방 생성 API', () => {
 
     const result = await createRoom(settings);
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       'http://localhost:3000/room',
       expect.objectContaining({
         method: 'POST',
@@ -41,10 +40,10 @@ describe('방 생성 API', () => {
 
   it('응답에서 roomId를 반환한다', async () => {
     const mockRoomId = 'xyz98765';
-    (global.fetch as any).mockResolvedValueOnce({
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ roomId: mockRoomId }),
-    });
+    } as Response);
 
     const result = await createRoom({
       maxPlayer: 6,
@@ -56,10 +55,10 @@ describe('방 생성 API', () => {
   });
 
   it('응답이 실패하면 에러를 던진다', async () => {
-    (global.fetch as any).mockResolvedValueOnce({
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce({
       ok: false,
       status: 500,
-    });
+    } as Response);
 
     await expect(
       createRoom({
@@ -71,10 +70,10 @@ describe('방 생성 API', () => {
   });
 
   it('다양한 설정을 올바르게 전송한다', async () => {
-    (global.fetch as any).mockResolvedValueOnce({
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ roomId: 'test123' }),
-    });
+    } as Response);
 
     const customSettings = {
       maxPlayer: 20,
@@ -84,7 +83,7 @@ describe('방 생성 API', () => {
 
     await createRoom(customSettings);
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({
         body: JSON.stringify(customSettings),
