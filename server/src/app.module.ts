@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 import { RedisModule } from './redis/redis.module';
+import { GameModule } from './game/game.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { RedisModule } from './redis/redis.module';
       },
     }),
     RedisModule,
+    GameModule,
   ],
   controllers: [AppController],
   providers: [AppService],
