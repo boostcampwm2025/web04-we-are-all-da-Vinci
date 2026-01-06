@@ -5,20 +5,20 @@ import { calculateHullSimilarity } from './convexHall';
 
 export const calculateFinalSimilarity = (
   promptStrokes: Stroke[], // 제시 그림 스트로크
-  strokes: Stroke[], // 사용자 그림 스트로크
+  playerStrokes: Stroke[], // 사용자 그림 스트로크
 ) => {
   const normalizedPromptStrokes = normalizeStrokes(promptStrokes);
-  const normalizedStrokes = normalizeStrokes(strokes);
+  const normalizedPlayerStrokes = normalizeStrokes(playerStrokes);
 
   // 스트로크 개수 비교
   const strokeCountSimilarity =
-    normalizedStrokes.length === 0
+    normalizedPlayerStrokes.length === 0
       ? 0
       : Math.max(
           0,
           100 -
             Math.abs(
-              normalizedPromptStrokes.length - normalizedStrokes.length,
+              normalizedPromptStrokes.length - normalizedPlayerStrokes.length,
             ) *
               10,
         );
@@ -26,13 +26,13 @@ export const calculateFinalSimilarity = (
   // 스트로크 유사도
   const strokeMatchSimilarity = calculateGreedyStrokeMatchScore(
     normalizedPromptStrokes,
-    normalizedStrokes,
+    normalizedPlayerStrokes,
   );
 
   // hull 기반 유사도
   const hullScore = calculateHullSimilarity(
     normalizedPromptStrokes,
-    normalizedStrokes,
+    normalizedPlayerStrokes,
   );
 
   const scaledHull = applyNonLinearScale(hullScore);
