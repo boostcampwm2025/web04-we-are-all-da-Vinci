@@ -5,12 +5,14 @@ import { GamePhase } from 'src/common/constants';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { RoomWaitlistService } from 'src/redis/cache/room-waitlist.service';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
+import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 
 @Injectable()
 export class GameService {
   constructor(
     private readonly cacheService: GameRoomCacheService,
     private readonly waitlistService: RoomWaitlistService,
+    private readonly playerCacheService: PlayerCacheService,
   ) {}
 
   async createRoom() {
@@ -27,6 +29,35 @@ export class GameService {
     await this.cacheService.saveRoom(roomId, gameRoom);
 
     return roomId;
+  }
+
+  async leaveRoom(socketId: string) {
+    const roomId = await this.playerCacheService.getRoomId(socketId);
+    if (!roomId) {
+      return;
+    }
+
+    const room = await this.cacheService.getRoom(roomId);
+
+    if (!room) {
+      return;
+    }
+
+    const target = room.players.find((player) => player.socketId === socketId);
+
+    if (!target) {
+      return;
+    }
+    room.players = room.players.filter(
+      (player) => player.socketId !== socketId,
+    );
+
+    if (target.isHost && room.players.length > 0) {
+      room.players[0].isHost = true;
+    }
+
+    await this.cacheService.saveRoom(roomId, room);
+    await this.playerCacheService.delete(socketId);
   }
 
   private async generateRoomId() {
@@ -65,7 +96,8 @@ export class GameService {
       isHost: room.players.length === 0,
     });
 
-    this.cacheService.saveRoom(roomId, room);
+    await this.cacheService.saveRoom(roomId, room);
+    await this.playerCacheService.set(socketId, roomId);
     return room;
   }
 }
