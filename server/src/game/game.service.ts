@@ -1,9 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { GameRoom } from 'src/common/types';
 import { GamePhase } from 'src/common/constants';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { RoomWaitlistService } from 'src/redis/cache/room-waitlist.service';
+import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 
 @Injectable()
 export class GameService {
@@ -44,11 +45,11 @@ export class GameService {
     const room = await this.cacheService.getRoom(roomId);
 
     if (!room) {
-      throw new BadRequestException('방이 존재하지 않습니다.');
+      throw new WebsocketException('방이 존재하지 않습니다.');
     }
 
     if (room.players.length >= room.settings.maxPlayer) {
-      throw new BadRequestException('방이 꽉 찼습니다.');
+      throw new WebsocketException('방이 꽉 찼습니다.');
     }
 
     const phase = room.phase;

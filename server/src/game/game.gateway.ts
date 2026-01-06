@@ -15,6 +15,8 @@ import { ClientEvents, ServerEvents } from 'src/common/constants';
 import { PinoLogger } from 'nestjs-pino';
 import { GameService } from './game.service';
 import { GameRoom } from 'src/common/types';
+import { UseFilters } from '@nestjs/common';
+import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
 
 @WebSocketGateway({
   cors: {
@@ -22,6 +24,7 @@ import { GameRoom } from 'src/common/types';
     credentials: true,
   },
 })
+@UseFilters(WebsocketExceptionFilter)
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
