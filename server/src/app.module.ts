@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 import { RedisModule } from './redis/redis.module';
 import { GameModule } from './game/game.module';
+import { PlayModule } from './play/play.module';
+import { RoundModule } from './round/round.module';
 
 @Module({
   imports: [
@@ -36,8 +36,8 @@ import { GameModule } from './game/game.module';
     }),
     RedisModule,
     GameModule,
+    PlayModule,
+    RoundModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

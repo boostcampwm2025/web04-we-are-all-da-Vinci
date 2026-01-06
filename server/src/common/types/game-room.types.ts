@@ -1,3 +1,5 @@
+import { GamePhase } from '../constants';
+
 export interface Player {
   socketId: string;
   nickname: string;
@@ -13,7 +15,9 @@ export interface Settings {
 export interface GameRoom {
   roomId: string;
   players: Player[];
-  phase: 'WAITING' | 'PROMPT' | 'DRAWING' | 'ROUND_END' | 'GAME_END';
+  phase: Phase;
   currentRound: number;
   settings: Settings;
 }
+
+export type Phase = (typeof GamePhase)[keyof typeof GamePhase];

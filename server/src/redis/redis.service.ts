@@ -1,28 +1,35 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { PinoLogger } from 'nestjs-pino';
 import { createClient, RedisClientType } from 'redis';
 
 @Injectable()
 export class RedisService implements OnModuleInit {
   private client: RedisClientType;
 
-  constructor() {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly logger: PinoLogger,
+  ) {
+    this.logger.setContext(RedisService.name);
+
     this.client = createClient({
       socket: {
-        host: process.env.REDIS_HOST,
-        port: parseInt(process.env.REDIS_PORT || '6379', 10),
+        host: this.configService.get('REDIS_HOST'),
+        port: parseInt(this.configService.get('REDIS_PORT') || '6379', 10),
       },
     });
 
     this.client.on('error', (err) => {
-      console.error('❌ Redis Client Error:', err);
+      this.logger.error(err, 'Redis Client Error');
     });
 
     this.client.on('connect', () => {
-      console.log('🔄 Redis Connecting...');
+      this.logger.info('Redis Connecting...');
     });
 
     this.client.on('ready', () => {
-      console.log('✅ Redis Connected and Ready!');
+      this.logger.info('Redis Connected and Ready!');
     });
   }
 
