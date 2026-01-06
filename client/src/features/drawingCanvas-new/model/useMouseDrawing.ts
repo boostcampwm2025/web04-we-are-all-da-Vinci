@@ -1,12 +1,10 @@
 import { useRef, useState } from 'react';
 import type { RefObject } from 'react';
-import { CANVAS_STYLES } from '@/shared/config';
 
-interface UseDrawingOptions {
-  canvasRef: RefObject<HTMLCanvasElement>;
-  ctxRef: RefObject<CanvasRenderingContext2D>;
+interface UseMouseDrawingOptions {
+  canvasRef: RefObject<HTMLCanvasElement | null>;
+  ctxRef: RefObject<CanvasRenderingContext2D | null>;
   onAddStroke?: (stroke: Stroke) => void; // stroke 추가 시 호출
-  onClearStrokes?: () => void; // strokes 초기화 시 호출
 }
 
 // TODO : 미지가 추가해준 타입 파일에서 가져오기로 수정!
@@ -15,14 +13,13 @@ interface Stroke {
   color: [number, number, number];
 }
 
-// 캔버스 그리기 기능을 제공하는 훅
+// 마우스 이벤트로 캔버스에 그리는 기능을 제공하는 훅
 // 마우스 이벤트를 처리하고 완성된 스트로크를 콜백으로 전달
-export const useDrawing = ({
+export const useMouseDrawing = ({
   canvasRef,
   ctxRef,
   onAddStroke,
-  onClearStrokes,
-}: UseDrawingOptions) => {
+}: UseMouseDrawingOptions) => {
   const [isDrawing, setIsDrawing] = useState(false);
   const currentStrokeRef = useRef<[number[], number[]] | null>(null);
 
@@ -92,27 +89,11 @@ export const useDrawing = ({
     if (isDrawing) handleMouseUp();
   };
 
-  // 캔버스 초기화 (화면 + 상태)
-  const clearCanvas = () => {
-    const canvas = canvasRef.current;
-    const ctx = ctxRef.current;
-    if (!canvas || !ctx) return;
-
-    // 화면 지우기
-    ctx.fillStyle = CANVAS_STYLES.fillStyle;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    currentStrokeRef.current = null;
-
-    // strokes 초기화 콜백 호출
-    onClearStrokes?.();
-  };
-
   return {
     isDrawing,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
     handleMouseOut,
-    clearCanvas,
   };
 };
