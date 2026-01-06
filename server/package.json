@@ -75,6 +75,9 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
-    "passWithNoTests": true
+    "passWithNoTests": true,
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/$1"
+    }
   }
 }
