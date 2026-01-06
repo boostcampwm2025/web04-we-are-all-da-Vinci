@@ -4,10 +4,7 @@ import {
   getStrokeDirection,
   getStrokeLength,
 } from '../geometry/strokeGeometry';
-import {
-  getEuclideanDistance,
-  getRelativeSimilarity,
-} from '../utils/mathUtils';
+import { getEuclideanDistance, getRelativeSimilarity } from '../utils/math';
 
 // 두 스트로크를 일대일로 비교
 export const comparePairwiseStrokeSimilarity = (
