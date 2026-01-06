@@ -1,5 +1,5 @@
-import { SettingItem } from './SettingItem';
 import type { RoomSettings } from '@/features/roomSettings';
+import { SettingItem } from './SettingItem';
 
 interface GameSettingsCardProps {
   settings: RoomSettings;
@@ -15,17 +15,17 @@ export const GameSettingsCard = ({ settings }: GameSettingsCardProps) => {
         <SettingItem
           icon="group"
           label="최대 인원"
-          value={`${settings.players}명`}
+          value={`${settings.maxPlayers}명`}
         />
         <SettingItem
           icon="replay"
           label="라운드"
-          value={`${settings.rounds} 라운드`}
+          value={`${settings.totalRounds} 라운드`}
         />
         <SettingItem
           icon="schedule"
           label="그리기 시간"
-          value={`${settings.timeLimit}초`}
+          value={`${settings.drawingTime}초`}
         />
         <SettingItem icon="draw" label="주제" value="랜덤" />
       </div>
