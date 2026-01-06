@@ -9,6 +9,12 @@ import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 
 @Injectable()
 export class GameService {
+  private readonly defaultGameSettings = {
+    drawingTime: 40,
+    maxPlayer: 5,
+    totalRounds: 1,
+  };
+
   constructor(
     private readonly cacheService: GameRoomCacheService,
     private readonly waitlistService: RoomWaitlistService,
@@ -23,7 +29,7 @@ export class GameService {
       players: [],
       phase: GamePhase.WAITING,
       currentRound: 0,
-      settings: { drawingTime: 40, maxPlayer: 8, totalRounds: 4 },
+      settings: this.defaultGameSettings,
     };
 
     await this.cacheService.saveRoom(roomId, gameRoom);
