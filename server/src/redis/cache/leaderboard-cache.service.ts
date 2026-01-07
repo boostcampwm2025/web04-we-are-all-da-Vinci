@@ -9,6 +9,14 @@ export class LeaderboardCacheService {
     return `leaderboard:${roomId}`;
   }
 
+  async initRanking(roomId: string, socketIds: string[]) {
+    const client = this.redisService.getClient();
+    const key = this.getKey(roomId);
+    const members = socketIds.map((id) => ({ score: 0, value: id }));
+
+    await client.zAdd(key, members);
+  }
+
   async updateScore(roomId: string, socketId: string, similarity: number) {
     const client = this.redisService.getClient();
     const key = this.getKey(roomId);
