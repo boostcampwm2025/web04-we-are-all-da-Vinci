@@ -12,7 +12,7 @@ import * as path from 'path';
 
 @Injectable()
 export class GameService {
-  private promptStrokes: Stroke[][] = [];
+  private promptStrokesData: Stroke[][] = [];
 
   constructor(
     private readonly cacheService: GameRoomCacheService,
@@ -124,13 +124,17 @@ export class GameService {
     room.currentRound = 1;
 
     await this.cacheService.saveRoom(roomId, room);
-    const promptStroke = this.promptStrokes[0];
-    return promptStroke;
+    const promptStrokes = this.promptStrokesData[0];
+    return promptStrokes;
   }
 
   private loadPromptStrokes(): void {
     const promptPath = path.join(process.cwd(), 'data', 'promptStrokes.json');
     const data = fs.readFileSync(promptPath, 'utf-8');
-    this.promptStrokes = JSON.parse(data) as Stroke[][];
+    this.promptStrokesData = JSON.parse(data) as Stroke[][];
+  }
+
+  async getRoom(roomId: string): Promise<GameRoom | null> {
+    return await this.cacheService.getRoom(roomId);
   }
 }
