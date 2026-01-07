@@ -6,6 +6,6 @@ import { RedisModule } from 'src/redis/redis.module';
 @Module({
   imports: [RedisModule],
   providers: [RoundGateway, RoundService],
-  exports: [RoundGateway],
+  exports: [RoundGateway, RoundService],
 })
 export class RoundModule {}
