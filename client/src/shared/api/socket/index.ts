@@ -20,4 +20,3 @@ export const disconnectSocket = (): void => {
     socket = null;
   }
 };
-
