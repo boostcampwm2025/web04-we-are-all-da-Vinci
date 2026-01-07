@@ -1,34 +1,38 @@
+import type { FinalResult } from '@/entities/gameResult';
 import { PodiumPlayer } from '@/entities/gameResult';
-import type { GameResultData } from '@/entities/gameResult';
 import { PATHS, TITLES } from '@/shared/config';
 import { CommonBtn, Title } from '@/shared/ui';
 
-const DUMMY_DATA: GameResultData = {
-  totalRounds: 10,
+const DUMMY_DATA: { totalRounds: number; players: FinalResult[] } = {
+  totalRounds: 3,
   players: [
     {
-      rank: 1,
+      socketId: 'socket1',
+      ranking: 1,
       nickname: 'User 1',
       score: 2400,
-      isCurrentUser: true,
+      totalScore: 24000,
     },
     {
-      rank: 2,
+      socketId: 'socket2',
+      ranking: 2,
       nickname: 'Player 2',
       score: 1850,
-      isCurrentUser: false,
+      totalScore: 18500,
     },
     {
-      rank: 3,
+      socketId: 'socket3',
+      ranking: 3,
       nickname: 'Player 3',
       score: 1200,
-      isCurrentUser: false,
+      totalScore: 12000,
     },
     {
-      rank: 4,
+      socketId: 'socket4',
+      ranking: 4,
       nickname: 'Player 4',
       score: 450,
-      isCurrentUser: false,
+      totalScore: 4500,
     },
   ],
 };
