@@ -38,10 +38,6 @@ export class PlayGateway {
     @MessageBody() payload: UserScoreDto,
   ) {
     const { roomId, similarity } = payload;
-    this.logger.info(
-      { clientId: client.id, roomId, similarity },
-      'User Updated Score',
-    );
 
     const rankings = await this.playService.updateScore(
       roomId,
@@ -49,6 +45,11 @@ export class PlayGateway {
       similarity,
     );
     this.server.to(roomId).emit(ClientEvents.ROOM_LEADERBOARD, { rankings });
+
+    this.logger.info(
+      { clientId: client.id, roomId, similarity },
+      'User Updated Score',
+    );
     return 'ok';
   }
 
