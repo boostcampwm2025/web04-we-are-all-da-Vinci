@@ -1,13 +1,15 @@
 interface DrawingToolbarProps {
   onColorSelect?: (color: string) => void;
-  onToolSelect?: (tool: 'pen' | 'eraser') => void;
+  onUndo?: () => void;
   onClear?: () => void;
+  canUndo?: boolean;
 }
 
 export const DrawingToolbar = ({
   onColorSelect,
-  onToolSelect,
+  onUndo,
   onClear,
+  canUndo = false,
 }: DrawingToolbarProps) => {
   return (
     <div className="flex shrink-0 items-center gap-4 border-b-2 border-gray-300 bg-gray-100 px-4 py-3">
@@ -38,18 +40,11 @@ export const DrawingToolbar = ({
 
       <div className="flex items-center gap-2">
         <button
-          onClick={() => onToolSelect?.('pen')}
-          className="rounded-lg p-2 transition-colors hover:bg-gray-200"
+          onClick={onUndo}
+          disabled={!canUndo}
+          className="rounded-lg p-2 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <span className="material-symbols-outlined text-gray-700">edit</span>
-        </button>
-        <button
-          onClick={() => onToolSelect?.('eraser')}
-          className="rounded-lg p-2 transition-colors hover:bg-gray-200"
-        >
-          <span className="material-symbols-outlined text-gray-700">
-            ink_eraser
-          </span>
+          <span className="material-symbols-outlined text-gray-700">undo</span>
         </button>
       </div>
 
