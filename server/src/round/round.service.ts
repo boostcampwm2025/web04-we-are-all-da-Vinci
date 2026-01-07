@@ -20,6 +20,7 @@ export class RoundService {
 
   private async movePrompt(room: GameRoom) {
     room.phase = GamePhase.PROMPT;
+    room.currentRound += 1;
 
     await this.cacheService.saveRoom(room.roomId, room);
 
