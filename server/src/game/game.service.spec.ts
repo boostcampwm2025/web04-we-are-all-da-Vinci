@@ -7,6 +7,7 @@ import { GameRoom } from '../common/types/game-room.types';
 import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
 import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { PinoLogger } from 'nestjs-pino';
+import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
 
 describe('GameService', () => {
   let service: GameService;
@@ -22,6 +23,10 @@ describe('GameService', () => {
     };
     const mockPlayerCacheService = {
       set: jest.fn(),
+      delete: jest.fn(),
+    };
+    const mockLeaderboardCacheService = {
+      update: jest.fn(),
       delete: jest.fn(),
     };
 
@@ -44,6 +49,10 @@ describe('GameService', () => {
         {
           provide: PlayerCacheService,
           useValue: mockPlayerCacheService,
+        },
+        {
+          provide: LeaderboardCacheService,
+          useValue: mockLeaderboardCacheService,
         },
         {
           provide: PinoLogger,
