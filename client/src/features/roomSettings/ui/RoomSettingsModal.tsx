@@ -34,7 +34,6 @@ const RoomSettingsModal = ({
         drawingTime: selectedTime,
       });
     }
-    onClose();
   };
 
   return (
