@@ -10,7 +10,7 @@ export const ServerEvents = {
 } as const;
 
 export const ClientEvents = {
-  // 클라이언트 -> 서버
+  // 서버 -> 클라이언트
   USER_WAITLIST: 'user:waitlist',
   ROOM_METADATA: 'room:metadata',
   ROOM_LEADERBOARD: 'room:leaderboard',
