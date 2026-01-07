@@ -1,26 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { GameRoom, Stroke } from 'src/common/types';
+import { GameRoom } from 'src/common/types';
 import { GamePhase } from 'src/common/constants';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { CreateRoomDto } from './dto/create-room.dto';
-import * as fs from 'fs';
-import * as path from 'path';
 
 @Injectable()
 export class GameService {
-  private promptStrokesData: Stroke[][] = [];
-
   constructor(
     private readonly cacheService: GameRoomCacheService,
     private readonly waitlistService: WaitlistCacheService,
     private readonly playerCacheService: PlayerCacheService,
-  ) {
-    this.loadPromptStrokes();
-  }
+  ) {}
 
   async createRoom(createRoomDto: CreateRoomDto) {
     const roomId = await this.generateRoomId();
@@ -120,18 +114,7 @@ export class GameService {
       throw new WebsocketException('방이 존재하지 않습니다.');
     }
 
-    room.phase = GamePhase.PROMPT;
-    room.currentRound = 1;
-
     await this.cacheService.saveRoom(roomId, room);
-    const promptStrokes = this.promptStrokesData[0];
-    return promptStrokes;
-  }
-
-  private loadPromptStrokes(): void {
-    const promptPath = path.join(process.cwd(), 'data', 'promptStrokes.json');
-    const data = fs.readFileSync(promptPath, 'utf-8');
-    this.promptStrokesData = JSON.parse(data) as Stroke[][];
   }
 
   async getRoom(roomId: string): Promise<GameRoom | null> {

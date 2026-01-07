@@ -17,6 +17,7 @@ import { GameService } from './game.service';
 import { GameRoom } from 'src/common/types';
 import { UseFilters } from '@nestjs/common';
 import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
+import { RoundGateway } from 'src/round/round.gateway';
 
 @WebSocketGateway({
   cors: {
@@ -32,6 +33,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly logger: PinoLogger,
     private readonly gameService: GameService,
+    private readonly roundGateway: RoundGateway,
   ) {
     this.logger.setContext(GameGateway.name);
   }
@@ -97,15 +99,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.info({ clientId: client.id, ...payload }, 'Game Started');
 
     const { roomId } = payload;
-    const promptStrokes = await this.gameService.startGame(roomId);
-    const room = await this.gameService.getRoom(roomId);
-
-    if (room) {
-      this.broadcastMetadata(room);
-      this.server.to(roomId).emit(ClientEvents.ROOM_PROMPT, {
-        promptStrokes: promptStrokes,
-      });
-    }
+    await this.gameService.startGame(roomId);
+    await this.roundGateway.startRound(roomId, 1);
 
     return 'ok';
   }
