@@ -1,4 +1,4 @@
-import { fetchJson } from '@/shared/api/rest';
+import { fetchClient } from '@/shared/api/rest';
 
 interface CreateRoomRequest {
   maxPlayer: number;
@@ -10,11 +10,11 @@ interface CreateRoomResponse {
   roomId: string;
 }
 
-export async function createRoom(
+export const createRoom = async (
   settings: CreateRoomRequest,
-): Promise<CreateRoomResponse> {
-  return fetchJson<CreateRoomResponse>('/room', {
+): Promise<CreateRoomResponse> => {
+  return fetchClient<CreateRoomResponse, CreateRoomRequest>('/room', {
     method: 'POST',
-    body: JSON.stringify(settings),
+    body: settings,
   });
-}
+};
