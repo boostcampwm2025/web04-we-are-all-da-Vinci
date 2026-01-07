@@ -9,8 +9,11 @@ import { UserScoreDto } from './dto/user-score.dto';
 import { UserDrawingDto } from './dto/user-drawing.dto';
 import { ServerEvents } from 'src/common/constants';
 import { PinoLogger } from 'nestjs-pino';
+import { UseFilters } from '@nestjs/common';
+import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
 
 @WebSocketGateway()
+@UseFilters(WebsocketExceptionFilter)
 export class PlayGateway {
   constructor(private readonly logger: PinoLogger) {
     this.logger.setContext(PlayGateway.name);

@@ -1,4 +1,4 @@
 export class UserScoreDto {
-  roomId: string;
-  similarity: number;
+  roomId!: string;
+  similarity!: number;
 }

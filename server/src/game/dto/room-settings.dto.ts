@@ -1,6 +1,6 @@
 export class RoomSettingsDto {
-  roomId: string;
-  maxPlayer: number;
-  totalRounds: number;
-  drawingTime: number;
+  roomId!: string;
+  maxPlayer!: number;
+  totalRounds!: number;
+  drawingTime!: number;
 }

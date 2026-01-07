@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { TITLES } from '@/shared/config';
-import { Title } from '@/shared/ui';
-import { RoomCodeCopy } from '@/features/roomCode';
 import { GameSettingsCard } from '@/entities/gameSettings';
 import { PlayerListSection } from '@/features/playerList';
-import { WaitingRoomActions } from '@/features/waitingRoomActions';
+import { RoomCodeCopy } from '@/features/roomCode';
 import { RoomSettingsModal, type RoomSettings } from '@/features/roomSettings';
+import { WaitingRoomActions } from '@/features/waitingRoomActions';
+import { TITLES } from '@/shared/config';
+import { Title } from '@/shared/ui';
+import { useState } from 'react';
 
 export const Waiting = () => {
   const [players] = useState([
@@ -16,9 +16,9 @@ export const Waiting = () => {
   ]);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [roomSettings, setRoomSettings] = useState<RoomSettings>({
-    players: 8,
-    rounds: 5,
-    timeLimit: 90,
+    maxPlayers: 8,
+    totalRounds: 5,
+    drawingTime: 90,
   });
 
   const roomId = 'ABC-1234';
@@ -53,7 +53,7 @@ export const Waiting = () => {
             <div className="flex-1">
               <PlayerListSection
                 players={players}
-                maxPlayers={roomSettings.players}
+                maxPlayers={roomSettings.maxPlayers}
                 roomCode={<RoomCodeCopy roomId={roomId} onCopy={copyRoomId} />}
               />
             </div>
