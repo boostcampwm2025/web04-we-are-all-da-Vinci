@@ -1,6 +1,7 @@
-import { Controller, Post } from '@nestjs/common';
-import { GameService } from './game.service';
+import { Body, Controller, Post } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
+import { CreateRoomDto } from './dto/create-room.dto';
+import { GameService } from './game.service';
 
 @Controller()
 export class GameController {
@@ -12,10 +13,10 @@ export class GameController {
   }
 
   @Post('room')
-  async createRoom() {
-    const roomId = await this.gameService.createRoom();
+  async createRoom(@Body() createRoomDto: CreateRoomDto) {
+    const roomId = await this.gameService.createRoom(createRoomDto);
 
-    this.logger.info({ roomId }, 'New Room Created');
+    this.logger.info({ roomId, settings: createRoomDto }, 'New Room Created');
     return { roomId };
   }
 }

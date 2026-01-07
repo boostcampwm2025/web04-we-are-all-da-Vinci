@@ -22,7 +22,7 @@ import { PinoLogger } from 'nestjs-pino';
 })
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   constructor(private readonly logger: PinoLogger) {
     this.logger.setContext(GameGateway.name);

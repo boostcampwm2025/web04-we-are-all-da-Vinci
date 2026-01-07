@@ -1,5 +1,4 @@
-export class RoomSettingsDto {
-  roomId!: string;
+export class CreateRoomDto {
   maxPlayer!: number;
   totalRounds!: number;
   drawingTime!: number;
