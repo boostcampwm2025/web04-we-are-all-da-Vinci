@@ -4,6 +4,9 @@ import { GameService } from './game.service';
 import { GameRoomCacheService } from '../redis/cache/game-room-cache.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { GameRoom } from '../common/types/game-room.types';
+import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
+import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
+import { PinoLogger } from 'nestjs-pino';
 
 describe('GameService', () => {
   let service: GameService;
@@ -14,6 +17,18 @@ describe('GameService', () => {
       getRoom: jest.fn(),
       saveRoom: jest.fn(),
     };
+    const mockWaitlistService = {
+      addPlayer: jest.fn(),
+    };
+    const mockPlayerCacheService = {
+      set: jest.fn(),
+      delete: jest.fn(),
+    };
+
+    const mockLogger = {
+      info: jest.fn(),
+      error: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -21,6 +36,18 @@ describe('GameService', () => {
         {
           provide: GameRoomCacheService,
           useValue: mockCacheService,
+        },
+        {
+          provide: WaitlistCacheService,
+          useValue: mockWaitlistService,
+        },
+        {
+          provide: PlayerCacheService,
+          useValue: mockPlayerCacheService,
+        },
+        {
+          provide: PinoLogger,
+          useValue: mockLogger,
         },
       ],
     }).compile();
