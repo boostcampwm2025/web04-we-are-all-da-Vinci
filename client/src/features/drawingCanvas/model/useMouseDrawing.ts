@@ -1,27 +1,17 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import type { RefObject } from 'react';
 
 interface UseMouseDrawingOptions {
   canvasRef: RefObject<HTMLCanvasElement | null>;
   ctxRef: RefObject<CanvasRenderingContext2D | null>;
-  onAddStroke?: (stroke: Stroke) => void; // stroke 추가 시 호출
-}
-
-// TODO : 미지가 추가해준 타입 파일에서 가져오기로 수정!
-interface Stroke {
-  points: [number[], number[]];
-  color: [number, number, number];
 }
 
 // 마우스 이벤트로 캔버스에 그리는 기능을 제공하는 훅
-// 마우스 이벤트를 처리하고 완성된 스트로크를 콜백으로 전달
 export const useMouseDrawing = ({
   canvasRef,
   ctxRef,
-  onAddStroke,
 }: UseMouseDrawingOptions) => {
   const [isDrawing, setIsDrawing] = useState(false);
-  const currentStrokeRef = useRef<[number[], number[]] | null>(null);
 
   // 브라우저 마우스 좌표를 캔버스 내부 픽셀 좌표로 변환
   const getMousePosOnCanvas = (e: React.MouseEvent) => {
@@ -47,8 +37,6 @@ export const useMouseDrawing = ({
     ctx.beginPath();
     ctx.moveTo(x, y);
     setIsDrawing(true);
-
-    currentStrokeRef.current = [[x], [y]];
   };
 
   // 그리기 진행
@@ -59,9 +47,6 @@ export const useMouseDrawing = ({
     const { x, y } = getMousePosOnCanvas(e);
     ctx.lineTo(x, y);
     ctx.stroke();
-
-    currentStrokeRef.current?.[0].push(x);
-    currentStrokeRef.current?.[1].push(y);
   };
 
   // 그리기 종료
@@ -71,17 +56,6 @@ export const useMouseDrawing = ({
 
     ctx.closePath();
     setIsDrawing(false);
-
-    if (currentStrokeRef.current) {
-      const newStroke: Stroke = {
-        points: currentStrokeRef.current,
-        color: [0, 0, 0], // TODO: 색상 기능 추가 시 수정 필요
-      };
-
-      // stroke 추가 콜백 호출
-      onAddStroke?.(newStroke);
-      currentStrokeRef.current = null;
-    }
   };
 
   // 마우스가 캔버스 밖으로 나갔을 때 그리기 종료
