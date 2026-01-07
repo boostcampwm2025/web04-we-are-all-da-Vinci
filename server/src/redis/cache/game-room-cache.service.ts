@@ -15,6 +15,10 @@ export class GameRoomCacheService {
     return `active:rooms`;
   }
 
+  private getPlayerListKey(roomId: string) {
+    return `room:${roomId}:players`;
+  }
+
   async saveRoom(roomId: string, gameRoom: GameRoom) {
     const client = this.redisService.getClient();
     const key = this.getRoomKey(roomId);
@@ -53,5 +57,31 @@ export class GameRoomCacheService {
     const client = this.redisService.getClient();
     await client.sRem(this.getActiveRoomsKey(), roomId);
     await client.del(this.getRoomKey(roomId));
+  }
+
+  async addPlayer(roomId: string, player: Player) {
+    const client = this.redisService.getClient();
+    const key = this.getPlayerListKey(roomId);
+
+    await client.zAdd(key, {
+      score: Date.now(),
+      value: JSON.stringify(player),
+    });
+  }
+
+  async deletePlayer(roomId: string, player: Player) {
+    const client = this.redisService.getClient();
+    const key = this.getPlayerListKey(roomId);
+
+    await client.zRem(key, JSON.stringify(player));
+  }
+
+  async getAllPlayers(roomId: string): Promise<Player[]> {
+    const client = this.redisService.getClient();
+    const key = this.getPlayerListKey(roomId);
+
+    return (await client.zRange(key, 0, -1)).map(
+      (value) => JSON.parse(value) as Player,
+    );
   }
 }
