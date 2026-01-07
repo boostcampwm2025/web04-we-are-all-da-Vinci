@@ -3,7 +3,8 @@ import type { RoundResult } from '@/entities/roundResult/model';
 import type { Phase } from '@/shared/config';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import type { GameRoom, Player } from './types';
+import type { GameRoom } from './types';
+import type { Player } from '@/entities/player/model';
 import { getSocket } from '@/shared/api/socket';
 
 interface GameState extends GameRoom {
