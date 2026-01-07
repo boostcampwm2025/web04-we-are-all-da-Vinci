@@ -11,6 +11,7 @@ import { RoundService } from './round.service';
 import { PinoLogger } from 'nestjs-pino';
 import { UserDrawingDto } from 'src/play/dto/user-drawing.dto';
 import { RoomGameEndDto } from './dto/room-game-end.dto';
+import { RoomRoundEndDto } from './dto/room-round-end.dto';
 
 @WebSocketGateway({
   cors: {
@@ -48,8 +49,14 @@ export class RoundGateway {
     const roomId = payload.roomId;
     const room = await this.roundService.endRound(roomId);
 
+    // 임시 라운드 결과값
+    const roundResult: RoomRoundEndDto = {
+      rankings: [],
+      promptStrokes: [],
+    };
+
     this.server.to(roomId).emit(ClientEvents.ROOM_METADATA, room);
-    this.server.to(roomId).emit(ClientEvents.ROOM_ROUND_END);
+    this.server.to(roomId).emit(ClientEvents.ROOM_ROUND_END, roundResult);
 
     setTimeout(() => {
       void (async () => {
