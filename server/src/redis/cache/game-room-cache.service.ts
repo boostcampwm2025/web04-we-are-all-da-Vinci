@@ -46,4 +46,8 @@ export class GameRoomCacheService {
     await client.sRem('active:rooms', roomId);
     await client.del(`room:${roomId}`);
   }
+
+  async getPlayers(roomId: string) {
+    return (await this.getRoom(roomId))?.players;
+  }
 }

@@ -3,19 +3,32 @@ import {
   MessageBody,
   SubscribeMessage,
   WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { UserScoreDto } from './dto/user-score.dto';
 import { UserDrawingDto } from './dto/user-drawing.dto';
-import { ServerEvents } from 'src/common/constants';
+import { ClientEvents, ServerEvents } from 'src/common/constants';
 import { PinoLogger } from 'nestjs-pino';
 import { UseFilters } from '@nestjs/common';
 import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
+import { PlayService } from './play.service';
 
-@WebSocketGateway()
+@WebSocketGateway({
+  cors: {
+    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [],
+    credentials: true,
+  },
+})
 @UseFilters(WebsocketExceptionFilter)
 export class PlayGateway {
-  constructor(private readonly logger: PinoLogger) {
+  @WebSocketServer()
+  server!: Server;
+
+  constructor(
+    private readonly logger: PinoLogger,
+    private readonly playService: PlayService,
+  ) {
     this.logger.setContext(PlayGateway.name);
   }
 
@@ -24,7 +37,18 @@ export class PlayGateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: UserScoreDto,
   ) {
-    this.logger.info({ clientId: client.id, ...payload }, 'User Updated Score');
+    const { roomId, similarity } = payload;
+    this.logger.info(
+      { clientId: client.id, roomId, similarity },
+      'User Updated Score',
+    );
+
+    const rankings = this.playService.updateScore(
+      roomId,
+      client.id,
+      similarity,
+    );
+    this.server.to(roomId).emit(ClientEvents.ROOM_LEADERBOARD, { rankings });
     return 'ok';
   }
 
