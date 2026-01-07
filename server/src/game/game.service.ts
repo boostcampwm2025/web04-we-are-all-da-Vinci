@@ -6,22 +6,17 @@ import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { RoomWaitlistService } from 'src/redis/cache/room-waitlist.service';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
+import { CreateRoomDto } from './dto/create-room.dto';
 
 @Injectable()
 export class GameService {
-  private readonly defaultGameSettings = {
-    drawingTime: 40,
-    maxPlayer: 5,
-    totalRounds: 1,
-  };
-
   constructor(
     private readonly cacheService: GameRoomCacheService,
     private readonly waitlistService: RoomWaitlistService,
     private readonly playerCacheService: PlayerCacheService,
   ) {}
 
-  async createRoom() {
+  async createRoom(createRoomDto: CreateRoomDto) {
     const roomId = await this.generateRoomId();
 
     const gameRoom: GameRoom = {
@@ -29,7 +24,11 @@ export class GameService {
       players: [],
       phase: GamePhase.WAITING,
       currentRound: 0,
-      settings: this.defaultGameSettings,
+      settings: {
+        drawingTime: createRoomDto.drawingTime,
+        maxPlayer: createRoomDto.maxPlayer,
+        totalRounds: createRoomDto.totalRounds,
+      },
     };
 
     await this.cacheService.saveRoom(roomId, gameRoom);

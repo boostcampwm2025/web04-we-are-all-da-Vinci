@@ -35,7 +35,7 @@ export class GameRoomCacheService {
     return {
       roomId: data.roomId,
       players: JSON.parse(data.players) as Player[],
-      phase: data.phase as GameRoom['phase'],
+      phase: data.phase,
       currentRound: parseInt(data.currentRound),
       settings: JSON.parse(data.settings) as Settings,
     };

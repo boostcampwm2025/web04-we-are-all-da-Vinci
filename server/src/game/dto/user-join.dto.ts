@@ -1,4 +1,4 @@
 export class UserJoinDto {
-  roomId: string;
-  nickname: string;
+  roomId!: string;
+  nickname!: string;
 }

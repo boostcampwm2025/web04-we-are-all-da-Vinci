@@ -8,9 +8,9 @@ interface SettingsModalProps {
 }
 
 export interface RoomSettings {
-  players: number;
-  rounds: number;
-  timeLimit: number;
+  maxPlayers: number;
+  totalRounds: number;
+  drawingTime: number;
 }
 
 const RoomSettingsModal = ({
@@ -20,21 +20,20 @@ const RoomSettingsModal = ({
 }: SettingsModalProps) => {
   const [selectedPlayers, setSelectedPlayers] = useState(4);
   const [selectedRounds, setSelectedRounds] = useState(5);
-  const [selectedTime, setSelectedTime] = useState(90);
+  const [selectedTime, setSelectedTime] = useState(15);
 
-  const playerOptions = [2, 3, 4, 5, 6, 20];
+  const playerOptions = [2, 3, 4, 5, 6, 8];
   const roundOptions = [3, 5, 7, 10];
-  const timeOptions = [60, 90, 120, 180];
+  const timeOptions = [15, 30, 45, 60];
 
   const handleComplete = () => {
     if (onComplete) {
       onComplete({
-        players: selectedPlayers,
-        rounds: selectedRounds,
-        timeLimit: selectedTime,
+        maxPlayers: selectedPlayers,
+        totalRounds: selectedRounds,
+        drawingTime: selectedTime,
       });
     }
-    onClose();
   };
 
   return (

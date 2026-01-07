@@ -1,3 +1,3 @@
 export class RoomTimerDto {
-  timeLeft: number;
+  timeLeft!: number;
 }

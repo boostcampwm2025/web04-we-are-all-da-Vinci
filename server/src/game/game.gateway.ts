@@ -27,7 +27,7 @@ import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-except
 @UseFilters(WebsocketExceptionFilter)
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   constructor(
     private readonly logger: PinoLogger,

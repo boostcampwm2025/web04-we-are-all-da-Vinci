@@ -1,3 +1,3 @@
 export class RoomStartDto {
-  roomId: string;
+  roomId!: string;
 }
