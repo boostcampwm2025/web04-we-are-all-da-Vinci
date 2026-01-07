@@ -64,7 +64,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         'Client Joined Game.',
       );
 
-      client.join(room.roomId);
+      await client.join(room.roomId);
       this.broadcastMetadata(room);
     } else {
       this.logger.info(
