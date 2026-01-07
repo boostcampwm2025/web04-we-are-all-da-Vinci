@@ -1,10 +1,10 @@
 import type { FinalResult } from '@/entities/gameResult/model';
-import type { Player } from '@/entities/player/model';
 import type { RoundResult } from '@/entities/roundResult/model';
 import type { Phase } from '@/shared/config';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import type { GameRoom } from './types';
+import type { GameRoom, Player } from './types';
+import { getSocket } from '@/shared/api/socket';
 
 interface GameState extends GameRoom {
   // 소켓 연결 상태
@@ -13,7 +13,7 @@ interface GameState extends GameRoom {
   // 실시간 데이터
   timer: number;
   liveScores: Record<string, number>; // socketId -> 유사도
-  promptImage: string;
+  promptImage: string; // TODO: promptImage 기능 완성되면 연동할 예정
 
   // 결과 데이터
   roundResults: RoundResult[];
@@ -91,4 +91,16 @@ export const useCurrentPlayer = (): Player | null => {
 export const useIsHost = (): boolean => {
   const currentPlayer = useCurrentPlayer();
   return currentPlayer?.isHost ?? false;
+};
+
+// Helper: 특정 socketId가 현재 유저인지 확인
+export const useIsCurrentUser = (socketId: string): boolean => {
+  const isConnected = useGameStore((state) => state.isConnected);
+
+  if (!isConnected) return false;
+
+  const socket = getSocket();
+  const mySocketId = socket?.id;
+
+  return mySocketId === socketId;
 };
