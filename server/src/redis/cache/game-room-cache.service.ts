@@ -25,7 +25,6 @@ export class GameRoomCacheService {
 
     await client.hSet(key, {
       roomId,
-      players: JSON.stringify(gameRoom.players),
       phase: gameRoom.phase,
       currentRound: String(gameRoom.currentRound),
       settings: JSON.stringify(gameRoom.settings),
@@ -37,16 +36,18 @@ export class GameRoomCacheService {
 
   async getRoom(roomId: string) {
     const client = this.redisService.getClient();
-    const key = `room:${roomId}`;
+    const key = this.getRoomKey(roomId);
     const data = await client.hGetAll(key);
 
     if (!data || Object.keys(data).length === 0) {
       return null;
     }
 
+    const players = await this.getAllPlayers(roomId);
+
     return {
       roomId: data.roomId,
-      players: JSON.parse(data.players) as Player[],
+      players: players,
       phase: data.phase,
       currentRound: parseInt(data.currentRound),
       settings: JSON.parse(data.settings) as Settings,
@@ -55,6 +56,7 @@ export class GameRoomCacheService {
 
   async deleteRoom(roomId: string) {
     const client = this.redisService.getClient();
+    await client.del(this.getPlayerListKey(roomId));
     await client.sRem(this.getActiveRoomsKey(), roomId);
     await client.del(this.getRoomKey(roomId));
   }
@@ -67,6 +69,8 @@ export class GameRoomCacheService {
       score: Date.now(),
       value: JSON.stringify(player),
     });
+
+    await client.expire(key, REDIS_TTL);
   }
 
   async deletePlayer(roomId: string, player: Player) {
