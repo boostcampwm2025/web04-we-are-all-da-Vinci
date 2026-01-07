@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '../redis.service';
+import { REDIS_TTL } from 'src/common/constants';
 
 @Injectable()
 export class LeaderboardCacheService {
@@ -15,6 +16,8 @@ export class LeaderboardCacheService {
     const members = socketIds.map((id) => ({ score: 0, value: id }));
 
     await client.zAdd(key, members);
+
+    await client.expire(key, REDIS_TTL);
   }
 
   async updateScore(roomId: string, socketId: string, similarity: number) {

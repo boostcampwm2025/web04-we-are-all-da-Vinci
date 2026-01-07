@@ -33,7 +33,7 @@ export class PlayGateway {
   }
 
   @SubscribeMessage(ServerEvents.USER_SCORE)
-  updateScore(
+  async updateScore(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: UserScoreDto,
   ) {
@@ -43,7 +43,7 @@ export class PlayGateway {
       'User Updated Score',
     );
 
-    const rankings = this.playService.updateScore(
+    const rankings = await this.playService.updateScore(
       roomId,
       client.id,
       similarity,

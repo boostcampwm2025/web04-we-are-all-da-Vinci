@@ -34,13 +34,14 @@ export class PlayService {
       }),
       {},
     );
-    const rankings = (await this.leaderboardCacheService.getAll(roomId)).map(
-      ({ value, score }) => ({
-        socketId: value,
-        similarity: score,
-        nickname: idNicknameMapper[value],
-      }),
-    );
+    const leaderboard = await this.leaderboardCacheService.getAll(roomId);
+    const rankings = leaderboard.map(({ value, score }) => ({
+      socketId: value,
+      similarity: score,
+      nickname: idNicknameMapper[value],
+    }));
+
+    this.logger.debug({ rankings, players, leaderboard });
 
     return rankings;
   }
