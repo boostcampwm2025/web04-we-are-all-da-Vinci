@@ -9,7 +9,7 @@ import { Timer } from '@/shared/ui';
 
 export const Drawing = () => {
   const navigate = useNavigate();
-  const [timeLeft, setTimeLeft] = useState(5);
+  const [timeLeft, setTimeLeft] = useState(30);
 
   useEffect(() => {
     if (timeLeft > 0) {
@@ -26,7 +26,7 @@ export const Drawing = () => {
     <>
       <div className="absolute top-8 right-8 z-20">
         <div className="relative inline-block">
-          <Timer time={5} />
+          <Timer time={30} />
         </div>
       </div>
       <div className="flex h-screen w-full items-center justify-center px-4 py-4">
