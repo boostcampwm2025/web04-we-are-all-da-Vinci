@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { PATHS } from '@/shared/config';
 import { RankingCard } from '@/entities/ranking';
 import { DrawingHeader, RankingPanel } from '@/entities/drawing';
-import { DrawingToolbar } from '@/features/drawingToolbar';
 import { DrawingCanvas } from '@/features/drawingCanvas';
 import { RoundBadge } from '@/shared/ui/round';
 import { Timer } from '@/shared/ui';
@@ -39,10 +38,7 @@ export const Drawing = () => {
 
           <div className="flex min-h-0 flex-1 gap-4">
             <div className="flex min-h-0 flex-1 flex-col">
-              <div className="flex h-full flex-col overflow-hidden rounded-2xl border-4 border-gray-800 bg-white shadow-2xl">
-                <DrawingToolbar />
-                <DrawingCanvas />
-              </div>
+              <DrawingCanvas />
             </div>
 
             <RankingPanel>
