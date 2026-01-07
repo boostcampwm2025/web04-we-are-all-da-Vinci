@@ -1,8 +1,8 @@
 interface PlayerCardProps {
-  id: number;
+  id: string;
   nickname: string;
-  status: string;
   isHost: boolean;
+  status?: string;
 }
 
 const PlayerCard = ({ id, isHost, nickname, status }: PlayerCardProps) => {
@@ -30,7 +30,9 @@ const PlayerCard = ({ id, isHost, nickname, status }: PlayerCardProps) => {
         </g>
       </svg>
       <div className="font-handwriting mb-1 text-lg font-bold">{nickname}</div>
-      <div className="font-handwriting text-sm text-gray-500">{status}</div>
+      {status && (
+        <div className="font-handwriting text-sm text-gray-500">{status}</div>
+      )}
     </div>
   );
 };

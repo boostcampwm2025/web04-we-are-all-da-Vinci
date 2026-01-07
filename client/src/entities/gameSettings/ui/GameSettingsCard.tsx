@@ -1,8 +1,8 @@
-import type { RoomSettings } from '@/features/roomSettings';
+import type { Settings } from '@/entities/gameRoom/model';
 import { SettingItem } from './SettingItem';
 
 interface GameSettingsCardProps {
-  settings: RoomSettings;
+  settings: Settings;
 }
 
 export const GameSettingsCard = ({ settings }: GameSettingsCardProps) => {
@@ -15,7 +15,7 @@ export const GameSettingsCard = ({ settings }: GameSettingsCardProps) => {
         <SettingItem
           icon="group"
           label="최대 인원"
-          value={`${settings.maxPlayers}명`}
+          value={`${settings.maxPlayer}명`}
         />
         <SettingItem
           icon="replay"
