@@ -107,4 +107,36 @@ export class GameService {
     await this.playerCacheService.set(socketId, roomId);
     return room;
   }
+
+  async startGame(roomId: string, socketId: string): Promise<GameRoom> {
+    const room = await this.cacheService.getRoom(roomId);
+
+    if (!room) {
+      throw new WebsocketException('방이 존재하지 않습니다.');
+    }
+
+    if (room.phase !== GamePhase.WAITING) {
+      throw new WebsocketException('게임이 이미 진행 중입니다.');
+    }
+
+    const player = room.players.find((player) => player.socketId === socketId);
+
+    if (!player) {
+      throw new WebsocketException(
+        '플레이어가 존재하지 않습니다. 재접속이 필요합니다.',
+      );
+    }
+
+    if (!player.isHost) {
+      throw new WebsocketException('방장 권한이 없습니다.');
+    }
+
+    if (room.players.length < 2) {
+      throw new WebsocketException('게임을 시작하려면 최소 2명이 필요합니다.');
+    }
+
+    // TODO: 게임 시작
+
+    return room;
+  }
 }

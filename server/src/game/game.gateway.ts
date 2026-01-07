@@ -90,10 +90,17 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage(ServerEvents.ROOM_START)
-  startGame(
+  async startGame(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: RoomStartDto,
-  ): string {
+  ): Promise<string> {
+    const { roomId } = payload;
+    const room = await this.gameService.startGame(roomId, client.id);
+    if (!room) {
+      this.logger.error({ clientId: client.id, room }, 'Game Not Started');
+      return 'false';
+    }
+    this.broadcastMetadata(room);
     this.logger.info({ clientId: client.id, ...payload }, 'Game Started');
     return 'ok';
   }
