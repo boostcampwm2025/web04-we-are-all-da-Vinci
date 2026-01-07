@@ -3,14 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { PATHS } from '@/shared/config';
 import { RankingCard } from '@/entities/ranking';
 import { DrawingHeader, RankingPanel } from '@/entities/drawing';
-import { DrawingToolbar } from '@/features/drawingToolbar';
 import { DrawingCanvas } from '@/features/drawingCanvas';
 import { RoundBadge } from '@/shared/ui/round';
 import { Timer } from '@/shared/ui';
 
 export const Drawing = () => {
   const navigate = useNavigate();
-  const [timeLeft, setTimeLeft] = useState(5);
+  const [timeLeft, setTimeLeft] = useState(30);
 
   useEffect(() => {
     if (timeLeft > 0) {
@@ -27,7 +26,7 @@ export const Drawing = () => {
     <>
       <div className="absolute top-8 right-8 z-20">
         <div className="relative inline-block">
-          <Timer time={5} />
+          <Timer time={30} />
         </div>
       </div>
       <div className="flex h-screen w-full items-center justify-center px-4 py-4">
@@ -37,37 +36,36 @@ export const Drawing = () => {
             roundBadge={<RoundBadge round={1} />}
           />
 
-          <div className="flex min-h-0 flex-1 gap-4">
-            <div className="flex min-h-0 flex-1 flex-col">
-              <div className="flex h-full flex-col overflow-hidden rounded-2xl border-4 border-gray-800 bg-white shadow-2xl">
-                <DrawingToolbar />
-                <DrawingCanvas />
-              </div>
+          <div className="flex min-h-0 flex-1 items-center justify-center gap-6">
+            <div className="aspect-square h-full">
+              <DrawingCanvas />
             </div>
 
-            <RankingPanel>
-              <RankingCard
-                rank={1}
-                icon="account_circle"
-                nickname="User 1"
-                percent={82}
-                color="blue"
-              />
-              <RankingCard
-                rank={2}
-                icon="account_circle"
-                nickname="Player 2"
-                percent={45}
-                color="yellow"
-              />
-              <RankingCard
-                rank={3}
-                icon="account_circle"
-                nickname="Player 3"
-                percent={12}
-                color="purple"
-              />
-            </RankingPanel>
+            <div className="h-full">
+              <RankingPanel>
+                <RankingCard
+                  rank={1}
+                  icon="account_circle"
+                  nickname="User 1"
+                  percent={82}
+                  color="blue"
+                />
+                <RankingCard
+                  rank={2}
+                  icon="account_circle"
+                  nickname="Player 2"
+                  percent={45}
+                  color="yellow"
+                />
+                <RankingCard
+                  rank={3}
+                  icon="account_circle"
+                  nickname="Player 3"
+                  percent={12}
+                  color="purple"
+                />
+              </RankingPanel>
+            </div>
           </div>
         </div>
       </div>

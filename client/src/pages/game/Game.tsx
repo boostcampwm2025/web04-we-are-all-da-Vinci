@@ -15,7 +15,7 @@ const GAME_PHASE_COMPONENT_MAP = {
 const Game = () => {
   //   const [gamePhase, setGamePhase] = useState<GamePhase>('WAITING');
 
-  const gamePhase = 'GAME_END';
+  const gamePhase = 'DRAWING';
   const PhaseComponent = GAME_PHASE_COMPONENT_MAP[gamePhase];
 
   return <PhaseComponent />;
