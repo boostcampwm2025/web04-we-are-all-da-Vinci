@@ -1,19 +1,41 @@
+import { useEffect } from 'react';
 import { useCanvasSetup } from '@/shared/model/useCanvasSetup';
 import { useMouseDrawing } from '../model/useMouseDrawing';
+import { useStrokes } from '../model/useStrokes';
+import { useColorSelection } from '../model/useColorSelection';
+import { DrawingToolbar } from '@/features/drawingToolbar/ui/DrawingToolbar';
 import { CANVAS_CONFIG } from '@/shared/config';
+import { drawStrokesOnCanvas } from '../lib/drawStrokesOnCanvas';
 
 // 기본 그리기 기능을 제공하는 캔버스 컴포넌트
 export const DrawingCanvas = () => {
   const { canvasRef, ctxRef } = useCanvasSetup();
 
+  const { strokes, canUndo, handleAddStroke, handleClearStrokes, handleUndo } =
+    useStrokes();
+  const { selectedColor, handleColorSelect } = useColorSelection();
+
+  // strokes 변경 시 캔버스 다시 그리기
+  useEffect(() => {
+    drawStrokesOnCanvas(canvasRef, ctxRef, strokes);
+  }, [canvasRef, ctxRef, strokes]);
+
   const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseOut } =
     useMouseDrawing({
       canvasRef,
       ctxRef,
+      selectedColor,
+      onAddStroke: handleAddStroke,
     });
 
   return (
     <div className="flex aspect-square w-full flex-col overflow-hidden rounded-2xl border-4 border-gray-800 bg-white shadow-2xl">
+      <DrawingToolbar
+        onColorSelect={handleColorSelect}
+        onUndo={handleUndo}
+        onClear={handleClearStrokes}
+        canUndo={canUndo}
+      />
       <div className="relative aspect-square w-full bg-white">
         <canvas
           ref={canvasRef}
