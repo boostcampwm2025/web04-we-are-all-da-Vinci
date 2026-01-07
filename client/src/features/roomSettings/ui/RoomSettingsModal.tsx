@@ -20,7 +20,7 @@ const RoomSettingsModal = ({
 }: SettingsModalProps) => {
   const [selectedPlayers, setSelectedPlayers] = useState(4);
   const [selectedRounds, setSelectedRounds] = useState(5);
-  const [selectedTime, setSelectedTime] = useState(90);
+  const [selectedTime, setSelectedTime] = useState(15);
 
   const playerOptions = [2, 3, 4, 5, 6, 8];
   const roundOptions = [3, 5, 7, 10];
