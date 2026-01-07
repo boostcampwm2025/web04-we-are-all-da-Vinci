@@ -11,7 +11,7 @@ import {
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const LandingPage = () => {
+const Main = () => {
   const navigate = useNavigate();
   const [showNicknameModal, setShowNicknameModal] = useState(() => {
     return !localStorage.getItem('nickname');
@@ -131,4 +131,4 @@ const LandingPage = () => {
   );
 };
 
-export default LandingPage;
+export default Main;

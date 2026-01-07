@@ -1,13 +1,13 @@
 import type { RouteObject } from 'react-router-dom';
 import { PATHS } from '@/shared/config';
-import LandingPage from '@/pages/main/Landingpage';
 
 import { Game } from '@/pages/game';
+import Main from '@/pages/main/Main';
 
 export const routes: RouteObject[] = [
   {
     path: PATHS.HOME,
-    element: <LandingPage />,
+    element: <Main />,
   },
   {
     path: PATHS.GAME,
