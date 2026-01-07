@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { useCanvasSetup } from '@/shared/model/useCanvasSetup';
-import { useMouseDrawing } from '../model/useMouseDrawing';
-import { useStrokes } from '../model/useStrokes';
-import { useColorSelection } from '../model/useColorSelection';
+import { useMouseDrawing } from '@/features/drawingCanvas/model/useMouseDrawing';
+import { useStrokes } from '@/features/drawingCanvas/model/useStrokes';
+import { useColorSelection } from '@/features/drawingCanvas/model/useColorSelection';
 import { DrawingToolbar } from '@/features/drawingToolbar/ui/DrawingToolbar';
 import { CANVAS_CONFIG } from '@/shared/config';
-import { drawStrokesOnCanvas } from '../lib/drawStrokesOnCanvas';
+import { drawStrokesOnCanvas } from '@/features/drawingCanvas/lib/drawStrokesOnCanvas';
 
 // 기본 그리기 기능을 제공하는 캔버스 컴포넌트
 export const DrawingCanvas = () => {
