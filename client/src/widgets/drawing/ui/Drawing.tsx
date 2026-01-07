@@ -36,34 +36,36 @@ export const Drawing = () => {
             roundBadge={<RoundBadge round={1} />}
           />
 
-          <div className="flex min-h-0 flex-1 gap-4">
-            <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 items-center justify-center gap-6">
+            <div className="aspect-square h-full">
               <DrawingCanvas />
             </div>
 
-            <RankingPanel>
-              <RankingCard
-                rank={1}
-                icon="account_circle"
-                nickname="User 1"
-                percent={82}
-                color="blue"
-              />
-              <RankingCard
-                rank={2}
-                icon="account_circle"
-                nickname="Player 2"
-                percent={45}
-                color="yellow"
-              />
-              <RankingCard
-                rank={3}
-                icon="account_circle"
-                nickname="Player 3"
-                percent={12}
-                color="purple"
-              />
-            </RankingPanel>
+            <div className="h-full">
+              <RankingPanel>
+                <RankingCard
+                  rank={1}
+                  icon="account_circle"
+                  nickname="User 1"
+                  percent={82}
+                  color="blue"
+                />
+                <RankingCard
+                  rank={2}
+                  icon="account_circle"
+                  nickname="Player 2"
+                  percent={45}
+                  color="yellow"
+                />
+                <RankingCard
+                  rank={3}
+                  icon="account_circle"
+                  nickname="Player 3"
+                  percent={12}
+                  color="purple"
+                />
+              </RankingPanel>
+            </div>
           </div>
         </div>
       </div>

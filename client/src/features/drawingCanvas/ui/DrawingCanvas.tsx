@@ -13,8 +13,8 @@ export const DrawingCanvas = () => {
     });
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border-4 border-gray-800 bg-white shadow-2xl">
-      <div className="relative min-h-0 flex-1 bg-white">
+    <div className="flex aspect-square w-full flex-col overflow-hidden rounded-2xl border-4 border-gray-800 bg-white shadow-2xl">
+      <div className="relative aspect-square w-full bg-white">
         <canvas
           ref={canvasRef}
           width={CANVAS_CONFIG.width}
