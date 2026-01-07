@@ -1,12 +1,7 @@
-export interface PlayerResult {
-  rank: number;
+export interface FinalResult {
+  socketId: string;
   nickname: string;
   score: number;
-  isCurrentUser?: boolean;
-  avatar?: string;
-}
-
-export interface GameResultData {
-  players: PlayerResult[];
-  totalRounds: number;
+  ranking: number;
+  totalScore: number;
 }
