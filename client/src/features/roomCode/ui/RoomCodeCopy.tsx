@@ -10,7 +10,7 @@ export const RoomCodeCopy = ({ roomId, onCopy }: RoomCodeCopyProps) => {
         tag
       </span>
       <span className="text-base font-bold text-gray-700">
-        ROOM ID: {roomId}
+        친구들을 초대하세요!: {roomId}
       </span>
       <button
         onClick={onCopy}
