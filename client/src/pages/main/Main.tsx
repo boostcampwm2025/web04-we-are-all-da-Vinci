@@ -30,20 +30,17 @@ const Main = () => {
 
   const handleSettingsComplete = async (settings: RoomSettings) => {
     try {
-      // TODO: 룸아이디 반환 후 처리하는 것 고민해야함 어떻게 프론트에서 저장할지, 초대 URL에 포함
-      // const { roomId } = await createRoom({
-      await createRoom({
+      const { roomId } = await createRoom({
         maxPlayer: settings.maxPlayers,
         totalRounds: settings.totalRounds,
         drawingTime: settings.drawingTime,
       });
 
-      setShowSettingsModal(false); // 성공 시에만 모달 닫기
-      navigate(PATHS.GAME);
+      setShowSettingsModal(false);
+      navigate(`${PATHS.GAME}/${roomId}`);
     } catch (error) {
       console.error('Failed to create room:', error);
       globalThis.alert('방 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.');
-      // 실패 시 모달은 열린 상태 유지 → 사용자가 재시도 가능
     }
   };
 
