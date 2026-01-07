@@ -7,6 +7,7 @@ import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { CreateRoomDto } from './dto/create-room.dto';
+import { RoundService } from 'src/round/round.service';
 
 @Injectable()
 export class GameService {
@@ -14,6 +15,7 @@ export class GameService {
     private readonly cacheService: GameRoomCacheService,
     private readonly waitlistService: WaitlistCacheService,
     private readonly playerCacheService: PlayerCacheService,
+    private readonly roundService: RoundService,
   ) {}
 
   async createRoom(createRoomDto: CreateRoomDto) {
@@ -135,8 +137,7 @@ export class GameService {
       throw new WebsocketException('게임을 시작하려면 최소 2명이 필요합니다.');
     }
 
-    // TODO: 게임 시작
-
+    await this.roundService.nextPhase(room);
     return room;
   }
 }

@@ -1,4 +1,5 @@
 export const REDIS_TTL = 3600;
+export const PROMPT_MS = 5 * 1000;
 
 export const ServerEvents = {
   // 클라이언트 -> 서버
