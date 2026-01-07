@@ -1,31 +1,31 @@
+import {
+  selectPlayers,
+  selectSettings,
+  useGameStore,
+  useIsHost,
+} from '@/entities/gameRoom/model';
 import { GameSettingsCard } from '@/entities/gameSettings';
 import { PlayerListSection } from '@/features/playerList';
 import { RoomCodeCopy } from '@/features/roomCode';
 import { RoomSettingsModal, type RoomSettings } from '@/features/roomSettings';
 import { WaitingRoomActions } from '@/features/waitingRoomActions';
-import { TITLES } from '@/shared/config';
+import { getSocket } from '@/shared/api/socket';
+import { SERVER_EVENTS, TITLES } from '@/shared/config';
 import { Title } from '@/shared/ui';
 import { useState } from 'react';
 
 export const Waiting = () => {
-  const [players] = useState([
-    { id: 1, nickname: '나(방장)', status: '준비완료', isHost: true },
-    { id: 2, nickname: '김그림', status: '대기중', isHost: false },
-    { id: 3, nickname: 'ArtMaster', status: '대기중', isHost: false },
-    { id: 4, nickname: '낙서왕', status: '대기중', isHost: false },
-  ]);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [roomSettings, setRoomSettings] = useState<RoomSettings>({
-    maxPlayers: 8,
-    totalRounds: 5,
-    drawingTime: 90,
-  });
 
-  const roomId = 'ABC-1234';
+  // Zustand에서 실제 데이터 가져오기
+  const roomId = useGameStore((state) => state.roomId);
+  const players = useGameStore(selectPlayers);
+  const settings = useGameStore(selectSettings);
+  const isHostUser = useIsHost();
 
   const copyRoomId = () => {
-    navigator.clipboard.writeText(roomId);
-    alert('방 코드가 복사되었습니다!');
+    navigator.clipboard.writeText(window.location.href);
+    alert('방 링크가 복사되었습니다!');
   };
 
   const handleSettingsChange = () => {
@@ -33,9 +33,19 @@ export const Waiting = () => {
   };
 
   const handleSettingsComplete = (settings: RoomSettings) => {
-    setRoomSettings(settings);
-    console.log('Updated room settings:', settings);
-    // TODO: 방 설정 업데이트 API 호출
+    const socket = getSocket();
+    socket.emit(SERVER_EVENTS.ROOM_SETTINGS, {
+      roomId,
+      maxPlayer: settings.maxPlayers,
+      totalRounds: settings.totalRounds,
+      drawingTime: settings.drawingTime,
+    });
+    setShowSettingsModal(false);
+  };
+
+  const handleStartGame = () => {
+    const socket = getSocket();
+    socket.emit(SERVER_EVENTS.ROOM_START, { roomId });
   };
 
   return (
@@ -53,14 +63,19 @@ export const Waiting = () => {
             <div className="flex-1">
               <PlayerListSection
                 players={players}
-                maxPlayers={roomSettings.maxPlayers}
+                maxPlayer={settings.maxPlayer}
                 roomCode={<RoomCodeCopy roomId={roomId} onCopy={copyRoomId} />}
               />
             </div>
 
             <div className="flex w-96 flex-col justify-center gap-4">
-              <GameSettingsCard settings={roomSettings} />
-              <WaitingRoomActions onSettingsClick={handleSettingsChange} />
+              <GameSettingsCard settings={settings} />
+              <WaitingRoomActions
+                onSettingsClick={handleSettingsChange}
+                onStartClick={handleStartGame}
+                isHost={isHostUser}
+                canStart={players.length >= 2}
+              />
             </div>
           </div>
         </div>
