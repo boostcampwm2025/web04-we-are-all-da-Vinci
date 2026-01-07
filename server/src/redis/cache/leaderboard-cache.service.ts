@@ -34,10 +34,10 @@ export class LeaderboardCacheService {
     return await client.zRangeWithScores(key, 0, -1, { REV: true });
   }
 
-  async delete(roomId: string) {
+  async delete(roomId: string, socketId: string) {
     const client = this.redisService.getClient();
     const key = this.getKey(roomId);
 
-    await client.del(key);
+    await client.zRem(key, socketId);
   }
 }
