@@ -48,14 +48,16 @@ export const captureMessage = (
   Sentry.captureMessage(message, level);
 };
 
-export const setUser = (user: {
-  id: string;
-  email?: string;
-  username?: string;
-}) => {
-  Sentry.setUser(user);
-};
+// 로그인 들어가면 넣기? 사용자 정보와 함께 에러 기록 가능
 
-export const clearUser = () => {
-  Sentry.setUser(null);
-};
+// export const setUser = (user: {
+//   id: string;
+//   email?: string;
+//   username?: string;
+// }) => {
+//   Sentry.setUser(user);
+// };
+
+// export const clearUser = () => {
+//   Sentry.setUser(null);
+// };
