@@ -18,9 +18,9 @@ describe('방 생성 API', () => {
     } as Response);
 
     const settings = {
-      maxPlayer: 4,
-      totalRounds: 5,
-      drawingTime: 90,
+      maxPlayer: 4, // playerOptions: [2, 3, 4, 5, 6, 8]
+      totalRounds: 5, // roundOptions: [3, 5, 7, 10]
+      drawingTime: 60, // timeOptions: [15, 30, 45, 60]
     };
 
     const result = await createRoom(settings);
@@ -46,9 +46,9 @@ describe('방 생성 API', () => {
     } as Response);
 
     const result = await createRoom({
-      maxPlayer: 6,
-      totalRounds: 10,
-      drawingTime: 120,
+      maxPlayer: 6, // playerOptions: [2, 3, 4, 5, 6, 8]
+      totalRounds: 10, // roundOptions: [3, 5, 7, 10]
+      drawingTime: 45, // timeOptions: [15, 30, 45, 60]
     });
 
     expect(result.roomId).toBe(mockRoomId);
@@ -62,9 +62,9 @@ describe('방 생성 API', () => {
 
     await expect(
       createRoom({
-        maxPlayer: 4,
-        totalRounds: 5,
-        drawingTime: 90,
+        maxPlayer: 4, // playerOptions: [2, 3, 4, 5, 6, 8]
+        totalRounds: 5, // roundOptions: [3, 5, 7, 10]
+        drawingTime: 30, // timeOptions: [15, 30, 45, 60]
       }),
     ).rejects.toThrow('HTTP error! status: 500');
   });
@@ -76,9 +76,9 @@ describe('방 생성 API', () => {
     } as Response);
 
     const customSettings = {
-      maxPlayer: 20,
-      totalRounds: 3,
-      drawingTime: 60,
+      maxPlayer: 8, // playerOptions: [2, 3, 4, 5, 6, 8]
+      totalRounds: 3, // roundOptions: [3, 5, 7, 10]
+      drawingTime: 15, // timeOptions: [15, 30, 45, 60]
     };
 
     await createRoom(customSettings);

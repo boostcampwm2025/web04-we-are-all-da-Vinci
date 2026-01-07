@@ -58,7 +58,7 @@ describe('랜딩페이지 - 방 생성', () => {
       expect(screen.getByText('방 설정')).toBeInTheDocument();
     });
 
-    // 설정 선택 (기본값: 4명, 5라운드, 90초)
+    // 설정 선택 (기본값: 4명, 5라운드, 15초)
     const completeButton = screen.getByText('완료');
     fireEvent.click(completeButton);
 
@@ -66,7 +66,7 @@ describe('랜딩페이지 - 방 생성', () => {
       expect(mockCreateRoom).toHaveBeenCalledWith({
         maxPlayer: 4,
         totalRounds: 5,
-        drawingTime: 90,
+        drawingTime: 15,
       });
     });
   });
@@ -75,6 +75,7 @@ describe('랜딩페이지 - 방 생성', () => {
     const consoleErrorSpy = vi
       .spyOn(console, 'error')
       .mockImplementation(() => {});
+    const alertSpy = vi.spyOn(globalThis, 'alert').mockImplementation(() => {});
 
     vi.spyOn(createRoomAPI, 'createRoom').mockRejectedValue(
       new Error('API Error'),
@@ -100,7 +101,16 @@ describe('랜딩페이지 - 방 생성', () => {
       );
     });
 
+    // 에러 발생 시 alert 표시
+    expect(alertSpy).toHaveBeenCalledWith(
+      '방 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+    );
+
+    // 에러 발생 시 모달은 여전히 열려있음 (재시도 가능)
+    expect(screen.getByText('방 설정')).toBeInTheDocument();
+
     consoleErrorSpy.mockRestore();
+    alertSpy.mockRestore();
   });
 
   it('방 생성 성공 후 설정 모달을 닫는다', async () => {
