@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { RedisService } from '../redis.service';
 
 @Injectable()
-export class RoomWaitlistService {
+export class WaitlistCacheService {
   constructor(private readonly redisService: RedisService) {}
 
   private getKey(roomId: string) {

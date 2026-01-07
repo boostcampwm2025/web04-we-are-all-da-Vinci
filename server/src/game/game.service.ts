@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { GameRoom } from 'src/common/types';
 import { GamePhase } from 'src/common/constants';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
-import { RoomWaitlistService } from 'src/redis/cache/room-waitlist.service';
+import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { CreateRoomDto } from './dto/create-room.dto';
@@ -12,7 +12,7 @@ import { CreateRoomDto } from './dto/create-room.dto';
 export class GameService {
   constructor(
     private readonly cacheService: GameRoomCacheService,
-    private readonly waitlistService: RoomWaitlistService,
+    private readonly waitlistService: WaitlistCacheService,
     private readonly playerCacheService: PlayerCacheService,
   ) {}
 
