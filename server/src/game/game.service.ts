@@ -47,7 +47,6 @@ export class GameService {
     if (!room) {
       return null;
     }
-
     const players = await this.cacheService.getAllPlayers(roomId);
 
     const target = players.find((player) => player.socketId === socketId);
@@ -56,10 +55,10 @@ export class GameService {
       return null;
     }
 
-    if (target.isHost && players.length > 0) {
+    if (target.isHost && players.length > 1) {
       const nextHost = players[1];
-      await this.cacheService.deletePlayer(roomId, nextHost);
       await this.cacheService.addPlayer(roomId, { ...nextHost, isHost: true });
+      await this.cacheService.deletePlayer(roomId, nextHost);
     }
 
     await this.cacheService.deletePlayer(roomId, target);
