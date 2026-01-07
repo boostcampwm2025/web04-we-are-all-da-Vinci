@@ -7,9 +7,17 @@ import { REDIS_TTL } from 'src/common/constants';
 export class GameRoomCacheService {
   constructor(private readonly redisService: RedisService) {}
 
+  private getRoomKey(roomId: string) {
+    return `room:${roomId}:info`;
+  }
+
+  private getActiveRoomsKey() {
+    return `active:rooms`;
+  }
+
   async saveRoom(roomId: string, gameRoom: GameRoom) {
     const client = this.redisService.getClient();
-    const key = `room:${roomId}`;
+    const key = this.getRoomKey(roomId);
 
     await client.hSet(key, {
       roomId,
@@ -20,7 +28,7 @@ export class GameRoomCacheService {
     });
 
     await client.expire(key, REDIS_TTL);
-    await client.sAdd('active:rooms', roomId);
+    await client.sAdd(this.getActiveRoomsKey(), roomId);
   }
 
   async getRoom(roomId: string) {
@@ -43,7 +51,7 @@ export class GameRoomCacheService {
 
   async deleteRoom(roomId: string) {
     const client = this.redisService.getClient();
-    await client.sRem('active:rooms', roomId);
-    await client.del(`room:${roomId}`);
+    await client.sRem(this.getActiveRoomsKey(), roomId);
+    await client.del(this.getRoomKey(roomId));
   }
 }
