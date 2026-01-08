@@ -37,19 +37,27 @@ export class TimerCacheService {
 
   async getAllTimers(): Promise<Timer[]> {
     const client = this.redisService.getClient();
-    const keys = await client.keys('timer:*');
-    if (keys.length === 0) return [];
-
     const timers = [];
-    for (const key of keys) {
-      const data = await client.hGetAll(key);
-      if (data && Object.keys(data).length > 0) {
-        timers.push({
-          roomId: data.roomId,
-          timeLeft: parseInt(data.timeLeft),
-        });
+
+    // Use SCAN instead of KEYS to avoid blocking Redis
+    let cursor = '0';
+    do {
+      const result = await client.scan(cursor, {
+        MATCH: 'timer:*',
+        COUNT: 100,
+      });
+      cursor = result.cursor;
+
+      for (const key of result.keys) {
+        const data = await client.hGetAll(key);
+        if (data && Object.keys(data).length > 0) {
+          timers.push({
+            roomId: data.roomId,
+            timeLeft: parseInt(data.timeLeft),
+          });
+        }
       }
-    }
+    } while (cursor !== '0');
 
     return timers;
   }
