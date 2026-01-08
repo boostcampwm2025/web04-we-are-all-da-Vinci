@@ -17,6 +17,8 @@ import { GameService } from './game.service';
 import { GameRoom } from 'src/common/types';
 import { UseFilters } from '@nestjs/common';
 import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
+import { RoundService } from 'src/round/round.service';
+import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 
 @WebSocketGateway({
   cors: {
@@ -32,6 +34,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly logger: PinoLogger,
     private readonly gameService: GameService,
+    private readonly roundService: RoundService,
+    private readonly cacheService: GameRoomCacheService,
   ) {
     this.logger.setContext(GameGateway.name);
   }
@@ -90,10 +94,41 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage(ServerEvents.ROOM_START)
-  startGame(
+  async startGame(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: RoomStartDto,
-  ): string {
+  ): Promise<string> {
+    const { roomId } = payload;
+    const { room, result } = await this.gameService.startGame(
+      roomId,
+      client.id,
+    );
+    if (!result) {
+      this.logger.error({ clientId: client.id }, 'Game Not Started');
+      return 'false';
+    }
+
+    // WAITING -> PROMPT
+    const { promptStrokes } = result;
+
+    this.broadcastMetadata(room);
+    this.server.to(roomId).emit(ClientEvents.ROOM_PROMPT, {
+      promptStrokes,
+    });
+
+    // 5초 후 PROMPT -> DRAWING으로 전환
+    setTimeout(() => {
+      void (async () => {
+        const updatedRoom = await this.cacheService.getRoom(roomId);
+        if (!updatedRoom) {
+          return;
+        }
+
+        await this.roundService.nextPhase(updatedRoom);
+        this.broadcastMetadata(updatedRoom);
+      })();
+    }, 5000);
+
     this.logger.info({ clientId: client.id, ...payload }, 'Game Started');
     return 'ok';
   }
