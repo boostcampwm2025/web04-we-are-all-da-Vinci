@@ -1,10 +1,9 @@
 import { selectTimer, useGameStore } from '@/entities/gameRoom/model';
-
-const URGENT_THRESHOLD = 5;
+import { TIMER } from '../config';
 
 export const Timer = () => {
   const timer = useGameStore(selectTimer);
-  const isUrgent = timer <= URGENT_THRESHOLD && timer > 0;
+  const isUrgent = timer <= TIMER.URGENT_THRESHOLD && timer > TIMER.LOWER_LIMIT;
 
   return (
     <div className="absolute top-8 right-8 z-20">
