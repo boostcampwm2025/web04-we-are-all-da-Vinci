@@ -91,7 +91,7 @@ export const useGameSocket = () => {
     socket.on(
       CLIENT_EVENTS.USER_WAITLIST,
       ({ roomId: waitRoomId }: { roomId: string }) => {
-        console.log(waitRoomId)
+        console.log(waitRoomId);
         alert('현재 게임이 진행 중입니다. 다음 라운드부터 참여할 수 있습니다.');
       },
     );
