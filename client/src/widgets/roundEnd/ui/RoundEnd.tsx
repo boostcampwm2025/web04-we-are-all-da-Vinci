@@ -1,11 +1,12 @@
 import { RankingCard } from '@/entities/ranking';
 import {
-  RoundResultHeader,
-  ReferenceImageCard,
-  PlayerDrawingCard,
   NextRoundIndicator,
+  PlayerDrawingCard,
   RankingList,
+  ReferenceImageCard,
+  RoundResultHeader,
 } from '@/entities/roundResult';
+import { Timer } from '@/entities/timer';
 
 export const RoundEnd = () => {
   const rankings = [
@@ -39,6 +40,7 @@ export const RoundEnd = () => {
 
   return (
     <>
+      <Timer />
       <div className="flex h-screen w-full items-center justify-center px-4 py-4">
         <div className="flex h-full w-full max-w-5xl flex-col">
           <RoundResultHeader title="Round Results" />
