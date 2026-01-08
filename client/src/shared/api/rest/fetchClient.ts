@@ -41,6 +41,10 @@ export const fetchClient = async <TResponse, TBody = unknown>(
 
     return response.json();
   } catch (error) {
+    if (error instanceof Error && error.message.startsWith('HTTP error!')) {
+      throw error;
+    }
+
     Sentry.captureException(error, {
       tags: {
         error_type: 'fetch_error',
