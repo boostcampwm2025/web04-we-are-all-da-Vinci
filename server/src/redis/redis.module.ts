@@ -4,6 +4,7 @@ import { RedisController } from './redis.controller';
 import { GameRoomCacheService } from './cache/game-room-cache.service';
 import { WaitlistCacheService } from './cache/waitlist-cache.service';
 import { PlayerCacheService } from './cache/player-cache.service';
+import { TimerCacheService } from './cache/timer-cache.service';
 
 @Module({
   providers: [
@@ -11,6 +12,7 @@ import { PlayerCacheService } from './cache/player-cache.service';
     GameRoomCacheService,
     WaitlistCacheService,
     PlayerCacheService,
+    TimerCacheService,
   ],
   controllers: [RedisController],
   exports: [
@@ -18,6 +20,7 @@ import { PlayerCacheService } from './cache/player-cache.service';
     GameRoomCacheService,
     WaitlistCacheService,
     PlayerCacheService,
+    TimerCacheService,
   ],
 })
 export class RedisModule {}

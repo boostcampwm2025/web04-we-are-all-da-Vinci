@@ -14,6 +14,7 @@ import { RoomGameEndDto } from './dto/room-game-end.dto';
 import { RoomRoundEndDto } from './dto/room-round-end.dto';
 import { RoomPromptDto } from './dto/room-prompt.dto';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
+import { TimerService } from 'src/timer/timer.service';
 
 @WebSocketGateway({
   cors: {
@@ -29,6 +30,7 @@ export class RoundGateway {
     private readonly logger: PinoLogger,
     private readonly roundService: RoundService,
     private readonly cacheService: GameRoomCacheService,
+    private readonly timerService: TimerService,
   ) {
     this.logger.setContext(RoundGateway.name);
   }
@@ -54,6 +56,7 @@ export class RoundGateway {
     this.server.to(roomId).emit(ClientEvents.ROOM_ROUND_END, roundResult);
 
     // 10초 후 다음 라운드 또는 게임 종료
+    await this.timerService.startTimer(roomId, 10);
     setTimeout(() => {
       void (async () => {
         const updatedRoom = await this.cacheService.getRoom(roomId);
@@ -78,6 +81,7 @@ export class RoundGateway {
           this.server.to(roomId).emit(ClientEvents.ROOM_PROMPT, promptResult);
 
           // 5초 후 PROMPT -> DRAWING으로 전환
+          await this.timerService.startTimer(roomId, 5);
           setTimeout(() => {
             void (async () => {
               const drawingRoom = await this.cacheService.getRoom(roomId);
@@ -86,6 +90,10 @@ export class RoundGateway {
               }
 
               // PROMPT -> DRAWING
+              await this.timerService.startTimer(
+                roomId,
+                drawingRoom.settings.drawingTime,
+              );
               await this.roundService.nextPhase(drawingRoom);
               this.server
                 .to(roomId)

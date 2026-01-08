@@ -54,6 +54,19 @@ export class TimerCacheService {
     return timers;
   }
 
+  async decrementTimer(roomId: string) {
+    const timer = await this.getTimer(roomId);
+    if (!timer) return null;
+    const updatedTimeLeft = timer.timeLeft - 1;
+    if (updatedTimeLeft <= 0) {
+      await this.deleteTimer(roomId);
+      return 0;
+    }
+
+    await this.addTimer(roomId, updatedTimeLeft);
+    return updatedTimeLeft;
+  }
+
   async deleteTimer(roomId: string) {
     const client = this.redisService.getClient();
     const key = this.getKey(roomId);
