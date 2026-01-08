@@ -19,6 +19,7 @@ import { UseFilters } from '@nestjs/common';
 import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
 import { RoundService } from 'src/round/round.service';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
+import { TimerService } from 'src/timer/timer.service';
 
 @WebSocketGateway({
   cors: {
@@ -36,6 +37,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly gameService: GameService,
     private readonly roundService: RoundService,
     private readonly cacheService: GameRoomCacheService,
+    private readonly timerService: TimerService,
   ) {
     this.logger.setContext(GameGateway.name);
   }
@@ -117,6 +119,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
 
     // 5초 후 PROMPT -> DRAWING으로 전환
+    await this.timerService.startTimer(roomId, 5);
     setTimeout(() => {
       void (async () => {
         const updatedRoom = await this.cacheService.getRoom(roomId);
@@ -124,6 +127,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           return;
         }
 
+        await this.timerService.startTimer(roomId, room.settings.drawingTime);
         await this.roundService.nextPhase(updatedRoom);
         this.broadcastMetadata(updatedRoom);
       })();
