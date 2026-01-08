@@ -21,7 +21,7 @@ export class PlayService {
       similarity,
     );
 
-    const players = await this.cacheService.getPlayers(roomId);
+    const players = await this.cacheService.getAllPlayers(roomId);
     if (!players) {
       this.logger.error('게임 방 데이터 오류');
       throw new WebsocketException('서버 오류');

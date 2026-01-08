@@ -88,8 +88,4 @@ export class GameRoomCacheService {
       (value) => JSON.parse(value) as Player,
     );
   }
-
-  async getPlayers(roomId: string) {
-    return (await this.getRoom(roomId))?.players;
-  }
 }
