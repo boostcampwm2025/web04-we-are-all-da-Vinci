@@ -98,8 +98,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: RoomStartDto,
   ): Promise<string> {
-    this.logger.info({ clientId: client.id, ...payload }, 'Game Started');
-
     const { roomId } = payload;
     const { room, result } = await this.gameService.startGame(
       roomId,
@@ -131,6 +129,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       })();
     }, 5000);
 
+    this.logger.info({ clientId: client.id, ...payload }, 'Game Started');
     return 'ok';
   }
 

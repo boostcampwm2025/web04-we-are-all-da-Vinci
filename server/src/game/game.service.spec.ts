@@ -25,7 +25,9 @@ describe('GameService', () => {
       set: jest.fn(),
       delete: jest.fn(),
     };
-    const mockRoundService = {};
+    const mockRoundService = {
+      nextPhase: jest.fn(),
+    };
 
     const mockLogger = {
       info: jest.fn(),
