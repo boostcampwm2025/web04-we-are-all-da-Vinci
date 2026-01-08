@@ -24,7 +24,7 @@ export const Waiting = () => {
   const isHostUser = useIsHost();
 
   const copyRoomId = () => {
-    navigator.clipboard.writeText(window.location.href);
+    navigator.clipboard.writeText(globalThis.location.href);
     alert('방 링크가 복사되었습니다!');
   };
 
@@ -42,8 +42,19 @@ export const Waiting = () => {
     });
     setShowSettingsModal(false);
   };
-
   const handleStartGame = () => {
+    // 검증: roomId가 없으면 이벤트 발생 방지
+    if (!roomId) {
+      console.error('Cannot start game: 룸아이디가 있어야 가능');
+      return;
+    }
+
+    // 검증: 방장이 아니면 게임 시작 불가
+    if (!isHostUser) {
+      console.error('Cannot start game: 방장만 가능');
+      return;
+    }
+
     const socket = getSocket();
     socket.emit(SERVER_EVENTS.ROOM_START, { roomId });
   };
@@ -74,7 +85,7 @@ export const Waiting = () => {
                 onSettingsClick={handleSettingsChange}
                 onStartClick={handleStartGame}
                 isHost={isHostUser}
-                canStart={players.length >= 2}
+                canStart={!!roomId && players.length >= 2}
               />
             </div>
           </div>

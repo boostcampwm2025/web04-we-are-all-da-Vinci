@@ -81,11 +81,19 @@ export const selectPhase = (state: GameState) => state.phase;
 export const selectLiveScores = (state: GameState) => state.liveScores;
 export const selectTimer = (state: GameState) => state.timer;
 
-// Helper: 현재 플레이어 찾기
+// Helper: 현재 플레이어 찾기 (소켓 ID 기반)
 export const useCurrentPlayer = (): Player | null => {
   const players = useGameStore(selectPlayers);
-  const nickname = localStorage.getItem('nickname');
-  return players.find((p) => p.nickname === nickname) || null;
+  const isConnected = useGameStore((state) => state.isConnected);
+
+  if (!isConnected) return null;
+
+  const socket = getSocket();
+  const mySocketId = socket?.id;
+
+  if (!mySocketId) return null;
+
+  return players.find((p) => p.socketId === mySocketId) || null;
 };
 
 // Helper: 호스트 여부 확인
