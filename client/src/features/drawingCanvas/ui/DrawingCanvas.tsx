@@ -4,8 +4,11 @@ import { useMouseDrawing } from '@/features/drawingCanvas/model/useMouseDrawing'
 import { useStrokes } from '@/features/drawingCanvas/model/useStrokes';
 import { useColorSelection } from '@/features/drawingCanvas/model/useColorSelection';
 import { DrawingToolbar } from '@/features/drawingToolbar/ui/DrawingToolbar';
-import { CANVAS_CONFIG } from '@/shared/config';
+import { CANVAS_CONFIG, SERVER_EVENTS } from '@/shared/config';
 import { drawStrokesOnCanvas } from '@/features/drawingCanvas/lib/drawStrokesOnCanvas';
+import { useGameStore, selectPhase } from '@/entities/gameRoom/model';
+import { calculateFinalSimilarity } from '@/features/similarity/lib';
+import { getSocket } from '@/shared/api/socket';
 
 // 기본 그리기 기능을 제공하는 캔버스 컴포넌트
 export const DrawingCanvas = () => {
@@ -17,13 +20,33 @@ export const DrawingCanvas = () => {
 
   const strokeCountRef = useRef(strokes.length);
 
-  // strokes 길이가 줄어들 때만 캔버스 다시 그리기 (undo/clear)
+  const phase = useGameStore(selectPhase);
+  const promptStrokes = useGameStore((state) => state.promptStrokes);
+  const roomId = useGameStore((state) => state.roomId);
+
+  // strokes가 변경될 때마다 유사도 계산 및 점수 전송
   useEffect(() => {
+    try {
+      const similarity = calculateFinalSimilarity(promptStrokes, strokes);
+
+      // 서버에 점수 전송
+      const socket = getSocket();
+
+      socket.emit(SERVER_EVENTS.USER_SCORE, {
+        roomId,
+        similarity: similarity.similarity,
+      });
+    } catch (error) {
+      console.error('Failed to calculate/send similarity:', error);
+    }
+
+    // strokes 길이가 줄어들 때는 캔버스 다시 그리기 (undo/clear)
     if (strokes.length < strokeCountRef.current) {
       drawStrokesOnCanvas(canvasRef, ctxRef, strokes);
     }
+
     strokeCountRef.current = strokes.length;
-  }, [canvasRef, ctxRef, strokes]);
+  }, [strokes, phase, promptStrokes, roomId, canvasRef, ctxRef]);
 
   const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseOut } =
     useMouseDrawing({
