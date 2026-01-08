@@ -2,6 +2,7 @@ import type { FinalResult } from '@/entities/gameResult/model';
 import type { GameRoom } from '@/entities/gameRoom/model';
 import { useGameStore } from '@/entities/gameRoom/model';
 import type { RoundResult } from '@/entities/roundResult/model';
+import type { Stroke } from '@/entities/similarity';
 import { disconnectSocket, getSocket } from '@/shared/api/socket';
 import { CLIENT_EVENTS, SERVER_EVENTS } from '@/shared/config';
 import { useEffect } from 'react';
@@ -16,7 +17,7 @@ export const useGameSocket = () => {
   const updateRoom = useGameStore((state) => state.updateRoom);
   const setTimer = useGameStore((state) => state.setTimer);
   const setLiveScores = useGameStore((state) => state.setLiveScores);
-  const setPromptImage = useGameStore((state) => state.setPromptImage);
+  const setPromptStrokes = useGameStore((state) => state.setPromptStrokes);
   const setRoundResults = useGameStore((state) => state.setRoundResults);
   const setFinalResults = useGameStore((state) => state.setFinalResults);
 
@@ -74,9 +75,12 @@ export const useGameSocket = () => {
       },
     );
 
-    socket.on(CLIENT_EVENTS.ROOM_PROMPT, (imageUrl: string) => {
-      setPromptImage(imageUrl);
-    });
+    socket.on(
+      CLIENT_EVENTS.ROOM_PROMPT,
+      ({ promptStrokes }: { promptStrokes: Stroke[] }) => {
+        setPromptStrokes(promptStrokes);
+      },
+    );
 
     // 결과
     socket.on(CLIENT_EVENTS.ROOM_ROUND_END, (results: RoundResult[]) => {
@@ -124,7 +128,7 @@ export const useGameSocket = () => {
     updateRoom,
     setTimer,
     setLiveScores,
-    setPromptImage,
+    setPromptStrokes,
     setRoundResults,
     setFinalResults,
   ]);

@@ -6,6 +6,7 @@ import { devtools } from 'zustand/middleware';
 import type { GameRoom } from './types';
 import type { Player } from '@/entities/player/model';
 import { getSocket } from '@/shared/api/socket';
+import type { Stroke } from '@/entities/similarity';
 
 interface GameState extends GameRoom {
   // 소켓 연결 상태
@@ -14,7 +15,7 @@ interface GameState extends GameRoom {
   // 실시간 데이터
   timer: number;
   liveScores: Record<string, number>; // socketId -> 유사도
-  promptImage: string; // TODO: promptImage 기능 완성되면 연동할 예정
+  promptStrokes: Stroke[];
 
   // 결과 데이터
   roundResults: RoundResult[];
@@ -25,7 +26,7 @@ interface GameState extends GameRoom {
   updateRoom: (room: Partial<GameRoom>) => void;
   setTimer: (timer: number) => void;
   setLiveScores: (scores: Record<string, number>) => void;
-  setPromptImage: (imageUrl: string) => void;
+  setPromptStrokes: (strokes: Stroke[]) => void;
   setRoundResults: (results: RoundResult[]) => void;
   setFinalResults: (results: FinalResult[]) => void;
   reset: () => void;
@@ -44,7 +45,7 @@ const initialState = {
   },
   timer: 0,
   liveScores: {},
-  promptImage: '', // TODO: promptImage 기능 완성되면 연동할 예정
+  promptStrokes: [],
   roundResults: [],
   finalResults: [],
 };
@@ -62,7 +63,7 @@ export const useGameStore = create<GameState>()(
 
       setLiveScores: (liveScores) => set({ liveScores }),
 
-      setPromptImage: (promptImage) => set({ promptImage }),
+      setPromptStrokes: (promptStrokes) => set({ promptStrokes }),
 
       setRoundResults: (roundResults) => set({ roundResults }),
 

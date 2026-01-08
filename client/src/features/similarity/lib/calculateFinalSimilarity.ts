@@ -6,6 +6,7 @@ export const calculateFinalSimilarity = (
   promptStrokes: Stroke[], // 제시 그림 스트로크
   playerStrokes: Stroke[], // 사용자 그림 스트로크
 ) => {
+  if (playerStrokes.length === 0) return { similarity: 0 };
   const normalizedPromptStrokes = normalizeStrokes(promptStrokes);
   const normalizedPlayerStrokes = normalizeStrokes(playerStrokes);
 
