@@ -15,14 +15,14 @@ export const DrawingCanvas = () => {
     useStrokes();
   const { selectedColor, handleColorSelect } = useColorSelection();
 
-  const prevLengthRef = useRef(strokes.length);
+  const strokeCountRef = useRef(strokes.length);
 
   // strokes 길이가 줄어들 때만 캔버스 다시 그리기 (undo/clear)
   useEffect(() => {
-    if (strokes.length < prevLengthRef.current) {
+    if (strokes.length < strokeCountRef.current) {
       drawStrokesOnCanvas(canvasRef, ctxRef, strokes);
     }
-    prevLengthRef.current = strokes.length;
+    strokeCountRef.current = strokes.length;
   }, [canvasRef, ctxRef, strokes]);
 
   const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseOut } =
