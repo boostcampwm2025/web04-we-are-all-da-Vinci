@@ -7,6 +7,7 @@ import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { CreateRoomDto } from './dto/create-room.dto';
+import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
 import { RoundService } from 'src/round/round.service';
 import { RoomPromptDto } from 'src/round/dto/room-prompt.dto';
 
@@ -16,6 +17,7 @@ export class GameService {
     private readonly cacheService: GameRoomCacheService,
     private readonly waitlistService: WaitlistCacheService,
     private readonly playerCacheService: PlayerCacheService,
+    private readonly leaderboardCacheService: LeaderboardCacheService,
     private readonly roundService: RoundService,
   ) {}
 
@@ -66,6 +68,7 @@ export class GameService {
 
     await this.cacheService.deletePlayer(roomId, target);
     await this.playerCacheService.delete(socketId);
+    await this.leaderboardCacheService.delete(roomId, socketId);
 
     const updatedRoom = await this.cacheService.getRoom(roomId);
     return updatedRoom;
@@ -110,6 +113,7 @@ export class GameService {
     });
 
     await this.playerCacheService.set(socketId, roomId);
+    await this.leaderboardCacheService.updateScore(roomId, socketId, 0);
 
     const updatedRoom = await this.cacheService.getRoom(roomId);
     return updatedRoom;
