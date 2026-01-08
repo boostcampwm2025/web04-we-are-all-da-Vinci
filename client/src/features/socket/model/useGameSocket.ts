@@ -63,8 +63,8 @@ export const useGameSocket = () => {
     });
 
     // 실시간 데이터
-    socket.on(CLIENT_EVENTS.ROOM_TIMER, (time: number) => {
-      setTimer(time);
+    socket.on(CLIENT_EVENTS.ROOM_TIMER, ({ timeLeft }: { timeLeft: number }) => {
+      setTimer(timeLeft);
     });
 
     socket.on(
