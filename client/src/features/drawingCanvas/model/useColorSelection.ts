@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Color } from '@/entities/similarity/model';
-import { COLOR_MAP } from '@/features/drawingCanvas/constants/colors';
+import { COLOR_MAP } from '@/features/drawingCanvas/config/colors';
 
 // 색상 선택 상태와 핸들러를 관리하는 훅
 export const useColorSelection = (initialColor: Color = [0, 0, 0]) => {
