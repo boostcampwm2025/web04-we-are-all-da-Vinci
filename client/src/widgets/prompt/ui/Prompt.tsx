@@ -1,8 +1,11 @@
 import { Timer } from '@/entities/timer';
 import { RoundBadge } from '@/shared/ui/round';
 import { GameStartHeader, ImagePreviewCard } from '@/entities/gameStart';
+import { useGameStore } from '@/entities/gameRoom/model';
 
 export const Prompt = () => {
+  const promptStrokes = useGameStore((state) => state.promptStrokes);
+  
   return (
     <>
       <Timer />
@@ -15,7 +18,7 @@ export const Prompt = () => {
           />
 
           <div className="flex min-h-0 flex-1 items-center justify-center">
-            <ImagePreviewCard />
+            <ImagePreviewCard promptStrokes={promptStrokes} />
           </div>
         </div>
       </div>
