@@ -1,14 +1,9 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { WebSocketServer } from '@nestjs/websockets';
 import { PinoLogger } from 'nestjs-pino';
-import { Server } from 'socket.io';
 import { TimerCacheService } from 'src/redis/cache/timer-cache.service';
 
 @Injectable()
 export class TimerService implements OnModuleInit, OnModuleDestroy {
-  @WebSocketServer()
-  server!: Server;
-
   private globalIntervalId?: NodeJS.Timeout;
   private onTimerTickCallback?: (roomId: string, timeLeft: number) => void;
 
