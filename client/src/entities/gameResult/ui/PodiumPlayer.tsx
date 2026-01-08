@@ -1,7 +1,8 @@
-import type { PlayerResult } from '../model/types';
+import { useIsCurrentUser } from '@/entities/gameRoom/model';
+import type { FinalResult } from '../model/types';
 
 interface PodiumPlayerProps {
-  player: PlayerResult;
+  player: FinalResult;
   position: 'first' | 'second' | 'third';
 }
 
@@ -69,6 +70,7 @@ const MEDAL_EMOJI = {
 };
 
 export const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
+  const isCurrentUser = useIsCurrentUser(player.socketId);
   const config = PODIUM_CONFIG[position];
 
   return (
@@ -77,17 +79,15 @@ export const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
         <div
           className={`${config.size} relative mb-3 flex items-center justify-center overflow-hidden rounded-full border-4 ${config.borderColor} bg-white shadow-${position === 'first' ? 'xl' : 'lg'}`}
         >
-          {player.avatar ? (
+          {/* {player.avatar ? (
             <img
               alt={`${player.nickname} avatar`}
               className="h-full w-full object-cover"
               src={player.avatar}
             />
-          ) : (
-            <span className="text-3xl select-none">
-              {MEDAL_EMOJI[position]}
-            </span>
-          )}
+          ) : ( */}
+          <span className="text-3xl select-none">{MEDAL_EMOJI[position]}</span>
+          {/* )} */}
         </div>
 
         {config.badge && (
@@ -109,7 +109,7 @@ export const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
         className={`font-handwriting ${config.nameSize} font-bold text-gray-800 ${position === 'first' ? 'mt-4' : ''}`}
       >
         {player.nickname}
-        {player.isCurrentUser && ' (You)'}
+        {isCurrentUser && ' (You)'}
       </h3>
 
       <p className={`${config.textColor} ${config.scoreSize} font-bold`}>

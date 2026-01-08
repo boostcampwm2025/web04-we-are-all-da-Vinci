@@ -1,25 +1,20 @@
+import { EmptySlot, PlayerCard } from '@/entities/player';
+import type { Player } from '@/entities/player/model';
 import type { ReactNode } from 'react';
-import { PlayerCard, EmptySlot } from '@/entities/player';
-
-interface Player {
-  id: number;
-  nickname: string;
-  status: string;
-  isHost: boolean;
-}
 
 interface PlayerListSectionProps {
   players: Player[];
-  maxPlayers: number;
+  maxPlayer: number;
   roomCode?: ReactNode;
 }
 
 export const PlayerListSection = ({
   players,
-  maxPlayers,
+  maxPlayer,
   roomCode,
 }: PlayerListSectionProps) => {
-  const emptySlots = Math.max(0, maxPlayers - players.length);
+  const TOTAL_SLOTS = 8;
+  const emptySlots = TOTAL_SLOTS - players.length;
 
   return (
     <div className="flex flex-col rounded-2xl border-2 border-gray-800 bg-white p-6 shadow-lg">
@@ -27,20 +22,20 @@ export const PlayerListSection = ({
         <h2 className="font-handwriting flex items-center gap-2 text-2xl font-bold">
           인원
           <span className="text-lg text-gray-500">
-            ({players.length}/{maxPlayers})
+            ({players.length}/{maxPlayer})
           </span>
         </h2>
         {roomCode}
       </div>
 
-      <div className="grid max-h-80 grid-cols-4 gap-5 overflow-y-scroll">
+      <div className="grid max-h-80 grid-cols-4 grid-rows-2 gap-5 overflow-y-scroll">
         {players.map((player) => (
           <PlayerCard
-            key={player.id}
-            id={player.id}
+            key={player.socketId}
+            id={player.socketId}
             nickname={player.nickname}
-            isHost={player.isHost}
-            status={player.status}
+            isHost={player.isHost ?? false}
+            status="대기중"
           />
         ))}
 

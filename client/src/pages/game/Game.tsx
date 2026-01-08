@@ -1,8 +1,6 @@
-import { Waiting, Drawing, RoundEnd, GameEnd, Prompt } from '@/widgets';
-
-// import { useState } from 'react';
-
-// type GamePhase = 'WAITING' | 'DRAWING' | 'PROMPT' | 'ROUND_END' | 'GAME_END';
+import { selectPhase, useGameStore } from '@/entities/gameRoom/model';
+import { useGameSocket } from '@/features/socket/model';
+import { Drawing, GameEnd, Prompt, RoundEnd, Waiting } from '@/widgets';
 
 const GAME_PHASE_COMPONENT_MAP = {
   WAITING: Waiting,
@@ -13,10 +11,9 @@ const GAME_PHASE_COMPONENT_MAP = {
 } as const;
 
 const Game = () => {
-  //   const [gamePhase, setGamePhase] = useState<GamePhase>('WAITING');
-
-  const gamePhase = 'DRAWING';
-  const PhaseComponent = GAME_PHASE_COMPONENT_MAP[gamePhase];
+  useGameSocket();
+  const phase = useGameStore(selectPhase);
+  const PhaseComponent = GAME_PHASE_COMPONENT_MAP[phase];
 
   return <PhaseComponent />;
 };

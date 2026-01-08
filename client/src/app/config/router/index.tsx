@@ -1,7 +1,7 @@
-import type { RouteObject } from 'react-router-dom';
 import { PATHS } from '@/shared/config';
+import type { RouteObject } from 'react-router-dom';
 
-import { Game } from '@/pages/game';
+import Game from '@/pages/game/Game';
 import Main from '@/pages/main/Main';
 
 export const routes: RouteObject[] = [
@@ -10,7 +10,7 @@ export const routes: RouteObject[] = [
     element: <Main />,
   },
   {
-    path: PATHS.GAME,
+    path: `${PATHS.GAME}/:roomId`,
     element: <Game />,
   },
 ];

@@ -9,6 +9,7 @@ interface CommonBtnProps {
   color?: string;
   path?: string;
   onClick?: () => void;
+  disabled?: boolean;
 }
 
 const CommonBtn = ({
@@ -18,10 +19,12 @@ const CommonBtn = ({
   variant,
   color = 'blue',
   onClick,
+  disabled = false,
 }: CommonBtnProps) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
+    if (disabled) return;
     if (onClick) {
       onClick();
     }
@@ -63,7 +66,8 @@ const CommonBtn = ({
   return (
     <button
       onClick={handleClick}
-      className={`${baseClasses} ${variantClasses[variant]}`}
+      disabled={disabled}
+      className={`${baseClasses} ${variantClasses[variant]} ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
     >
       <span className={iconClasses[variant]}>{icon}</span>
       <span className={textClasses[variant]}>{text}</span>

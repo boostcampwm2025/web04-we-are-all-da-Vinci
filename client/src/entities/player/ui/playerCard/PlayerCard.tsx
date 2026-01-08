@@ -1,16 +1,21 @@
+import { useIsCurrentUser } from '@/entities/gameRoom/model';
+
 interface PlayerCardProps {
-  id: number;
+  id: string;
   nickname: string;
-  status: string;
   isHost: boolean;
+  status?: string;
 }
 
 const PlayerCard = ({ id, isHost, nickname, status }: PlayerCardProps) => {
+  const isCurrentUser = useIsCurrentUser(id);
   return (
     <div
       key={id}
       className={`relative flex flex-col items-center justify-center rounded-xl border-2 p-4 text-center ${
-        isHost ? 'border-blue-400 bg-blue-50' : 'border-gray-300 bg-gray-50'
+        isCurrentUser
+          ? 'border-blue-400 bg-blue-50'
+          : 'border-gray-300 bg-gray-50'
       }`}
     >
       <svg
@@ -30,7 +35,10 @@ const PlayerCard = ({ id, isHost, nickname, status }: PlayerCardProps) => {
         </g>
       </svg>
       <div className="font-handwriting mb-1 text-lg font-bold">{nickname}</div>
-      <div className="font-handwriting text-sm text-gray-500">{status}</div>
+      {isHost && <span className="absolute top-2 right-2 text-xl">👑</span>}
+      {status && (
+        <div className="font-handwriting text-sm text-gray-500">{status}</div>
+      )}
     </div>
   );
 };

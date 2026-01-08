@@ -1,1 +1,1 @@
-export type { PlayerResult, GameResultData } from './types';
+export type { FinalResult } from './types';

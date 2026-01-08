@@ -1,7 +1,6 @@
-export interface FinalResult {
+export interface RoundResult {
   socketId: string;
   nickname: string;
   score: number;
   ranking: number;
-  totalScore: number;
 }
