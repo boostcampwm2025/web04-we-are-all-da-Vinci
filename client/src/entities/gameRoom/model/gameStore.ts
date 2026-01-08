@@ -89,7 +89,11 @@ export const useCurrentPlayer = (): Player | null => {
   if (!isConnected) return null;
 
   const socket = getSocket();
-  const mySocketId = socket?.id;
+
+  const mySocketId =
+    socket && 'connected' in socket && socket.connected && socket.id
+      ? socket.id
+      : undefined;
 
   if (!mySocketId) return null;
 
