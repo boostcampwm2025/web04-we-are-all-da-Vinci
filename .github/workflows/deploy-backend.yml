@@ -38,7 +38,7 @@ jobs:
         run: |
           docker ps
           echo "Checking API health..."
-          curl -f http://localhost:3000 || exit 1
+          curl -f http://localhost:3000/redis/health || exit 1
 
       - name: Show container logs
         if: always()
