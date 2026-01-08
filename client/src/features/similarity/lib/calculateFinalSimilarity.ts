@@ -7,8 +7,12 @@ export const calculateFinalSimilarity = (
   playerStrokes: Stroke[], // 사용자 그림 스트로크
 ) => {
   if (playerStrokes.length === 0) return { similarity: 0 };
-  const normalizedPromptStrokes = normalizeStrokes(promptStrokes);
-  const normalizedPlayerStrokes = normalizeStrokes(playerStrokes);
+
+  const validPromptStrokes = getValidStrokes(promptStrokes);
+  const validPlayerStrokes = getValidStrokes(playerStrokes);
+
+  const normalizedPromptStrokes = normalizeStrokes(validPromptStrokes);
+  const normalizedPlayerStrokes = normalizeStrokes(validPlayerStrokes);
 
   // 스트로크 개수 비교
   const strokeCountSimilarity =
@@ -72,6 +76,21 @@ export const calculateFinalSimilarity = (
   return {
     similarity: roundedSimilarity,
   };
+};
+
+// 일정 길이 이상의 스트로크만 남김
+const getValidStrokes = (strokes: Stroke[]): Stroke[] => {
+  const MIN_STROKE_LENGTH = 10; // 최소 길이 임계값
+  return strokes.filter((stroke) => {
+    const [xs, ys] = stroke.points;
+    let length = 0;
+    for (let i = 1; i < xs.length; i++) {
+      const dx = xs[i] - xs[i - 1];
+      const dy = ys[i] - ys[i - 1];
+      length += Math.sqrt(dx * dx + dy * dy);
+    }
+    return length >= MIN_STROKE_LENGTH;
+  });
 };
 
 // 스트로크 정규화

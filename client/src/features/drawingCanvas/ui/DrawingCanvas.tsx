@@ -27,8 +27,6 @@ export const DrawingCanvas = () => {
   // strokes가 변경될 때마다 유사도 계산 및 점수 전송
   useEffect(() => {
     try {
-      console.log(promptStrokes);
-      console.log(strokes);
       const similarity = calculateFinalSimilarity(promptStrokes, strokes);
 
       // 서버에 점수 전송
