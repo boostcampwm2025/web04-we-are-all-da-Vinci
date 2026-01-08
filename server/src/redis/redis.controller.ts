@@ -11,7 +11,6 @@ export class RedisController {
       const client = this.redisService.getClient();
 
       const pong = await client.ping();
-      console.log('✅ Ping:', pong);
 
       return {
         success: true,

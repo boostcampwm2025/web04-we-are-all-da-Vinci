@@ -34,7 +34,6 @@ export const useGameSocket = () => {
 
     // 연결 이벤트
     socket.on('connect', () => {
-      console.log('소켓 연결됨:', socket.id);
       setConnected(true);
 
       // 방 입장
@@ -49,13 +48,11 @@ export const useGameSocket = () => {
     });
 
     socket.on('disconnect', () => {
-      console.log('소켓 연결 해제됨');
       setConnected(false);
     });
 
     // 방 정보 업데이트
     socket.on(CLIENT_EVENTS.ROOM_METADATA, (data: GameRoom) => {
-      console.log('방 정보 업데이트:', data);
       updateRoom({
         roomId: data.roomId,
         players: data.players,
@@ -78,18 +75,15 @@ export const useGameSocket = () => {
     );
 
     socket.on(CLIENT_EVENTS.ROOM_PROMPT, (imageUrl: string) => {
-      console.log('프롬프트 수신:', imageUrl);
       setPromptImage(imageUrl);
     });
 
     // 결과
     socket.on(CLIENT_EVENTS.ROOM_ROUND_END, (results: RoundResult[]) => {
-      console.log('라운드 종료:', results);
       setRoundResults(results);
     });
 
     socket.on(CLIENT_EVENTS.ROOM_GAME_END, (results: FinalResult[]) => {
-      console.log('게임 종료:', results);
       setFinalResults(results);
     });
 
@@ -97,14 +91,13 @@ export const useGameSocket = () => {
     socket.on(
       CLIENT_EVENTS.USER_WAITLIST,
       ({ roomId: waitRoomId }: { roomId: string }) => {
-        console.log('대기열에 추가됨:', waitRoomId);
+        console.log(waitRoomId)
         alert('현재 게임이 진행 중입니다. 다음 라운드부터 참여할 수 있습니다.');
       },
     );
 
     // 에러
     socket.on(CLIENT_EVENTS.ERROR, (error: { message: string }) => {
-      console.error('소켓 에러:', error);
       alert(error.message);
       navigate('/');
     });
