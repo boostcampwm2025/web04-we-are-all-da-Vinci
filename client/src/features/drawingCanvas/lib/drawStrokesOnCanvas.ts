@@ -12,7 +12,8 @@ export const drawStrokesOnCanvas = (
   if (!ctx || !canvas) return;
 
   // 캔버스 초기화
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // 모든 strokes 그리기
   strokes.forEach((stroke) => {
