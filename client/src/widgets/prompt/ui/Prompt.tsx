@@ -5,7 +5,7 @@ import { useGameStore } from '@/entities/gameRoom/model';
 
 export const Prompt = () => {
   const promptStrokes = useGameStore((state) => state.promptStrokes);
-  
+
   return (
     <>
       <Timer />
