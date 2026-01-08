@@ -1,34 +1,13 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { PATHS } from '@/shared/config';
+import { Timer } from '@/entities/timer';
 import { RankingCard } from '@/entities/ranking';
 import { DrawingHeader, RankingPanel } from '@/entities/drawing';
 import { DrawingCanvas } from '@/features/drawingCanvas';
 import { RoundBadge } from '@/shared/ui/round';
-import { Timer } from '@/shared/ui';
 
 export const Drawing = () => {
-  const navigate = useNavigate();
-  const [timeLeft, setTimeLeft] = useState(30);
-
-  useEffect(() => {
-    if (timeLeft > 0) {
-      const timer = setTimeout(() => {
-        setTimeLeft(timeLeft - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else {
-      navigate(PATHS.FINAL_RESULTS);
-    }
-  }, [timeLeft, navigate]);
-
   return (
     <>
-      <div className="absolute top-8 right-8 z-20">
-        <div className="relative inline-block">
-          <Timer time={30} />
-        </div>
-      </div>
+      <Timer />
       <div className="flex h-screen w-full items-center justify-center px-4 py-4">
         <div className="flex h-full w-full max-w-7xl flex-col">
           <DrawingHeader
