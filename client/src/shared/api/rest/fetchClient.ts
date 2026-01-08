@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/react';
+import { captureException } from '@/shared/lib/sentry';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -9,6 +9,16 @@ class HttpError extends Error {
     super(message);
     this.name = 'HttpError';
     this.status = status;
+  }
+}
+
+class FetchError extends Error {
+  originalError: Error;
+
+  constructor(message: string, originalError: Error) {
+    super(message);
+    this.name = 'FetchError';
+    this.originalError = originalError;
   }
 }
 
@@ -38,7 +48,7 @@ export const fetchClient = async <TResponse, TBody = unknown>(
         response.status,
       );
 
-      Sentry.captureException(error, {
+      captureException(error, {
         tags: {
           error_type: 'http_error',
           status_code: response.status,
@@ -47,6 +57,7 @@ export const fetchClient = async <TResponse, TBody = unknown>(
         extra: {
           endpoint,
         },
+        fingerprint: ['응답 에러!', String(response.status)],
       });
 
       throw error;
@@ -58,13 +69,26 @@ export const fetchClient = async <TResponse, TBody = unknown>(
       throw error;
     }
 
-    Sentry.captureException(error, {
+    const fetchError = new FetchError(
+      `Network error! (${endpoint})`,
+      error instanceof Error ? error : new Error(String(error)),
+    );
+
+    captureException(fetchError, {
       tags: {
         error_type: 'fetch_error',
       },
       level: 'error',
+      extra: {
+        endpoint,
+        originalError: error instanceof Error ? error.message : String(error),
+      },
+      fingerprint: [
+        '요청 에러!',
+        error instanceof Error ? error.name : 'unknown',
+      ],
     });
 
-    throw error;
+    throw fetchError;
   }
 };

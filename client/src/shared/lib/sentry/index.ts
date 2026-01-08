@@ -23,7 +23,7 @@ export const initSentry = (config: SentryConfig) => {
         maskAllText: false,
         blockAllMedia: false,
       }),
-      Sentry.captureConsoleIntegration({ levels: ['error', 'warn'] }),
+      // Sentry.captureConsoleIntegration({ levels: ['error', 'warn'] }),
     ],
     tracesSampleRate: 1.0,
     tracePropagationTargets: ['localhost', import.meta.env.VITE_API_URL],
