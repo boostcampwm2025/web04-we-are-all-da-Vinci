@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useCanvasSetup } from '@/shared/model/useCanvasSetup';
 import { useMouseDrawing } from '@/features/drawingCanvas/model/useMouseDrawing';
 import { useStrokes } from '@/features/drawingCanvas/model/useStrokes';
@@ -15,9 +15,14 @@ export const DrawingCanvas = () => {
     useStrokes();
   const { selectedColor, handleColorSelect } = useColorSelection();
 
-  // strokes 변경 시 캔버스 다시 그리기
+  const prevLengthRef = useRef(strokes.length);
+
+  // strokes 길이가 줄어들 때만 캔버스 다시 그리기 (undo/clear)
   useEffect(() => {
-    drawStrokesOnCanvas(canvasRef, ctxRef, strokes);
+    if (strokes.length < prevLengthRef.current) {
+      drawStrokesOnCanvas(canvasRef, ctxRef, strokes);
+    }
+    prevLengthRef.current = strokes.length;
   }, [canvasRef, ctxRef, strokes]);
 
   const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseOut } =
