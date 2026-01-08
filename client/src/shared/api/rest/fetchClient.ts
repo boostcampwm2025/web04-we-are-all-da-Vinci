@@ -23,9 +23,7 @@ export const fetchClient = async <TResponse, TBody = unknown>(
     });
 
     if (!response.ok) {
-      const error = new Error(
-        `HTTP ${response.status}: ${response.statusText}`,
-      );
+      const error = new Error(`HTTP error! status: ${response.status}`);
 
       Sentry.captureException(error, {
         tags: {
