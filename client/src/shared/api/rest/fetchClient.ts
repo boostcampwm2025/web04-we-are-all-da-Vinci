@@ -2,6 +2,16 @@ import * as Sentry from '@sentry/react';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
+class HttpError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'HttpError';
+    this.status = status;
+  }
+}
+
 interface FetchOptions<TBody = unknown> {
   body?: TBody;
   headers?: Record<string, string>;
@@ -23,7 +33,10 @@ export const fetchClient = async <TResponse, TBody = unknown>(
     });
 
     if (!response.ok) {
-      const error = new Error(`HTTP error! status: ${response.status}`);
+      const error = new HttpError(
+        `HTTP error! status: ${response.status}`,
+        response.status,
+      );
 
       Sentry.captureException(error, {
         tags: {
@@ -41,7 +54,7 @@ export const fetchClient = async <TResponse, TBody = unknown>(
 
     return response.json();
   } catch (error) {
-    if (error instanceof Error && error.message.startsWith('HTTP error!')) {
+    if (error instanceof HttpError) {
       throw error;
     }
 
