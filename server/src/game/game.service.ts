@@ -8,6 +8,8 @@ import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
+import { RoundService } from 'src/round/round.service';
+import { RoomPromptDto } from 'src/round/dto/room-prompt.dto';
 
 @Injectable()
 export class GameService {
@@ -16,6 +18,7 @@ export class GameService {
     private readonly waitlistService: WaitlistCacheService,
     private readonly playerCacheService: PlayerCacheService,
     private readonly leaderboardCacheService: LeaderboardCacheService,
+    private readonly roundService: RoundService,
   ) {}
 
   async createRoom(createRoomDto: CreateRoomDto) {
@@ -49,25 +52,26 @@ export class GameService {
     if (!room) {
       return null;
     }
+    const players = await this.cacheService.getAllPlayers(roomId);
 
-    const target = room.players.find((player) => player.socketId === socketId);
+    const target = players.find((player) => player.socketId === socketId);
 
     if (!target) {
       return null;
     }
-    room.players = room.players.filter(
-      (player) => player.socketId !== socketId,
-    );
 
-    if (target.isHost && room.players.length > 0) {
-      room.players[0].isHost = true;
+    if (target.isHost && players.length > 1) {
+      const nextHost = players[1];
+      await this.cacheService.addPlayer(roomId, { ...nextHost, isHost: true });
+      await this.cacheService.deletePlayer(roomId, nextHost);
     }
 
-    await this.cacheService.saveRoom(roomId, room);
+    await this.cacheService.deletePlayer(roomId, target);
     await this.playerCacheService.delete(socketId);
     await this.leaderboardCacheService.delete(roomId, socketId);
 
-    return room;
+    const updatedRoom = await this.cacheService.getRoom(roomId);
+    return updatedRoom;
   }
 
   private async generateRoomId() {
@@ -100,15 +104,55 @@ export class GameService {
       return null;
     }
 
-    room.players.push({
+    const players = await this.cacheService.getAllPlayers(roomId);
+
+    await this.cacheService.addPlayer(roomId, {
       nickname,
       socketId,
-      isHost: room.players.length === 0,
+      isHost: players.length === 0,
     });
 
-    await this.cacheService.saveRoom(roomId, room);
     await this.playerCacheService.set(socketId, roomId);
     await this.leaderboardCacheService.updateScore(roomId, socketId, 0);
-    return room;
+
+    const updatedRoom = await this.cacheService.getRoom(roomId);
+    return updatedRoom;
+  }
+
+  async startGame(
+    roomId: string,
+    socketId: string,
+  ): Promise<{ room: GameRoom; result: RoomPromptDto }> {
+    const room = await this.cacheService.getRoom(roomId);
+    if (!room) {
+      throw new WebsocketException('방이 존재하지 않습니다.');
+    }
+
+    if (room.phase !== GamePhase.WAITING) {
+      throw new WebsocketException('게임이 이미 진행 중입니다.');
+    }
+
+    const player = room.players.find((player) => player.socketId === socketId);
+
+    if (!player) {
+      throw new WebsocketException(
+        '플레이어가 존재하지 않습니다. 재접속이 필요합니다.',
+      );
+    }
+
+    if (!player.isHost) {
+      throw new WebsocketException('방장 권한이 없습니다.');
+    }
+
+    if (room.players.length < 2) {
+      throw new WebsocketException('게임을 시작하려면 최소 2명이 필요합니다.');
+    }
+
+    const result = (await this.roundService.nextPhase(room)) as RoomPromptDto;
+    return { room, result };
+  }
+
+  async getRoom(roomId: string): Promise<GameRoom | null> {
+    return await this.cacheService.getRoom(roomId);
   }
 }

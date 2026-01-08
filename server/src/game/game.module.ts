@@ -3,9 +3,10 @@ import { GameController } from './game.controller';
 import { GameGateway } from './game.gateway';
 import { GameService } from './game.service';
 import { RedisModule } from 'src/redis/redis.module';
+import { RoundModule } from 'src/round/round.module';
 
 @Module({
-  imports: [RedisModule],
+  imports: [RedisModule, RoundModule],
   controllers: [GameController],
   providers: [GameService, GameGateway],
 })
