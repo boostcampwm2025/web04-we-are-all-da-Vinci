@@ -17,9 +17,9 @@ export const useGameSocket = () => {
   const updateRoom = useGameStore((state) => state.updateRoom);
   const setTimer = useGameStore((state) => state.setTimer);
   const setLiveScores = useGameStore((state) => state.setLiveScores);
-  const setPromptStrokes = useGameStore((state) => state.setPromptStrokes);
   const setRoundResults = useGameStore((state) => state.setRoundResults);
   const setFinalResults = useGameStore((state) => state.setFinalResults);
+  const setPromptStrokes = useGameStore((state) => state.setPromptStrokes);
 
   useEffect(() => {
     if (!roomId) {
