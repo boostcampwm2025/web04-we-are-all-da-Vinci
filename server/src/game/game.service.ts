@@ -50,24 +50,25 @@ export class GameService {
     if (!room) {
       return null;
     }
+    const players = await this.cacheService.getAllPlayers(roomId);
 
-    const target = room.players.find((player) => player.socketId === socketId);
+    const target = players.find((player) => player.socketId === socketId);
 
     if (!target) {
       return null;
     }
-    room.players = room.players.filter(
-      (player) => player.socketId !== socketId,
-    );
 
-    if (target.isHost && room.players.length > 0) {
-      room.players[0].isHost = true;
+    if (target.isHost && players.length > 1) {
+      const nextHost = players[1];
+      await this.cacheService.addPlayer(roomId, { ...nextHost, isHost: true });
+      await this.cacheService.deletePlayer(roomId, nextHost);
     }
 
-    await this.cacheService.saveRoom(roomId, room);
+    await this.cacheService.deletePlayer(roomId, target);
     await this.playerCacheService.delete(socketId);
 
-    return room;
+    const updatedRoom = await this.cacheService.getRoom(roomId);
+    return updatedRoom;
   }
 
   private async generateRoomId() {
@@ -100,15 +101,18 @@ export class GameService {
       return null;
     }
 
-    room.players.push({
+    const players = await this.cacheService.getAllPlayers(roomId);
+
+    await this.cacheService.addPlayer(roomId, {
       nickname,
       socketId,
-      isHost: room.players.length === 0,
+      isHost: players.length === 0,
     });
 
-    await this.cacheService.saveRoom(roomId, room);
     await this.playerCacheService.set(socketId, roomId);
-    return room;
+
+    const updatedRoom = await this.cacheService.getRoom(roomId);
+    return updatedRoom;
   }
 
   async startGame(
