@@ -1,12 +1,20 @@
 import type { FinalResult } from '@/entities/gameResult/model';
 import type { GameRoom } from '@/entities/gameRoom/model';
 import { useGameStore } from '@/entities/gameRoom/model';
+import type { RankingEntry } from '@/entities/ranking';
 import type { RoundResult } from '@/entities/roundResult/model';
 import type { Stroke } from '@/entities/similarity';
 import { disconnectSocket, getSocket } from '@/shared/api/socket';
 import { CLIENT_EVENTS, SERVER_EVENTS } from '@/shared/config';
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+
+// 서버에서 오는 랭킹 데이터 타입
+interface ServerRankingEntry {
+  socketId: string;
+  nickname: string;
+  similarity: number;
+}
 
 export const useGameSocket = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -16,7 +24,7 @@ export const useGameSocket = () => {
   const setConnected = useGameStore((state) => state.setConnected);
   const updateRoom = useGameStore((state) => state.updateRoom);
   const setTimer = useGameStore((state) => state.setTimer);
-  const setLiveScores = useGameStore((state) => state.setLiveScores);
+  const setLiveRankings = useGameStore((state) => state.setLiveRankings);
   const setRoundResults = useGameStore((state) => state.setRoundResults);
   const setFinalResults = useGameStore((state) => state.setFinalResults);
   const setPromptStrokes = useGameStore((state) => state.setPromptStrokes);
@@ -73,8 +81,27 @@ export const useGameSocket = () => {
 
     socket.on(
       CLIENT_EVENTS.ROOM_LEADERBOARD,
-      (scores: Record<string, number>) => {
-        setLiveScores(scores);
+      (data: { rankings: ServerRankingEntry[] }) => {
+        const currentRankings = useGameStore.getState().liveRankings;
+
+        const newRankings: RankingEntry[] = data.rankings.map(
+          (entry, index) => {
+            const rank = index + 1;
+            const prevEntry = currentRankings.find(
+              (r) => r.socketId === entry.socketId,
+            );
+
+            return {
+              socketId: entry.socketId,
+              nickname: entry.nickname,
+              similarity: entry.similarity,
+              rank,
+              previousRank: prevEntry?.rank ?? null,
+            };
+          },
+        );
+
+        setLiveRankings(newRankings);
       },
     );
 
@@ -130,7 +157,7 @@ export const useGameSocket = () => {
     setConnected,
     updateRoom,
     setTimer,
-    setLiveScores,
+    setLiveRankings,
     setPromptStrokes,
     setRoundResults,
     setFinalResults,

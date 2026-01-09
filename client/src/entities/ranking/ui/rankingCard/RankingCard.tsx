@@ -1,21 +1,52 @@
 import { SimilarityProgressBar } from '@/entities/similarity/ui/progress-bar';
-
-type Color = 'blue' | 'red' | 'green' | 'purple' | 'yellow' | 'indigo' | 'gray';
+import { RANK_CHANGE, type PlayerColor, type RankChange } from '../../model';
 
 interface RankingCardProps {
-  icon?: string;
   nickname: string;
   percent: number;
-  color?: Color;
+  color?: PlayerColor;
   rank?: number;
+  rankChange?: RankChange;
+  isCurrentUser?: boolean;
 }
 
+const RankChangeIndicator = ({ change }: { change: RankChange }) => {
+  switch (change) {
+    case RANK_CHANGE.UP:
+      return (
+        <span className="text-xs text-green-500" title="순위 상승">
+          🔺
+        </span>
+      );
+    case RANK_CHANGE.DOWN:
+      return (
+        <span className="text-xs text-red-500" title="순위 하락">
+          🔻
+        </span>
+      );
+    case RANK_CHANGE.NEW:
+      return (
+        <span className="text-xs text-blue-500" title="신규 진입">
+          ✨
+        </span>
+      );
+    case RANK_CHANGE.SAME:
+    default:
+      return (
+        <span className="text-xs text-gray-400" title="순위 유지">
+          ➖
+        </span>
+      );
+  }
+};
+
 const RankingCard = ({
-  icon,
   nickname,
   percent,
   color = 'blue',
   rank,
+  rankChange,
+  isCurrentUser = false,
 }: RankingCardProps) => {
   const colorClasses = {
     blue: {
@@ -78,8 +109,15 @@ const RankingCard = ({
 
   const colors = colorClasses[color];
 
+  // 현재 사용자일 경우 더 눈에 띄는 스타일 적용
+  const currentUserStyles = isCurrentUser
+    ? 'ring-2 ring-offset-1 ring-blue-500'
+    : '';
+
   return (
-    <div className={`rounded-xl border-2 ${colors.border} ${colors.bg} p-3`}>
+    <div
+      className={`rounded-xl border-2 ${colors.border} ${colors.bg} ${currentUserStyles} p-3 transition-all duration-300`}
+    >
       <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
           {rank && (
@@ -89,16 +127,13 @@ const RankingCard = ({
               {rank}위
             </div>
           )}
-          {icon && (
-            <div
-              className={`flex h-8 w-8 items-center justify-center rounded-full ${colors.iconBg}`}
-            >
-              <span className="material-symbols-outlined text-sm text-white">
-                {icon}
-              </span>
-            </div>
-          )}
-          <span className="font-handwriting text-sm font-bold">{nickname}</span>
+          {rankChange && <RankChangeIndicator change={rankChange} />}
+          <span className="font-handwriting text-sm font-bold">
+            {nickname}
+            {isCurrentUser && (
+              <span className="ml-1 text-xs text-blue-500">(나)</span>
+            )}
+          </span>
         </div>
         <span className={`text-lg font-bold ${colors.text}`}>{percent}%</span>
       </div>
