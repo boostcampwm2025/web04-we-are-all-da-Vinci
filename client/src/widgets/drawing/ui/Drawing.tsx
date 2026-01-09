@@ -1,10 +1,13 @@
-import { Timer } from '@/entities/timer';
-import { RankingCard } from '@/entities/ranking';
 import { DrawingHeader, RankingPanel } from '@/entities/drawing';
+import { useGameStore } from '@/entities/gameRoom/model';
+import { Timer } from '@/entities/timer';
 import { DrawingCanvas } from '@/features/drawingCanvas';
+import { LiveRankingList } from '@/features/liveRanking';
 import { RoundBadge } from '@/shared/ui/round';
 
 export const Drawing = () => {
+  const currentRound = useGameStore((state) => state.currentRound);
+
   return (
     <>
       <Timer />
@@ -12,7 +15,7 @@ export const Drawing = () => {
         <div className="flex h-full w-full max-w-7xl flex-col">
           <DrawingHeader
             title="그림을 그려주세요!"
-            roundBadge={<RoundBadge round={1} />}
+            roundBadge={<RoundBadge round={currentRound} />}
           />
 
           <div className="flex min-h-0 flex-1 items-center justify-center gap-6">
@@ -22,27 +25,7 @@ export const Drawing = () => {
 
             <div className="h-full">
               <RankingPanel>
-                <RankingCard
-                  rank={1}
-                  icon="account_circle"
-                  nickname="User 1"
-                  percent={82}
-                  color="blue"
-                />
-                <RankingCard
-                  rank={2}
-                  icon="account_circle"
-                  nickname="Player 2"
-                  percent={45}
-                  color="yellow"
-                />
-                <RankingCard
-                  rank={3}
-                  icon="account_circle"
-                  nickname="Player 3"
-                  percent={12}
-                  color="purple"
-                />
+                <LiveRankingList />
               </RankingPanel>
             </div>
           </div>
