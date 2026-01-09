@@ -1,12 +1,13 @@
 import type { FinalResult } from '@/entities/gameResult/model';
+import type { Player } from '@/entities/player/model';
+import type { RankingEntry } from '@/entities/ranking';
 import type { RoundResult } from '@/entities/roundResult/model';
+import type { Stroke } from '@/entities/similarity';
+import { getSocket } from '@/shared/api/socket';
 import type { Phase } from '@/shared/config';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import type { GameRoom } from './types';
-import type { Player } from '@/entities/player/model';
-import { getSocket } from '@/shared/api/socket';
-import type { Stroke } from '@/entities/similarity';
 
 interface GameState extends GameRoom {
   // 소켓 연결 상태
@@ -14,7 +15,7 @@ interface GameState extends GameRoom {
 
   // 실시간 데이터
   timer: number;
-  liveScores: Record<string, number>; // socketId -> 유사도
+  liveRankings: RankingEntry[]; // 실시간 랭킹
   promptStrokes: Stroke[];
 
   // 결과 데이터
@@ -25,7 +26,7 @@ interface GameState extends GameRoom {
   setConnected: (isConnected: boolean) => void;
   updateRoom: (room: Partial<GameRoom>) => void;
   setTimer: (timer: number) => void;
-  setLiveScores: (scores: Record<string, number>) => void;
+  setLiveRankings: (rankings: RankingEntry[]) => void;
   setPromptStrokes: (strokes: Stroke[]) => void;
   setRoundResults: (results: RoundResult[]) => void;
   setFinalResults: (results: FinalResult[]) => void;
@@ -44,7 +45,7 @@ const initialState = {
     maxPlayer: 8,
   },
   timer: 0,
-  liveScores: {},
+  liveRankings: [],
   promptStrokes: [],
   roundResults: [],
   finalResults: [],
@@ -61,7 +62,7 @@ export const useGameStore = create<GameState>()(
 
       setTimer: (timer) => set({ timer }),
 
-      setLiveScores: (liveScores) => set({ liveScores }),
+      setLiveRankings: (liveRankings) => set({ liveRankings }),
 
       setPromptStrokes: (promptStrokes) => set({ promptStrokes }),
 
@@ -79,7 +80,7 @@ export const useGameStore = create<GameState>()(
 export const selectPlayers = (state: GameState) => state.players;
 export const selectSettings = (state: GameState) => state.settings;
 export const selectPhase = (state: GameState) => state.phase;
-export const selectLiveScores = (state: GameState) => state.liveScores;
+export const selectLiveRankings = (state: GameState) => state.liveRankings;
 export const selectTimer = (state: GameState) => state.timer;
 
 // Helper: 현재 플레이어 찾기 (소켓 ID 기반)
