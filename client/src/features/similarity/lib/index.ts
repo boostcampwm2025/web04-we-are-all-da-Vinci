@@ -1,0 +1,1 @@
+export { calculateFinalSimilarity } from './calculateFinalSimilarity';
