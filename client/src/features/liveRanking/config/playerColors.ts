@@ -1,4 +1,11 @@
-export type Color = 'blue' | 'red' | 'green' | 'purple' | 'yellow' | 'indigo' | 'gray';
+export type Color =
+  | 'blue'
+  | 'red'
+  | 'green'
+  | 'purple'
+  | 'yellow'
+  | 'indigo'
+  | 'gray';
 
 export const PLAYER_COLORS: Color[] = [
   'blue',
