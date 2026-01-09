@@ -1,2 +1,3 @@
 export { RankingCard } from './ui/rankingCard';
-export type { RankingEntry, RankChange } from './model';
+export { RANK_CHANGE } from './model';
+export type { RankingEntry, RankChange, PlayerColor } from './model';

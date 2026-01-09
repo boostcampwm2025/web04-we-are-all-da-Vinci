@@ -1,15 +1,15 @@
-import { useGameStore, selectLiveRankings } from '@/entities/gameRoom/model';
+import { selectLiveRankings, useGameStore } from '@/entities/gameRoom/model';
+import { RANK_CHANGE, type RankChange } from '@/entities/ranking';
 import { getSocket } from '@/shared/api/socket';
-import type { RankChange } from '@/entities/ranking';
 
 function calculateRankChange(
   previousRank: number | null,
   currentRank: number,
 ): RankChange {
-  if (previousRank === null) return 'new';
-  if (previousRank > currentRank) return 'up';
-  if (previousRank < currentRank) return 'down';
-  return 'same';
+  if (previousRank === null) return RANK_CHANGE.NEW;
+  if (previousRank > currentRank) return RANK_CHANGE.UP;
+  if (previousRank < currentRank) return RANK_CHANGE.DOWN;
+  return RANK_CHANGE.SAME;
 }
 
 export const useLiveRanking = () => {

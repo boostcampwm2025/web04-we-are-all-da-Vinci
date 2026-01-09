@@ -1,4 +1,20 @@
-export type RankChange = 'up' | 'down' | 'same' | 'new';
+export const RANK_CHANGE = {
+  UP: 'up',
+  DOWN: 'down',
+  SAME: 'same',
+  NEW: 'new',
+} as const;
+
+export type RankChange = (typeof RANK_CHANGE)[keyof typeof RANK_CHANGE];
+
+export type PlayerColor =
+  | 'blue'
+  | 'red'
+  | 'green'
+  | 'purple'
+  | 'yellow'
+  | 'indigo'
+  | 'gray';
 
 export interface RankingEntry {
   socketId: string;

@@ -1,13 +1,6 @@
-export type Color =
-  | 'blue'
-  | 'red'
-  | 'green'
-  | 'purple'
-  | 'yellow'
-  | 'indigo'
-  | 'gray';
+import type { PlayerColor } from '@/entities/ranking';
 
-export const PLAYER_COLORS: Color[] = [
+export const PLAYER_COLORS: PlayerColor[] = [
   'blue',
   'yellow',
   'purple',

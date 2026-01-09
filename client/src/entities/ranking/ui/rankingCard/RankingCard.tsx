@@ -1,12 +1,10 @@
 import { SimilarityProgressBar } from '@/entities/similarity/ui/progress-bar';
-import type { RankChange } from '../../model';
-
-type Color = 'blue' | 'red' | 'green' | 'purple' | 'yellow' | 'indigo' | 'gray';
+import { RANK_CHANGE, type PlayerColor, type RankChange } from '../../model';
 
 interface RankingCardProps {
   nickname: string;
   percent: number;
-  color?: Color;
+  color?: PlayerColor;
   rank?: number;
   rankChange?: RankChange;
   isCurrentUser?: boolean;
@@ -14,25 +12,25 @@ interface RankingCardProps {
 
 const RankChangeIndicator = ({ change }: { change: RankChange }) => {
   switch (change) {
-    case 'up':
+    case RANK_CHANGE.UP:
       return (
         <span className="text-xs text-green-500" title="순위 상승">
           🔺
         </span>
       );
-    case 'down':
+    case RANK_CHANGE.DOWN:
       return (
         <span className="text-xs text-red-500" title="순위 하락">
           🔻
         </span>
       );
-    case 'new':
+    case RANK_CHANGE.NEW:
       return (
         <span className="text-xs text-blue-500" title="신규 진입">
           ✨
         </span>
       );
-    case 'same':
+    case RANK_CHANGE.SAME:
     default:
       return (
         <span className="text-xs text-gray-400" title="순위 유지">
