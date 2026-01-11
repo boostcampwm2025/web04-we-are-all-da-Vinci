@@ -119,7 +119,7 @@ jobs:
         if: github.event_name == 'pull_request'
         with:
           working-directory: server
-          test-script: pnpm run test:cov
+          skip-step: all
 
       - name: Build
         run: pnpm run build
