@@ -44,8 +44,8 @@ jobs:
         if: always()
         with:
           script: |
-            const results = ${{ steps.lighthouse.outputs.manifest }};
-            const links = ${{ steps.lighthouse.outputs.links }};
+            const results = JSON.parse('${{ steps.lighthouse.outputs.manifest }}');
+            const links = JSON.parse('${{ steps.lighthouse.outputs.links }}');
 
             if (!results || !links) {
               console.log('No Lighthouse results found');

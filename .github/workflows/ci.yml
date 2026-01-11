@@ -54,16 +54,18 @@ jobs:
       - name: Post Client Security Audit
         uses: actions/github-script@v7
         if: github.event_name == 'pull_request'
+        env:
+          AUDIT_OUTPUT: ${{ steps.client-audit.outputs.audit_result }}
         with:
           script: |
-            const output = `${{ steps.client-audit.outputs.audit_result }}`;
-            const hasVulnerabilities = output.includes('vulnerabilities');
+            const output = process.env.AUDIT_OUTPUT || '';
             const icon = output.includes('0 vulnerabilities') ? '✅' : '⚠️';
+            const escapedOutput = output.slice(0, 3000).replace(/`/g, '\\`').replace(/\$/g, '\\$');
 
             const body = `## ${icon} Client Security Audit
 
             \`\`\`
-            ${output.slice(0, 3000)}
+            ${escapedOutput}
             \`\`\`
             `;
 
@@ -141,15 +143,18 @@ jobs:
       - name: Post Server Security Audit
         uses: actions/github-script@v7
         if: github.event_name == 'pull_request'
+        env:
+          AUDIT_OUTPUT: ${{ steps.server-audit.outputs.audit_result }}
         with:
           script: |
-            const output = `${{ steps.server-audit.outputs.audit_result }}`;
+            const output = process.env.AUDIT_OUTPUT || '';
             const icon = output.includes('0 vulnerabilities') ? '✅' : '⚠️';
+            const escapedOutput = output.slice(0, 3000).replace(/`/g, '\\`').replace(/\$/g, '\\$');
 
             const body = `## ${icon} Server Security Audit
 
             \`\`\`
-            ${output.slice(0, 3000)}
+            ${escapedOutput}
             \`\`\`
             `;
 
