@@ -58,10 +58,12 @@ export class PlayGateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: UserDrawingDto,
   ) {
+    const { roomId, strokes, similarity } = payload;
     this.logger.info(
       { clientId: client.id, ...payload },
       'User Submitted Drawing',
     );
+    this.playService.submitDrawing(roomId, client.id, similarity, strokes);
     return 'ok';
   }
 }
