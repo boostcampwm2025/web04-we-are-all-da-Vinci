@@ -111,15 +111,16 @@ jobs:
       - name: Format Check
         run: pnpm run format:check
 
-      - name: Test with Coverage
-        run: pnpm run test:cov
+      - name: Test
+        run: pnpm run test
 
       - name: Server Coverage Report
         uses: ArtiomTr/jest-coverage-report-action@v2
         if: github.event_name == 'pull_request'
         with:
           working-directory: server
-          skip-step: all
+          package-manager: pnpm
+          test-script: pnpm run test:cov
 
       - name: Build
         run: pnpm run build
