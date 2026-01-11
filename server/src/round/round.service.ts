@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { GameRoom, Stroke } from 'src/common/types';
 import { ClientEvents, GamePhase } from 'src/common/constants';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
@@ -14,7 +14,7 @@ import { WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 
 @Injectable()
-export class RoundService {
+export class RoundService implements OnModuleInit {
   @WebSocketServer()
   server!: Server;
 
@@ -25,6 +25,16 @@ export class RoundService {
     private readonly logger: PinoLogger,
   ) {
     this.logger.setContext(RoundService.name);
+  }
+
+  onModuleInit() {
+    this.timerService.setOnTimerEnd(async (roomId: string) => {
+      const room = await this.cacheService.getRoom(roomId);
+      if (!room) {
+        return;
+      }
+      await this.nextPhase(room);
+    });
   }
 
   async nextPhase(room: GameRoom) {

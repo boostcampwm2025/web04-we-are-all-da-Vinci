@@ -6,6 +6,7 @@ import { TimerCacheService } from 'src/redis/cache/timer-cache.service';
 export class TimerService implements OnModuleInit, OnModuleDestroy {
   private globalIntervalId?: NodeJS.Timeout;
   private onTimerTickCallback?: (roomId: string, timeLeft: number) => void;
+  private onTimerEndCallback?: (roomId: string) => Promise<void>;
 
   constructor(
     private readonly timerCacheService: TimerCacheService,
@@ -28,6 +29,10 @@ export class TimerService implements OnModuleInit, OnModuleDestroy {
     this.onTimerTickCallback = callback;
   }
 
+  setOnTimerEnd(callback: (roomId: string) => Promise<void>) {
+    this.onTimerEndCallback = callback;
+  }
+
   startGlobalTimer() {
     this.globalIntervalId = setInterval(() => {
       void (async () => {
@@ -48,6 +53,10 @@ export class TimerService implements OnModuleInit, OnModuleDestroy {
         // Gateway에 알림
         if (this.onTimerTickCallback) {
           this.onTimerTickCallback(timer.roomId, updatedTimeLeft);
+        }
+
+        if (updatedTimeLeft === 0 && this.onTimerEndCallback) {
+          this.onTimerEndCallback(timer.roomId);
         }
       }
     }
