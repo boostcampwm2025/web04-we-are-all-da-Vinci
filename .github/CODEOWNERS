@@ -1,0 +1,5 @@
+# CODEOWNERS - 자동 리뷰어 할당
+# PR 생성 시 아래 팀원들이 자동으로 리뷰어로 할당됩니다.
+
+# 모든 파일에 대해 전체 팀원 자동 할당
+*       @joarthvr @kwon204 @cjy3458 @avocado8 @oesnuj
