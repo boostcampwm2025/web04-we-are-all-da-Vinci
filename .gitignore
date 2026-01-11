@@ -31,3 +31,6 @@ pnpm-debug.log*
 .claude*
 CLAUDE.md
 claude*
+
+# test
+coverage/

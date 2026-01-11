@@ -42,14 +42,26 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Security Audit
+        run: pnpm audit --audit-level=high
+        continue-on-error: true
+
       - name: Lint
         run: pnpm run lint
 
       - name: Format Check
         run: pnpm run format:check
 
-      - name: Test
-        run: pnpm run test
+      - name: Test with Coverage
+        run: pnpm run test:coverage
+
+      - name: Coverage Report
+        uses: davelosert/vitest-coverage-report-action@v2
+        if: github.event_name == 'pull_request'
+        with:
+          working-directory: client
+          json-summary-path: ./coverage/coverage-summary.json
+          json-final-path: ./coverage/coverage-final.json
 
       - name: Build
         run: pnpm run build
@@ -89,17 +101,56 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Security Audit
+        run: pnpm audit --audit-level=high
+        continue-on-error: true
+
       - name: Lint
         run: pnpm run lint
 
       - name: Format Check
         run: pnpm run format:check
 
-      - name: Test
-        run: pnpm run test
+      - name: Test with Coverage
+        run: pnpm run test:cov
+
+      - name: Server Coverage Report
+        uses: ArtiomTr/jest-coverage-report-action@v2
+        if: github.event_name == 'pull_request'
+        with:
+          working-directory: server
+          test-script: pnpm run test:cov
 
       - name: Build
         run: pnpm run build
+
+  bundle-size:
+    name: Bundle Size Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: client
+
+      - name: Bundle Size Check
+        uses: preactjs/compressed-size-action@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          build-script: "build"
+          cwd: "./client"
 
   notify:
     name: Slack Notification
