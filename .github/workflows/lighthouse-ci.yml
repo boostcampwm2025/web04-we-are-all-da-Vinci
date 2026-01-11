@@ -57,12 +57,12 @@ jobs:
               const reportUrl = links[url];
               const { performance, accessibility, 'best-practices': bestPractices, seo } = result.summary;
               
-              return `| ${url} | ${Math.round(performance * 100)} | ${Math.round(accessibility * 100)} | ${Math.round(bestPractices * 100)} | ${Math.round(seo * 100)} | [Report](${reportUrl}) |`;
+              return `| Run ${i + 1} | ${Math.round(performance * 100)} | ${Math.round(accessibility * 100)} | ${Math.round(bestPractices * 100)} | ${Math.round(seo * 100)} | [Report](${reportUrl}) |`;
             }).join('\n');
 
             const body = `## 🚀 Lighthouse Report
 
-            | URL | Performance | Accessibility | Best Practices | SEO | Report |
+            | Run | Performance | Accessibility | Best Practices | SEO | Report |
             |-----|-------------|---------------|----------------|-----|--------|
             ${summary}
 
