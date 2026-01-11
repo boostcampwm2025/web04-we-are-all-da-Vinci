@@ -43,8 +43,36 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Security Audit
-        run: pnpm audit --audit-level=high
+        id: client-audit
+        run: |
+          pnpm audit --audit-level=high 2>&1 | tee audit-output.txt || true
+          echo "audit_result<<EOF" >> $GITHUB_OUTPUT
+          cat audit-output.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
         continue-on-error: true
+
+      - name: Post Client Security Audit
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const output = `${{ steps.client-audit.outputs.audit_result }}`;
+            const hasVulnerabilities = output.includes('vulnerabilities');
+            const icon = output.includes('0 vulnerabilities') ? '✅' : '⚠️';
+
+            const body = `## ${icon} Client Security Audit
+
+            \`\`\`
+            ${output.slice(0, 3000)}
+            \`\`\`
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
 
       - name: Lint
         run: pnpm run lint
@@ -102,8 +130,35 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Security Audit
-        run: pnpm audit --audit-level=high
+        id: server-audit
+        run: |
+          pnpm audit --audit-level=high 2>&1 | tee audit-output.txt || true
+          echo "audit_result<<EOF" >> $GITHUB_OUTPUT
+          cat audit-output.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
         continue-on-error: true
+
+      - name: Post Server Security Audit
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const output = `${{ steps.server-audit.outputs.audit_result }}`;
+            const icon = output.includes('0 vulnerabilities') ? '✅' : '⚠️';
+
+            const body = `## ${icon} Server Security Audit
+
+            \`\`\`
+            ${output.slice(0, 3000)}
+            \`\`\`
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
 
       - name: Lint
         run: pnpm run lint
