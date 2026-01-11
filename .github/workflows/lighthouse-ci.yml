@@ -32,8 +32,45 @@ jobs:
         working-directory: client
 
       - name: Run Lighthouse CI
+        id: lighthouse
         uses: treosh/lighthouse-ci-action@v12
         with:
           uploadArtifacts: true
           temporaryPublicStorage: true
           configPath: ./client/lighthouserc.json
+
+      - name: Post Lighthouse Report to PR
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            const results = ${{ steps.lighthouse.outputs.manifest }};
+            const links = ${{ steps.lighthouse.outputs.links }};
+
+            if (!results || !links) {
+              console.log('No Lighthouse results found');
+              return;
+            }
+
+            const summary = results.map((result, i) => {
+              const url = Object.keys(links)[i];
+              const reportUrl = links[url];
+              const { performance, accessibility, 'best-practices': bestPractices, seo } = result.summary;
+              
+              return `| ${url} | ${Math.round(performance * 100)} | ${Math.round(accessibility * 100)} | ${Math.round(bestPractices * 100)} | ${Math.round(seo * 100)} | [Report](${reportUrl}) |`;
+            }).join('\n');
+
+            const body = `## 🚀 Lighthouse Report
+
+            | URL | Performance | Accessibility | Best Practices | SEO | Report |
+            |-----|-------------|---------------|----------------|-----|--------|
+            ${summary}
+
+            > Score legend: 🟢 90-100 | 🟠 50-89 | 🔴 0-49`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
