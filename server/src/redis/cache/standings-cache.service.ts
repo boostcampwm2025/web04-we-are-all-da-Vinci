@@ -27,9 +27,8 @@ export class StandingsCacheService {
 
     const standings = await client.zRangeWithScores(key, 0, -1, { REV: true });
 
-    return standings.map(({ value, score }, index) => ({
-      ranking: index + 1,
-      similarity: score,
+    return standings.map(({ value, score }) => ({
+      score: score,
       socketId: value,
     }));
   }

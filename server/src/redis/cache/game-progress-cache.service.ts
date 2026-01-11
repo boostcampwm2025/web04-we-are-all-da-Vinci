@@ -69,20 +69,37 @@ export class GameProgressCacheService {
       }));
   }
 
-  async getRoundResultOne(
+  async getPlayerResults(
     roomId: string,
-    round: number,
     socketId: string,
-  ): Promise<RoundResult | null> {
+    totalRounds: number,
+  ) {
     const client = this.redisService.getClient();
-    const key = this.getKey(roomId, round, socketId);
+    const keys = new Array(totalRounds).map((_, round) =>
+      this.getKey(roomId, round + 1, socketId),
+    );
 
-    const result = await client.get(key);
+    const result = await client.mGet(keys);
 
-    if (!result) {
-      return null;
-    }
+    return result
+      .map((value) => ({
+        socketId: socketId,
+        value: value,
+      }))
+      .filter(
+        (item): item is { socketId: string; value: string } => !item.value,
+      )
+      .map(({ socketId, value }) => ({
+        socketId,
+        ...(JSON.parse(value) as PlayerRecord),
+      }));
+  }
 
-    return { socketId, ...(JSON.parse(result) as PlayerRecord) };
+  async getHighlight(roomId: string, socketId: string, totalRounds: number) {
+    const results = await this.getPlayerResults(roomId, socketId, totalRounds);
+    const highlight = results
+      .map((result, round) => ({ ...result, round: round + 1 }))
+      .sort((a, b) => b.similarity - a.similarity)[0];
+    return highlight;
   }
 }

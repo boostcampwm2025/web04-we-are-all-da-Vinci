@@ -6,12 +6,12 @@ import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import * as fs from 'fs';
 import * as path from 'path';
 import { RoomPromptDto } from './dto/room-prompt.dto';
-import { RoomGameEndDto } from './dto/room-game-end.dto';
 import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
 import { PinoLogger } from 'nestjs-pino';
 import { TimerService } from 'src/timer/timer.service';
 import { WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
+import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
 
 @Injectable()
 export class RoundService implements OnModuleInit {
@@ -21,6 +21,7 @@ export class RoundService implements OnModuleInit {
   constructor(
     private readonly cacheService: GameRoomCacheService,
     private readonly progressCacheService: GameProgressCacheService,
+    private readonly standingsCacheService: StandingsCacheService,
     private readonly timerService: TimerService,
     private readonly logger: PinoLogger,
   ) {
@@ -129,29 +130,49 @@ export class RoundService implements OnModuleInit {
     this.server.to(room.roomId).emit(ClientEvents.ROOM_ROUND_END, result);
   }
 
-  private async moveNextRoundOrEnd(
-    room: GameRoom,
-  ): Promise<RoomGameEndDto | RoomPromptDto> {
-    if (room.currentRound >= room.settings.totalRounds) {
-      // 게임 종료
-      room.phase = GamePhase.GAME_END;
-      await this.cacheService.saveRoom(room.roomId, room);
-
-      // TODO: 최종 결과 계산 로직 추가
-      const finalResult = {
-        finalRankings: [],
-        highlight: {
-          promptStrokes: [],
-          playerStrokes: [],
-          similarity: 0,
-        },
-      };
-
-      return finalResult;
+  private async moveNextRoundOrEnd(room: GameRoom) {
+    if (room.currentRound < room.settings.totalRounds) {
+      // 다음 라운드 시작
+      return await this.movePrompt(room);
     }
 
-    // 다음 라운드 시작
-    return await this.movePrompt(room);
+    // 게임 종료
+    room.phase = GamePhase.GAME_END;
+    await this.cacheService.saveRoom(room.roomId, room);
+
+    const standings = await this.standingsCacheService.getStandings(
+      room.roomId,
+    );
+
+    const idNicknameMapper: Record<string, string> = room.players.reduce(
+      (prev, player) => ({ ...prev, [player.socketId]: player.nickname }),
+      {},
+    );
+
+    const rankings = standings.map((value) => ({
+      ...value,
+      nickname: idNicknameMapper[value.socketId],
+    }));
+
+    const champion = rankings[0];
+
+    const highlight = await this.progressCacheService.getHighlight(
+      room.roomId,
+      champion.socketId,
+      room.settings.totalRounds,
+    );
+
+    const finalResult = {
+      finalRankings: rankings,
+      highlight: {
+        promptStrokes: this.getPromptForRound(highlight.round) || [],
+        playerStrokes: highlight.strokes,
+        similarity: highlight.similarity,
+      },
+    };
+
+    this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
+    this.server.to(room.roomId).emit(ClientEvents.ROOM_GAME_END, finalResult);
   }
 
   private loadPromptStrokes(): Stroke[][] {
