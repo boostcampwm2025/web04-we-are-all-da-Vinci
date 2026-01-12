@@ -108,7 +108,7 @@ export const useGameSocket = () => {
 
     socket.on(
       CLIENT_EVENTS.ROOM_PROMPT,
-      ({ promptStrokes }: { promptStrokes: Stroke[] }) => {
+      (promptStrokes: Stroke[]) => {
         setPromptStrokes(promptStrokes);
       },
     );
