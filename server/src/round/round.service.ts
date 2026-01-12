@@ -5,17 +5,14 @@ import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { RoomPromptDto } from './dto/room-prompt.dto';
 import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
 import { PinoLogger } from 'nestjs-pino';
 import { TimerService } from 'src/timer/timer.service';
-import { WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
 
 @Injectable()
 export class RoundService implements OnModuleInit {
-  @WebSocketServer()
   server!: Server;
 
   constructor(
@@ -36,6 +33,10 @@ export class RoundService implements OnModuleInit {
       }
       await this.nextPhase(room);
     });
+  }
+
+  setServer(server: Server) {
+    this.server = server;
   }
 
   async nextPhase(room: GameRoom) {
@@ -76,7 +77,7 @@ export class RoundService implements OnModuleInit {
     await this.nextPhase(room);
   }
 
-  private async movePrompt(room: GameRoom): Promise<RoomPromptDto> {
+  private async movePrompt(room: GameRoom) {
     room.phase = GamePhase.PROMPT;
     room.currentRound += 1;
 
@@ -87,15 +88,21 @@ export class RoundService implements OnModuleInit {
 
     await this.cacheService.saveRoom(room.roomId, room);
 
-    return { promptStrokes };
+    this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
+    this.server.to(room.roomId).emit(ClientEvents.ROOM_PROMPT, promptStrokes);
+
+    await this.timerService.startTimer(room.roomId, 5);
+    this.logger.info({ room }, 'Prompt Phase Start');
   }
 
-  private async moveDrawing(room: GameRoom): Promise<Record<string, never>> {
+  private async moveDrawing(room: GameRoom) {
     room.phase = GamePhase.DRAWING;
     await this.cacheService.saveRoom(room.roomId, room);
 
-    // PROMPT -> DRAWING 전환은 브로드캐스트할 데이터가 없음
-    return {};
+    await this.timerService.startTimer(room.roomId, room.settings.drawingTime);
+    this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
+
+    this.logger.info({ room }, 'Drawing Phase Start');
   }
 
   private async moveRoundEnd(room: GameRoom) {
@@ -128,6 +135,8 @@ export class RoundService implements OnModuleInit {
 
     this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
     this.server.to(room.roomId).emit(ClientEvents.ROOM_ROUND_END, result);
+
+    this.logger.info({ room }, 'Round End Phase Start');
   }
 
   private async moveNextRoundOrEnd(room: GameRoom) {

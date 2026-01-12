@@ -56,13 +56,14 @@ export class TimerService implements OnModuleInit, OnModuleDestroy {
         }
 
         if (updatedTimeLeft === 0 && this.onTimerEndCallback) {
-          this.onTimerEndCallback(timer.roomId);
+          await this.onTimerEndCallback(timer.roomId);
         }
       }
     }
   }
 
   async startTimer(roomId: string, timeLeft: number) {
+    this.logger.info({ roomId, timeLeft }, 'Start Timer');
     await this.timerCacheService.addTimer(roomId, timeLeft);
   }
 
