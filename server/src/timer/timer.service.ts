@@ -56,7 +56,14 @@ export class TimerService implements OnModuleInit, OnModuleDestroy {
         }
 
         if (updatedTimeLeft === 0 && this.onTimerEndCallback) {
-          await this.onTimerEndCallback(timer.roomId);
+          try {
+            await this.onTimerEndCallback(timer.roomId);
+          } catch (err) {
+            this.logger.error(
+              { roomId: timer.roomId, err },
+              'Timer end callback failed.',
+            );
+          }
         }
       }
     }

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
+import { GamePhase } from 'src/common/constants';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import { Stroke } from 'src/common/types';
 import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
@@ -61,6 +62,14 @@ export class PlayService {
 
     if (!room) {
       throw new WebsocketException('방이 존재하지 않습니다.');
+    }
+
+    if (room.phase !== GamePhase.DRAWING) {
+      throw new WebsocketException('그리기 단계에 제출해야 합니다.');
+    }
+
+    if (!room.players.find((player) => player.socketId === socketId)) {
+      throw new WebsocketException('현재 게임에 참여 중이지 않습니다.');
     }
 
     const currentRound = room.currentRound;

@@ -13,12 +13,8 @@ export class StandingsCacheService {
     const client = this.redisService.getClient();
     const key = this.getKey(roomId);
 
-    let score = (await client.zScore(key, socketId)) ?? 0;
-
     // TODO: 누적 점수 계산 로직 추가 필요
-    score += similarity;
-
-    await client.zAdd(key, { score: score, value: socketId });
+    await client.zIncrBy(key, similarity, socketId);
   }
 
   async getStandings(roomId: string) {

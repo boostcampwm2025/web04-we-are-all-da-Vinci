@@ -173,11 +173,27 @@ export class RoundService implements OnModuleInit {
 
     const champion = rankings[0];
 
+    if (!champion) {
+      this.logger.error(
+        { roomId: room.roomId },
+        '게임 결과를 계산할 수 없습니다. Standings이 비어져있습니다.',
+      );
+      throw new WebsocketException('게임 결과를 계산할 수 없습니다.');
+    }
+
     const highlight = await this.progressCacheService.getHighlight(
       room.roomId,
       champion.socketId,
       room.settings.totalRounds,
     );
+
+    if (!highlight) {
+      this.logger.error(
+        { roomId: room.roomId },
+        '하이라이트가 존재하지 않습니다.',
+      );
+      throw new WebsocketException('하이라이트를 불러올 수 없습니다.');
+    }
 
     const finalResult = {
       finalRankings: rankings,
