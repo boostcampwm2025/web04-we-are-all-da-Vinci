@@ -60,8 +60,8 @@ export class GameProgressCacheService {
         socketId: socketIds[index],
         value: value,
       }))
-      .filter(
-        (item): item is { socketId: string; value: string } => !item.value,
+      .filter((item): item is { socketId: string; value: string } =>
+        Boolean(item.value),
       )
       .map(({ socketId, value }) => ({
         socketId,
@@ -86,8 +86,8 @@ export class GameProgressCacheService {
         socketId: socketId,
         value: value,
       }))
-      .filter(
-        (item): item is { socketId: string; value: string } => !item.value,
+      .filter((item): item is { socketId: string; value: string } =>
+        Boolean(item.value),
       )
       .map(({ socketId, value }) => ({
         socketId,
