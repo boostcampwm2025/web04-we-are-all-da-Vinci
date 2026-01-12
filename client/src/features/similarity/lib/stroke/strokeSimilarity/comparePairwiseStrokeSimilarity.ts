@@ -17,9 +17,9 @@ export const comparePairwiseStrokeSimilarity = (
 
   // 가중 평균
   const similarity =
-    lengthSimilarity * 0.3 +
-    directionSimilarity * 0.4 +
-    positionSimilarity * 0.3;
+    lengthSimilarity * 0.35 +
+    directionSimilarity * 0.3 +
+    positionSimilarity * 0.35;
 
   return similarity * 100;
 };

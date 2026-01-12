@@ -1,5 +1,6 @@
 import type { Stroke } from '@/entities/similarity/model';
 import { comparePairwiseStrokeSimilarity } from './comparePairwiseStrokeSimilarity';
+import { calculateColorSimilarity } from '../../color/calculateColorSimilarity';
 
 // 두 그림의 스트로크를 모두 일대일로 매칭하여 최종 스트로크 유사도 산출
 export const calculateGreedyStrokeMatchScore = (
@@ -42,7 +43,15 @@ export const calculateGreedyStrokeMatchScore = (
     if (!used1.has(pair.i) && !used2.has(pair.j)) {
       used1.add(pair.i);
       used2.add(pair.j);
-      matches.push(pair.similarity);
+
+      const strokeShapeSim = pair.similarity;
+      const strokeColorSim = calculateColorSimilarity(
+        strokes1[pair.i].color,
+        strokes2[pair.j].color,
+      );
+
+      const finalPairSim = strokeShapeSim * (0.7 + 0.3 * strokeColorSim);
+      matches.push(finalPairSim);
     }
   }
 
