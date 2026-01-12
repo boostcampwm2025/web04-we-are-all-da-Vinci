@@ -31,6 +31,12 @@ export class RoundService implements OnModuleInit {
       if (!room) {
         return;
       }
+      if (room.phase === GamePhase.DRAWING) {
+        // Drawing -> Round_End로의 전환은 모든 플레이어가 제출해야 전환된다.
+        // 따라서 타이머에 의한 전환을 막는다.
+        // TODO: 에러로 인해 제출하지 못하는 경우를 막기 위해 제한 시간 이후에 강제 전환 로직이 필요
+        return;
+      }
       await this.nextPhase(room);
     });
   }
@@ -70,7 +76,7 @@ export class RoundService implements OnModuleInit {
       room.currentRound,
     );
 
-    if (roundResults.length !== room.players.length) {
+    if (roundResults.length < room.players.length) {
       return;
     }
 
