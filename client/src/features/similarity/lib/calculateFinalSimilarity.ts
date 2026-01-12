@@ -32,29 +32,32 @@ export const calculateFinalSimilarity = (
     normalizedPlayerStrokes,
   );
 
-  const scaledHull = applyNonLinearScale(hullScore);
+  const scaledHull = applyNonLinearScale(hullScore, 90);
   let weights;
 
-  if (scaledHull >= 92) {
-    // Hull 높음 -> 형태 중심 평가
-    weights = {
-      strokeCount: 0.05,
-      strokeMatch: 0.15, // 비중 감소
-      hull: 0.8, // Hull 비중 증가
-    };
-  } else if (scaledHull >= 60) {
-    // Hull 중간 -> 균형
-    weights = {
-      strokeCount: 0.08,
-      strokeMatch: 0.32,
-      hull: 0.6,
-    };
-  } else {
-    // Hull 낮음 -> Stroke를 더 중요하게 봄
+  const promptStrokeCount = normalizedPromptStrokes.length;
+  const playerStrokeCount = normalizedPlayerStrokes.length;
+  const strokeCountDifference = promptStrokeCount - playerStrokeCount;
+  if (strokeCountDifference > 0) {
+    // 스트로크 개수가 더 적을 때: 선 유사도에 가중치
     weights = {
       strokeCount: 0.1,
-      strokeMatch: 0.5,
-      hull: 0.4,
+      strokeMatch: 0.6,
+      hull: 0.3,
+    };
+  } else if (strokeCountDifference === 0) {
+    // 스트로크 개수가 같을 때
+    weights = {
+      strokeCount: 0.15,
+      strokeMatch: 0.35,
+      hull: 0.5,
+    };
+  } else {
+    // 스트로크 개수가 더 많을 때: 형태 유사도에 가중치
+    weights = {
+      strokeCount: 0.1,
+      strokeMatch: 0.3,
+      hull: 0.6,
     };
   }
 
@@ -149,8 +152,6 @@ const applyNonLinearScale = (
     // 낮은 점수는 제곱으로 더 낮춤
     return Math.pow(score / 100, steepness) * 100;
   } else {
-    // 높은 점수는 유지하되 약간만 강조
-    const normalized = (score - threshold) / (100 - threshold);
-    return threshold + normalized * (100 - threshold);
+    return score;
   }
 };
