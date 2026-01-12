@@ -17,10 +17,6 @@ export const routes: RouteObject[] = [
         path: `${PATHS.GAME}/:roomId`,
         element: <Game />,
       },
-      {
-        path: `/aa`,
-        element: <div>aa</div>,
-      },
     ],
   },
 ];
