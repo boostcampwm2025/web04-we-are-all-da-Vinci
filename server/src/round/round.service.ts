@@ -59,6 +59,9 @@ export class RoundService implements OnModuleInit {
       case GamePhase.ROUND_END:
         return await this.moveNextRoundOrEnd(room);
 
+      case GamePhase.GAME_END:
+        return await this.moveWaiting(room);
+
       default:
         throw new WebsocketException(`알 수 없는 phase입니다: ${room.phase}`);
     }
@@ -158,7 +161,6 @@ export class RoundService implements OnModuleInit {
     const standings = await this.standingsCacheService.getStandings(
       room.roomId,
     );
-
     const idNicknameMapper: Record<string, string> = room.players.reduce(
       (prev, player) => ({ ...prev, [player.socketId]: player.nickname }),
       {},
@@ -188,6 +190,21 @@ export class RoundService implements OnModuleInit {
 
     this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
     this.server.to(room.roomId).emit(ClientEvents.ROOM_GAME_END, finalResult);
+
+    await this.timerService.startTimer(room.roomId, 10);
+
+    this.logger.info('Game End Start');
+  }
+
+  private async moveWaiting(room: GameRoom) {
+    room.phase = GamePhase.WAITING;
+    room.currentRound = 0;
+
+    await this.cacheService.saveRoom(room.roomId, room);
+
+    this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
+
+    this.logger.info({ roomId: room.roomId }, 'Game Waiting Start');
   }
 
   private async loadPromptStrokes(): Promise<Stroke[][]> {
