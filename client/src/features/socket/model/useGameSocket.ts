@@ -106,12 +106,9 @@ export const useGameSocket = () => {
       },
     );
 
-    socket.on(
-      CLIENT_EVENTS.ROOM_PROMPT,
-      (promptStrokes: Stroke[]) => {
-        setPromptStrokes(promptStrokes);
-      },
-    );
+    socket.on(CLIENT_EVENTS.ROOM_PROMPT, (promptStrokes: Stroke[]) => {
+      setPromptStrokes(promptStrokes);
+    });
 
     // 결과
     socket.on(CLIENT_EVENTS.ROOM_ROUND_END, (response: RoundEndResponse) => {
