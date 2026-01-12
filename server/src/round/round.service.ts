@@ -3,7 +3,7 @@ import { GameRoom, Stroke } from 'src/common/types';
 import { ClientEvents, GamePhase } from 'src/common/constants';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
-import * as fs from 'fs';
+import * as fs from 'fs/promises';
 import * as path from 'path';
 import { RoomPromptDto } from './dto/room-prompt.dto';
 import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
@@ -80,7 +80,7 @@ export class RoundService implements OnModuleInit {
     room.phase = GamePhase.PROMPT;
     room.currentRound += 1;
 
-    const promptStrokes = this.getPromptForRound(room.currentRound);
+    const promptStrokes = await this.getPromptForRound(room.currentRound);
     if (!promptStrokes) {
       throw new Error('제시 그림 불러오기에 실패했습니다.');
     }
@@ -121,7 +121,7 @@ export class RoundService implements OnModuleInit {
 
     const result = {
       rankings: rankings,
-      promptStrokes: this.getPromptForRound(room.currentRound) || [],
+      promptStrokes: (await this.getPromptForRound(room.currentRound)) || [],
     };
 
     await this.timerService.startTimer(room.roomId, 10);
@@ -165,7 +165,7 @@ export class RoundService implements OnModuleInit {
     const finalResult = {
       finalRankings: rankings,
       highlight: {
-        promptStrokes: this.getPromptForRound(highlight.round) || [],
+        promptStrokes: (await this.getPromptForRound(highlight.round)) || [],
         playerStrokes: highlight.strokes,
         similarity: highlight.similarity,
       },
@@ -175,15 +175,15 @@ export class RoundService implements OnModuleInit {
     this.server.to(room.roomId).emit(ClientEvents.ROOM_GAME_END, finalResult);
   }
 
-  private loadPromptStrokes(): Stroke[][] {
+  private async loadPromptStrokes(): Promise<Stroke[][]> {
     const promptPath = path.join(process.cwd(), 'data', 'promptStrokes.json');
-    const data = fs.readFileSync(promptPath, 'utf-8');
+    const data = await fs.readFile(promptPath, 'utf-8');
     const promptStrokesData = JSON.parse(data) as Stroke[][];
     return promptStrokesData;
   }
 
-  private getPromptForRound(round: number): Stroke[] | null {
-    const promptStrokesData = this.loadPromptStrokes();
+  private async getPromptForRound(round: number): Promise<Stroke[] | null> {
+    const promptStrokesData = await this.loadPromptStrokes();
     const index = round - 1;
     if (index < 0 || index >= promptStrokesData.length) {
       return null;
