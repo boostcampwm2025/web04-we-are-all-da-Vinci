@@ -7,6 +7,7 @@ export const GameEnd = () => {
   const finalResults = useGameStore((state) => state.finalResults);
   const settings = useGameStore((state) => state.settings);
   const highlight = useGameStore((state) => state.highlight);
+  const roomId = useGameStore((state) => state.roomId);
 
   const topThree = finalResults.slice(0, 3);
 
@@ -68,7 +69,7 @@ export const GameEnd = () => {
                 variant="radius"
                 icon="replay"
                 text="다시하기"
-                path={PATHS.GAME}
+                path={`${PATHS.GAME}/${roomId}`}
               />
             </div>
           </div>
