@@ -15,17 +15,10 @@ export const calculateFinalSimilarity = (
   const normalizedPlayerStrokes = normalizeStrokes(validPlayerStrokes);
 
   // 스트로크 개수 비교
-  const strokeCountSimilarity =
-    normalizedPlayerStrokes.length === 0
-      ? 0
-      : Math.max(
-          0,
-          100 -
-            Math.abs(
-              normalizedPromptStrokes.length - normalizedPlayerStrokes.length,
-            ) *
-              10,
-        );
+  const strokeCountSimilarity = calculateStrokeCountSimilarity(
+    normalizedPromptStrokes,
+    normalizedPlayerStrokes,
+  );
 
   // 스트로크 유사도
   const strokeMatchSimilarity = calculateGreedyStrokeMatchScore(
@@ -128,6 +121,21 @@ const normalizeStrokes = (strokes: Stroke[]): Stroke[] => {
   });
 
   return normalized;
+};
+
+// 스트로크 개수 유사도 점수
+const calculateStrokeCountSimilarity = (
+  strokes1: Stroke[],
+  strokes2: Stroke[],
+) => {
+  const strokeCount1 = strokes1.length;
+  const strokeCount2 = strokes2.length;
+  if (strokeCount1 === 0 && strokeCount2 === 0) return 100;
+  if (strokeCount1 === 0 || strokeCount2 === 0) return 0;
+
+  const ratio =
+    Math.min(strokeCount1, strokeCount2) / Math.max(strokeCount1, strokeCount2);
+  return ratio * 100;
 };
 
 // 점수 비선형 스케일링
