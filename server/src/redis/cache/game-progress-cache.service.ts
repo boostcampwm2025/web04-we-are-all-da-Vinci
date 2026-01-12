@@ -89,24 +89,25 @@ export class GameProgressCacheService {
     const result = await client.mGet(keys);
 
     return result
-      .map((value) => ({
+      .map((value, index) => ({
         socketId: socketId,
         value: value,
+        round: index + 1,
       }))
-      .filter((item): item is { socketId: string; value: string } =>
-        Boolean(item.value),
+      .filter(
+        (item): item is { socketId: string; value: string; round: number } =>
+          Boolean(item.value),
       )
-      .map(({ socketId, value }) => ({
+      .map(({ socketId, value, round }) => ({
         socketId,
+        round,
         ...(JSON.parse(value) as PlayerRecord),
       }));
   }
 
   async getHighlight(roomId: string, socketId: string, totalRounds: number) {
     const results = await this.getPlayerResults(roomId, socketId, totalRounds);
-    const highlight = results
-      .map((result, round) => ({ ...result, round: round + 1 }))
-      .sort((a, b) => b.similarity - a.similarity)[0];
+    const highlight = results.sort((a, b) => b.similarity - a.similarity)[0];
     return highlight;
   }
 }

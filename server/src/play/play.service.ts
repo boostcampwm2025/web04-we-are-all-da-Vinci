@@ -71,6 +71,7 @@ export class PlayService {
     if (!room.players.find((player) => player.socketId === socketId)) {
       throw new WebsocketException('현재 게임에 참여 중이지 않습니다.');
     }
+
     const currentRound = room.currentRound;
 
     await this.progressCacheService.submitRoundResult(
