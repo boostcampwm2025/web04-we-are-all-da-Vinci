@@ -75,8 +75,8 @@ export class GameProgressCacheService {
     totalRounds: number,
   ) {
     const client = this.redisService.getClient();
-    const keys = new Array(totalRounds).map((_, round) =>
-      this.getKey(roomId, round + 1, socketId),
+    const keys = Array.from({ length: totalRounds }, (_, index) =>
+      this.getKey(roomId, index + 1, socketId),
     );
 
     const result = await client.mGet(keys);
