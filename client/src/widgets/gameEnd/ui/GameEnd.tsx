@@ -1,44 +1,14 @@
-import type { FinalResult } from '@/entities/gameResult';
 import { PodiumPlayer } from '@/entities/gameResult';
+import { useGameStore } from '@/entities/gameRoom/model';
 import { PATHS, TITLES } from '@/shared/config';
 import { CommonBtn, Title } from '@/shared/ui';
 
-const DUMMY_DATA: { totalRounds: number; players: FinalResult[] } = {
-  totalRounds: 3,
-  players: [
-    {
-      socketId: 'socket1',
-      ranking: 1,
-      nickname: 'User 1',
-      score: 2400,
-      totalScore: 24000,
-    },
-    {
-      socketId: 'socket2',
-      ranking: 2,
-      nickname: 'Player 2',
-      score: 1850,
-      totalScore: 18500,
-    },
-    {
-      socketId: 'socket3',
-      ranking: 3,
-      nickname: 'Player 3',
-      score: 1200,
-      totalScore: 12000,
-    },
-    {
-      socketId: 'socket4',
-      ranking: 4,
-      nickname: 'Player 4',
-      score: 450,
-      totalScore: 4500,
-    },
-  ],
-};
-
 export const GameEnd = () => {
-  const topThree = DUMMY_DATA.players.slice(0, 3);
+  const finalResults = useGameStore((state) => state.finalResults);
+  const settings = useGameStore((state) => state.settings);
+  const highlight = useGameStore((state) => state.highlight);
+
+  const topThree = finalResults.slice(0, 3);
 
   return (
     <div className="h-screen">
@@ -61,11 +31,22 @@ export const GameEnd = () => {
                   1등 POTG
                 </div>
                 <span className="text-sm text-gray-500">
-                  Total Rounds: {DUMMY_DATA.totalRounds}
+                  Total Rounds: {settings.totalRounds}
                 </span>
               </div>
 
-              <div className="flex-1">리플레이를 넣어라</div>
+              <div className="flex-1">
+                {highlight ? (
+                  <div className="flex h-full flex-col items-center justify-center">
+                    <p className="font-handwriting text-lg text-gray-600">
+                      유사도: {highlight.similarity.toFixed(1)}%
+                    </p>
+                    {/* TODO: DrawingReplay 컴포넌트로 highlight.playerStrokes 리플레이 구현 */}
+                  </div>
+                ) : (
+                  <p className="text-center text-gray-400">리플레이 없음</p>
+                )}
+              </div>
             </div>
           </div>
 
