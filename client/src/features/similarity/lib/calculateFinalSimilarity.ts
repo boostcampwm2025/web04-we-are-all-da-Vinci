@@ -1,6 +1,6 @@
 import type { Stroke } from '@/entities/similarity/model';
 import { calculateGreedyStrokeMatchScore } from './stroke/strokeSimilarity/calculateGreedyStrokeMatchScore';
-import { calculateHullSimilarity } from './hull/hullSimilarity/calculateHullSimilarity';
+import { calculateShapeSimilarity } from './shape/shapeSimilarity/calculateShapeSimilarity';
 
 export const calculateFinalSimilarity = (
   promptStrokes: Stroke[], // 제시 그림 스트로크
@@ -27,7 +27,7 @@ export const calculateFinalSimilarity = (
   );
 
   // hull 기반 유사도
-  const hullScore = calculateHullSimilarity(
+  const hullScore = calculateShapeSimilarity(
     normalizedPromptStrokes,
     normalizedPlayerStrokes,
   );
