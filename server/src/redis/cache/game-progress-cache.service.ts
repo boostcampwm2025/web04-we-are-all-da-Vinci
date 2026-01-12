@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { RedisService } from '../redis.service';
 import { RoundResultEntry, Stroke } from 'src/common/types';
 import { REDIS_TTL } from 'src/common/constants';
+import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 
 interface PlayerRecord {
   strokes: Stroke[];
@@ -31,6 +32,12 @@ export class GameProgressCacheService {
   ) {
     const client = this.redisService.getClient();
     const key = this.getKey(roomId, round, socketId);
+
+    const exists = await client.get(key);
+
+    if (exists) {
+      throw new WebsocketException('이미 제출하였습니다.');
+    }
 
     await client.setEx(key, REDIS_TTL, JSON.stringify({ strokes, similarity }));
   }
