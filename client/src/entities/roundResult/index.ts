@@ -1,4 +1,4 @@
-export type { RoundResult } from './model';
+export type { RoundResult, RoundEndResponse } from './model';
 export { NextRoundIndicator } from './ui/NextRoundIndicator';
 export { PlayerDrawingCard } from './ui/PlayerDrawingCard';
 export { RankingList } from './ui/RankingList';
