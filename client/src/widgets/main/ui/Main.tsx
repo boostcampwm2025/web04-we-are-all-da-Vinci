@@ -2,7 +2,6 @@ import { PATHS, TITLES } from '@/shared/config';
 import { CommonBtn, DecorateTitle, Title } from '@/shared/ui';
 
 import { AlertModal } from '@/entities';
-import { NicknameInputModal } from '@/features/nickname';
 import {
   RoomSettingsModal,
   type RoomSettings,
@@ -15,16 +14,9 @@ import { TEXT } from '@/widgets/main/config';
 
 export const Main = () => {
   const navigate = useNavigate();
-  const [showNicknameModal, setShowNicknameModal] = useState(() => {
-    return !localStorage.getItem('nickname');
-  });
+
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
-  const [nickname, setNickname] = useState('');
-
-  const handleNicknameSubmit = () => {
-    localStorage.setItem('nickname', nickname);
-  };
 
   const handleCreateRoom = () => {
     setShowSettingsModal(true);
@@ -85,16 +77,6 @@ export const Main = () => {
         </div>
       </div>
 
-      <NicknameInputModal
-        nickname={nickname}
-        setNickname={setNickname}
-        placeholder="닉네임 (최대 10자)"
-        maxLength={10}
-        onSubmit={handleNicknameSubmit}
-        isOpen={showNicknameModal}
-        onClose={() => setShowNicknameModal(false)}
-      />
-
       <RoomSettingsModal
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
@@ -104,8 +86,8 @@ export const Main = () => {
       <AlertModal
         isOpen={showGuideModal}
         onClose={() => setShowGuideModal(false)}
-        title={TITLES.DESCRIPTION}
-        message={TEXT.MANUAL_MESSAGE}
+        title="게임 설명서"
+        message="1. 방을 만들거나 입장하세요. 2. 주어진 주제에 맞는 그림을 그리세요. 3. 다른 사람의 그림을 보고 정답을 맞춰보세요. 4. 가장 많은 점수를 얻은 사람이 승리합니다!"
       />
     </>
   );

@@ -6,7 +6,7 @@ import type { RoundEndResponse } from '@/entities/roundResult/model';
 import type { Stroke } from '@/entities/similarity';
 import { disconnectSocket, getSocket } from '@/shared/api/socket';
 import { CLIENT_EVENTS, SERVER_EVENTS } from '@/shared/config';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 // 서버에서 오는 랭킹 데이터 타입
@@ -20,6 +20,11 @@ export const useGameSocket = () => {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
 
+  // 닉네임 상태 추적 - localStorage 변경 감지
+  const [nickname, setNickname] = useState<string | null>(() =>
+    localStorage.getItem('nickname'),
+  );
+
   // Zustand actions
   const setConnected = useGameStore((state) => state.setConnected);
   const updateRoom = useGameStore((state) => state.updateRoom);
@@ -31,10 +36,35 @@ export const useGameSocket = () => {
   const setPromptStrokes = useGameStore((state) => state.setPromptStrokes);
   const reset = useGameStore((state) => state.reset);
 
+  // localStorage 변경 감지
+  useEffect(() => {
+    const checkNickname = () => {
+      const storedNickname = localStorage.getItem('nickname');
+      setNickname(storedNickname);
+    };
+
+    // storage 이벤트 리스너 (다른 탭에서 변경 시)
+    window.addEventListener('storage', checkNickname);
+
+    // 같은 탭에서 변경 감지를 위한 interval
+    const interval = setInterval(checkNickname, 100);
+
+    return () => {
+      window.removeEventListener('storage', checkNickname);
+      clearInterval(interval);
+    };
+  }, []);
+
   useEffect(() => {
     if (!roomId) {
       console.error('roomId가 없습니다');
       navigate('/');
+      return;
+    }
+
+    // 닉네임이 없으면 소켓 연결하지 않음
+    if (!nickname) {
+      console.log('닉네임이 없어서 소켓 연결 대기 중...');
       return;
     }
 
@@ -48,13 +78,6 @@ export const useGameSocket = () => {
       setConnected(true);
 
       // 방 입장
-      const nickname = localStorage.getItem('nickname');
-      if (!nickname) {
-        console.error('닉네임이 없습니다');
-        navigate('/');
-        return;
-      }
-
       socket.emit(SERVER_EVENTS.USER_JOIN, { roomId, nickname });
     });
 
@@ -168,6 +191,7 @@ export const useGameSocket = () => {
     };
   }, [
     roomId,
+    nickname,
     navigate,
     setConnected,
     updateRoom,
