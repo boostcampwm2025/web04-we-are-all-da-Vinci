@@ -2,7 +2,7 @@ import { RankingCard, type PlayerColor } from '@/entities/ranking';
 import {
   NextRoundIndicator,
   PlayerDrawingCard,
-  PlayerReplaysGrid,
+  PlayerReplaysSection,
   PromptSection,
   RankingList,
   ReferenceImageCard,
@@ -48,19 +48,13 @@ export const RoundEnd = () => {
     <>
       <Timer />
       <div className="flex h-screen w-full flex-col px-4 py-4">
-        {/* Header */}
         <div className="mx-auto w-full max-w-7xl">
           <div className="mb-4">
             <RoundResultHeader title={`라운드 ${currentRound} 결과`} />
           </div>
-
-          {/* Main Content: Reference Image + Player Grid */}
           <div className="flex min-h-0 flex-1 gap-4">
-            {/* Left: Prompt */}
             <PromptSection promptStrokes={promptStrokes} />
-
-            {/* Right: Player Replays Grid */}
-            <PlayerReplaysGrid
+            <PlayerReplaysSection
               players={playersForGrid}
               currentUserSocketId={mySocketId}
             />

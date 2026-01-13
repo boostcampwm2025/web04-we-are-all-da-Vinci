@@ -10,17 +10,17 @@ interface Player {
   socketId?: string;
 }
 
-interface PlayerReplaysGridProps {
+interface PlayerReplaysSectionProps {
   players: Player[];
   currentUserSocketId?: string;
 }
 
 const PLAYERS_PER_PAGE = 8;
 
-export const PlayerReplaysGrid = ({
+export const PlayerReplaysSection = ({
   players,
   currentUserSocketId,
-}: PlayerReplaysGridProps) => {
+}: PlayerReplaysSectionProps) => {
   const [currentPage, setCurrentPage] = useState(0);
 
   const totalPages = Math.ceil(players.length / PLAYERS_PER_PAGE);

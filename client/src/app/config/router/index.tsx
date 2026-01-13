@@ -3,6 +3,7 @@ import type { RouteObject } from 'react-router-dom';
 
 import Game from '@/pages/game/Game';
 import Main from '@/pages/main/Main';
+import { RoundEnd } from '@/widgets';
 
 export const routes: RouteObject[] = [
   {
@@ -12,5 +13,9 @@ export const routes: RouteObject[] = [
   {
     path: `${PATHS.GAME}/:roomId`,
     element: <Game />,
+  },
+  {
+    path: '/round-end-preview',
+    element: <RoundEnd />,
   },
 ];
