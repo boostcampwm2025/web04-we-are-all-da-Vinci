@@ -104,8 +104,8 @@ export const Main = () => {
       <AlertModal
         isOpen={showGuideModal}
         onClose={() => setShowGuideModal(false)}
-        title="게임 설명서"
-        message="1. 방을 만들거나 입장하세요. 2. 주어진 주제에 맞는 그림을 그리세요. 3. 다른 사람의 그림을 보고 정답을 맞춰보세요. 4. 가장 많은 점수를 얻은 사람이 승리합니다!"
+        title={TITLES.DESCRIPTION}
+        message={TEXT.MANUAL_MESSAGE}
       />
     </>
   );
