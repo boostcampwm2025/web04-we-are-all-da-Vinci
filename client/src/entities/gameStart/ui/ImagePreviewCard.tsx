@@ -13,11 +13,13 @@ export const ImagePreviewCard = ({
   promptStrokes,
   label,
 }: ImagePreviewCardProps) => {
-  const { canvasRef, ctxRef } = useCanvasSetup();
+  const { canvasRef, ctxRef, isReady } = useCanvasSetup();
 
   useEffect(() => {
-    drawStrokesOnCanvas(canvasRef, ctxRef, promptStrokes);
-  }, [promptStrokes]);
+    if (isReady) {
+      drawStrokesOnCanvas(canvasRef, ctxRef, promptStrokes ?? []);
+    }
+  }, [promptStrokes, isReady]);
 
   return (
     <div className="relative w-full max-w-2xl rounded-2xl border-4 border-gray-800 bg-white p-3 shadow-2xl">

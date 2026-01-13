@@ -6,7 +6,10 @@ export const calculateFinalSimilarity = (
   promptStrokes: Stroke[], // 제시 그림 스트로크
   playerStrokes: Stroke[], // 사용자 그림 스트로크
 ) => {
-  if (playerStrokes.length === 0) return { similarity: 0 };
+  // 빈 배열 또는 undefined 체크
+  if (!promptStrokes || !playerStrokes || playerStrokes.length === 0) {
+    return { similarity: 0 };
+  }
 
   const validPromptStrokes = getValidStrokes(promptStrokes);
   const validPlayerStrokes = getValidStrokes(playerStrokes);
@@ -19,13 +22,13 @@ export const calculateFinalSimilarity = (
     normalizedPlayerStrokes.length === 0
       ? 0
       : Math.max(
-          0,
-          100 -
-            Math.abs(
-              normalizedPromptStrokes.length - normalizedPlayerStrokes.length,
-            ) *
-              10,
-        );
+        0,
+        100 -
+        Math.abs(
+          normalizedPromptStrokes.length - normalizedPlayerStrokes.length,
+        ) *
+        10,
+      );
 
   // 스트로크 유사도
   const strokeMatchSimilarity = calculateGreedyStrokeMatchScore(
