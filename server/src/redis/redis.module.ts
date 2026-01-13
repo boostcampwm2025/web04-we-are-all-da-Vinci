@@ -6,6 +6,8 @@ import { WaitlistCacheService } from './cache/waitlist-cache.service';
 import { PlayerCacheService } from './cache/player-cache.service';
 import { TimerCacheService } from './cache/timer-cache.service';
 import { LeaderboardCacheService } from './cache/leaderboard-cache.service';
+import { GameProgressCacheService } from './cache/game-progress-cache.service';
+import { StandingsCacheService } from './cache/standings-cache.service';
 
 @Module({
   providers: [
@@ -15,6 +17,8 @@ import { LeaderboardCacheService } from './cache/leaderboard-cache.service';
     PlayerCacheService,
     TimerCacheService,
     LeaderboardCacheService,
+    GameProgressCacheService,
+    StandingsCacheService,
   ],
   controllers: [RedisController],
   exports: [
@@ -24,6 +28,8 @@ import { LeaderboardCacheService } from './cache/leaderboard-cache.service';
     PlayerCacheService,
     TimerCacheService,
     LeaderboardCacheService,
+    GameProgressCacheService,
+    StandingsCacheService,
   ],
 })
 export class RedisModule {}

@@ -1,14 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
+import { GamePhase } from 'src/common/constants';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
+import { Stroke } from 'src/common/types';
+import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
+import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
 
 @Injectable()
 export class PlayService {
   constructor(
     private readonly leaderboardCacheService: LeaderboardCacheService,
     private readonly cacheService: GameRoomCacheService,
+    private readonly progressCacheService: GameProgressCacheService,
+    private readonly standingsCacheService: StandingsCacheService,
     private readonly logger: PinoLogger,
   ) {
     this.logger.setContext(PlayService.name);
@@ -44,5 +50,38 @@ export class PlayService {
     }));
 
     return rankings;
+  }
+
+  async submitDrawing(
+    roomId: string,
+    socketId: string,
+    similarity: number,
+    strokes: Stroke[],
+  ) {
+    const room = await this.cacheService.getRoom(roomId);
+
+    if (!room) {
+      throw new WebsocketException('방이 존재하지 않습니다.');
+    }
+
+    if (room.phase !== GamePhase.DRAWING) {
+      throw new WebsocketException('그리기 단계에 제출해야 합니다.');
+    }
+
+    if (!room.players.find((player) => player.socketId === socketId)) {
+      throw new WebsocketException('현재 게임에 참여 중이지 않습니다.');
+    }
+
+    const currentRound = room.currentRound;
+
+    await this.progressCacheService.submitRoundResult(
+      roomId,
+      currentRound,
+      socketId,
+      strokes,
+      similarity,
+    );
+
+    await this.standingsCacheService.updateScore(roomId, socketId, similarity);
   }
 }

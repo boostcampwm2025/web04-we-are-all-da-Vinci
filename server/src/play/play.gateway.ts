@@ -54,14 +54,22 @@ export class PlayGateway {
   }
 
   @SubscribeMessage(ServerEvents.USER_DRAWING)
-  submitDrawing(
+  async submitDrawing(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: UserDrawingDto,
   ) {
+    const { roomId, strokes, similarity } = payload;
     this.logger.info(
       { clientId: client.id, ...payload },
       'User Submitted Drawing',
     );
+    await this.playService.submitDrawing(
+      roomId,
+      client.id,
+      similarity,
+      strokes,
+    );
+
     return 'ok';
   }
 }
