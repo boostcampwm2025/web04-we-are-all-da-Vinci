@@ -5,6 +5,7 @@ import { useGameStore } from '@/entities/gameRoom/model';
 
 export const Prompt = () => {
   const promptStrokes = useGameStore((state) => state.promptStrokes);
+  const currentRound = useGameStore((state) => state.currentRound);
 
   return (
     <>
@@ -13,7 +14,7 @@ export const Prompt = () => {
       <div className="flex h-full w-full items-center justify-center px-4 py-4">
         <div className="flex h-full w-full max-w-3xl flex-col">
           <GameStartHeader
-            roundBadge={<RoundBadge round={1} />}
+            roundBadge={<RoundBadge round={currentRound} />}
             title="기억하세요!"
           />
 
