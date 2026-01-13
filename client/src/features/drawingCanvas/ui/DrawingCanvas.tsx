@@ -4,7 +4,7 @@ import { useMouseDrawing } from '@/features/drawingCanvas/model/useMouseDrawing'
 import { useStrokes } from '@/features/drawingCanvas/model/useStrokes';
 import { useColorSelection } from '@/features/drawingCanvas/model/useColorSelection';
 import { DrawingToolbar } from '@/features/drawingToolbar/ui/DrawingToolbar';
-import { CANVAS_CONFIG, SERVER_EVENTS, GAME_PHASE } from '@/shared/config';
+import { CANVAS_CONFIG, SERVER_EVENTS } from '@/shared/config';
 import { drawStrokesOnCanvas } from '@/features/drawingCanvas/lib/drawStrokesOnCanvas';
 import { useGameStore, selectPhase } from '@/entities/gameRoom/model';
 import { getSocket } from '@/shared/api/socket';
@@ -36,41 +36,38 @@ export const DrawingCanvas = () => {
   const isSubmittedRef = useRef(false);
   const hasTimerStartedRef = useRef(false);
 
-  // 라운드/페이즈 변경 시 ref 초기화
+  // 컴포넌트 언마운트 시 Drawing time을 Sentry에 전송
   useEffect(() => {
+    // Drawing phase 시작 시 총 그리기 시간 초기화
+    totalDrawingTimeRef.current = 0;
     isSubmittedRef.current = false;
     hasTimerStartedRef.current = false;
 
-    // Drawing phase 시작 시 총 그리기 시간 초기화
-    if (phase === GAME_PHASE.DRAWING) {
-      totalDrawingTimeRef.current = 0;
-    }
+    return () => {
+      // 언마운트 시 그리기 시간이 있으면 Sentry에 전송
+      if (totalDrawingTimeRef.current > 0) {
+        const totalRoundTimeSec = settings.drawingTime;
+        const actualDrawingTimeSec = totalDrawingTimeRef.current / 1000;
+        const thinkingTimeSec = totalRoundTimeSec - actualDrawingTimeSec;
+        const drawingRatio = (actualDrawingTimeSec / totalRoundTimeSec) * 100;
 
-    // Drawing phase 종료 시 총 그리기 시간을 Sentry에 전송
-    if (phase !== GAME_PHASE.DRAWING && totalDrawingTimeRef.current > 0) {
-      const totalRoundTimeSec = settings.drawingTime;
-      const actualDrawingTimeSec = totalDrawingTimeRef.current / 1000;
-      const thinkingTimeSec = totalRoundTimeSec - actualDrawingTimeSec;
-      const drawingRatio = (actualDrawingTimeSec / totalRoundTimeSec) * 100;
-
-      captureEvent(
-        'Drawing Time Check',
-        'info',
-        {
-          round: String(currentRound),
-          roomId,
-        },
-        {
-          totalRoundTimeSec,
-          actualDrawingTimeSec: actualDrawingTimeSec.toFixed(2),
-          thinkingTimeSec: thinkingTimeSec.toFixed(2),
-          drawingRatio: drawingRatio.toFixed(1),
-        },
-      );
-
-      totalDrawingTimeRef.current = 0;
-    }
-  }, [currentRound, phase, roomId, settings.drawingTime]);
+        captureEvent(
+          'Drawing Time Check',
+          'info',
+          {
+            round: String(currentRound),
+            roomId,
+          },
+          {
+            '라운드 총 시간': totalRoundTimeSec,
+            '그림 그린 시간': actualDrawingTimeSec.toFixed(2),
+            '대기한 시간': thinkingTimeSec.toFixed(2),
+            '그림 그리기 비율': drawingRatio.toFixed(1),
+          },
+        );
+      }
+    };
+  }, [currentRound, roomId, settings.drawingTime]);
 
   // promptStrokes 전처리 (제시 그림이 바뀌지 않으면 캐시된 값 사용)
   const preprocessedPrompt = useMemo(() => {
@@ -83,14 +80,10 @@ export const DrawingCanvas = () => {
     return preprocessStrokes(strokes);
   }, [strokes]);
 
-  // timer가 0이 되면 자동 제출
   useEffect(() => {
-    // 타이머가 시작되었는지 확인 (0보다 큰 값이 들어오면 시작된 것으로 간주)
     if (timer > 0) {
       hasTimerStartedRef.current = true;
     }
-
-    // 타이머가 시작된 적이 있고, 0이 되면 제출
     if (
       phase === 'DRAWING' &&
       timer === 0 &&
