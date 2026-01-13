@@ -34,7 +34,7 @@ export const calculateShapeSimilarity = (
   // 5. 각도 기반 형태 유사도 계산
   const radialSim = calculateRadialSimilarity(points1, points2);
 
-  const shapeSim = (hullSim * 0.5 + radialSim * 0.5) * 100;
+  const shapeSim = (hullSim * 0.6 + radialSim * 0.4) * 100;
 
   return shapeSim;
 };
