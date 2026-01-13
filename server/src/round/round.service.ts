@@ -77,7 +77,10 @@ export class RoundService implements OnModuleInit {
     room.phase = GamePhase.PROMPT;
     room.currentRound += 1;
 
-    const promptStrokes = await this.getPromptForRound(room.currentRound);
+    const promptStrokes = await this.getPromptForRound(
+      room.promptId,
+      room.currentRound,
+    );
     if (!promptStrokes) {
       throw new Error('제시 그림 불러오기에 실패했습니다.');
     }
@@ -124,7 +127,8 @@ export class RoundService implements OnModuleInit {
 
     const result = {
       rankings: rankings,
-      promptStrokes: (await this.getPromptForRound(room.currentRound)) || [],
+      promptStrokes:
+        (await this.getPromptForRound(room.promptId, room.currentRound)) || [],
     };
 
     await this.timerService.startTimer(room.roomId, 10);
@@ -185,7 +189,8 @@ export class RoundService implements OnModuleInit {
     const finalResult = {
       finalRankings: rankings,
       highlight: {
-        promptStrokes: (await this.getPromptForRound(highlight.round)) || [],
+        promptStrokes:
+          (await this.getPromptForRound(room.promptId, highlight.round)) || [],
         playerStrokes: highlight.strokes,
         similarity: highlight.similarity,
       },
@@ -217,9 +222,12 @@ export class RoundService implements OnModuleInit {
     return promptStrokesData;
   }
 
-  private async getPromptForRound(round: number): Promise<Stroke[] | null> {
+  private async getPromptForRound(
+    promptId: number,
+    round: number,
+  ): Promise<Stroke[] | null> {
     const promptStrokesData = await this.loadPromptStrokes();
-    const index = round - 1;
+    const index = (promptId + round - 1) % promptStrokesData.length;
     if (index < 0 || index >= promptStrokesData.length) {
       return null;
     }

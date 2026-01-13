@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { GameRoom } from 'src/common/types';
+import { GameRoom, Stroke } from 'src/common/types';
 import { GamePhase } from 'src/common/constants';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
@@ -9,6 +9,8 @@ import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
 import { RoundService } from 'src/round/round.service';
+import path from 'node:path';
+import fs from 'fs/promises';
 
 @Injectable()
 export class GameService {
@@ -23,6 +25,7 @@ export class GameService {
   async createRoom(createRoomDto: CreateRoomDto) {
     const roomId = await this.generateRoomId();
 
+    const promptId = await this.getRandomPromptId();
     const gameRoom: GameRoom = {
       roomId,
       players: [],
@@ -33,6 +36,7 @@ export class GameService {
         maxPlayer: createRoomDto.maxPlayer,
         totalRounds: createRoomDto.totalRounds,
       },
+      promptId: promptId,
     };
 
     await this.cacheService.saveRoom(roomId, gameRoom);
@@ -173,5 +177,19 @@ export class GameService {
     }
 
     await this.roundService.nextPhase(room);
+  }
+
+  private async loadPromptStrokes(): Promise<Stroke[][]> {
+    const promptPath = path.join(process.cwd(), 'data', 'promptStrokes.json');
+    const data = await fs.readFile(promptPath, 'utf-8');
+    const promptStrokesData = JSON.parse(data) as Stroke[][];
+    return promptStrokesData;
+  }
+
+  private async getRandomPromptId(): Promise<number> {
+    const promptStrokesData = await this.loadPromptStrokes();
+
+    const id = Math.floor(Math.random() * promptStrokesData.length);
+    return id;
   }
 }
