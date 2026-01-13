@@ -59,10 +59,10 @@ export const DrawingCanvas = () => {
             roomId,
           },
           {
-            '라운드 총 시간': totalRoundTimeSec,
-            '그림 그린 시간': actualDrawingTimeSec.toFixed(2),
-            '대기한 시간': thinkingTimeSec.toFixed(2),
-            '그림 그리기 비율': drawingRatio.toFixed(1),
+            totalRoundTime: totalRoundTimeSec,
+            actualDrawingTime: actualDrawingTimeSec.toFixed(2),
+            waitingTime: thinkingTimeSec.toFixed(2),
+            drawingRatio: drawingRatio.toFixed(1),
           },
         );
       }
@@ -95,6 +95,17 @@ export const DrawingCanvas = () => {
       const similarity = calculateFinalSimilarityByPreprocessed(
         preprocessedPrompt,
         preprocessedPlayer,
+      );
+
+      captureEvent(
+        'Drawing Data',
+        'info',
+        {
+          roomId,
+        },
+        {
+          strokesData: strokes,
+        },
       );
 
       getSocket().emit(SERVER_EVENTS.USER_DRAWING, {
