@@ -1,5 +1,8 @@
 import type { Stroke } from '@/entities/similarity/model';
-import { calculateStrokeScale, transformPoint } from '@/shared/lib/scaleStrokesToCanvas';
+import {
+  calculateStrokeScale,
+  transformPoint,
+} from '@/shared/lib/scaleStrokesToCanvas';
 import type { RefObject } from 'react';
 
 const LOOP_DELAY_MS = 1000; // 루프 재시작 전 대기 시간(ms)
