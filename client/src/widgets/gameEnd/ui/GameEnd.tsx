@@ -1,11 +1,11 @@
 import { PodiumPlayer } from '@/entities/gameResult';
 import { useGameStore, useIsHost } from '@/entities/gameRoom/model';
+import { TIMER } from '@/entities/timer/config';
 import { DrawingReplayCanvas } from '@/features/replayingCanvas';
 import { getSocket } from '@/shared/api/socket';
-import { PATHS, SERVER_EVENTS, TITLES } from '@/shared/config';
+import { SERVER_EVENTS, TITLES } from '@/shared/config';
 import { CommonBtn, Title } from '@/shared/ui';
 
-const GAME_END_TOTAL_TIME = 30; // 서버와 동일하게 30초
 const BUTTON_ENABLE_AFTER = 10; // 10초 후 버튼 활성화
 
 export const GameEnd = () => {
@@ -14,11 +14,10 @@ export const GameEnd = () => {
   const highlight = useGameStore((state) => state.highlight);
   const roomId = useGameStore((state) => state.roomId);
   const timer = useGameStore((state) => state.timer);
-  const reset = useGameStore((state) => state.reset);
   const isHost = useIsHost();
 
   const topThree = finalResults.slice(0, 3);
-  const isButtonEnabled = timer <= GAME_END_TOTAL_TIME - BUTTON_ENABLE_AFTER;
+  const isButtonEnabled = timer <= TIMER.GAME_END_TIME - BUTTON_ENABLE_AFTER;
 
   const handleRestart = () => {
     if (!isButtonEnabled) return;
@@ -28,8 +27,7 @@ export const GameEnd = () => {
     socket.emit(SERVER_EVENTS.ROOM_RESTART, { roomId });
 
     // 상태 초기화 후 페이지 새로고침
-    reset();
-    window.location.href = `${PATHS.GAME}/${roomId}`;
+    // reset();
   };
 
   return (
