@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { GameRoom } from 'src/common/types';
+import { GameRoom, Stroke } from 'src/common/types';
 import { GamePhase } from 'src/common/constants';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
@@ -9,7 +9,8 @@ import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
 import { RoundService } from 'src/round/round.service';
-import { RoomPromptDto } from 'src/round/dto/room-prompt.dto';
+import path from 'node:path';
+import fs from 'fs/promises';
 
 @Injectable()
 export class GameService {
@@ -24,6 +25,7 @@ export class GameService {
   async createRoom(createRoomDto: CreateRoomDto) {
     const roomId = await this.generateRoomId();
 
+    const promptId = await this.getRandomPromptId();
     const gameRoom: GameRoom = {
       roomId,
       players: [],
@@ -34,6 +36,7 @@ export class GameService {
         maxPlayer: createRoomDto.maxPlayer,
         totalRounds: createRoomDto.totalRounds,
       },
+      promptId: promptId,
     };
 
     await this.cacheService.saveRoom(roomId, gameRoom);
@@ -119,10 +122,7 @@ export class GameService {
     return updatedRoom;
   }
 
-  async startGame(
-    roomId: string,
-    socketId: string,
-  ): Promise<{ room: GameRoom; result: RoomPromptDto }> {
+  async startGame(roomId: string, socketId: string) {
     const room = await this.cacheService.getRoom(roomId);
     if (!room) {
       throw new WebsocketException('방이 존재하지 않습니다.');
@@ -147,12 +147,49 @@ export class GameService {
     if (room.players.length < 2) {
       throw new WebsocketException('게임을 시작하려면 최소 2명이 필요합니다.');
     }
-
-    const result = (await this.roundService.nextPhase(room)) as RoomPromptDto;
-    return { room, result };
+    await this.roundService.nextPhase(room);
   }
 
   async getRoom(roomId: string): Promise<GameRoom | null> {
     return await this.cacheService.getRoom(roomId);
+  }
+
+  async restartGame(roomId: string, socketId: string) {
+    const room = await this.cacheService.getRoom(roomId);
+    if (!room) {
+      throw new WebsocketException('방이 존재하지 않습니다.');
+    }
+
+    if (room.phase !== GamePhase.GAME_END) {
+      throw new WebsocketException('게임이 종료 상태가 아닙니다.');
+    }
+
+    const player = room.players.find((player) => player.socketId === socketId);
+
+    if (!player) {
+      throw new WebsocketException(
+        '플레이어가 존재하지 않습니다. 재접속이 필요합니다.',
+      );
+    }
+
+    if (!player.isHost) {
+      throw new WebsocketException('방장만 재시작할 수 있습니다.');
+    }
+
+    await this.roundService.nextPhase(room);
+  }
+
+  private async loadPromptStrokes(): Promise<Stroke[][]> {
+    const promptPath = path.join(process.cwd(), 'data', 'promptStrokes.json');
+    const data = await fs.readFile(promptPath, 'utf-8');
+    const promptStrokesData = JSON.parse(data) as Stroke[][];
+    return promptStrokesData;
+  }
+
+  private async getRandomPromptId(): Promise<number> {
+    const promptStrokesData = await this.loadPromptStrokes();
+
+    const id = Math.floor(Math.random() * promptStrokesData.length);
+    return id;
   }
 }

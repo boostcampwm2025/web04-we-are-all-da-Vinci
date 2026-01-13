@@ -1,4 +1,8 @@
 export const REDIS_TTL = 3600;
+export const PROMPT_TIME = 5;
+export const DRAWING_END_DELAY = 1800; // 그림 그리기 종료 후 대기 시간 (ms)
+export const ROUND_END_TIME = 15; // 라운드 결과 표시 시간 (초)
+export const GAME_END_TIME = 30; // 게임 종료 화면 표시 시간 (초)
 
 export const ServerEvents = {
   // 클라이언트 -> 서버
@@ -7,6 +11,7 @@ export const ServerEvents = {
   USER_DRAWING: 'user:drawing',
   ROOM_SETTINGS: 'room:settings',
   ROOM_START: 'room:start',
+  ROOM_RESTART: 'room:restart',
 } as const;
 
 export const ClientEvents = {

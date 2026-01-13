@@ -124,6 +124,7 @@ describe('GameService', () => {
           maxPlayer: 4,
           totalRounds: 5,
         },
+        promptId: 1,
       };
 
       cacheService.getRoom

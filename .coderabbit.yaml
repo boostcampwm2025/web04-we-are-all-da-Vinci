@@ -1,0 +1,73 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+language: "ko-KR"
+early_access: false # 실험적 기능 활성화 여부
+
+reviews:
+  profile: "chill" # 리뷰톤 (느긋함, 중요한 이슈만 지적, 코멘트 적음)
+  request_changes_workflow: false # 일반 코멘트로만 표시 (머지 차단 없음)
+  high_level_summary: true # PR 변경사항 요약 생성
+  review_status: true # 리뷰 상태 표시
+  collapse_walkthrough: false # 코드 워크스루(상세 분석) 펼침
+
+  auto_review:
+    enabled: true # 자동 리뷰 활성화
+    drafts: false # 리뷰 초안 제외
+
+  # 팀 컨벤션 가이드
+  instructions: |
+    ## 네이밍 규칙
+    - 변수/함수: camelCase
+    - 클래스/컴포넌트: PascalCase
+    - 상수: UPPER_SNAKE_CASE
+    - Boolean: is, has 접두사 (isLoading, hasError)
+    - 핸들러: handle~ 접두사
+    - Props 콜백: on~ 접두사
+
+    ## 프론트엔드 규칙
+    - 컴포넌트 파일: PascalCase
+    - 함수/hook/타입 파일: camelCase
+    - 화살표 함수 export const 사용
+    - Props는 interface 우선, 결합 시 type 사용
+    - 구조 분해 할당 사용
+    - Early return 패턴 활용
+    - 한 파일에 한 컴포넌트
+    - 절대 경로(@/) 사용
+
+    ## Import 순서
+    1. React 관련
+    2. 외부 라이브러리
+    3. 내부 컴포넌트
+    4. 유틸/타입
+    5. 스타일/에셋
+
+    ## 백엔드 규칙
+    - 파일명: kebab-case
+    - 접미사: .types.ts, .dto.ts, .controller.ts, .service.ts, .spec.ts
+
+  # 경로별 세부 규칙
+  path_instructions:
+    - path: "client/**/*.tsx"
+      instructions: |
+        프론트엔드 컴포넌트 규칙:
+        - 화살표 함수로 컴포넌트 정의 (export const)
+        - Props는 interface로 정의 ({Component}Props 형식)
+        - 구조 분해 할당으로 props 받기
+        - Early return 패턴 사용
+        - 한 파일에 한 컴포넌트만
+
+    - path: "client/**/use*.ts"
+      instructions: |
+        커스텀 훅 규칙:
+        - 파일명은 camelCase (useFetch.ts)
+        - use 접두사 필수
+        - 반환값 타입 명시
+
+    - path: "server/**/*.ts"
+      instructions: |
+        백엔드 규칙:
+        - 파일명은 kebab-case
+        - NestJS 스타일 준수
+
+chat:
+  auto_reply: true

@@ -22,3 +22,55 @@ pre-commit:
       root: "server/"
       glob: "*.ts"
       run: npx prettier --write {staged_files}
+
+# Commit message 검증
+commit-msg:
+  commands:
+    check-convention:
+      run: |
+        MSG_FILE="{1}"
+        MSG=$(cat "$MSG_FILE")
+
+        # 빈 메시지 무시
+        if [ -z "$MSG" ]; then
+          exit 0
+        fi
+
+        # Merge 커밋 무시
+        if echo "$MSG" | grep -q "^Merge"; then
+          exit 0
+        fi
+
+        # 커밋 메시지 형식 검사: type(scope): message 또는 type: message
+        # 허용되는 타입 (! 접두사 포함)
+        if ! echo "$MSG" | grep -qE "^(!BREAKING CHANGE|!HOTFIX|feat|fix|style|design|refactor|docs|chore|lint|deploy|test|rename|remove|type|comment|build|ci|perf)(\([a-z]+\))?:\s.+"; then
+          echo "❌ 커밋 메시지 형식이 올바르지 않습니다!"
+          echo ""
+          echo "올바른 형식: type(scope): message"
+          echo "scope는 선택사항입니다 (fe, be 등)"
+          echo ""
+          echo "허용되는 타입:"
+          echo "  - feat: 새로운 기능 추가"
+          echo "  - fix: 버그 수정"
+          echo "  - style: 코드 포맷 변경"
+          echo "  - design: CSS 등 UI 변경"
+          echo "  - refactor: 코드 리팩토링"
+          echo "  - docs: 문서 수정"
+          echo "  - chore: 빌드/설정 작업"
+          echo "  - lint: ESLint 설정/에러 수정"
+          echo "  - deploy: 빌드 및 배포 작업"
+          echo "  - test: 테스트 추가/수정"
+          echo "  - rename: 파일/폴더명 변경"
+          echo "  - remove: 파일 삭제"
+          echo "  - type: 타입 정의 수정"
+          echo "  - comment: 주석 추가/변경"
+          echo "  - build: 빌드 시스템 변경"
+          echo "  - ci: CI 설정 변경"
+          echo "  - perf: 성능 개선"
+          echo "  - !HOTFIX: 긴급 버그 수정"
+          echo "  - !BREAKING CHANGE: 큰 API 변경"
+          echo ""
+          echo "예시: feat(fe): 회원가입 이메일 인증 추가"
+          echo "예시: fix: 로그인 리다이렉트 오류 수정"
+          exit 1
+        fi

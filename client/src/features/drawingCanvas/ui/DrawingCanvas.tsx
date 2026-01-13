@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useCanvasSetup } from '@/shared/model/useCanvasSetup';
 import { useMouseDrawing } from '@/features/drawingCanvas/model/useMouseDrawing';
 import { useStrokes } from '@/features/drawingCanvas/model/useStrokes';
@@ -7,8 +7,12 @@ import { DrawingToolbar } from '@/features/drawingToolbar/ui/DrawingToolbar';
 import { CANVAS_CONFIG, SERVER_EVENTS } from '@/shared/config';
 import { drawStrokesOnCanvas } from '@/features/drawingCanvas/lib/drawStrokesOnCanvas';
 import { useGameStore, selectPhase } from '@/entities/gameRoom/model';
-import { calculateFinalSimilarity } from '@/features/similarity/lib';
 import { getSocket } from '@/shared/api/socket';
+import {
+  calculateFinalSimilarityByPreprocessed,
+  preprocessStrokes,
+} from '@/features/similarity/lib';
+import { captureEvent } from '@/shared/lib/sentry';
 
 // 기본 그리기 기능을 제공하는 캔버스 컴포넌트
 export const DrawingCanvas = () => {
@@ -19,15 +23,108 @@ export const DrawingCanvas = () => {
   const { selectedColor, handleColorSelect } = useColorSelection();
 
   const strokeCountRef = useRef(strokes.length);
+  const totalDrawingTimeRef = useRef<number>(0);
 
   const phase = useGameStore(selectPhase);
   const promptStrokes = useGameStore((state) => state.promptStrokes);
   const roomId = useGameStore((state) => state.roomId);
+  const timer = useGameStore((state) => state.timer);
+  const currentRound = useGameStore((state) => state.currentRound);
+  const settings = useGameStore((state) => state.settings);
+
+  // 제출 상태 추적용 ref
+  const isSubmittedRef = useRef(false);
+  const hasTimerStartedRef = useRef(false);
+
+  // 컴포넌트 언마운트 시 Drawing time을 Sentry에 전송
+  useEffect(() => {
+    // Drawing phase 시작 시 총 그리기 시간 초기화
+    totalDrawingTimeRef.current = 0;
+    isSubmittedRef.current = false;
+    hasTimerStartedRef.current = false;
+
+    return () => {
+      // 언마운트 시 그리기 시간이 있으면 Sentry에 전송
+      if (totalDrawingTimeRef.current > 0) {
+        const totalRoundTimeSec = settings.drawingTime;
+        const actualDrawingTimeSec = totalDrawingTimeRef.current / 1000;
+        const thinkingTimeSec = totalRoundTimeSec - actualDrawingTimeSec;
+        const drawingRatio = (actualDrawingTimeSec / totalRoundTimeSec) * 100;
+
+        captureEvent(
+          'Drawing Time Check',
+          'info',
+          {
+            round: String(currentRound),
+            roomId,
+          },
+          {
+            totalRoundTime: totalRoundTimeSec,
+            actualDrawingTime: actualDrawingTimeSec.toFixed(2),
+            waitingTime: thinkingTimeSec.toFixed(2),
+            drawingRatio: drawingRatio.toFixed(1),
+          },
+        );
+      }
+    };
+  }, [currentRound, roomId, settings.drawingTime]);
+
+  // promptStrokes 전처리 (제시 그림이 바뀌지 않으면 캐시된 값 사용)
+  const preprocessedPrompt = useMemo(() => {
+    if (promptStrokes.length === 0) return null;
+    return preprocessStrokes(promptStrokes);
+  }, [promptStrokes]);
+
+  // playerStrokes 전처리 (strokes가 변경될 때마다 재계산)
+  const preprocessedPlayer = useMemo(() => {
+    return preprocessStrokes(strokes);
+  }, [strokes]);
+
+  useEffect(() => {
+    if (timer > 0) {
+      hasTimerStartedRef.current = true;
+    }
+    if (
+      phase === 'DRAWING' &&
+      timer === 0 &&
+      hasTimerStartedRef.current &&
+      !isSubmittedRef.current &&
+      preprocessedPrompt
+    ) {
+      isSubmittedRef.current = true;
+      const similarity = calculateFinalSimilarityByPreprocessed(
+        preprocessedPrompt,
+        preprocessedPlayer,
+      );
+
+      captureEvent(
+        'Drawing Data',
+        'info',
+        {
+          roomId,
+        },
+        {
+          strokesData: JSON.stringify(strokes),
+        },
+      );
+
+      getSocket().emit(SERVER_EVENTS.USER_DRAWING, {
+        roomId,
+        strokes,
+        similarity: similarity.similarity,
+      });
+    }
+  }, [timer, phase, preprocessedPrompt, preprocessedPlayer, strokes, roomId]);
 
   // strokes가 변경될 때마다 유사도 계산 및 점수 전송
   useEffect(() => {
     try {
-      const similarity = calculateFinalSimilarity(promptStrokes, strokes);
+      if (!preprocessedPrompt) return;
+
+      const similarity = calculateFinalSimilarityByPreprocessed(
+        preprocessedPrompt,
+        preprocessedPlayer,
+      );
 
       // 서버에 점수 전송
       const socket = getSocket();
@@ -42,11 +139,24 @@ export const DrawingCanvas = () => {
 
     // strokes 길이가 줄어들 때는 캔버스 다시 그리기 (undo/clear)
     if (strokes.length < strokeCountRef.current) {
-      drawStrokesOnCanvas(canvasRef, ctxRef, strokes);
+      drawStrokesOnCanvas(canvasRef, ctxRef, strokes, false);
     }
 
     strokeCountRef.current = strokes.length;
-  }, [strokes, phase, promptStrokes, roomId, canvasRef, ctxRef]);
+  }, [
+    strokes,
+    phase,
+    preprocessedPrompt,
+    preprocessedPlayer,
+    roomId,
+    canvasRef,
+    ctxRef,
+  ]);
+
+  // 스트로크 지속시간을 누적하는 핸들러
+  const handleStrokeDuration = (duration: number) => {
+    totalDrawingTimeRef.current += duration;
+  };
 
   const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseOut } =
     useMouseDrawing({
@@ -54,6 +164,7 @@ export const DrawingCanvas = () => {
       ctxRef,
       selectedColor,
       onAddStroke: handleAddStroke,
+      onStrokeDuration: handleStrokeDuration,
     });
 
   return (

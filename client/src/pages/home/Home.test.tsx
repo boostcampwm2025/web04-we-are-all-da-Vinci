@@ -2,7 +2,7 @@ import * as createRoomAPI from '@/features/roomSettings';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import Main from './Main';
+import Home from './Home';
 
 // Mock modules
 vi.mock('@/features/roomSettings', async () => {
@@ -32,7 +32,7 @@ describe('랜딩페이지 - 방 생성', () => {
 
   it('"방 만들기" 클릭 시 방 설정 모달을 표시한다', async () => {
     localStorage.setItem('nickname', 'TestUser');
-    renderWithRouter(<Main />);
+    renderWithRouter(<Home />);
 
     const createRoomButton = screen.getByText('방 만들기');
     fireEvent.click(createRoomButton);
@@ -48,7 +48,7 @@ describe('랜딩페이지 - 방 생성', () => {
       .mockResolvedValue({ roomId: 'test123' });
 
     localStorage.setItem('nickname', 'TestUser');
-    renderWithRouter(<Main />);
+    renderWithRouter(<Home />);
 
     // 방 설정 모달 열기
     const createRoomButton = screen.getByText('방 만들기');
@@ -82,7 +82,7 @@ describe('랜딩페이지 - 방 생성', () => {
     );
 
     localStorage.setItem('nickname', 'TestUser');
-    renderWithRouter(<Main />);
+    renderWithRouter(<Home />);
 
     const createRoomButton = screen.getByText('방 만들기');
     fireEvent.click(createRoomButton);
@@ -119,7 +119,7 @@ describe('랜딩페이지 - 방 생성', () => {
     });
 
     localStorage.setItem('nickname', 'TestUser');
-    renderWithRouter(<Main />);
+    renderWithRouter(<Home />);
 
     const createRoomButton = screen.getByText('방 만들기');
     fireEvent.click(createRoomButton);
