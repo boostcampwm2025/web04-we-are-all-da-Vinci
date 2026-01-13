@@ -207,7 +207,7 @@ export class RoundService implements OnModuleInit {
     this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
     this.server.to(room.roomId).emit(ClientEvents.ROOM_GAME_END, finalResult);
 
-    await this.timerService.startTimer(room.roomId, 10);
+    await this.timerService.startTimer(room.roomId, 30);
 
     this.logger.info('Game End Start');
   }
