@@ -4,11 +4,10 @@ import { useMouseDrawing } from '@/features/drawingCanvas/model/useMouseDrawing'
 import { useStrokes } from '@/features/drawingCanvas/model/useStrokes';
 import { useColorSelection } from '@/features/drawingCanvas/model/useColorSelection';
 import { DrawingToolbar } from '@/features/drawingToolbar/ui/DrawingToolbar';
-import { CANVAS_CONFIG, SERVER_EVENTS, GAME_PHASE } from '@/shared/config';
+import { CANVAS_CONFIG, SERVER_EVENTS } from '@/shared/config';
 import { drawStrokesOnCanvas } from '@/features/drawingCanvas/lib/drawStrokesOnCanvas';
 import { useGameStore, selectPhase } from '@/entities/gameRoom/model';
 import { getSocket } from '@/shared/api/socket';
-import { captureEvent } from '@/shared/lib/sentry';
 import {
   calculateFinalSimilarityByPreprocessed,
   preprocessStrokes,
@@ -23,47 +22,22 @@ export const DrawingCanvas = () => {
   const { selectedColor, handleColorSelect } = useColorSelection();
 
   const strokeCountRef = useRef(strokes.length);
-  const totalDrawingTimeRef = useRef<number>(0);
 
   const phase = useGameStore(selectPhase);
   const promptStrokes = useGameStore((state) => state.promptStrokes);
   const roomId = useGameStore((state) => state.roomId);
+  const timer = useGameStore((state) => state.timer);
   const currentRound = useGameStore((state) => state.currentRound);
-  const settings = useGameStore((state) => state.settings);
 
-  // 라운드 시작/종료 처리
+  // 제출 상태 추적용 ref
+  const isSubmittedRef = useRef(false);
+  const hasTimerStartedRef = useRef(false);
+
+  // 라운드/페이즈 변경 시 ref 초기화
   useEffect(() => {
-    if (phase === GAME_PHASE.DRAWING) {
-      // 라운드 시작 시 총 그리기 시간 초기화
-      totalDrawingTimeRef.current = 0;
-    }
-
-    if (phase !== GAME_PHASE.DRAWING && totalDrawingTimeRef.current > 0) {
-      // 라운드 종료 시 총 그리기 시간을 Sentry에 전송
-      const totalRoundTimeSec = settings.drawingTime;
-      const thinkingTimeSec =
-        totalRoundTimeSec - totalDrawingTimeRef.current / 1000;
-      const drawingRatio =
-        (totalDrawingTimeRef.current / 1000 / totalRoundTimeSec) * 100;
-
-      captureEvent(
-        'Drawing Round Completed',
-        'info',
-        {
-          round: String(currentRound),
-          roomId,
-        },
-        {
-          totalRoundTimeSec,
-          actualDrawingTimeMs: totalDrawingTimeRef.current,
-          thinkingTimeSec: thinkingTimeSec.toFixed(2),
-          drawingRatio: drawingRatio.toFixed(1),
-        },
-      );
-
-      totalDrawingTimeRef.current = 0;
-    }
-  }, [phase, currentRound, roomId, settings.drawingTime]);
+    isSubmittedRef.current = false;
+    hasTimerStartedRef.current = false;
+  }, [currentRound, phase]);
 
   // promptStrokes 전처리 (제시 그림이 바뀌지 않으면 캐시된 값 사용)
   const preprocessedPrompt = useMemo(() => {
@@ -75,6 +49,35 @@ export const DrawingCanvas = () => {
   const preprocessedPlayer = useMemo(() => {
     return preprocessStrokes(strokes);
   }, [strokes]);
+
+  // timer가 0이 되면 자동 제출
+  useEffect(() => {
+    // 타이머가 시작되었는지 확인 (0보다 큰 값이 들어오면 시작된 것으로 간주)
+    if (timer > 0) {
+      hasTimerStartedRef.current = true;
+    }
+
+    // 타이머가 시작된 적이 있고, 0이 되면 제출
+    if (
+      phase === 'DRAWING' &&
+      timer === 0 &&
+      hasTimerStartedRef.current &&
+      !isSubmittedRef.current &&
+      preprocessedPrompt
+    ) {
+      isSubmittedRef.current = true;
+      const similarity = calculateFinalSimilarityByPreprocessed(
+        preprocessedPrompt,
+        preprocessedPlayer,
+      );
+
+      getSocket().emit(SERVER_EVENTS.USER_DRAWING, {
+        roomId,
+        strokes,
+        similarity: similarity.similarity,
+      });
+    }
+  }, [timer, phase, preprocessedPrompt, preprocessedPlayer, strokes, roomId]);
 
   // strokes가 변경될 때마다 유사도 계산 및 점수 전송
   useEffect(() => {
@@ -113,18 +116,12 @@ export const DrawingCanvas = () => {
     ctxRef,
   ]);
 
-  // 스트로크 지속시간을 누적하는 핸들러
-  const handleStrokeDuration = (duration: number) => {
-    totalDrawingTimeRef.current += duration;
-  };
-
   const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseOut } =
     useMouseDrawing({
       canvasRef,
       ctxRef,
       selectedColor,
       onAddStroke: handleAddStroke,
-      onStrokeDuration: handleStrokeDuration,
     });
 
   return (

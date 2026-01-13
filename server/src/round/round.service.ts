@@ -1,6 +1,11 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { GameRoom, Stroke } from 'src/common/types';
-import { ClientEvents, GamePhase } from 'src/common/constants';
+import {
+  ClientEvents,
+  GamePhase,
+  PROMPT_TIME,
+  ROUND_END_DELAY,
+} from 'src/common/constants';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import * as fs from 'fs/promises';
@@ -35,7 +40,7 @@ export class RoundService implements OnModuleInit {
       if (room.phase === GamePhase.DRAWING) {
         setTimeout(() => {
           this.nextPhase(room);
-        }, 5000);
+        }, ROUND_END_DELAY);
         return;
       }
       await this.nextPhase(room);
@@ -82,7 +87,7 @@ export class RoundService implements OnModuleInit {
     this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
     this.server.to(room.roomId).emit(ClientEvents.ROOM_PROMPT, promptStrokes);
 
-    await this.timerService.startTimer(room.roomId, 5);
+    await this.timerService.startTimer(room.roomId, PROMPT_TIME);
     this.logger.info({ room }, 'Prompt Phase Start');
   }
 
@@ -189,7 +194,7 @@ export class RoundService implements OnModuleInit {
     this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
     this.server.to(room.roomId).emit(ClientEvents.ROOM_GAME_END, finalResult);
 
-    await this.timerService.startTimer(room.roomId, 10);
+    await this.timerService.startTimer(room.roomId, 30);
 
     this.logger.info('Game End Start');
   }

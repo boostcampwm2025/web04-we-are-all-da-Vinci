@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { CANVAS_STYLES } from '@/shared/config';
 
 interface CanvasSetupOptions {
@@ -22,6 +22,7 @@ export const useCanvasSetup = (options: CanvasSetupOptions = {}) => {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -41,8 +42,9 @@ export const useCanvasSetup = (options: CanvasSetupOptions = {}) => {
     ctx.lineJoin = lineJoin;
 
     ctxRef.current = ctx;
+    setIsReady(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // 초기화는 1회만 실행, 이후 색깔, 선 스타일 변경은 ctxRef.current로 직접 수정
 
-  return { canvasRef, ctxRef };
+  return { canvasRef, ctxRef, isReady };
 };

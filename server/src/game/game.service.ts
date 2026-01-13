@@ -149,4 +149,29 @@ export class GameService {
   async getRoom(roomId: string): Promise<GameRoom | null> {
     return await this.cacheService.getRoom(roomId);
   }
+
+  async restartGame(roomId: string, socketId: string) {
+    const room = await this.cacheService.getRoom(roomId);
+    if (!room) {
+      throw new WebsocketException('방이 존재하지 않습니다.');
+    }
+
+    if (room.phase !== GamePhase.GAME_END) {
+      throw new WebsocketException('게임이 종료 상태가 아닙니다.');
+    }
+
+    const player = room.players.find((player) => player.socketId === socketId);
+
+    if (!player) {
+      throw new WebsocketException(
+        '플레이어가 존재하지 않습니다. 재접속이 필요합니다.',
+      );
+    }
+
+    if (!player.isHost) {
+      throw new WebsocketException('방장만 재시작할 수 있습니다.');
+    }
+
+    await this.roundService.nextPhase(room);
+  }
 }

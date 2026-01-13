@@ -1,4 +1,4 @@
-import { RankingCard } from '@/entities/ranking';
+import { RankingCard, type PlayerColor } from '@/entities/ranking';
 import {
   NextRoundIndicator,
   PlayerDrawingCard,
@@ -7,36 +7,25 @@ import {
   RoundResultHeader,
 } from '@/entities/roundResult';
 import { Timer } from '@/entities/timer';
+import { useGameStore } from '@/entities/gameRoom/model';
+
+const COLORS: PlayerColor[] = [
+  'yellow',
+  'indigo',
+  'red',
+  'green',
+  'purple',
+  'blue',
+  'gray',
+];
 
 export const RoundEnd = () => {
-  const rankings = [
-    {
-      rank: 1,
-      nickname: 'User 1 (You)',
-      score: 92,
-      color: 'yellow' as const,
-    },
-    {
-      rank: 2,
-      nickname: 'Player 2',
-      score: 78,
-      color: 'indigo' as const,
-    },
-    {
-      rank: 3,
-      nickname: 'Player 3',
-      score: 45,
-      color: 'red' as const,
-    },
-    {
-      rank: 4,
-      nickname: 'Player 4',
-      score: 0,
-      color: 'yellow' as const,
-    },
-  ];
+  const roundResults = useGameStore((state) => state.roundResults);
+  const currentRound = useGameStore((state) => state.currentRound);
+  const settings = useGameStore((state) => state.settings);
 
-  const totalRounds = 10;
+  // 1위 플레이어
+  const topPlayer = roundResults[0];
 
   return (
     <>
@@ -46,24 +35,27 @@ export const RoundEnd = () => {
           <RoundResultHeader title="Round Results" />
 
           <div className="flex min-h-0 flex-1 gap-4">
-            <ReferenceImageCard playerName="User 1" rank={1} />
+            <ReferenceImageCard
+              playerName={topPlayer?.nickname ?? '-'}
+              rank={1}
+            />
 
-            <PlayerDrawingCard similarity={92} />
+            <PlayerDrawingCard similarity={topPlayer?.similarity ?? 0} />
 
             <div className="flex w-72 flex-col gap-3">
               <NextRoundIndicator
-                currentRound={totalRounds}
-                totalRounds={totalRounds}
+                currentRound={currentRound}
+                totalRounds={settings.totalRounds}
               />
 
               <RankingList>
-                {rankings.map((player) => (
+                {roundResults.map((player, index) => (
                   <RankingCard
-                    key={player.rank}
-                    rank={player.rank}
+                    key={player.socketId}
+                    rank={index + 1}
                     nickname={player.nickname}
-                    percent={player.score}
-                    color={player.color}
+                    percent={player.similarity}
+                    color={COLORS[index % COLORS.length]}
                   />
                 ))}
               </RankingList>
