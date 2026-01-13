@@ -128,7 +128,7 @@ export const DrawingCanvas = () => {
 
     // strokes 길이가 줄어들 때는 캔버스 다시 그리기 (undo/clear)
     if (strokes.length < strokeCountRef.current) {
-      drawStrokesOnCanvas(canvasRef, ctxRef, strokes);
+      drawStrokesOnCanvas(canvasRef, ctxRef, strokes, false);
     }
 
     strokeCountRef.current = strokes.length;
