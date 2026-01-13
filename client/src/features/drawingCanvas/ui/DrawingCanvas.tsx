@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useCanvasSetup } from '@/shared/model/useCanvasSetup';
 import { useMouseDrawing } from '@/features/drawingCanvas/model/useMouseDrawing';
 import { useStrokes } from '@/features/drawingCanvas/model/useStrokes';
@@ -7,8 +7,11 @@ import { DrawingToolbar } from '@/features/drawingToolbar/ui/DrawingToolbar';
 import { CANVAS_CONFIG, SERVER_EVENTS } from '@/shared/config';
 import { drawStrokesOnCanvas } from '@/features/drawingCanvas/lib/drawStrokesOnCanvas';
 import { useGameStore, selectPhase } from '@/entities/gameRoom/model';
-import { calculateFinalSimilarity } from '@/features/similarity/lib';
 import { getSocket } from '@/shared/api/socket';
+import {
+  calculateFinalSimilarityByPreprocessed,
+  preprocessStrokes,
+} from '@/features/similarity/lib';
 
 // 기본 그리기 기능을 제공하는 캔버스 컴포넌트
 export const DrawingCanvas = () => {
@@ -24,39 +27,26 @@ export const DrawingCanvas = () => {
   const promptStrokes = useGameStore((state) => state.promptStrokes);
   const roomId = useGameStore((state) => state.roomId);
 
-  const timer = useGameStore((state) => state.timer);
-  const isSubmittedRef = useRef(false);
-  const hasTimerStartedRef = useRef(false);
+  // promptStrokes 전처리 (제시 그림이 바뀌지 않으면 캐시된 값 사용)
+  const preprocessedPrompt = useMemo(() => {
+    if (promptStrokes.length === 0) return null;
+    return preprocessStrokes(promptStrokes);
+  }, [promptStrokes]);
 
-  // timer가 0이 되면 자동 제출
-  useEffect(() => {
-    // 타이머가 시작되었는지 확인 (0보다 큰 값이 들어오면 시작된 것으로 간주)
-    if (timer > 0) {
-      hasTimerStartedRef.current = true;
-    }
-
-    // 타이머가 시작된 적이 있고, 0이 되면 제출
-    if (
-      phase === 'DRAWING' &&
-      timer === 0 &&
-      hasTimerStartedRef.current &&
-      !isSubmittedRef.current
-    ) {
-      isSubmittedRef.current = true;
-      const similarity = calculateFinalSimilarity(promptStrokes, strokes);
-
-      getSocket().emit(SERVER_EVENTS.USER_DRAWING, {
-        roomId,
-        strokes,
-        similarity: similarity.similarity,
-      });
-    }
-  }, [timer, phase, promptStrokes, strokes, roomId]);
+  // playerStrokes 전처리 (strokes가 변경될 때마다 재계산)
+  const preprocessedPlayer = useMemo(() => {
+    return preprocessStrokes(strokes);
+  }, [strokes]);
 
   // strokes가 변경될 때마다 유사도 계산 및 점수 전송
   useEffect(() => {
     try {
-      const similarity = calculateFinalSimilarity(promptStrokes, strokes);
+      if (!preprocessedPrompt) return;
+
+      const similarity = calculateFinalSimilarityByPreprocessed(
+        preprocessedPrompt,
+        preprocessedPlayer,
+      );
 
       // 서버에 점수 전송
       const socket = getSocket();
@@ -75,7 +65,15 @@ export const DrawingCanvas = () => {
     }
 
     strokeCountRef.current = strokes.length;
-  }, [strokes, phase, promptStrokes, roomId, canvasRef, ctxRef]);
+  }, [
+    strokes,
+    phase,
+    preprocessedPrompt,
+    preprocessedPlayer,
+    roomId,
+    canvasRef,
+    ctxRef,
+  ]);
 
   const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseOut } =
     useMouseDrawing({

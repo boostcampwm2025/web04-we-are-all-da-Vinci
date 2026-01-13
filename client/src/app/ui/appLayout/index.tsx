@@ -1,17 +1,35 @@
-import type { ReactNode } from 'react';
+import { useState } from 'react';
+import { Outlet } from 'react-router-dom';
 import {
   SunDoodle,
   ScribbleDoodle,
   StarDoodle,
   BrushDoodle,
   PaletteDoodle,
+  NickDoodle,
 } from '@/shared/ui/doodles';
+import { NicknameInputModal } from '@/features/nickname';
 
-interface AppLayoutProps {
-  children: ReactNode;
-}
+const AppLayout = () => {
+  const [isModalOpen, setIsModalOpen] = useState(() => {
+    return !localStorage.getItem('nickname');
+  });
+  const [nickname, setNickname] = useState('');
 
-const AppLayout = ({ children }: AppLayoutProps) => {
+  const handleSubmit = () => {
+    if (nickname.trim()) {
+      localStorage.setItem('nickname', nickname.trim());
+      setIsModalOpen(false);
+    }
+  };
+
+  const handleClose = () => {
+    const storedNickname = localStorage.getItem('nickname');
+    if (storedNickname) {
+      setIsModalOpen(false);
+    }
+  };
+
   return (
     <div className="font-display relative h-screen w-full overflow-hidden bg-white text-[#111318]">
       <svg width="0" height="0" className="invisible absolute" aria-hidden>
@@ -36,9 +54,20 @@ const AppLayout = ({ children }: AppLayoutProps) => {
         <StarDoodle />
         <BrushDoodle />
         <PaletteDoodle />
+        <NickDoodle />
       </div>
 
-      <div className="relative z-10 h-full w-full">{children}</div>
+      <div className="relative z-10 h-full w-full">
+        <Outlet />
+      </div>
+
+      <NicknameInputModal
+        isOpen={isModalOpen}
+        onClose={handleClose}
+        nickname={nickname}
+        setNickname={setNickname}
+        onSubmit={handleSubmit}
+      />
     </div>
   );
 };

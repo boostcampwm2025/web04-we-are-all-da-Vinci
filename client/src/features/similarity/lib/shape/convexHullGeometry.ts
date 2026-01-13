@@ -1,6 +1,5 @@
 import type { Point, Stroke } from '@/entities/similarity/model';
-
-// -----convex hall 계산 관련 유틸-----
+// -----convex hull 계산 관련 유틸-----
 
 export const strokesToPoints = (strokes: Stroke[]): Point[] => {
   const points: Point[] = [];
@@ -15,7 +14,7 @@ export const strokesToPoints = (strokes: Stroke[]): Point[] => {
   return points;
 };
 
-export const hullArea = (hull: Point[]): number => {
+export const getHullArea = (hull: Point[]): number => {
   if (hull.length < 3) return 0;
 
   let area = 0;
@@ -28,7 +27,7 @@ export const hullArea = (hull: Point[]): number => {
   return Math.abs(area) / 2;
 };
 
-export const hullPerimeter = (hull: Point[]): number => {
+export const getHullPerimeter = (hull: Point[]): number => {
   if (hull.length < 2) return 0;
 
   let length = 0;
@@ -42,7 +41,9 @@ export const hullPerimeter = (hull: Point[]): number => {
   return length;
 };
 
-export const convexHull = (points: Point[]): Point[] => {
+// 형태 유사도 지표 1
+// convex hull 둘레 + 넓이
+export const getConvexHull = (points: Point[]): Point[] => {
   points.sort(function (a, b) {
     return a.x != b.x ? a.x - b.x : a.y - b.y;
   });
