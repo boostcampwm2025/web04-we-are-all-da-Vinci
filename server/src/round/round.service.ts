@@ -2,9 +2,11 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { GameRoom, Stroke } from 'src/common/types';
 import {
   ClientEvents,
+  DRAWING_END_DELAY,
+  GAME_END_TIME,
   GamePhase,
   PROMPT_TIME,
-  ROUND_END_DELAY,
+  ROUND_END_TIME,
 } from 'src/common/constants';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
@@ -42,7 +44,7 @@ export class RoundService implements OnModuleInit {
       if (room.phase === GamePhase.DRAWING) {
         setTimeout(() => {
           this.nextPhase(room);
-        }, ROUND_END_DELAY);
+        }, DRAWING_END_DELAY);
         return;
       }
       await this.nextPhase(room);
@@ -133,7 +135,7 @@ export class RoundService implements OnModuleInit {
         (await this.getPromptForRound(room.promptId, room.currentRound)) || [],
     };
 
-    await this.timerService.startTimer(room.roomId, 10);
+    await this.timerService.startTimer(room.roomId, ROUND_END_TIME);
 
     this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
     this.server.to(room.roomId).emit(ClientEvents.ROOM_ROUND_END, result);
@@ -201,7 +203,7 @@ export class RoundService implements OnModuleInit {
     this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
     this.server.to(room.roomId).emit(ClientEvents.ROOM_GAME_END, finalResult);
 
-    await this.timerService.startTimer(room.roomId, 30);
+    await this.timerService.startTimer(room.roomId, GAME_END_TIME);
 
     this.logger.info('Game End Start');
   }
@@ -210,6 +212,9 @@ export class RoundService implements OnModuleInit {
     if (room.phase !== GamePhase.GAME_END) {
       return;
     }
+
+    // GAME_END 타이머 취소 (재시작 시 자동 시작 방지)
+    await this.timerService.cancelTimer(room.roomId);
 
     room.phase = GamePhase.WAITING;
     room.currentRound = 0;
