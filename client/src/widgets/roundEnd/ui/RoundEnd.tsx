@@ -32,18 +32,6 @@ export const RoundEnd = () => {
   const socket = getSocket();
   const mySocketId = socket?.id;
 
-  // 1위 플레이어
-  const topPlayer = roundResults[0];
-
-  // PlayerReplaysGrid에 전달할 데이터 변환
-  const playersForGrid = roundResults.map((result) => ({
-    rank: result.ranking,
-    nickname: result.nickname,
-    similarity: result.similarity,
-    strokes: result.strokes,
-    socketId: result.socketId,
-  }));
-
   return (
     <>
       <Timer />
@@ -55,7 +43,7 @@ export const RoundEnd = () => {
           <div className="flex min-h-0 flex-1 gap-4">
             <PromptSection promptStrokes={promptStrokes} />
             <PlayerReplaysSection
-              players={playersForGrid}
+              players={roundResults}
               currentUserSocketId={mySocketId}
             />
           </div>

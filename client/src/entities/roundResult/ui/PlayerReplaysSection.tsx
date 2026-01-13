@@ -3,11 +3,10 @@ import type { Stroke } from '@/entities/similarity/model';
 import { PlayerReplayCard } from './PlayerReplayCard';
 
 interface Player {
-  rank: number;
   nickname: string;
   similarity: number;
   strokes: Stroke[];
-  socketId?: string;
+  socketId: string;
 }
 
 interface PlayerReplaysSectionProps {
@@ -28,13 +27,9 @@ export const PlayerReplaysSection = ({
   const endIndex = startIndex + PLAYERS_PER_PAGE;
   const currentPlayers = players.slice(startIndex, endIndex);
 
-  const goToPrevPage = () => {
-    setCurrentPage((prev) => Math.max(0, prev - 1));
-  };
-
-  const goToNextPage = () => {
+  const goToPrevPage = () => setCurrentPage((prev) => Math.max(0, prev - 1));
+  const goToNextPage = () =>
     setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1));
-  };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -75,13 +70,14 @@ export const PlayerReplaysSection = ({
       </div>
 
       <div className="grid grid-cols-4 gap-2">
-        {currentPlayers.map((player) => {
+        {currentPlayers.map((player, index) => {
           const isCurrentUser = player.socketId === currentUserSocketId;
+          const rank = startIndex + index + 1;
 
           return (
             <PlayerReplayCard
-              key={player.rank}
-              rank={player.rank}
+              key={player.socketId}
+              rank={rank}
               nickname={player.nickname}
               similarity={player.similarity}
               strokes={player.strokes}
