@@ -124,7 +124,7 @@ export const DrawingCanvas = () => {
       });
 
       captureEvent(
-        'Drawing Time Check',
+        'Drawing Data',
         'info',
         {
           round: String(currentRound),
