@@ -104,7 +104,7 @@ export const DrawingCanvas = () => {
           roomId,
         },
         {
-          strokesData: strokes,
+          strokesData: JSON.stringify(strokes),
         },
       );
 
