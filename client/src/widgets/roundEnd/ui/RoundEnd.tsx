@@ -1,11 +1,7 @@
 import { RankingCard, type PlayerColor } from '@/entities/ranking';
 import {
-  NextRoundIndicator,
-  PlayerDrawingCard,
   PlayerReplaysSection,
   PromptSection,
-  RankingList,
-  ReferenceImageCard,
   RoundResultHeader,
 } from '@/entities/roundResult';
 import { Timer } from '@/entities/timer';
