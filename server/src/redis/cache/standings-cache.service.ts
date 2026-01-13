@@ -28,4 +28,11 @@ export class StandingsCacheService {
       socketId: value,
     }));
   }
+
+  async deleteAll(roomId: string) {
+    const client = this.redisService.getClient();
+    const key = this.getKey(roomId);
+
+    await client.unlink(key);
+  }
 }

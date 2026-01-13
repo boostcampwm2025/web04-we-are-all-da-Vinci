@@ -40,4 +40,11 @@ export class LeaderboardCacheService {
 
     await client.zRem(key, socketId);
   }
+
+  async deleteAll(roomId: string) {
+    const client = this.redisService.getClient();
+    const key = this.getKey(roomId);
+
+    await client.unlink(key);
+  }
 }

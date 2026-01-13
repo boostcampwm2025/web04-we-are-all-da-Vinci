@@ -5,6 +5,7 @@ import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.se
 import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
 import { TimerService } from 'src/timer/timer.service';
 import { PinoLogger } from 'nestjs-pino';
+import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
 
 describe('RoundService', () => {
   let service: RoundService;
@@ -20,6 +21,10 @@ describe('RoundService', () => {
 
   const mockStandingsCacheService = {
     getStandings: jest.fn(),
+  };
+
+  const mockLeaderboardCacheService = {
+    deleteAll: jest.fn(),
   };
 
   const mockTimerService = {
@@ -45,6 +50,10 @@ describe('RoundService', () => {
         { provide: StandingsCacheService, useValue: mockStandingsCacheService },
         { provide: TimerService, useValue: mockTimerService },
         { provide: PinoLogger, useValue: mockLogger },
+        {
+          provide: LeaderboardCacheService,
+          useValue: mockLeaderboardCacheService,
+        },
       ],
     }).compile();
 
