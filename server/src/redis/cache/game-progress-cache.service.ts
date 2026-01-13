@@ -60,7 +60,8 @@ export class GameProgressCacheService {
 
     const result = await client.mGet(keys);
 
-    const socketIds = keys.map((key) => key.slice(scanKey.length - 1));
+    const prefix = `drawing:${roomId}:${round}:`;
+    const socketIds = keys.map((key) => key.slice(prefix.length));
 
     return result
       .map((value, index) => ({

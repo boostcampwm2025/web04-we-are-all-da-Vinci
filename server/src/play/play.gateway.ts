@@ -13,7 +13,6 @@ import { PinoLogger } from 'nestjs-pino';
 import { UseFilters } from '@nestjs/common';
 import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
 import { PlayService } from './play.service';
-import { RoundService } from 'src/round/round.service';
 
 @WebSocketGateway({
   cors: {
@@ -29,7 +28,6 @@ export class PlayGateway {
   constructor(
     private readonly logger: PinoLogger,
     private readonly playService: PlayService,
-    private readonly roundService: RoundService,
   ) {
     this.logger.setContext(PlayGateway.name);
   }
@@ -71,7 +69,6 @@ export class PlayGateway {
       similarity,
       strokes,
     );
-    await this.roundService.onPlayerSubmit(roomId);
 
     return 'ok';
   }
