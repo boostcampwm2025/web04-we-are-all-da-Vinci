@@ -27,10 +27,17 @@ export const DrawingCanvas = () => {
   const promptStrokes = useGameStore((state) => state.promptStrokes);
   const roomId = useGameStore((state) => state.roomId);
   const timer = useGameStore((state) => state.timer);
+  const currentRound = useGameStore((state) => state.currentRound);
 
   // 제출 상태 추적용 ref
   const isSubmittedRef = useRef(false);
   const hasTimerStartedRef = useRef(false);
+
+  // 라운드/페이즈 변경 시 ref 초기화
+  useEffect(() => {
+    isSubmittedRef.current = false;
+    hasTimerStartedRef.current = false;
+  }, [currentRound, phase]);
 
   // promptStrokes 전처리 (제시 그림이 바뀌지 않으면 캐시된 값 사용)
   const preprocessedPrompt = useMemo(() => {
