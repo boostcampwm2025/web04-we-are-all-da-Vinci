@@ -4,6 +4,7 @@ export const SERVER_EVENTS = {
   USER_DRAWING: 'user:drawing',
   ROOM_SETTINGS: 'room:settings',
   ROOM_START: 'room:start',
+  ROOM_RESTART: 'room:restart',
 } as const;
 
 export const CLIENT_EVENTS = {

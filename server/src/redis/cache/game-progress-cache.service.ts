@@ -58,6 +58,11 @@ export class GameProgressCacheService {
       keys.push(...data.keys);
     } while (cursor !== '0');
 
+    // 키가 없으면 빈 배열 반환
+    if (keys.length === 0) {
+      return [];
+    }
+
     const result = await client.mGet(keys);
 
     const prefix = `drawing:${roomId}:${round}:`;
@@ -86,6 +91,11 @@ export class GameProgressCacheService {
     const keys = Array.from({ length: totalRounds }, (_, index) =>
       this.getKey(roomId, index + 1, socketId),
     );
+
+    // 키가 없으면 빈 배열 반환
+    if (keys.length === 0) {
+      return [];
+    }
 
     const result = await client.mGet(keys);
 

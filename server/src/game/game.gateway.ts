@@ -101,6 +101,18 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return 'ok';
   }
 
+  @SubscribeMessage(ServerEvents.ROOM_RESTART)
+  async restartGame(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: RoomStartDto,
+  ): Promise<string> {
+    const { roomId } = payload;
+    await this.gameService.restartGame(roomId, client.id);
+
+    this.logger.info({ clientId: client.id, ...payload }, 'Game Restarted');
+    return 'ok';
+  }
+
   broadcastMetadata(room: GameRoom) {
     this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
   }

@@ -1,4 +1,4 @@
-import type { FinalResult } from '@/entities/gameResult/model';
+import type { FinalResult, Highlight } from '@/entities/gameResult/model';
 import type { Player } from '@/entities/player/model';
 import type { RankingEntry } from '@/entities/ranking';
 import type { RoundResult } from '@/entities/roundResult/model';
@@ -21,6 +21,7 @@ interface GameState extends GameRoom {
   // 결과 데이터
   roundResults: RoundResult[];
   finalResults: FinalResult[];
+  highlight: Highlight | null;
 
   // Actions
   setConnected: (isConnected: boolean) => void;
@@ -30,6 +31,7 @@ interface GameState extends GameRoom {
   setPromptStrokes: (strokes: Stroke[]) => void;
   setRoundResults: (results: RoundResult[]) => void;
   setFinalResults: (results: FinalResult[]) => void;
+  setHighlight: (highlight: Highlight) => void;
   reset: () => void;
 }
 
@@ -49,6 +51,7 @@ const initialState = {
   promptStrokes: [],
   roundResults: [],
   finalResults: [],
+  highlight: null,
 };
 
 export const useGameStore = create<GameState>()(
@@ -69,6 +72,8 @@ export const useGameStore = create<GameState>()(
       setRoundResults: (roundResults) => set({ roundResults }),
 
       setFinalResults: (finalResults) => set({ finalResults }),
+
+      setHighlight: (highlight) => set({ highlight }),
 
       reset: () => set(initialState),
     }),

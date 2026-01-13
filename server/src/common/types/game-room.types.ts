@@ -18,6 +18,7 @@ export interface GameRoom {
   phase: Phase;
   currentRound: number;
   settings: Settings;
+  promptId: number;
 }
 
 export type Phase = (typeof GamePhase)[keyof typeof GamePhase];
