@@ -1,4 +1,6 @@
 export const REDIS_TTL = 3600;
+export const PROMPT_TIME = 5;
+export const ROUND_END_DELAY = 3000;
 
 export const ServerEvents = {
   // 클라이언트 -> 서버
