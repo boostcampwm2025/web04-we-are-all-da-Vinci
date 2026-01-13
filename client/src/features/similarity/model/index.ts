@@ -1,1 +1,1 @@
-export { type PreprocessedStrokeData } from './PreprocessedStrokeData';
+export { type PreprocessedStrokeData } from './preprocessedStrokeData';
