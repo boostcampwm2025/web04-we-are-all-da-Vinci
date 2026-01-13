@@ -1,1 +1,1 @@
-export type { RoundResult } from './types';
+export type { RoundResult, RoundEndResponse } from './types';

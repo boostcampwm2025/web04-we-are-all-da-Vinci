@@ -1,4 +1,3 @@
-//import { RankingCard, type PlayerColor } from '@/entities/ranking';
 import {
   PlayerReplaysSection,
   PromptSection,
@@ -8,24 +7,12 @@ import { Timer } from '@/entities/timer';
 import { useGameStore } from '@/entities/gameRoom/model';
 import { getSocket } from '@/shared/api/socket';
 
-// const COLORS: PlayerColor[] = [
-//   'yellow',
-//   'indigo',
-//   'red',
-//   'green',
-//   'purple',
-//   'blue',
-//   'gray',
-// ];
+  const socket = getSocket();
+  const mySocketId = socket?.id;
 
 export const RoundEnd = () => {
   const roundResults = useGameStore((state) => state.roundResults);
-  const promptStrokes = useGameStore((state) => state.promptStrokes);
   const currentRound = useGameStore((state) => state.currentRound);
-
-  // 현재 사용자의 소켓 ID 가져오기
-  const socket = getSocket();
-  const mySocketId = socket?.id;
 
   return (
     <>

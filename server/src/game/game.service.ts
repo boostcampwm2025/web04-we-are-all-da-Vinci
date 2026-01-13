@@ -9,7 +9,6 @@ import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
 import { RoundService } from 'src/round/round.service';
-import { RoomPromptDto } from 'src/round/dto/room-prompt.dto';
 
 @Injectable()
 export class GameService {
@@ -119,10 +118,7 @@ export class GameService {
     return updatedRoom;
   }
 
-  async startGame(
-    roomId: string,
-    socketId: string,
-  ): Promise<{ room: GameRoom; result: RoomPromptDto }> {
+  async startGame(roomId: string, socketId: string) {
     const room = await this.cacheService.getRoom(roomId);
     if (!room) {
       throw new WebsocketException('방이 존재하지 않습니다.');
@@ -147,12 +143,35 @@ export class GameService {
     if (room.players.length < 2) {
       throw new WebsocketException('게임을 시작하려면 최소 2명이 필요합니다.');
     }
-
-    const result = (await this.roundService.nextPhase(room)) as RoomPromptDto;
-    return { room, result };
+    await this.roundService.nextPhase(room);
   }
 
   async getRoom(roomId: string): Promise<GameRoom | null> {
     return await this.cacheService.getRoom(roomId);
+  }
+
+  async restartGame(roomId: string, socketId: string) {
+    const room = await this.cacheService.getRoom(roomId);
+    if (!room) {
+      throw new WebsocketException('방이 존재하지 않습니다.');
+    }
+
+    if (room.phase !== GamePhase.GAME_END) {
+      throw new WebsocketException('게임이 종료 상태가 아닙니다.');
+    }
+
+    const player = room.players.find((player) => player.socketId === socketId);
+
+    if (!player) {
+      throw new WebsocketException(
+        '플레이어가 존재하지 않습니다. 재접속이 필요합니다.',
+      );
+    }
+
+    if (!player.isHost) {
+      throw new WebsocketException('방장만 재시작할 수 있습니다.');
+    }
+
+    await this.roundService.nextPhase(room);
   }
 }

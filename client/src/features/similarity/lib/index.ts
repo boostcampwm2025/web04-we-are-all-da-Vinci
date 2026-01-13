@@ -1,1 +1,5 @@
-export { calculateFinalSimilarity } from './calculateFinalSimilarity';
+export {
+  preprocessStrokes,
+  calculateFinalSimilarityByStrokes,
+  calculateFinalSimilarityByPreprocessed,
+} from './calculateFinalSimilarity';

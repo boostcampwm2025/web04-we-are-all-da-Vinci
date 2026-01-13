@@ -6,6 +6,7 @@ import { TimerCacheService } from 'src/redis/cache/timer-cache.service';
 export class TimerService implements OnModuleInit, OnModuleDestroy {
   private globalIntervalId?: NodeJS.Timeout;
   private onTimerTickCallback?: (roomId: string, timeLeft: number) => void;
+  private onTimerEndCallback?: (roomId: string) => Promise<void>;
 
   constructor(
     private readonly timerCacheService: TimerCacheService,
@@ -26,6 +27,10 @@ export class TimerService implements OnModuleInit, OnModuleDestroy {
 
   setOnTimerTick(callback: (roomId: string, timeLeft: number) => void) {
     this.onTimerTickCallback = callback;
+  }
+
+  setOnTimerEnd(callback: (roomId: string) => Promise<void>) {
+    this.onTimerEndCallback = callback;
   }
 
   startGlobalTimer() {
@@ -49,11 +54,23 @@ export class TimerService implements OnModuleInit, OnModuleDestroy {
         if (this.onTimerTickCallback) {
           this.onTimerTickCallback(timer.roomId, updatedTimeLeft);
         }
+
+        if (updatedTimeLeft === 0 && this.onTimerEndCallback) {
+          try {
+            await this.onTimerEndCallback(timer.roomId);
+          } catch (err) {
+            this.logger.error(
+              { roomId: timer.roomId, err },
+              'Timer end callback failed.',
+            );
+          }
+        }
       }
     }
   }
 
   async startTimer(roomId: string, timeLeft: number) {
+    this.logger.info({ roomId, timeLeft }, 'Start Timer');
     await this.timerCacheService.addTimer(roomId, timeLeft);
   }
 

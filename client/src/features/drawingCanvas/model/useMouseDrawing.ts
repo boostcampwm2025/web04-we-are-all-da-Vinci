@@ -7,6 +7,7 @@ interface UseMouseDrawingOptions {
   ctxRef: RefObject<CanvasRenderingContext2D | null>;
   selectedColor: Color;
   onAddStroke?: (stroke: Stroke) => void; // 그리기 완료 시 완성된 stroke 전달
+  onStrokeDuration?: (duration: number) => void; // 스트로크 지속시간 콜백
 }
 
 // 마우스 이벤트로 캔버스에 그리는 기능을 제공하는 훅
@@ -16,9 +17,11 @@ export const useMouseDrawing = ({
   ctxRef,
   selectedColor,
   onAddStroke,
+  onStrokeDuration,
 }: UseMouseDrawingOptions) => {
   const [isDrawing, setIsDrawing] = useState(false);
   const currentStrokeRef = useRef<[number[], number[]] | null>(null);
+  const strokeStartTimeRef = useRef<number | null>(null);
 
   // 브라우저 마우스 좌표를 캔버스 내부 픽셀 좌표로 변환
   const getMousePosOnCanvas = (e: React.MouseEvent) => {
@@ -49,6 +52,7 @@ export const useMouseDrawing = ({
     setIsDrawing(true);
 
     currentStrokeRef.current = [[x], [y]];
+    strokeStartTimeRef.current = performance.now();
   };
 
   // 그리기 진행
@@ -72,7 +76,9 @@ export const useMouseDrawing = ({
     ctx.closePath();
     setIsDrawing(false);
 
-    if (currentStrokeRef.current) {
+    if (currentStrokeRef.current && strokeStartTimeRef.current !== null) {
+      const strokeDuration = performance.now() - strokeStartTimeRef.current;
+
       const newStroke: Stroke = {
         points: currentStrokeRef.current,
         color: selectedColor,
@@ -80,7 +86,12 @@ export const useMouseDrawing = ({
 
       // stroke 추가 콜백 호출
       onAddStroke?.(newStroke);
+
+      // 스트로크 지속시간 콜백 호출
+      onStrokeDuration?.(strokeDuration);
+
       currentStrokeRef.current = null;
+      strokeStartTimeRef.current = null;
     }
   };
 

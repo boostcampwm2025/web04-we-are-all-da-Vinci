@@ -1,8 +1,8 @@
-import type { FinalResult } from '@/entities/gameResult/model';
+import type { GameEndResponse } from '@/entities/gameResult/model';
 import type { GameRoom } from '@/entities/gameRoom/model';
 import { useGameStore } from '@/entities/gameRoom/model';
 import type { RankingEntry } from '@/entities/ranking';
-import type { RoundResult } from '@/entities/roundResult/model';
+import type { RoundEndResponse } from '@/entities/roundResult/model';
 import type { Stroke } from '@/entities/similarity';
 import { disconnectSocket, getSocket } from '@/shared/api/socket';
 import { CLIENT_EVENTS, SERVER_EVENTS } from '@/shared/config';
@@ -27,7 +27,9 @@ export const useGameSocket = () => {
   const setLiveRankings = useGameStore((state) => state.setLiveRankings);
   const setRoundResults = useGameStore((state) => state.setRoundResults);
   const setFinalResults = useGameStore((state) => state.setFinalResults);
+  const setHighlight = useGameStore((state) => state.setHighlight);
   const setPromptStrokes = useGameStore((state) => state.setPromptStrokes);
+  const reset = useGameStore((state) => state.reset);
 
   useEffect(() => {
     if (!roomId) {
@@ -62,6 +64,19 @@ export const useGameSocket = () => {
 
     // 방 정보 업데이트
     socket.on(CLIENT_EVENTS.ROOM_METADATA, (data: GameRoom) => {
+      const currentPhase = useGameStore.getState().phase;
+
+      // GAME_END에서 WAITING으로 돌아올 때 게임 데이터 초기화
+      if (currentPhase === 'GAME_END' && data.phase === 'WAITING') {
+        useGameStore.setState({
+          liveRankings: [],
+          roundResults: [],
+          finalResults: [],
+          highlight: null,
+          promptStrokes: [],
+        });
+      }
+
       updateRoom({
         roomId: data.roomId,
         players: data.players,
@@ -105,20 +120,19 @@ export const useGameSocket = () => {
       },
     );
 
-    socket.on(
-      CLIENT_EVENTS.ROOM_PROMPT,
-      ({ promptStrokes }: { promptStrokes: Stroke[] }) => {
-        setPromptStrokes(promptStrokes);
-      },
-    );
-
-    // 결과
-    socket.on(CLIENT_EVENTS.ROOM_ROUND_END, (results: RoundResult[]) => {
-      setRoundResults(results);
+    socket.on(CLIENT_EVENTS.ROOM_PROMPT, (promptStrokes: Stroke[]) => {
+      setPromptStrokes(promptStrokes);
     });
 
-    socket.on(CLIENT_EVENTS.ROOM_GAME_END, (results: FinalResult[]) => {
-      setFinalResults(results);
+    // 결과
+    socket.on(CLIENT_EVENTS.ROOM_ROUND_END, (response: RoundEndResponse) => {
+      setRoundResults(response.rankings);
+      setPromptStrokes(response.promptStrokes);
+    });
+
+    socket.on(CLIENT_EVENTS.ROOM_GAME_END, (response: GameEndResponse) => {
+      setFinalResults(response.finalRankings);
+      setHighlight(response.highlight);
     });
 
     // 대기열 (DRAWING 중 입장 시)
@@ -150,6 +164,7 @@ export const useGameSocket = () => {
       socket.off(CLIENT_EVENTS.ERROR);
 
       disconnectSocket();
+      reset(); // 소켓 연결 해제 시 전체 상태 초기화
     };
   }, [
     roomId,
@@ -161,6 +176,8 @@ export const useGameSocket = () => {
     setPromptStrokes,
     setRoundResults,
     setFinalResults,
+    setHighlight,
+    reset,
   ]);
 
   return getSocket();

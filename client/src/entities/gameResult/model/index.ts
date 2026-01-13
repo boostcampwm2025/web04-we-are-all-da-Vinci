@@ -1,1 +1,1 @@
-export type { FinalResult } from './types';
+export type { FinalResult, Highlight, GameEndResponse } from './types';

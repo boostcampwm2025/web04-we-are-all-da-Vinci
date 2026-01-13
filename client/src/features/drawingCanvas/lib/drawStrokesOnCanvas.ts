@@ -10,7 +10,7 @@ export const drawStrokesOnCanvas = (
 ) => {
   const ctx = ctxRef.current;
   const canvas = canvasRef.current;
-  if (!ctx || !canvas || strokes.length === 0) return;
+  if (!ctx || !canvas || !strokes) return;
 
   // 캔버스 초기화
   ctx.fillStyle = 'white';
