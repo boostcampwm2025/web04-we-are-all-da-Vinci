@@ -14,7 +14,7 @@ export const strokesToPoints = (strokes: Stroke[]): Point[] => {
   return points;
 };
 
-export const hullArea = (hull: Point[]): number => {
+export const getHullArea = (hull: Point[]): number => {
   if (hull.length < 3) return 0;
 
   let area = 0;
@@ -27,7 +27,7 @@ export const hullArea = (hull: Point[]): number => {
   return Math.abs(area) / 2;
 };
 
-export const hullPerimeter = (hull: Point[]): number => {
+export const getHullPerimeter = (hull: Point[]): number => {
   if (hull.length < 2) return 0;
 
   let length = 0;

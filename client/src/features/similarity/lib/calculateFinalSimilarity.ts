@@ -1,18 +1,58 @@
 import type { Stroke } from '@/entities/similarity/model';
 import { calculateGreedyStrokeMatchScore } from './stroke/strokeSimilarity/calculateGreedyStrokeMatchScore';
-import { calculateShapeSimilarity } from './shape/shapeSimilarity/calculateShapeSimilarity';
+import {
+  getConvexHull,
+  getHullArea,
+  getHullPerimeter,
+  strokesToPoints,
+} from './shape/convexHullGeometry';
+import { getRadialSignature } from './shape/radialSignature';
+import type { PreprocessedStrokeData } from '../model';
+import { calculateShapeSimilarityByPreprocessed } from './shape/shapeSimilarity/calculateShapeSimilarity';
 
-export const calculateFinalSimilarity = (
-  promptStrokes: Stroke[], // 제시 그림 스트로크
-  playerStrokes: Stroke[], // 사용자 그림 스트로크
+// 스트로크에서 유사도 계산에 필요한 수학적 데이터를 미리 계산하는 함수
+export const preprocessStrokes = (
+  strokes: Stroke[],
+): PreprocessedStrokeData => {
+  const validStrokes = getValidStrokes(strokes);
+  const normalizedStrokes = normalizeStrokes(validStrokes);
+  const points = strokesToPoints(normalizedStrokes);
+  const hull = getConvexHull(points);
+  const hullArea = getHullArea(hull);
+  const hullPerimeter = getHullPerimeter(hull);
+  const radialSignature = getRadialSignature(points);
+
+  return {
+    normalizedStrokes,
+    strokeCount: normalizedStrokes.length,
+    points,
+    hull,
+    hullArea,
+    hullPerimeter,
+    radialSignature,
+  };
+};
+
+// 스트로크 데이터로 최종 유사도 계산
+export const calculateFinalSimilarityByStrokes = (
+  promptStrokes: Stroke[],
+  playerStrokes: Stroke[],
 ) => {
-  if (playerStrokes.length === 0) return { similarity: 0 };
+  const preprocessedPrompt = preprocessStrokes(promptStrokes);
+  const preprocessPlayer = preprocessStrokes(playerStrokes);
+  return calculateFinalSimilarityByPreprocessed(
+    preprocessedPrompt,
+    preprocessPlayer,
+  );
+};
 
-  const validPromptStrokes = getValidStrokes(promptStrokes);
-  const validPlayerStrokes = getValidStrokes(playerStrokes);
-
-  const normalizedPromptStrokes = normalizeStrokes(validPromptStrokes);
-  const normalizedPlayerStrokes = normalizeStrokes(validPlayerStrokes);
+// 전처리한 데이터로 최종 유사도 계산
+export const calculateFinalSimilarityByPreprocessed = (
+  preprocessedPrompt: PreprocessedStrokeData,
+  preprocessedPlayer: PreprocessedStrokeData,
+) => {
+  const normalizedPromptStrokes = preprocessedPrompt.normalizedStrokes;
+  const normalizedPlayerStrokes = preprocessedPlayer.normalizedStrokes;
 
   // 스트로크 개수 비교
   const strokeCountSimilarity = calculateStrokeCountSimilarity(
@@ -26,16 +66,16 @@ export const calculateFinalSimilarity = (
     normalizedPlayerStrokes,
   );
 
-  // hull 기반 유사도
-  const hullScore = calculateShapeSimilarity(
-    normalizedPromptStrokes,
-    normalizedPlayerStrokes,
+  // 형태 유사도
+  const shapeScore = calculateShapeSimilarityByPreprocessed(
+    preprocessedPrompt,
+    preprocessedPlayer,
   );
 
-  const scaledHull = applyNonLinearScale(hullScore, 90);
+  const scaledShapeScore = applyNonLinearScale(shapeScore, 90);
   let weights;
 
-  const promptStrokeCount = normalizedPromptStrokes.length;
+  const promptStrokeCount = preprocessedPrompt.strokeCount;
   const playerStrokeCount = normalizedPlayerStrokes.length;
   const strokeCountDifference = promptStrokeCount - playerStrokeCount;
   if (strokeCountDifference > 0) {
@@ -43,21 +83,21 @@ export const calculateFinalSimilarity = (
     weights = {
       strokeCount: 0.1,
       strokeMatch: 0.6,
-      hull: 0.3,
+      shape: 0.3,
     };
   } else if (strokeCountDifference === 0) {
     // 스트로크 개수가 같을 때
     weights = {
       strokeCount: 0.15,
       strokeMatch: 0.35,
-      hull: 0.5,
+      shape: 0.5,
     };
   } else {
     // 스트로크 개수가 더 많을 때: 형태 유사도에 가중치
     weights = {
       strokeCount: 0.1,
       strokeMatch: 0.3,
-      hull: 0.6,
+      shape: 0.6,
     };
   }
 
@@ -65,7 +105,7 @@ export const calculateFinalSimilarity = (
   const similarity =
     strokeCountSimilarity * weights.strokeCount +
     strokeMatchSimilarity * weights.strokeMatch +
-    scaledHull * weights.hull;
+    scaledShapeScore * weights.shape;
 
   const roundedSimilarity = Math.round(similarity * 100) / 100;
 

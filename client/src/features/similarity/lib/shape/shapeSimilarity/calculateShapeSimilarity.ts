@@ -2,12 +2,14 @@ import type { Point, Stroke } from '@/entities/similarity';
 import { cosineSimilarity, getRelativeSimilarity } from '../../utils/math';
 import {
   getConvexHull,
-  hullArea,
-  hullPerimeter,
+  getHullArea,
+  getHullPerimeter,
   strokesToPoints,
 } from '../convexHullGeometry';
 import { getRadialSignature } from '../radialSignature';
+import type { PreprocessedStrokeData } from '@/features/similarity/model';
 
+// 스트로크 데이터로 형태 유사도 계산
 export const calculateShapeSimilarity = (
   strokes1: Stroke[],
   strokes2: Stroke[],
@@ -21,10 +23,10 @@ export const calculateShapeSimilarity = (
   const hull2 = getConvexHull(points2);
 
   // 3. 면적과 둘레 계산
-  const area1 = hullArea(hull1);
-  const area2 = hullArea(hull2);
-  const perimeter1 = hullPerimeter(hull1);
-  const perimeter2 = hullPerimeter(hull2);
+  const area1 = getHullArea(hull1);
+  const area2 = getHullArea(hull2);
+  const perimeter1 = getHullPerimeter(hull1);
+  const perimeter2 = getHullPerimeter(hull2);
 
   // 4. hull 기반 형태 유사도 계산
   const areaSim = calculateAreaSimilarity(area1, area2);
@@ -33,6 +35,34 @@ export const calculateShapeSimilarity = (
 
   // 5. 각도 기반 형태 유사도 계산
   const radialSim = calculateRadialSimilarity(points1, points2);
+
+  const shapeSim = (hullSim * 0.6 + radialSim * 0.4) * 100;
+
+  return shapeSim;
+};
+
+// 전처리된 데이터로 형태 유사도 계산
+export const calculateShapeSimilarityByPreprocessed = (
+  preprocessedPrompt: PreprocessedStrokeData,
+  preprocessedPlayer: PreprocessedStrokeData,
+): number => {
+  // hull 기반 형태 유사도
+  const areaSim = calculateAreaSimilarity(
+    preprocessedPrompt.hullArea,
+    preprocessedPlayer.hullArea,
+  );
+  const perimeterSim = calculatePerimeterSimilarity(
+    preprocessedPrompt.hullPerimeter,
+    preprocessedPlayer.hullPerimeter,
+  );
+  const hullSim = areaSim * 0.5 + perimeterSim * 0.5;
+
+  // 각도 기반 형태 유사도
+  const cosSim = cosineSimilarity(
+    preprocessedPrompt.radialSignature,
+    preprocessedPlayer.radialSignature,
+  );
+  const radialSim = Math.max(0, Math.min(1, cosSim));
 
   const shapeSim = (hullSim * 0.6 + radialSim * 0.4) * 100;
 
