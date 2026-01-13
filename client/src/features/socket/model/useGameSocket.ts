@@ -29,6 +29,7 @@ export const useGameSocket = () => {
   const setFinalResults = useGameStore((state) => state.setFinalResults);
   const setHighlight = useGameStore((state) => state.setHighlight);
   const setPromptStrokes = useGameStore((state) => state.setPromptStrokes);
+  const reset = useGameStore((state) => state.reset);
 
   useEffect(() => {
     if (!roomId) {
@@ -63,6 +64,19 @@ export const useGameSocket = () => {
 
     // 방 정보 업데이트
     socket.on(CLIENT_EVENTS.ROOM_METADATA, (data: GameRoom) => {
+      const currentPhase = useGameStore.getState().phase;
+
+      // GAME_END에서 WAITING으로 돌아올 때 게임 데이터 초기화
+      if (currentPhase === 'GAME_END' && data.phase === 'WAITING') {
+        useGameStore.setState({
+          liveRankings: [],
+          roundResults: [],
+          finalResults: [],
+          highlight: null,
+          promptStrokes: [],
+        });
+      }
+
       updateRoom({
         roomId: data.roomId,
         players: data.players,
@@ -150,6 +164,7 @@ export const useGameSocket = () => {
       socket.off(CLIENT_EVENTS.ERROR);
 
       disconnectSocket();
+      reset(); // 소켓 연결 해제 시 전체 상태 초기화
     };
   }, [
     roomId,
@@ -162,6 +177,7 @@ export const useGameSocket = () => {
     setRoundResults,
     setFinalResults,
     setHighlight,
+    reset,
   ]);
 
   return getSocket();
