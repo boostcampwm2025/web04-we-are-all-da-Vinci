@@ -37,9 +37,7 @@ export const captureException = (
   error: Error,
   context?: Record<string, unknown>,
 ) => {
-  Sentry.captureException(error, {
-    extra: context,
-  });
+  Sentry.captureException(error, context);
 };
 
 export const captureMessage = (
