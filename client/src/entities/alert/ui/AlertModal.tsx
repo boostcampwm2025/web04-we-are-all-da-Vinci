@@ -15,7 +15,7 @@ const AlertModal = ({ isOpen, onClose, title, message }: AlertModalProps) => {
       title={title}
       onConfirm={onClose}
     >
-      <p className="font-handwriting text-center text-lg text-gray-700">
+      <p className="font-handwriting text-xl whitespace-pre-line text-gray-700">
         {message}
       </p>
     </BaseModal>

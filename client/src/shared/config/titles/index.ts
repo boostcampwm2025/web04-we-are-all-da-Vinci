@@ -3,4 +3,5 @@ export const TITLES = {
   CREATE: '방 만들기',
   ROOM: '게임방',
   END: '최종 결과',
+  DESCRIPTION: '게임 설명서',
 };

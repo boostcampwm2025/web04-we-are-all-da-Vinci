@@ -47,6 +47,20 @@ export const captureMessage = (
   Sentry.captureMessage(message, level);
 };
 
+export const captureEvent = (
+  message: string,
+  level: Sentry.SeverityLevel,
+  tags: Record<string, string>,
+  extra?: Record<string, unknown>,
+) => {
+  Sentry.captureEvent({
+    message,
+    level,
+    tags,
+    extra,
+  });
+};
+
 // 로그인 들어가면 넣기? 사용자 정보와 함께 에러 기록 가능
 
 // export const setUser = (user: {
