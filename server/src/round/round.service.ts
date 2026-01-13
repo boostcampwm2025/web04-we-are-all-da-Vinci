@@ -15,6 +15,7 @@ import { PinoLogger } from 'nestjs-pino';
 import { TimerService } from 'src/timer/timer.service';
 import { Server } from 'socket.io';
 import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
+import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
 
 @Injectable()
 export class RoundService implements OnModuleInit {
@@ -24,6 +25,7 @@ export class RoundService implements OnModuleInit {
     private readonly cacheService: GameRoomCacheService,
     private readonly progressCacheService: GameProgressCacheService,
     private readonly standingsCacheService: StandingsCacheService,
+    private readonly leaderboardCacheService: LeaderboardCacheService,
     private readonly timerService: TimerService,
     private readonly logger: PinoLogger,
   ) {
@@ -205,10 +207,20 @@ export class RoundService implements OnModuleInit {
   }
 
   private async moveWaiting(room: GameRoom) {
+    if (room.phase !== GamePhase.GAME_END) {
+      return;
+    }
+
     room.phase = GamePhase.WAITING;
     room.currentRound = 0;
 
+    room.promptId = await this.getRandomPromptId();
+
     await this.cacheService.saveRoom(room.roomId, room);
+
+    await this.progressCacheService.deleteAll(room.roomId);
+    await this.standingsCacheService.deleteAll(room.roomId);
+    await this.leaderboardCacheService.deleteAll(room.roomId);
 
     this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
 
@@ -232,5 +244,12 @@ export class RoundService implements OnModuleInit {
       return null;
     }
     return promptStrokesData[index];
+  }
+
+  private async getRandomPromptId(): Promise<number> {
+    const promptStrokesData = await this.loadPromptStrokes();
+
+    const id = Math.floor(Math.random() * promptStrokesData.length);
+    return id;
   }
 }
