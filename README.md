@@ -139,3 +139,7 @@
   <img src="https://img.shields.io/badge/ESLint-4B32C3?style=for-the-badge&logo=eslint&logoColor=white" alt="ESLint" />
   <img src="https://img.shields.io/badge/Prettier-F7B93E?style=for-the-badge&logo=prettier&logoColor=black" alt="Prettier" />
 </div>
+
+## Infra Architecture
+
+<img width="932" height="579" alt="Image" src="https://github.com/user-attachments/assets/2fa8acb7-3ff9-4229-bf93-395e55995b65" />
