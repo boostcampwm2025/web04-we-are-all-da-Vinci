@@ -28,6 +28,7 @@ export class GameRoomCacheService {
       phase: gameRoom.phase,
       currentRound: String(gameRoom.currentRound),
       settings: JSON.stringify(gameRoom.settings),
+      promptId: gameRoom.promptId,
     });
 
     await client.expire(key, REDIS_TTL);
@@ -51,6 +52,7 @@ export class GameRoomCacheService {
       phase: data.phase,
       currentRound: parseInt(data.currentRound),
       settings: JSON.parse(data.settings) as Settings,
+      promptId: parseInt(data.promptId),
     };
   }
 
