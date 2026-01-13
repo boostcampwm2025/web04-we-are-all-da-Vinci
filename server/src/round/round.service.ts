@@ -31,10 +31,11 @@ export class RoundService implements OnModuleInit {
       if (!room) {
         return;
       }
+
       if (room.phase === GamePhase.DRAWING) {
-        // Drawing -> Round_End로의 전환은 모든 플레이어가 제출해야 전환된다.
-        // 따라서 타이머에 의한 전환을 막는다.
-        // TODO: 에러로 인해 제출하지 못하는 경우를 막기 위해 제한 시간 이후에 강제 전환 로직이 필요
+        setTimeout(() => {
+          this.nextPhase(room);
+        }, 5000);
         return;
       }
       await this.nextPhase(room);
@@ -65,25 +66,6 @@ export class RoundService implements OnModuleInit {
       default:
         throw new WebsocketException(`알 수 없는 phase입니다: ${room.phase}`);
     }
-  }
-
-  async onPlayerSubmit(roomId: string) {
-    const room = await this.cacheService.getRoom(roomId);
-
-    if (!room) {
-      throw new WebsocketException('방이 존재하지 않습니다.');
-    }
-
-    const roundResults = await this.progressCacheService.getRoundResults(
-      roomId,
-      room.currentRound,
-    );
-
-    if (roundResults.length < room.players.length) {
-      return;
-    }
-
-    await this.nextPhase(room);
   }
 
   private async movePrompt(room: GameRoom) {
