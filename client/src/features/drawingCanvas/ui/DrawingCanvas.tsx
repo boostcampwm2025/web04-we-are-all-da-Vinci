@@ -4,7 +4,7 @@ import { useMouseDrawing } from '@/features/drawingCanvas/model/useMouseDrawing'
 import { useStrokes } from '@/features/drawingCanvas/model/useStrokes';
 import { useColorSelection } from '@/features/drawingCanvas/model/useColorSelection';
 import { DrawingToolbar } from '@/features/drawingToolbar/ui/DrawingToolbar';
-import { CANVAS_CONFIG, SERVER_EVENTS } from '@/shared/config';
+import { CANVAS_CONFIG, SERVER_EVENTS, GAME_PHASE } from '@/shared/config';
 import { drawStrokesOnCanvas } from '@/features/drawingCanvas/lib/drawStrokesOnCanvas';
 import { useGameStore, selectPhase } from '@/entities/gameRoom/model';
 import { getSocket } from '@/shared/api/socket';
@@ -12,6 +12,7 @@ import {
   calculateFinalSimilarityByPreprocessed,
   preprocessStrokes,
 } from '@/features/similarity/lib';
+import { captureEvent } from '@/shared/lib/sentry';
 
 // 기본 그리기 기능을 제공하는 캔버스 컴포넌트
 export const DrawingCanvas = () => {
@@ -22,12 +23,14 @@ export const DrawingCanvas = () => {
   const { selectedColor, handleColorSelect } = useColorSelection();
 
   const strokeCountRef = useRef(strokes.length);
+  const totalDrawingTimeRef = useRef<number>(0);
 
   const phase = useGameStore(selectPhase);
   const promptStrokes = useGameStore((state) => state.promptStrokes);
   const roomId = useGameStore((state) => state.roomId);
   const timer = useGameStore((state) => state.timer);
   const currentRound = useGameStore((state) => state.currentRound);
+  const settings = useGameStore((state) => state.settings);
 
   // 제출 상태 추적용 ref
   const isSubmittedRef = useRef(false);
@@ -37,7 +40,37 @@ export const DrawingCanvas = () => {
   useEffect(() => {
     isSubmittedRef.current = false;
     hasTimerStartedRef.current = false;
-  }, [currentRound, phase]);
+
+    // Drawing phase 시작 시 총 그리기 시간 초기화
+    if (phase === GAME_PHASE.DRAWING) {
+      totalDrawingTimeRef.current = 0;
+    }
+
+    // Drawing phase 종료 시 총 그리기 시간을 Sentry에 전송
+    if (phase !== GAME_PHASE.DRAWING && totalDrawingTimeRef.current > 0) {
+      const totalRoundTimeSec = settings.drawingTime;
+      const actualDrawingTimeSec = totalDrawingTimeRef.current / 1000;
+      const thinkingTimeSec = totalRoundTimeSec - actualDrawingTimeSec;
+      const drawingRatio = (actualDrawingTimeSec / totalRoundTimeSec) * 100;
+
+      captureEvent(
+        'Drawing Time Check',
+        'info',
+        {
+          round: String(currentRound),
+          roomId,
+        },
+        {
+          totalRoundTimeSec,
+          actualDrawingTimeSec: actualDrawingTimeSec.toFixed(2),
+          thinkingTimeSec: thinkingTimeSec.toFixed(2),
+          drawingRatio: drawingRatio.toFixed(1),
+        },
+      );
+
+      totalDrawingTimeRef.current = 0;
+    }
+  }, [currentRound, phase, roomId, settings.drawingTime]);
 
   // promptStrokes 전처리 (제시 그림이 바뀌지 않으면 캐시된 값 사용)
   const preprocessedPrompt = useMemo(() => {
@@ -116,12 +149,18 @@ export const DrawingCanvas = () => {
     ctxRef,
   ]);
 
+  // 스트로크 지속시간을 누적하는 핸들러
+  const handleStrokeDuration = (duration: number) => {
+    totalDrawingTimeRef.current += duration;
+  };
+
   const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseOut } =
     useMouseDrawing({
       canvasRef,
       ctxRef,
       selectedColor,
       onAddStroke: handleAddStroke,
+      onStrokeDuration: handleStrokeDuration,
     });
 
   return (
