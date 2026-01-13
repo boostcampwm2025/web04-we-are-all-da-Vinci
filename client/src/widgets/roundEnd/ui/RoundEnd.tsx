@@ -5,14 +5,11 @@ import {
 } from '@/entities/roundResult';
 import { Timer } from '@/entities/timer';
 import { useGameStore } from '@/entities/gameRoom/model';
-import { getSocket } from '@/shared/api/socket';
-
-  const socket = getSocket();
-  const mySocketId = socket?.id;
 
 export const RoundEnd = () => {
   const roundResults = useGameStore((state) => state.roundResults);
   const currentRound = useGameStore((state) => state.currentRound);
+  const promptStrokes = useGameStore((state) => state.promptStrokes);
 
   return (
     <>
@@ -24,10 +21,7 @@ export const RoundEnd = () => {
           </div>
           <div className="flex min-h-0 flex-1 gap-4">
             <PromptSection promptStrokes={promptStrokes} />
-            <PlayerReplaysSection
-              players={roundResults}
-              currentUserSocketId={mySocketId}
-            />
+            <PlayerReplaysSection players={roundResults} />
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Stroke } from '@/entities/similarity/model';
 import { PlayerReplayCard } from './PlayerReplayCard';
+import { useCurrentPlayer } from '@/entities/gameRoom/model';
 
 interface Player {
   nickname: string;
@@ -11,21 +12,25 @@ interface Player {
 
 interface PlayerReplaysSectionProps {
   players: Player[];
-  currentUserSocketId?: string;
 }
 
 const PLAYERS_PER_PAGE = 8;
 
 export const PlayerReplaysSection = ({
-  players,
-  currentUserSocketId,
+  players = [],
 }: PlayerReplaysSectionProps) => {
   const [currentPage, setCurrentPage] = useState(0);
 
-  const totalPages = Math.ceil(players.length / PLAYERS_PER_PAGE);
+  const currentPlayer = useCurrentPlayer();
+  const mySocketId = currentPlayer?.socketId;
+
+  // 페이지네이션 계산
+  const totalPages = Math.max(1, Math.ceil(players.length / PLAYERS_PER_PAGE));
   const startIndex = currentPage * PLAYERS_PER_PAGE;
-  const endIndex = startIndex + PLAYERS_PER_PAGE;
-  const currentPlayers = players.slice(startIndex, endIndex);
+  const currentPlayers = players.slice(
+    startIndex,
+    startIndex + PLAYERS_PER_PAGE,
+  );
 
   const goToPrevPage = () => setCurrentPage((prev) => Math.max(0, prev - 1));
   const goToNextPage = () =>
@@ -43,35 +48,36 @@ export const PlayerReplaysSection = ({
           </h2>
         </div>
 
-        {/* Pagination Controls */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={goToPrevPage}
-            disabled={currentPage === 0}
-            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-indigo-400 bg-white text-indigo-600 transition-all hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <span className="material-symbols-outlined text-lg">
-              chevron_left
+        {totalPages > 1 && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={goToPrevPage}
+              disabled={currentPage === 0}
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-indigo-400 bg-white text-indigo-600 transition-all hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <span className="material-symbols-outlined text-lg">
+                chevron_left
+              </span>
+            </button>
+            <span className="text-sm font-semibold text-gray-700">
+              {currentPage + 1} / {totalPages}
             </span>
-          </button>
-          <span className="text-sm font-semibold text-gray-700">
-            {currentPage + 1} / {totalPages}
-          </span>
-          <button
-            onClick={goToNextPage}
-            disabled={currentPage === totalPages - 1}
-            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-indigo-400 bg-white text-indigo-600 transition-all hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <span className="material-symbols-outlined text-lg">
-              chevron_right
-            </span>
-          </button>
-        </div>
+            <button
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages - 1}
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-indigo-400 bg-white text-indigo-600 transition-all hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <span className="material-symbols-outlined text-lg">
+                chevron_right
+              </span>
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-4 gap-2">
         {currentPlayers.map((player, index) => {
-          const isCurrentUser = player.socketId === currentUserSocketId;
+          const isCurrentUser = player.socketId === mySocketId;
           const rank = startIndex + index + 1;
 
           return (
