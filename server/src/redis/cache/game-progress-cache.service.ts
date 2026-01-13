@@ -23,6 +23,10 @@ export class GameProgressCacheService {
     return `drawing:${roomId}:${round}:*`;
   }
 
+  private getGameScanKey(roomId: string) {
+    return `drawing:${roomId}:*`;
+  }
+
   async submitRoundResult(
     roomId: string,
     round: number,
@@ -120,5 +124,25 @@ export class GameProgressCacheService {
     const results = await this.getPlayerResults(roomId, socketId, totalRounds);
     const highlight = results.sort((a, b) => b.similarity - a.similarity)[0];
     return highlight;
+  }
+
+  async deleteAll(roomId: string) {
+    const client = this.redisService.getClient();
+    const scanKey = this.getGameScanKey(roomId);
+
+    let cursor = '0';
+    do {
+      const data = await client.scan(cursor, {
+        TYPE: 'string',
+        COUNT: 20,
+        MATCH: scanKey,
+      });
+      cursor = data.cursor;
+      const keys = data.keys;
+
+      if (keys.length > 0) {
+        await client.unlink(keys);
+      }
+    } while (cursor !== '0');
   }
 }
