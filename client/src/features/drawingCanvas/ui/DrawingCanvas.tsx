@@ -5,7 +5,7 @@ import { useStrokes } from '@/features/drawingCanvas/model/useStrokes';
 import { useColorSelection } from '@/features/drawingCanvas/model/useColorSelection';
 import { DrawingToolbar } from '@/features/drawingToolbar/ui/DrawingToolbar';
 import { CANVAS_CONFIG, SERVER_EVENTS } from '@/shared/config';
-import { drawStrokesOnCanvas } from '@/features/drawingCanvas/lib/drawStrokesOnCanvas';
+import { drawStrokesOnCanvas } from '@/entities/drawing/lib/drawStrokesOnCanvas';
 import { useGameStore, selectPhase } from '@/entities/gameRoom/model';
 import { getSocket } from '@/shared/api/socket';
 import {
