@@ -12,7 +12,7 @@ import {
   calculateFinalSimilarityByPreprocessed,
   preprocessStrokes,
 } from '@/features/similarity/lib';
-import { captureEvent } from '@/shared/lib/sentry';
+import { captureMessage } from '@/shared/lib/sentry';
 
 // 기본 그리기 기능을 제공하는 캔버스 컴포넌트
 export const DrawingCanvas = () => {
@@ -51,20 +51,12 @@ export const DrawingCanvas = () => {
         const thinkingTimeSec = totalRoundTimeSec - actualDrawingTimeSec;
         const drawingRatio = (actualDrawingTimeSec / totalRoundTimeSec) * 100;
 
-        captureEvent(
-          'Drawing Time Check',
-          'info',
-          {
-            round: String(currentRound),
-            roomId,
-          },
-          {
-            totalRoundTime: totalRoundTimeSec,
-            actualDrawingTime: actualDrawingTimeSec.toFixed(2),
-            waitingTime: thinkingTimeSec.toFixed(2),
-            drawingRatio: drawingRatio.toFixed(1),
-          },
-        );
+        captureMessage('Drawing Time Check', 'info', {
+          totalRoundTime: String(totalRoundTimeSec),
+          actualDrawingTime: actualDrawingTimeSec.toFixed(2),
+          waitingTime: thinkingTimeSec.toFixed(2),
+          drawingRatio: drawingRatio.toFixed(1),
+        });
       }
     };
   }, [currentRound, roomId, settings.drawingTime]);
@@ -97,7 +89,7 @@ export const DrawingCanvas = () => {
         preprocessedPlayer,
       );
 
-      captureEvent(
+      captureMessage(
         'Drawing Data',
         'info',
         {
