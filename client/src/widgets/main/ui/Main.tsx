@@ -53,7 +53,7 @@ export const Main = () => {
 
           <Title title={TITLES.MAIN} fontSize={'text-9xl'} />
           <DecorateTitle />
-          <h6 className="font-handwriting mt-4 w-120 whitespace-pre-line text-2xl leading-relaxed font-medium text-gray-700">
+          <h6 className="font-handwriting mt-4 w-120 text-2xl leading-relaxed font-medium whitespace-pre-line text-gray-700">
             {TEXT.DESCRIPTION}
           </h6>
 
