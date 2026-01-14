@@ -28,7 +28,7 @@ export const PlayerListSection = ({
         {roomCode}
       </div>
 
-      <div className="grid max-h-80 grid-cols-4 grid-rows-2 gap-5 overflow-y-scroll">
+      <div className="grid max-h-80 grid-cols-4 gap-4 overflow-y-scroll">
         {players.map((player) => (
           <PlayerCard
             key={player.socketId}
