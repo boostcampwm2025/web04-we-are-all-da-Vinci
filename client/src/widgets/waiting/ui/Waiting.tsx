@@ -65,7 +65,7 @@ export const Waiting = () => {
         <div className="flex w-full max-w-7xl flex-col">
           <div className="mb-5 shrink-0 text-center">
             <Title title={TITLES.ROOM} fontSize="text-6xl" />
-            <p className="font-handwriting text-lg text-gray-600">
+            <p className="font-handwriting text-2xl text-gray-600">
               친구들이 모일 때까지 기다려주세요!
             </p>
           </div>
