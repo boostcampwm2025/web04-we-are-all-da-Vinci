@@ -7,14 +7,7 @@ export const RANK_CHANGE = {
 
 export type RankChange = (typeof RANK_CHANGE)[keyof typeof RANK_CHANGE];
 
-export type PlayerColor =
-  | 'blue'
-  | 'red'
-  | 'green'
-  | 'purple'
-  | 'yellow'
-  | 'indigo'
-  | 'gray';
+export type PlayerColor = 'blue' | 'gray';
 
 export interface RankingEntry {
   socketId: string;

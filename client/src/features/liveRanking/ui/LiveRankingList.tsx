@@ -1,5 +1,4 @@
 import { RankingCard } from '@/entities/ranking';
-import { PLAYER_COLORS } from '../config/playerColors';
 import { useLiveRanking } from '../model/useLiveRanking';
 
 const EmptyRankingPlaceholder = () => (
@@ -24,7 +23,7 @@ export const LiveRankingList = () => {
 
   return (
     <>
-      {rankings.map((entry, index) => (
+      {rankings.map((entry) => (
         <RankingCard
           key={entry.socketId}
           rank={entry.rank}
@@ -32,7 +31,7 @@ export const LiveRankingList = () => {
           percent={Math.round(entry.similarity)}
           rankChange={entry.rankChange}
           isCurrentUser={entry.isCurrentUser}
-          color={PLAYER_COLORS[index % PLAYER_COLORS.length]}
+          color={entry.isCurrentUser ? 'blue' : 'gray'}
         />
       ))}
     </>
