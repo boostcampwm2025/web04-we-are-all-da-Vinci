@@ -69,7 +69,7 @@ export const Main = () => {
 
             <button
               onClick={handleShowGuide}
-              className="font-handwriting mt-2 cursor-pointer text-xl text-gray-600 underline decoration-gray-400 decoration-2 underline-offset-4 transition-colors hover:text-gray-800"
+              className="font-handwriting mt-2 cursor-pointer text-2xl text-gray-600 underline decoration-gray-400 decoration-2 underline-offset-4 transition-colors hover:text-gray-800"
             >
               {TEXT.MANUAL}
             </button>
