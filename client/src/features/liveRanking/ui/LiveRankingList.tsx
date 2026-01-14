@@ -1,4 +1,4 @@
-import { RankingCard } from '@/entities/ranking';
+import { RankingCard, type PlayerColor } from '@/entities/ranking';
 import { useLiveRanking } from '../model/useLiveRanking';
 
 const EmptyRankingPlaceholder = () => (
@@ -13,6 +13,20 @@ const EmptyRankingPlaceholder = () => (
     </div>
   </div>
 );
+
+const getRankColor = (rank: number, isCurrentUser: boolean): PlayerColor => {
+  if (isCurrentUser) return 'blue';
+  switch (rank) {
+    case 1:
+      return 'gold';
+    case 2:
+      return 'silver';
+    case 3:
+      return 'bronze';
+    default:
+      return 'gray';
+  }
+};
 
 export const LiveRankingList = () => {
   const { rankings } = useLiveRanking();
@@ -31,7 +45,7 @@ export const LiveRankingList = () => {
           percent={Math.round(entry.similarity)}
           rankChange={entry.rankChange}
           isCurrentUser={entry.isCurrentUser}
-          color={entry.isCurrentUser ? 'blue' : 'gray'}
+          color={getRankColor(entry.rank, entry.isCurrentUser)}
         />
       ))}
     </>

@@ -65,6 +65,30 @@ const RankingCard = ({
       rankBg: 'bg-gray-600',
       rankText: 'text-white',
     },
+    gold: {
+      border: 'border-yellow-400',
+      bg: 'bg-gradient-to-r from-yellow-50 to-amber-50',
+      iconBg: 'bg-gradient-to-r from-yellow-400 to-amber-500',
+      text: 'text-amber-600',
+      rankBg: 'bg-gradient-to-r from-yellow-400 to-amber-500',
+      rankText: 'text-white',
+    },
+    silver: {
+      border: 'border-slate-400',
+      bg: 'bg-gradient-to-r from-slate-50 to-gray-100',
+      iconBg: 'bg-gradient-to-r from-slate-300 to-gray-400',
+      text: 'text-slate-600',
+      rankBg: 'bg-gradient-to-r from-slate-300 to-gray-400',
+      rankText: 'text-white',
+    },
+    bronze: {
+      border: 'border-orange-400',
+      bg: 'bg-gradient-to-r from-orange-50 to-amber-50',
+      iconBg: 'bg-gradient-to-r from-orange-400 to-amber-600',
+      text: 'text-orange-600',
+      rankBg: 'bg-gradient-to-r from-orange-400 to-amber-600',
+      rankText: 'text-white',
+    },
   };
 
   const colors = colorClasses[color];
@@ -82,9 +106,9 @@ const RankingCard = ({
         <div className="flex items-center gap-2">
           {rank && (
             <div
-              className={`flex h-6 w-6 items-center justify-center rounded-full ${colors.rankBg} ${colors.rankText} text-xs font-bold`}
+              className={`flex min-w-6 items-center justify-center rounded-full px-1.5 py-0.5 ${colors.rankBg} ${colors.rankText} text-xs font-bold`}
             >
-              {rank}위
+              {rank}
             </div>
           )}
           {rankChange && <RankChangeIndicator change={rankChange} />}
