@@ -24,7 +24,6 @@ export const DrawingCanvas = () => {
 
   const strokeCountRef = useRef(strokes.length);
   const totalDrawingTimeRef = useRef<number>(0);
-  const strokesRef = useRef(strokes);
 
   const phase = useGameStore(selectPhase);
   const promptStrokes = useGameStore((state) => state.promptStrokes);
@@ -36,11 +35,6 @@ export const DrawingCanvas = () => {
   // 제출 상태 추적용 ref
   const isSubmittedRef = useRef(false);
   const hasTimerStartedRef = useRef(false);
-
-  // strokes가 변경될 때마다 ref 업데이트
-  useEffect(() => {
-    strokesRef.current = strokes;
-  }, [strokes]);
 
   // 컴포넌트 언마운트 시 Drawing time을 Sentry에 전송
   useEffect(() => {
