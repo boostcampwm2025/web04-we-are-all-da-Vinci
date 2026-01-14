@@ -1,3 +1,4 @@
+import { StaticCanvas } from '@/entities/drawing';
 import { PodiumPlayer } from '@/entities/gameResult';
 import { useGameStore, useIsHost } from '@/entities/gameRoom/model';
 import { TIMER } from '@/entities/timer/config';
@@ -70,10 +71,8 @@ export const GameEnd = () => {
                         제시 이미지
                       </p>
                       <div className="aspect-square w-full overflow-hidden rounded-xl border-2 border-gray-200 bg-white">
-                        <DrawingReplayCanvas
+                        <StaticCanvas
                           strokes={highlight.promptStrokes}
-                          speed={30}
-                          loop={true}
                           className="h-full w-full"
                         />
                       </div>
