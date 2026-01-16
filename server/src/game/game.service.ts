@@ -65,8 +65,10 @@ export class GameService {
 
     if (target.isHost && players.length > 1) {
       const nextHost = players[1];
-      await this.cacheService.addPlayer(roomId, { ...nextHost, isHost: true });
-      await this.cacheService.deletePlayer(roomId, nextHost);
+      await this.cacheService.setPlayer(roomId, 1, {
+        ...nextHost,
+        isHost: true,
+      });
     }
 
     await this.cacheService.deletePlayer(roomId, target);
