@@ -1,3 +1,4 @@
+import { StaticCanvas } from '@/entities/drawing';
 import { PodiumPlayer } from '@/entities/gameResult';
 import { useGameStore, useIsHost } from '@/entities/gameRoom/model';
 import { TIMER } from '@/entities/timer/config';
@@ -58,7 +59,7 @@ export const GameEnd = () => {
 
               {highlight ? (
                 <div className="flex flex-col items-center gap-6">
-                  <p className="font-handwriting text-lg text-gray-600">
+                  <p className="font-handwriting text-3xl text-gray-600">
                     유사도: {highlight.similarity.toFixed(1)}%
                   </p>
 
@@ -70,10 +71,8 @@ export const GameEnd = () => {
                         제시 이미지
                       </p>
                       <div className="aspect-square w-full overflow-hidden rounded-xl border-2 border-gray-200 bg-white">
-                        <DrawingReplayCanvas
+                        <StaticCanvas
                           strokes={highlight.promptStrokes}
-                          speed={30}
-                          loop={true}
                           className="h-full w-full"
                         />
                       </div>

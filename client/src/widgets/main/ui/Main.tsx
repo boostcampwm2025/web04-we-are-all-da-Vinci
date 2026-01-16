@@ -53,7 +53,7 @@ export const Main = () => {
 
           <Title title={TITLES.MAIN} fontSize={'text-9xl'} />
           <DecorateTitle />
-          <h6 className="font-handwriting mt-4 w-90 text-2xl leading-relaxed font-medium text-gray-700">
+          <h6 className="font-handwriting mt-4 w-120 text-2xl leading-relaxed font-medium whitespace-pre-line text-gray-700">
             {TEXT.DESCRIPTION}
           </h6>
 
@@ -69,7 +69,7 @@ export const Main = () => {
 
             <button
               onClick={handleShowGuide}
-              className="font-handwriting mt-2 cursor-pointer text-xl text-gray-600 underline decoration-gray-400 decoration-2 underline-offset-4 transition-colors hover:text-gray-800"
+              className="font-handwriting mt-2 cursor-pointer text-2xl text-gray-600 underline decoration-gray-400 decoration-2 underline-offset-4 transition-colors hover:text-gray-800"
             >
               {TEXT.MANUAL}
             </button>
@@ -87,7 +87,7 @@ export const Main = () => {
         isOpen={showGuideModal}
         onClose={() => setShowGuideModal(false)}
         title="게임 설명서"
-        message="1. 방을 만들거나 입장하세요. 2. 주어진 주제에 맞는 그림을 그리세요. 3. 다른 사람의 그림을 보고 정답을 맞춰보세요. 4. 가장 많은 점수를 얻은 사람이 승리합니다!"
+        message={TEXT.MANUAL_MESSAGE}
       />
     </>
   );

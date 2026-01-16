@@ -142,4 +142,4 @@
 
 ## Infra Architecture
 
-<img width="932" height="579" alt="Image" src="https://github.com/user-attachments/assets/2fa8acb7-3ff9-4229-bf93-395e55995b65" />
+<img width="1076" height="684" alt="Image" src="https://github.com/user-attachments/assets/17d57435-2c69-4df3-a837-8b0929d03d21" />

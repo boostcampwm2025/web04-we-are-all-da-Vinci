@@ -18,12 +18,12 @@ export const Drawing = () => {
             roundBadge={<RoundBadge round={currentRound} />}
           />
 
-          <div className="flex min-h-0 flex-1 items-center justify-center gap-6">
+          <div className="flex min-h-0 flex-1 items-stretch justify-center gap-6">
             <div className="aspect-square h-full">
               <DrawingCanvas />
             </div>
 
-            <div className="h-full">
+            <div className="flex h-full">
               <RankingPanel>
                 <LiveRankingList />
               </RankingPanel>

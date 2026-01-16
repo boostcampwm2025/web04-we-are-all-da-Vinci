@@ -37,7 +37,7 @@ const PlayerCard = ({ id, isHost, nickname, status }: PlayerCardProps) => {
       <div className="font-handwriting mb-1 text-lg font-bold">{nickname}</div>
       {isHost && <span className="absolute top-2 right-2 text-xl">👑</span>}
       {status && (
-        <div className="font-handwriting text-sm text-gray-500">{status}</div>
+        <div className="font-handwriting text-md text-gray-500">{status}</div>
       )}
     </div>
   );
