@@ -72,11 +72,11 @@ export class GameRoomCacheService {
     await client.expire(key, REDIS_TTL);
   }
 
-  async setHost(roomId: string, host: Player) {
+  async setPlayer(roomId: string, index: number, player: Player) {
     const client = this.redisService.getClient();
     const key = this.getPlayerListKey(roomId);
 
-    await client.lSet(key, 1, JSON.stringify(host));
+    await client.lSet(key, index, JSON.stringify(player));
 
     await client.expire(key, REDIS_TTL);
   }
