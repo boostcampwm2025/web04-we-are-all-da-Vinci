@@ -77,6 +77,36 @@ export class GameService {
     return updatedRoom;
   }
 
+  async updateGameSettings(
+    roomId: string,
+    socketId: string,
+    maxPlayer: number,
+    totalRounds: number,
+    drawingTime: number,
+  ) {
+    const room = await this.cacheService.getRoom(roomId);
+
+    if (!room) {
+      throw new WebsocketException('방이 존재하지 않습니다.');
+    }
+
+    const player = room.players.find((player) => player.socketId === socketId);
+
+    if (!player) {
+      throw new WebsocketException('플레이어가 존재하지 않습니다.');
+    }
+
+    if (!player.isHost) {
+      throw new WebsocketException('방장 권한이 없습니다.');
+    }
+
+    Object.assign(room.settings, { maxPlayer, totalRounds, drawingTime });
+
+    await this.cacheService.saveRoom(roomId, room);
+
+    return room;
+  }
+
   private async generateRoomId() {
     let roomId = randomUUID().toString().substring(0, 8);
     while (await this.cacheService.getRoom(roomId)) {
