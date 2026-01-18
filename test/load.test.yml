@@ -9,7 +9,6 @@ config:
 
 before:
   flow:
-    - log: "Create Room"
     - post:
         url: "/room"
         json:
@@ -19,6 +18,7 @@ before:
         capture:
           - json: $.roomId
             as: roomId
+    - log: "Create Room: {{ roomId }}"
 
 scenarios:
   - name: "game"
@@ -55,7 +55,7 @@ scenarios:
                 roomId: "{{ roomId }}"
           - think: 1
         whileTrue: "waitRoundEnd"
-      - think: 1 # 버퍼 타임
+      - think: 0.5 # 버퍼 타임
       - log: "Drawing End"
       - emit:
           channel: "user:drawing"
@@ -63,4 +63,4 @@ scenarios:
             roomId: "{{ roomId }}"
             similarity: "{{ similarity }}"
             strokes: "{{ strokes }}"
-      - think: 12
+      - think: 24
