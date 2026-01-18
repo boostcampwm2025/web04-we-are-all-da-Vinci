@@ -1,39 +1,4 @@
-const fs = require("node:fs/promises");
-const fsSync = require("node:fs");
 require("dotenv").config();
-
-/*
- * 플레이어가 현재 몇 명 접속했는지 파악하기 위한 파일 관련 함수
- */
-const COUNTER_FILE = "thread-counter.txt";
-
-try {
-  fsSync.writeFileSync(COUNTER_FILE, "0", "utf8");
-} catch (err) {
-  console.error("파일 읽기 실패:", err);
-}
-
-async function incrementCounter() {
-  try {
-    const currentCount = await fs.readFile(COUNTER_FILE, "utf8");
-    const newCount = parseInt(currentCount) + 1;
-    await fs.writeFile(COUNTER_FILE, newCount.toString(), "utf8");
-    return newCount;
-  } catch (err) {
-    console.error("카운트 증가 실패:", err);
-    return -1;
-  }
-}
-
-async function checkCounter() {
-  try {
-    const currentCount = await fs.readFile(COUNTER_FILE, "utf8");
-    return parseInt(currentCount);
-  } catch (err) {
-    console.error("카운트 읽기 실패:", err);
-    return -1;
-  }
-}
 
 /**
  * 상수 정의
@@ -84,7 +49,7 @@ function initUser(userContext, events, done) {
     const isJoined = userContext.vars.isJoined;
     if (isJoined) return;
     if (players.length === 1 && phase === "WAITING") {
-      console.log(`set host ${socket.id}, ${phase}`);
+      console.log(`set host ${userContext.vars.nickname}, ${phase}`);
       userContext.vars.isHost = true;
       userContext.vars.startGame = "room:start";
     } else {
@@ -93,7 +58,6 @@ function initUser(userContext, events, done) {
     }
 
     userContext.vars.isJoined = true;
-    incrementCounter();
   });
 
   socket.on("room:timer", async (response) => {
@@ -118,6 +82,7 @@ function waitAllPlayerReady(userContext, next) {
 
 function waitDrawingPhase(userContext, next) {
   const phase = userContext.vars.phase;
+  console.log(phase)
   return next(phase === "WAITING" || phase === "PROMPT");
 }
 

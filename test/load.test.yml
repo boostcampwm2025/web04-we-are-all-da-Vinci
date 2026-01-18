@@ -41,6 +41,7 @@ scenarios:
             roomId: "{{ roomId }}"
           ifTrue: "{{ isHost }}"
       - log: "Game Start"
+      - think: 1
       - loop: # 프롬프트 단계가 끝나고 그리기 단계를 기다림.
           - think: 1
         whileTrue: "waitDrawingPhase"
@@ -54,8 +55,8 @@ scenarios:
                 roomId: "{{ roomId }}"
           - think: 1
         whileTrue: "waitRoundEnd"
-      - log: "Drawing End"
       - think: 1 # 버퍼 타임
+      - log: "Drawing End"
       - emit:
           channel: "user:drawing"
           data:
