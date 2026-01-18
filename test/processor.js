@@ -82,7 +82,7 @@ function waitAllPlayerReady(userContext, next) {
 
 function waitDrawingPhase(userContext, next) {
   const phase = userContext.vars.phase;
-  console.log(phase)
+
   return next(phase === "WAITING" || phase === "PROMPT");
 }
 
