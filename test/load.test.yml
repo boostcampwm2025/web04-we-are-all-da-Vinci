@@ -55,7 +55,7 @@ scenarios:
                 roomId: "{{ roomId }}"
           - think: 1
         whileTrue: "waitRoundEnd"
-      - think: 0.5 # 버퍼 타임
+      - think: "0.5s" # 버퍼 타임
       - log: "Drawing End"
       - emit:
           channel: "user:drawing"
