@@ -100,6 +100,10 @@ export class GameService {
       throw new WebsocketException('방장 권한이 없습니다.');
     }
 
+    if (maxPlayer < room.players.length) {
+      throw new WebsocketException('현재 인원보다 작게 설정할 수 없습니다.');
+    }
+
     Object.assign(room.settings, { maxPlayer, totalRounds, drawingTime });
 
     await this.cacheService.saveRoom(roomId, room);
