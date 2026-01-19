@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import type { Stroke } from '@/entities/similarity/model';
 import { DrawingReplayCanvas } from '@/features/replayingCanvas';
 import type { Similarity } from '@/features/similarity';
@@ -27,7 +27,6 @@ export const PlayerReplayCard = ({
   isCurrentUser = false,
 }: PlayerReplayCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -40,13 +39,12 @@ export const PlayerReplayCard = ({
   return (
     <div
       className="relative flex flex-col"
-      ref={cardRef}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       {/* Similarity Detail Tooltip */}
       {isHovered && (
-        <div className="absolute top-0 left-full z-20 mr-2 w-48">
+        <div className="absolute top-0 left-full z-20 ml-2 w-48">
           <PlayerSimilarityDetailTooltip similarity={similarity} />
         </div>
       )}

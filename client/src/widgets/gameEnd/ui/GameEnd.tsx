@@ -1,11 +1,13 @@
 import { StaticCanvas } from '@/entities/drawing';
 import { PodiumPlayer } from '@/entities/gameResult';
 import { useGameStore, useIsHost } from '@/entities/gameRoom/model';
+import { PlayerSimilarityDetailTooltip } from '@/entities/similarity';
 import { TIMER } from '@/entities/timer/config';
 import { DrawingReplayCanvas } from '@/features/replayingCanvas';
 import { getSocket } from '@/shared/api/socket';
 import { SERVER_EVENTS, TITLES } from '@/shared/config';
 import { CommonBtn, Title } from '@/shared/ui';
+import { useState } from 'react';
 
 const BUTTON_ENABLE_AFTER = 10; // 10초 후 버튼 활성화
 
@@ -19,6 +21,16 @@ export const GameEnd = () => {
 
   const topThree = finalResults.slice(0, 3);
   const isButtonEnabled = timer <= TIMER.GAME_END_TIME - BUTTON_ENABLE_AFTER;
+
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+  };
 
   const handleRestart = () => {
     if (!isButtonEnabled) return;
@@ -59,9 +71,23 @@ export const GameEnd = () => {
 
               {highlight ? (
                 <div className="flex flex-col items-center gap-6">
-                  <p className="font-handwriting text-3xl text-gray-600">
-                    유사도: {highlight.similarity.similarity.toFixed(2)}%
-                  </p>
+                  <div
+                    className="relative"
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <p className="font-handwriting cursor-pointer text-3xl text-gray-600 underline">
+                      유사도: {highlight.similarity.similarity.toFixed(2)}%
+                    </p>
+                    {/* Similarity Detail Tooltip */}
+                    {isHovered && (
+                      <div className="absolute bottom-5 left-full z-20 mr-2 w-48">
+                        <PlayerSimilarityDetailTooltip
+                          similarity={highlight.similarity}
+                        />
+                      </div>
+                    )}
+                  </div>
 
                   {/* 이미지 가로 배치 (md 이상에서) */}
                   <div className="flex w-full flex-col gap-6 md:flex-row">
