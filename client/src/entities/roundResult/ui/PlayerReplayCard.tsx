@@ -1,5 +1,8 @@
+import { useState, useRef } from 'react';
 import type { Stroke } from '@/entities/similarity/model';
 import { DrawingReplayCanvas } from '@/features/replayingCanvas';
+import type { Similarity } from '@/features/similarity';
+import { PlayerSimilarityDetailTooltip } from '@/entities/similarity';
 
 const getRankColor = (rank: number) => {
   if (rank === 1) return 'bg-yellow-400 text-yellow-900';
@@ -11,7 +14,7 @@ const getRankColor = (rank: number) => {
 interface PlayerReplayCardProps {
   rank: number;
   nickname: string;
-  similarity: number;
+  similarity: Similarity;
   strokes: Stroke[];
   isCurrentUser?: boolean;
 }
@@ -23,8 +26,31 @@ export const PlayerReplayCard = ({
   strokes,
   isCurrentUser = false,
 }: PlayerReplayCardProps) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+  };
+
   return (
-    <div className="flex flex-col">
+    <div
+      className="relative flex flex-col"
+      ref={cardRef}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {/* Similarity Detail Tooltip */}
+      {isHovered && (
+        <div className="absolute top-0 left-full z-20 mr-2 w-48">
+          <PlayerSimilarityDetailTooltip similarity={similarity} />
+        </div>
+      )}
+
       <div className="flex flex-col rounded-xl border-2 border-gray-800 bg-white p-2 shadow-lg">
         {/* Player Info Header */}
         <div className="mb-1 flex shrink-0 items-center justify-between">
@@ -64,13 +90,13 @@ export const PlayerReplayCard = ({
               유사도
             </span>
             <span className="font-handwriting text-lg font-bold text-blue-600">
-              {similarity}%
+              {similarity.similarity}%
             </span>
           </div>
           <div className="h-1.5 w-full rounded-full bg-gray-200">
             <div
               className="h-1.5 rounded-full bg-blue-600"
-              style={{ width: `${similarity}%` }}
+              style={{ width: `${similarity.similarity}%` }}
             />
           </div>
         </div>

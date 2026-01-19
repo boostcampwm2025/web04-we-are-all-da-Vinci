@@ -86,7 +86,7 @@ export const PlayerReplaysSection = ({
               key={player.socketId}
               rank={rank}
               nickname={player.nickname}
-              similarity={player.similarity.similarity}
+              similarity={player.similarity}
               strokes={player.strokes}
               isCurrentUser={isCurrentUser}
             />
