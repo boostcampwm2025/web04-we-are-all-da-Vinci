@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '../redis.service';
-import { RoundResultEntry, Stroke } from 'src/common/types';
+import { RoundResultEntry, Similarity, Stroke } from 'src/common/types';
 import { REDIS_TTL } from 'src/common/constants';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 
@@ -32,7 +32,7 @@ export class GameProgressCacheService {
     round: number,
     socketId: string,
     strokes: Stroke[],
-    similarity: number,
+    similarity: Similarity,
   ) {
     const client = this.redisService.getClient();
     const key = this.getKey(roomId, round, socketId);
