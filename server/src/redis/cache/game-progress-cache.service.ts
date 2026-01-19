@@ -6,7 +6,7 @@ import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 
 interface PlayerRecord {
   strokes: Stroke[];
-  similarity: number;
+  similarity: Similarity;
 }
 
 type RoundResult = Omit<RoundResultEntry, 'nickname'>;
@@ -122,7 +122,9 @@ export class GameProgressCacheService {
 
   async getHighlight(roomId: string, socketId: string, totalRounds: number) {
     const results = await this.getPlayerResults(roomId, socketId, totalRounds);
-    const highlight = results.sort((a, b) => b.similarity - a.similarity)[0];
+    const highlight = results.sort(
+      (a, b) => b.similarity.similarity - a.similarity.similarity,
+    )[0];
     return highlight;
   }
 

@@ -60,7 +60,7 @@ export const GameEnd = () => {
               {highlight ? (
                 <div className="flex flex-col items-center gap-6">
                   <p className="font-handwriting text-3xl text-gray-600">
-                    유사도: {highlight.similarity.toFixed(1)}%
+                    유사도: {highlight.similarity.similarity.toFixed(2)}%
                   </p>
 
                   {/* 이미지 가로 배치 (md 이상에서) */}

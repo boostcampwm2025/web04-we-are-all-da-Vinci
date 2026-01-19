@@ -13,7 +13,7 @@ export interface Similarity {
 export interface PlayerResult {
   socketId: string;
   nickname: string;
-  similarity: number;
+  similarity: Similarity;
 }
 
 export interface RoundResultEntry extends PlayerResult {
