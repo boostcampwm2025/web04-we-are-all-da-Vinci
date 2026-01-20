@@ -1,5 +1,4 @@
-import { BaseModal } from '@/shared/ui/base-modal';
-import { Input } from '@/shared/ui/input';
+import { BaseModal, Input } from '@/shared/ui';
 
 interface NicknameInputModalProps {
   isOpen: boolean;

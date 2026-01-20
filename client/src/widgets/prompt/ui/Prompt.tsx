@@ -1,5 +1,5 @@
 import { Timer } from '@/entities/timer';
-import { RoundBadge } from '@/shared/ui/round';
+import { RoundBadge } from '@/shared/ui';
 import { GameStartHeader, ImagePreviewCard } from '@/entities/gameStart';
 import { useGameStore } from '@/entities/gameRoom/model';
 

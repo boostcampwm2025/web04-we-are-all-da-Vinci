@@ -14,8 +14,10 @@ const AVATAR_PALETTE = [
   '#22c55e', // success (그린)
 ];
 
-export const UserAvatar = ({ name, size = 40 }: UserAvatarProps) => {
+const UserAvatar = ({ name, size = 40 }: UserAvatarProps) => {
   return (
     <Avatar name={name} size={size} variant="beam" colors={AVATAR_PALETTE} />
   );
 };
+
+export default UserAvatar;
