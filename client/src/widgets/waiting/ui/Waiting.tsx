@@ -72,9 +72,9 @@ export const Waiting = () => {
           </div>
 
           {/* 컨텐츠 영역 */}
-          <div className="flex min-h-0 flex-1 gap-7">
+          <div className="flex gap-7 mt-20">
             {/* 왼쪽: 플레이어 리스트 + 버튼 */}
-            <div className="flex flex-[2] flex-col justify-center gap-4">
+            <div className="flex flex-1 flex-col gap-4">
               <div>
                 <PlayerListSection
                   players={players}
@@ -101,7 +101,7 @@ export const Waiting = () => {
                 isHost={isHostUser}
               />
               {/* TODO: 채팅 컴포넌트 */}
-              <div className="card flex min-h-0 flex-1 items-center justify-center">
+              <div className="card flex flex-1 items-center justify-center">
                 <p className="font-handwriting text-content-disabled text-lg">
                   💬 채팅 (예정)
                 </p>
