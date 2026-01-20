@@ -67,10 +67,16 @@ export class GameRoomCacheService {
     const client = this.redisService.getClient();
     const key = this.getPlayerListKey(roomId);
 
-    await client.zAdd(key, {
-      score: Date.now(),
-      value: JSON.stringify(player),
-    });
+    await client.rPush(key, JSON.stringify(player));
+
+    await client.expire(key, REDIS_TTL);
+  }
+
+  async setPlayer(roomId: string, index: number, player: Player) {
+    const client = this.redisService.getClient();
+    const key = this.getPlayerListKey(roomId);
+
+    await client.lSet(key, index, JSON.stringify(player));
 
     await client.expire(key, REDIS_TTL);
   }
@@ -79,14 +85,14 @@ export class GameRoomCacheService {
     const client = this.redisService.getClient();
     const key = this.getPlayerListKey(roomId);
 
-    await client.zRem(key, JSON.stringify(player));
+    await client.lRem(key, 0, JSON.stringify(player));
   }
 
   async getAllPlayers(roomId: string): Promise<Player[]> {
     const client = this.redisService.getClient();
     const key = this.getPlayerListKey(roomId);
 
-    return (await client.zRange(key, 0, -1)).map(
+    return (await client.lRange(key, 0, -1)).map(
       (value) => JSON.parse(value) as Player,
     );
   }
