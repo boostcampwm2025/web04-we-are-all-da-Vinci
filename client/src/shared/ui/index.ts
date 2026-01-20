@@ -3,7 +3,7 @@ export { Input } from './input';
 export { BaseModal } from './base-modal';
 export { Title } from './title';
 export { DecorateTitle } from './title';
-export { Toast } from './toast';
+export { Toast } from './toast/Toast.tsx';
 export {
   SunDoodle,
   ScribbleDoodle,

@@ -27,7 +27,12 @@ const typeColorMap: Record<ToastType, string> = {
   info: 'bg-blue-400',
 };
 
-const Toast = ({ message, type, onClose, duration = 2000 }: ToastProps) => {
+export const Toast = ({
+  message,
+  type,
+  onClose,
+  duration = 2000,
+}: ToastProps) => {
   useEffect(() => {
     const timer = setTimeout(onClose, duration);
     return () => clearTimeout(timer);
@@ -45,5 +50,3 @@ const Toast = ({ message, type, onClose, duration = 2000 }: ToastProps) => {
     </div>
   );
 };
-
-export default Toast;
