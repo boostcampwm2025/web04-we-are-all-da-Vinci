@@ -44,7 +44,7 @@ export const DrawingToolbar = ({
       <div className="flex items-center gap-2">
         <button
           onClick={() => {
-            trackEvent(MIXPANEL_EVENTS.CLICK_UNDO);
+            trackEvent(MIXPANEL_EVENTS.CLICK_UNDO_BTN);
             onUndo?.();
           }}
           disabled={!canUndo}
@@ -58,7 +58,7 @@ export const DrawingToolbar = ({
 
       <button
         onClick={() => {
-          trackEvent(MIXPANEL_EVENTS.CLICK_CLEAR);
+          trackEvent(MIXPANEL_EVENTS.CLICK_CLEAR_BTN);
           onClear?.();
         }}
         className="flex items-center gap-1 rounded-lg p-2 text-red-600 transition-colors hover:bg-red-100"

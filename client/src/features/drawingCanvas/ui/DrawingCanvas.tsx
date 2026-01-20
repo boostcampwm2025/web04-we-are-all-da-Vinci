@@ -59,7 +59,7 @@ export const DrawingCanvas = () => {
           drawingRatio: drawingRatio.toFixed(1),
         });
 
-        trackEvent(MIXPANEL_EVENTS.DRAWING, {
+        trackEvent(MIXPANEL_EVENTS.DRAWING_TIME, {
           총_제한시간: totalRoundTimeSec,
           실제_그리기시간: Number(actualDrawingTimeSec.toFixed(2)),
           대기시간: Number(thinkingTimeSec.toFixed(2)),

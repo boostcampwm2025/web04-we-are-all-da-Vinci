@@ -20,7 +20,7 @@ export const Main = () => {
   const [showGuideModal, setShowGuideModal] = useState(false);
 
   const handleCreateRoom = () => {
-    trackEvent(MIXPANEL_EVENTS.CLICK_CREATEROOM);
+    trackEvent(MIXPANEL_EVENTS.CLICK_CREATEROOM_BTN);
     setShowSettingsModal(true);
   };
 
@@ -42,7 +42,7 @@ export const Main = () => {
 
   const handleShowGuide = () => {
     captureMessage('설명서 버튼을 클릭했습니다.');
-    trackEvent(MIXPANEL_EVENTS.CLICK_DESCRIPTION);
+    trackEvent(MIXPANEL_EVENTS.CLICK_DESCRIPTION_BTN);
     setShowGuideModal(true);
   };
 

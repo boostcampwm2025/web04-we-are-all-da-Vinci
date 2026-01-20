@@ -26,7 +26,7 @@ const RoomSettingsModal = ({
 
   const handlePlayersChange = (players: number) => {
     setSelectedPlayers(players);
-    trackEvent(MIXPANEL_EVENTS.CLICK_SETTINGROOM, {
+    trackEvent(MIXPANEL_EVENTS.CLICK_SETTINGROOM_PROPERTIES, {
       설정: '플레이어 수',
       값: players,
     });
@@ -34,7 +34,7 @@ const RoomSettingsModal = ({
 
   const handleRoundsChange = (rounds: number) => {
     setSelectedRounds(rounds);
-    trackEvent(MIXPANEL_EVENTS.CLICK_SETTINGROOM, {
+    trackEvent(MIXPANEL_EVENTS.CLICK_SETTINGROOM_PROPERTIES, {
       설정: '라운드 수',
       값: rounds,
     });
@@ -42,7 +42,7 @@ const RoomSettingsModal = ({
 
   const handleTimeChange = (time: number) => {
     setSelectedTime(time);
-    trackEvent(MIXPANEL_EVENTS.CLICK_SETTINGROOM, {
+    trackEvent(MIXPANEL_EVENTS.CLICK_SETTINGROOM_PROPERTIES, {
       설정: '제한 시간',
       값: time,
     });

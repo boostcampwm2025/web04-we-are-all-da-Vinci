@@ -27,7 +27,7 @@ export const Waiting = () => {
   const copyRoomId = async () => {
     try {
       await navigator.clipboard.writeText(globalThis.location.href);
-      trackEvent(MIXPANEL_EVENTS.CLICK_COPYLINK);
+      trackEvent(MIXPANEL_EVENTS.CLICK_COPYLINK_BTN);
     } catch (e) {
       console.error('클립보드 복사 실패', e);
     }
