@@ -1,0 +1,16 @@
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+[[edge_functions]]
+  path = "/"
+  function = "og"
+
+[[edge_functions]]
+  path = "/game/*"
+  function = "og"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
