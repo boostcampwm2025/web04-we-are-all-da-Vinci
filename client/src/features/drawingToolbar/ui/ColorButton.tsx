@@ -13,6 +13,7 @@ interface ColorButtonProps {
 
 const isSelected = (colorName: string, selectedColor: Color): boolean => {
   const color = COLOR_MAP[colorName];
+  if (!color) return false;
   return (
     color[0] === selectedColor[0] &&
     color[1] === selectedColor[1] &&
