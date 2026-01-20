@@ -72,7 +72,7 @@ export const Waiting = () => {
           </div>
 
           {/* 컨텐츠 영역 */}
-          <div className="flex gap-7 mt-20">
+          <div className="mt-20 flex gap-7">
             {/* 왼쪽: 플레이어 리스트 + 버튼 */}
             <div className="flex flex-1 flex-col gap-4">
               <div>
