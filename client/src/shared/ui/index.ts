@@ -10,4 +10,6 @@ export {
   BrushDoodle,
   PaletteDoodle,
   NickDoodle,
+  LionDoodle,
+  JudyDoodle,
 } from './doodles';

@@ -7,6 +7,8 @@ import {
   BrushDoodle,
   PaletteDoodle,
   NickDoodle,
+  JudyDoodle,
+  LionDoodle,
 } from '@/shared/ui/doodles';
 import { NicknameInputModal } from '@/features/nickname';
 import { registerUserProperties } from '@/shared/lib/mixpanel';
@@ -64,6 +66,8 @@ const AppLayout = () => {
         <BrushDoodle />
         <PaletteDoodle />
         <NickDoodle />
+        <JudyDoodle />
+        <LionDoodle />
       </div>
 
       <div className="relative z-10 h-full w-full">
