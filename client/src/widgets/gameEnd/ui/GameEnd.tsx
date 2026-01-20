@@ -38,33 +38,30 @@ export const GameEnd = () => {
     // 서버에 ROOM_RESTART 이벤트 전송하여 방 상태를 WAITING으로 변경
     const socket = getSocket();
     socket.emit(SERVER_EVENTS.ROOM_RESTART, { roomId });
-
-    // 상태 초기화 후 페이지 새로고침
-    // reset();
   };
 
   return (
-    <div className="h-screen">
-      <main className="flex h-full flex-col items-center justify-center px-4 py-12">
-        <div className="flex w-full flex-col">
-          <div className="mb-5 shrink-0 text-center">
-            <Title title={TITLES.END} fontSize="text-6xl" />
-            <div className="mx-auto mt-1 h-1.5 w-40 rounded-full bg-yellow-300" />
-          </div>
+    <div className="page-center h-screen">
+      <div className="page-container">
+        {/* 타이틀 */}
+        <div className="mb-4 shrink-0 text-center">
+          <Title title={TITLES.END} fontSize="text-6xl" />
+          <div className="underline-decor mt-1" />
         </div>
 
-        <div className="flex h-full w-full max-w-7xl flex-col items-center justify-center gap-8 lg:flex-row lg:items-center lg:gap-16">
-          {/* 왼쪽: POTG 카드 (그림 강조 - 가로로 넓게) */}
+        {/* 컨텐츠 영역 */}
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-8 lg:flex-row lg:items-center lg:gap-16">
+          {/* 왼쪽: POTG 카드 */}
           <div className="flex w-full justify-center lg:w-3/5 lg:justify-end">
-            <div className="flex w-full max-w-3xl flex-col rounded-2xl border-2 border-gray-200 bg-white p-6 shadow-xl">
-              <div className="mb-4 flex items-center justify-between border-b border-dashed border-gray-300 pb-2">
-                <div className="font-handwriting text-2xl text-gray-800">
-                  <span className="material-symbols-outlined mr-1 align-middle text-yellow-500">
+            <div className="card-lg flex w-full max-w-3xl flex-col">
+              <div className="border-stroke-default mb-4 flex items-center justify-between border-b border-dashed pb-2">
+                <div className="font-handwriting text-content-primary text-2xl">
+                  <span className="material-symbols-outlined text-rank-gold mr-1 align-middle">
                     leaderboard
                   </span>
                   1등 POTG!!
                 </div>
-                <span className="text-sm text-gray-500">
+                <span className="text-content-tertiary text-sm">
                   총 라운드: {settings.totalRounds}
                 </span>
               </div>
@@ -76,7 +73,7 @@ export const GameEnd = () => {
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
                   >
-                    <p className="font-handwriting cursor-pointer text-3xl text-gray-600 underline">
+                    <p className="font-handwriting text-content-secondary cursor-pointer text-3xl underline">
                       유사도: {highlight.similarity.similarity.toFixed(2)}%
                     </p>
                     {/* Similarity Detail Tooltip */}
@@ -89,14 +86,13 @@ export const GameEnd = () => {
                     )}
                   </div>
 
-                  {/* 이미지 가로 배치 (md 이상에서) */}
                   <div className="flex w-full flex-col gap-6 md:flex-row">
                     {/* 제시 이미지 */}
                     <div className="flex-1">
-                      <p className="mb-2 text-center text-sm text-gray-500">
+                      <p className="text-content-tertiary mb-2 text-center text-sm">
                         제시 이미지
                       </p>
-                      <div className="aspect-square w-full overflow-hidden rounded-xl border-2 border-gray-200 bg-white">
+                      <div className="border-stroke-muted bg-surface-base aspect-square w-full overflow-hidden rounded-xl border-2">
                         <StaticCanvas
                           strokes={highlight.promptStrokes}
                           className="h-full w-full"
@@ -105,10 +101,10 @@ export const GameEnd = () => {
                     </div>
                     {/* 1등 그림 */}
                     <div className="flex-1">
-                      <p className="mb-2 text-center text-sm text-gray-500">
+                      <p className="text-content-tertiary mb-2 text-center text-sm">
                         1등 그림
                       </p>
-                      <div className="aspect-square w-full overflow-hidden rounded-xl border-2 border-yellow-400 bg-white">
+                      <div className="border-rank-gold bg-surface-base aspect-square w-full overflow-hidden rounded-xl border-2">
                         <DrawingReplayCanvas
                           strokes={highlight.playerStrokes}
                           speed={30}
@@ -120,13 +116,15 @@ export const GameEnd = () => {
                   </div>
                 </div>
               ) : (
-                <p className="py-10 text-center text-gray-400">리플레이 없음</p>
+                <p className="text-content-disabled py-10 text-center">
+                  리플레이 없음
+                </p>
               )}
             </div>
           </div>
 
           {/* 오른쪽: 순위 및 버튼 */}
-          <div className="flex w-full flex-col items-center gap-10 pt-4 lg:w-2/5 lg:items-start">
+          <div className="flex w-full flex-col items-center gap-10 lg:w-2/5 lg:items-start">
             <div className="flex w-full flex-col items-end justify-center gap-6 sm:flex-row lg:justify-start">
               {topThree[1] && (
                 <PodiumPlayer player={topThree[1]} position="second" />
@@ -152,13 +150,13 @@ export const GameEnd = () => {
                 </div>
               )}
 
-              <p className="text-sm text-gray-400">
+              <p className="text-content-disabled text-sm">
                 {timer}초 후 자동으로 대기실로 이동합니다
               </p>
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };

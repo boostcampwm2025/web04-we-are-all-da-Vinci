@@ -1,6 +1,6 @@
 export const NickDoodle = () => (
   <svg
-    className="pointer-events-none absolute top-60 left-[30%] hidden h-24 w-24 rotate-[-15deg] text-yellow-500/50 md:block"
+    className="text-accent-bright/50 pointer-events-none absolute top-60 left-[30%] hidden h-24 w-24 rotate-[-15deg] md:block"
     fill="none"
     stroke="currentColor"
     strokeLinecap="round"
@@ -99,7 +99,7 @@ export const NickDoodle = () => (
 
 export const SunDoodle = () => (
   <svg
-    className="pointer-events-none absolute top-10 left-[10%] hidden h-24 w-24 rotate-[-15deg] text-yellow-500/50 md:block"
+    className="text-accent-bright/50 pointer-events-none absolute top-10 left-[10%] hidden h-24 w-24 rotate-[-15deg] md:block"
     fill="none"
     stroke="currentColor"
     strokeLinecap="round"
@@ -113,7 +113,7 @@ export const SunDoodle = () => (
 
 export const ScribbleDoodle = () => (
   <svg
-    className="pointer-events-none absolute top-24 right-[15%] hidden h-32 w-32 rotate-10 text-gray-400/40 md:block"
+    className="text-stroke-light/40 pointer-events-none absolute top-24 right-[15%] hidden h-32 w-32 rotate-10 md:block"
     fill="none"
     stroke="currentColor"
     strokeLinecap="round"
@@ -128,7 +128,7 @@ export const ScribbleDoodle = () => (
 
 export const StarDoodle = () => (
   <svg
-    className="text-primary/30 pointer-events-none absolute bottom-40 left-[15%] hidden h-20 w-20 -rotate-12 md:block"
+    className="text-brand-primary/30 pointer-events-none absolute bottom-40 left-[15%] hidden h-20 w-20 -rotate-12 md:block"
     fill="none"
     stroke="currentColor"
     strokeLinecap="round"
@@ -141,7 +141,7 @@ export const StarDoodle = () => (
 
 export const BrushDoodle = () => (
   <svg
-    className="text-primary/30 pointer-events-none absolute top-10 right-10 hidden h-32 w-32 rotate-15 md:block"
+    className="text-brand-primary/30 pointer-events-none absolute top-10 right-10 hidden h-32 w-32 rotate-15 md:block"
     fill="none"
     stroke="currentColor"
     strokeLinecap="round"
@@ -155,7 +155,7 @@ export const BrushDoodle = () => (
 
 export const PaletteDoodle = () => (
   <svg
-    className="pointer-events-none absolute right-[20%] bottom-32 hidden h-28 w-28 -rotate-12 text-pink-400/40 md:block"
+    className="text-accent-warm/40 pointer-events-none absolute right-[20%] bottom-32 hidden h-28 w-28 -rotate-12 md:block"
     fill="none"
     stroke="currentColor"
     strokeLinecap="round"

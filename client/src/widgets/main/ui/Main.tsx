@@ -45,15 +45,15 @@ export const Main = () => {
 
   return (
     <>
-      <div className="flex h-full w-full items-center justify-center px-4">
+      <div className="page-center">
         <div className="w-l flex flex-col items-center justify-center text-center">
-          <h3 className="mb-4 inline-block -rotate-1 rounded-full border-2 border-dashed border-orange-400 bg-orange-50 px-5 py-2 font-bold tracking-wide text-orange-600">
+          <h3 className="border-accent-warm bg-accent/30 text-accent-warm mb-4 inline-block -rotate-1 rounded-full border-2 border-dashed px-5 py-2 font-bold tracking-wide">
             {TEXT.SUB_TITLE}
           </h3>
 
           <Title title={TITLES.MAIN} fontSize={'text-9xl'} />
           <DecorateTitle />
-          <h6 className="font-handwriting mt-4 w-120 text-2xl leading-relaxed font-medium whitespace-pre-line text-gray-700">
+          <h6 className="font-handwriting text-content-muted mt-4 w-120 text-2xl leading-relaxed font-medium whitespace-pre-line">
             {TEXT.DESCRIPTION}
           </h6>
 
@@ -69,7 +69,7 @@ export const Main = () => {
 
             <button
               onClick={handleShowGuide}
-              className="font-handwriting mt-2 cursor-pointer text-2xl text-gray-600 underline decoration-gray-400 decoration-2 underline-offset-4 transition-colors hover:text-gray-800"
+              className="font-handwriting text-content-secondary decoration-content-disabled hover:text-content-primary mt-2 cursor-pointer text-2xl underline decoration-2 underline-offset-4 transition-colors"
             >
               {TEXT.MANUAL}
             </button>

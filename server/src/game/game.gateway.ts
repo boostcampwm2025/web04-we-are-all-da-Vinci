@@ -78,10 +78,21 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage(ServerEvents.ROOM_SETTINGS)
-  updateSettings(
+  async updateSettings(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: RoomSettingsDto,
-  ): string {
+  ): Promise<string> {
+    const { roomId, maxPlayer, totalRounds, drawingTime } = payload;
+    const room = await this.gameService.updateGameSettings(
+      roomId,
+      client.id,
+      maxPlayer,
+      totalRounds,
+      drawingTime,
+    );
+
+    this.broadcastMetadata(room);
+
     this.logger.info(
       { clientId: client.id, ...payload },
       'User Updated Room Settings',

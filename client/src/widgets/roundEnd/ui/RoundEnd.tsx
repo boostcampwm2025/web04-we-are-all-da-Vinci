@@ -14,8 +14,8 @@ export const RoundEnd = () => {
   return (
     <>
       <Timer />
-      <div className="flex h-screen w-full flex-col px-4 py-4">
-        <div className="mx-auto w-full max-w-7xl">
+      <div className="page-center h-screen">
+        <div className="page-container">
           <div className="mb-4">
             <RoundResultHeader title={`라운드 ${currentRound} 결과`} />
           </div>
