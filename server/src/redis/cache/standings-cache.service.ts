@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '../redis.service';
+import { Similarity } from 'src/common/types';
 
 @Injectable()
 export class StandingsCacheService {
@@ -9,12 +10,12 @@ export class StandingsCacheService {
     return `final:${roomId}`;
   }
 
-  async updateScore(roomId: string, socketId: string, similarity: number) {
+  async updateScore(roomId: string, socketId: string, similarity: Similarity) {
     const client = this.redisService.getClient();
     const key = this.getKey(roomId);
 
     // TODO: 누적 점수 계산 로직 추가 필요
-    await client.zIncrBy(key, similarity, socketId);
+    await client.zIncrBy(key, similarity.similarity, socketId);
   }
 
   async getStandings(roomId: string) {

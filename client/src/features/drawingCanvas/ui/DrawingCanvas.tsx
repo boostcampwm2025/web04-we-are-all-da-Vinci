@@ -103,7 +103,7 @@ export const DrawingCanvas = () => {
       getSocket().emit(SERVER_EVENTS.USER_DRAWING, {
         roomId,
         strokes,
-        similarity: similarity.similarity,
+        similarity: similarity,
       });
     }
   }, [timer, phase, preprocessedPrompt, preprocessedPlayer, strokes, roomId]);
@@ -166,13 +166,15 @@ export const DrawingCanvas = () => {
         onUndo={handleUndo}
         onClear={handleClearStrokes}
         canUndo={canUndo}
+        selectedColor={selectedColor}
       />
       <div className="relative aspect-square w-full bg-white">
         <canvas
           ref={canvasRef}
           width={CANVAS_CONFIG.width}
           height={CANVAS_CONFIG.height}
-          className="h-full w-full cursor-crosshair"
+          className="h-full w-full"
+          style={{ cursor: 'url(/cursors/pencil.png), auto' }}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}

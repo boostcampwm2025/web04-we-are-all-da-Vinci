@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { GamePhase } from 'src/common/constants';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
-import { Stroke } from 'src/common/types';
+import { Similarity, Stroke } from 'src/common/types';
 import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
@@ -55,7 +55,7 @@ export class PlayService {
   async submitDrawing(
     roomId: string,
     socketId: string,
-    similarity: number,
+    similarity: Similarity,
     strokes: Stroke[],
   ) {
     const room = await this.cacheService.getRoom(roomId);

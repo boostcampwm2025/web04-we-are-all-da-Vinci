@@ -1,7 +1,7 @@
-import { Stroke } from 'src/common/types';
+import { Similarity, Stroke } from 'src/common/types';
 
 export class UserDrawingDto {
   roomId!: string;
-  similarity!: number;
+  similarity!: Similarity;
   strokes!: Stroke[];
 }
