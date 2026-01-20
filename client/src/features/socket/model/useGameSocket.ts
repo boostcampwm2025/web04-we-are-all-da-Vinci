@@ -4,7 +4,7 @@ import { useGameStore } from '@/entities/gameRoom/model';
 import type { RankingEntry } from '@/entities/ranking';
 import type { RoundEndResponse } from '@/entities/roundResult/model';
 import type { Stroke } from '@/entities/similarity';
-import { disconnectSocket, getSocket } from '@/shared/api/socket';
+import { disconnectSocket, getSocket } from '@/shared/api';
 import { CLIENT_EVENTS, SERVER_EVENTS } from '@/shared/config';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
