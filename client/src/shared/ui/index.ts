@@ -10,7 +10,7 @@ export {
   ScribbleDoodle,
   StarDoodle,
   SunDoodle
-} from './doodles';
+} from './Doodles';
 export { default as Input } from './Input';
 export { default as RoundBadge } from './RoundBadge';
 export { default as Title } from './Title';

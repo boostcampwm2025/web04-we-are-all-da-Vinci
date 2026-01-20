@@ -9,7 +9,7 @@ import {
   NickDoodle,
   JudyDoodle,
   LionDoodle,
-} from '@/shared/ui/doodles';
+} from '@/shared/ui/Doodles';
 import { NicknameInputModal } from '@/features/nickname';
 import { registerUserProperties } from '@/shared/lib/mixpanel';
 
