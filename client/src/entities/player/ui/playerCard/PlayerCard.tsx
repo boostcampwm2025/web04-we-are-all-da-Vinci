@@ -12,14 +12,14 @@ const PlayerCard = ({ id, isHost, nickname, status }: PlayerCardProps) => {
   return (
     <div
       key={id}
-      className={`relative flex flex-col items-center justify-center rounded-xl border-2 p-4 text-center ${
+      className={`relative flex flex-col items-center justify-center rounded-xl border-2 p-6 text-center ${
         isCurrentUser
-          ? 'border-blue-400 bg-blue-50'
-          : 'border-gray-300 bg-gray-50'
+          ? 'border-interactive-light bg-interactive-subtle'
+          : 'border-stroke-default bg-surface-subtle'
       }`}
     >
       <svg
-        className="h-16 w-12"
+        className="h-16 w-14"
         xmlns="http://www.w3.org/2000/svg"
         version="1.0"
         viewBox="0 0 512 512"
@@ -37,7 +37,9 @@ const PlayerCard = ({ id, isHost, nickname, status }: PlayerCardProps) => {
       <div className="font-handwriting mb-1 text-lg font-bold">{nickname}</div>
       {isHost && <span className="absolute top-2 right-2 text-xl">👑</span>}
       {status && (
-        <div className="font-handwriting text-md text-gray-500">{status}</div>
+        <div className="font-handwriting text-md text-content-tertiary">
+          {status}
+        </div>
       )}
     </div>
   );

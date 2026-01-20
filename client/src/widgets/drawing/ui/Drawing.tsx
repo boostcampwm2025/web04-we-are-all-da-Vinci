@@ -19,7 +19,7 @@ export const Drawing = () => {
           />
 
           <div className="flex min-h-0 flex-1 items-stretch justify-center gap-6">
-            <div className="aspect-square h-full">
+            <div className="canvas-wrapper">
               <DrawingCanvas />
             </div>
 

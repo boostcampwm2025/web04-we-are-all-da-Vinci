@@ -3,14 +3,28 @@ import { SettingItem } from './SettingItem';
 
 interface GameSettingsCardProps {
   settings: Settings;
+  onEdit?: () => void;
+  isHost?: boolean;
 }
 
-export const GameSettingsCard = ({ settings }: GameSettingsCardProps) => {
+export const GameSettingsCard = ({
+  settings,
+  onEdit,
+  isHost,
+}: GameSettingsCardProps) => {
   return (
-    <div className="rounded-2xl border-2 border-gray-800 bg-yellow-50 p-5 shadow-lg">
-      <h3 className="font-handwriting mb-5 text-center text-2xl font-bold">
-        게임 설정
-      </h3>
+    <div className="card-settings relative">
+      <div className="relative mb-5 flex items-center justify-center">
+        <h3 className="font-handwriting text-2xl font-bold">게임 설정</h3>
+        {isHost && onEdit && (
+          <button
+            onClick={onEdit}
+            className="text-content-tertiary hover:text-content-primary absolute right-0 transition-colors"
+          >
+            <span className="material-symbols-outlined">settings</span>
+          </button>
+        )}
+      </div>
       <div className="space-y-4">
         <SettingItem
           icon="group"
@@ -27,7 +41,6 @@ export const GameSettingsCard = ({ settings }: GameSettingsCardProps) => {
           label="그리기 시간"
           value={`${settings.drawingTime}초`}
         />
-        <SettingItem icon="draw" label="주제" value="랜덤" />
       </div>
     </div>
   );

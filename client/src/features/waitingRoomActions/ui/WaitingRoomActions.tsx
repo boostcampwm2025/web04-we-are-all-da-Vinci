@@ -2,38 +2,19 @@ import { PATHS } from '@/shared/config';
 import { CommonBtn } from '@/shared/ui';
 
 interface WaitingRoomActionsProps {
-  onSettingsClick: () => void;
   onStartClick: () => void;
   isHost: boolean;
   canStart: boolean;
 }
 
 export const WaitingRoomActions = ({
-  onSettingsClick,
   onStartClick,
   isHost,
   canStart,
 }: WaitingRoomActionsProps) => {
   return (
-    <>
-      <CommonBtn
-        variant="radius"
-        icon="play_arrow"
-        text="게임 시작"
-        color="blue"
-        onClick={onStartClick}
-        disabled={!isHost || !canStart}
-      />
-
-      <div className="grid grid-cols-2 gap-4">
-        <CommonBtn
-          variant="radius"
-          icon="settings"
-          text="설정 변경"
-          color="gray"
-          onClick={onSettingsClick}
-          disabled={!isHost}
-        />
+    <div className="flex gap-4">
+      <div className="flex-1">
         <CommonBtn
           variant="radius"
           icon="logout"
@@ -42,6 +23,17 @@ export const WaitingRoomActions = ({
           color="red"
         />
       </div>
-    </>
+      <div className="flex-1">
+        <CommonBtn
+          variant="radius"
+          icon="play_arrow"
+          text="게임 시작"
+          color="blue"
+          onClick={onStartClick}
+          disabled={!isHost || !canStart}
+        />
+      </div>
+      
+    </div>
   );
 };

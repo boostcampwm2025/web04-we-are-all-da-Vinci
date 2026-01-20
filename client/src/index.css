@@ -117,12 +117,19 @@
   /* ─────────────────────────────────────────────────────────────
      CANVAS FRAMES
      ───────────────────────────────────────────────────────────── */
+  .canvas-wrapper {
+    @apply flex aspect-square items-center justify-center;
+    height: 100%;
+    width: auto;
+    max-width: 100%;
+  }
+
   .canvas-frame {
-    @apply aspect-square w-full overflow-hidden rounded-xl border-2;
+    @apply h-full w-full overflow-hidden rounded-xl border-2;
   }
 
   .canvas-main {
-    @apply border-stroke-strong bg-surface-base flex aspect-square w-full flex-col overflow-hidden rounded-2xl border-4 shadow-2xl;
+    @apply border-stroke-strong bg-surface-base flex h-full w-full flex-col overflow-hidden rounded-2xl border-4 shadow-2xl;
   }
 
   /* ─────────────────────────────────────────────────────────────
@@ -138,6 +145,12 @@
 
   .text-label {
     @apply font-handwriting text-xl;
+  }
+
+  .text-responsive-title {
+    @apply font-handwriting font-black;
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    line-height: 1.2;
   }
 
   /* ─────────────────────────────────────────────────────────────
