@@ -4,7 +4,7 @@ import { useMouseDrawing } from '@/features/drawingCanvas/model/useMouseDrawing'
 import { useStrokes } from '@/features/drawingCanvas/model/useStrokes';
 import { useColorSelection } from '@/features/drawingCanvas/model/useColorSelection';
 import { DrawingToolbar } from '@/features/drawingToolbar/ui/DrawingToolbar';
-import { CANVAS_CONFIG, SERVER_EVENTS } from '@/shared/config';
+import { CANVAS_CONFIG, SERVER_EVENTS, MIXPANEL_EVENTS } from '@/shared/config';
 import { drawStrokesOnCanvas } from '@/entities/drawing/lib/drawStrokesOnCanvas';
 import { useGameStore, selectPhase } from '@/entities/gameRoom/model';
 import { getSocket } from '@/shared/api/socket';
@@ -13,6 +13,7 @@ import {
   preprocessStrokes,
 } from '@/features/similarity/lib';
 import { captureMessage } from '@/shared/lib/sentry';
+import { trackEvent } from '@/shared/lib/mixpanel';
 
 // 기본 그리기 기능을 제공하는 캔버스 컴포넌트
 export const DrawingCanvas = () => {
@@ -56,6 +57,14 @@ export const DrawingCanvas = () => {
           actualDrawingTime: actualDrawingTimeSec.toFixed(2),
           waitingTime: thinkingTimeSec.toFixed(2),
           drawingRatio: drawingRatio.toFixed(1),
+        });
+
+        trackEvent(MIXPANEL_EVENTS.DRAWING_TIME, {
+          총_제한시간: totalRoundTimeSec,
+          실제_그리기시간: Number(actualDrawingTimeSec.toFixed(2)),
+          대기시간: Number(thinkingTimeSec.toFixed(2)),
+          그리기_비율: Number(drawingRatio.toFixed(1)),
+          라운드: currentRound,
         });
       }
     };
