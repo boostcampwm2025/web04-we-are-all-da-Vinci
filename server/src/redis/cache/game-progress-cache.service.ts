@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '../redis.service';
-import { RoundResultEntry, Stroke } from 'src/common/types';
+import { RoundResultEntry, Similarity, Stroke } from 'src/common/types';
 import { REDIS_TTL } from 'src/common/constants';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 
 interface PlayerRecord {
   strokes: Stroke[];
-  similarity: number;
+  similarity: Similarity;
 }
 
 type RoundResult = Omit<RoundResultEntry, 'nickname'>;
@@ -32,7 +32,7 @@ export class GameProgressCacheService {
     round: number,
     socketId: string,
     strokes: Stroke[],
-    similarity: number,
+    similarity: Similarity,
   ) {
     const client = this.redisService.getClient();
     const key = this.getKey(roomId, round, socketId);
@@ -122,7 +122,9 @@ export class GameProgressCacheService {
 
   async getHighlight(roomId: string, socketId: string, totalRounds: number) {
     const results = await this.getPlayerResults(roomId, socketId, totalRounds);
-    const highlight = results.sort((a, b) => b.similarity - a.similarity)[0];
+    const highlight = results.sort(
+      (a, b) => b.similarity.similarity - a.similarity.similarity,
+    )[0];
     return highlight;
   }
 

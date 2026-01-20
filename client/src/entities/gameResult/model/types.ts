@@ -1,4 +1,5 @@
 import type { Stroke } from '@/entities/similarity';
+import type { Similarity } from '@/features/similarity';
 
 export interface FinalResult {
   socketId: string;
@@ -9,7 +10,7 @@ export interface FinalResult {
 export interface Highlight {
   promptStrokes: Stroke[];
   playerStrokes: Stroke[];
-  similarity: number;
+  similarity: Similarity;
 }
 
 export interface GameEndResponse {
