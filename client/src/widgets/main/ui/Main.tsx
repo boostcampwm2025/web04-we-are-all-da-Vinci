@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { captureMessage } from '@/shared/lib/sentry';
 import { trackEvent } from '@/shared/lib/mixpanel';
 import { TEXT } from '@/widgets/main/config';
+import Toast from '@/shared/ui/toast/Toast';
 
 export const Main = () => {
   const navigate = useNavigate();
@@ -91,6 +92,11 @@ export const Main = () => {
         onClose={() => setShowGuideModal(false)}
         title="게임 설명서"
         message={TEXT.MANUAL_MESSAGE}
+      />
+      <Toast
+        message="곧 업데이트 예정입니다!"
+        type="error"
+        onClose={() => {}}
       />
     </>
   );
