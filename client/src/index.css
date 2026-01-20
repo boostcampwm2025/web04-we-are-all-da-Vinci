@@ -23,6 +23,7 @@
   --color-surface-subtle: #f9fafb; /* 미묘한 배경 */
   --color-surface-muted: #f3f4f6; /* 묵음 배경 */
   --color-surface-elevated: #e5e7eb; /* 부양 배경 */
+  --color-surface-warm: oklch(98.7% 0.026 102.212); /* yellow-50 */
 
   /* ─────────────────────────────────────────────────────────────
      STROKE COLORS (테두리용) - border-stroke-*
@@ -87,7 +88,7 @@
      LAYOUT - 페이지 레이아웃 패턴
      ───────────────────────────────────────────────────────────── */
   .page-center {
-    @apply flex h-full w-full items-center justify-center px-4 py-6 m-auto;
+    @apply m-auto flex h-full w-full items-center justify-center px-4 py-6;
   }
 
   .page-container {
@@ -110,7 +111,7 @@
   }
 
   .card-settings {
-    @apply border-stroke-strong bg-accent-bright/20 rounded-2xl border-2 p-5 shadow-lg;
+    @apply border-stroke-strong bg-surface-warm rounded-2xl border-2 p-5 shadow-lg;
   }
 
   /* ─────────────────────────────────────────────────────────────
