@@ -113,9 +113,9 @@ export const calculateFinalSimilarityByPreprocessed = (
 
   return {
     similarity: roundedSimilarity,
-    strokeCountSimilarity: Math.round(strokeCountSimilarity * 100) / 100,
-    strokeMatchSimilarity: Math.round(strokeMatchSimilarity * 100) / 100,
-    shapeSimilarity: Math.round(scaledShapeScore * 100) / 100,
+    strokeCountSimilarity: Math.round(weightedStrokeCountSim * 100) / 100,
+    strokeMatchSimilarity: Math.round(weightedStrokeMatchSim * 100) / 100,
+    shapeSimilarity: Math.round(weightedShapeSim * 100) / 100,
   };
 };
 

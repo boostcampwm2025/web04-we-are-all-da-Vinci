@@ -7,12 +7,12 @@ const SIMILARITY_ITEMS: {
 }[] = [
   {
     key: 'strokeCountSimilarity',
-    label: '스트로크 개수 유사도',
+    label: '선 개수 유사도',
     color: 'bg-yellow-400',
   },
   {
     key: 'strokeMatchSimilarity',
-    label: '스트로크 매칭 유사도',
+    label: '선 매칭 유사도',
     color: 'bg-indigo-400',
   },
   { key: 'shapeSimilarity', label: '형태 유사도', color: 'bg-red-400' },
