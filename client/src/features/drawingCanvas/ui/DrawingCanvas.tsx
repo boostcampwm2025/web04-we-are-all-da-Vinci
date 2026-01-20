@@ -172,7 +172,8 @@ export const DrawingCanvas = () => {
           ref={canvasRef}
           width={CANVAS_CONFIG.width}
           height={CANVAS_CONFIG.height}
-          className="h-full w-full cursor-crosshair"
+          className="h-full w-full"
+          style={{ cursor: 'url(/cursors/pencil.cur), auto' }}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
