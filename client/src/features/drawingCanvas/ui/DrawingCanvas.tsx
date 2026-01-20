@@ -166,6 +166,7 @@ export const DrawingCanvas = () => {
         onUndo={handleUndo}
         onClear={handleClearStrokes}
         canUndo={canUndo}
+        selectedColor={selectedColor}
       />
       <div className="relative aspect-square w-full bg-white">
         <canvas
