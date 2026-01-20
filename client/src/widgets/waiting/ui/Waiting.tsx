@@ -10,9 +10,10 @@ import { RoomCodeCopy } from '@/features/roomCode';
 import { RoomSettingsModal, type RoomSettings } from '@/features/roomSettings';
 import { WaitingRoomActions } from '@/features/waitingRoomActions';
 import { getSocket } from '@/shared/api/socket';
-import { SERVER_EVENTS, TITLES } from '@/shared/config';
+import { SERVER_EVENTS, TITLES, MIXPANEL_EVENTS } from '@/shared/config';
 import { Title } from '@/shared/ui';
 import { useState } from 'react';
+import { trackEvent } from '@/shared/lib/mixpanel';
 
 export const Waiting = () => {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -25,6 +26,7 @@ export const Waiting = () => {
 
   const copyRoomId = () => {
     navigator.clipboard.writeText(globalThis.location.href);
+    trackEvent(MIXPANEL_EVENTS.CLICK_COPYLINK);
     alert('방 링크가 복사되었습니다!');
   };
 
