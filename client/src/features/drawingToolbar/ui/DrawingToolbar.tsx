@@ -19,11 +19,31 @@ export const DrawingToolbar = ({
   return (
     <div className="flex shrink-0 items-center gap-4 border-b-2 border-gray-300 bg-gray-100 px-4 py-3">
       <div className="flex items-center gap-2">
-        <ColorButton color="black" selectedColor={selectedColor} onSelect={onColorSelect} />
-        <ColorButton color="red" selectedColor={selectedColor} onSelect={onColorSelect} />
-        <ColorButton color="blue" selectedColor={selectedColor} onSelect={onColorSelect} />
-        <ColorButton color="green" selectedColor={selectedColor} onSelect={onColorSelect} />
-        <ColorButton color="yellow" selectedColor={selectedColor} onSelect={onColorSelect} />
+        <ColorButton
+          color="black"
+          selectedColor={selectedColor}
+          onSelect={onColorSelect}
+        />
+        <ColorButton
+          color="red"
+          selectedColor={selectedColor}
+          onSelect={onColorSelect}
+        />
+        <ColorButton
+          color="blue"
+          selectedColor={selectedColor}
+          onSelect={onColorSelect}
+        />
+        <ColorButton
+          color="green"
+          selectedColor={selectedColor}
+          onSelect={onColorSelect}
+        />
+        <ColorButton
+          color="yellow"
+          selectedColor={selectedColor}
+          onSelect={onColorSelect}
+        />
       </div>
 
       <div className="h-6 w-px bg-gray-400"></div>
