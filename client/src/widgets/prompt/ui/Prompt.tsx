@@ -11,15 +11,17 @@ export const Prompt = () => {
     <>
       <Timer />
 
-      <div className="flex h-full w-full items-center justify-center px-4 py-4">
-        <div className="flex h-full w-full max-w-3xl flex-col">
+      <div className="page-center h-screen">
+        <div className="page-container">
           <GameStartHeader
             roundBadge={<RoundBadge round={currentRound} />}
             title="기억하세요!"
           />
 
           <div className="flex min-h-0 flex-1 items-center justify-center">
-            <ImagePreviewCard promptStrokes={promptStrokes} />
+            <div className="canvas-wrapper">
+              <ImagePreviewCard promptStrokes={promptStrokes} />
+            </div>
           </div>
         </div>
       </div>
