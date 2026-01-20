@@ -1,3 +1,5 @@
+import { trackEvent } from '@/shared/lib/mixpanel';
+import { MIXPANEL_EVENTS } from '@/shared/config';
 import type { Color } from '@/entities/similarity';
 import { ColorButton } from './ColorButton';
 
@@ -50,7 +52,10 @@ export const DrawingToolbar = ({
 
       <div className="flex items-center gap-2">
         <button
-          onClick={onUndo}
+          onClick={() => {
+            trackEvent(MIXPANEL_EVENTS.CLICK_UNDO_BTN);
+            onUndo?.();
+          }}
           disabled={!canUndo}
           className="rounded-lg p-2 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40"
         >
@@ -61,7 +66,10 @@ export const DrawingToolbar = ({
       <div className="h-6 w-px bg-gray-400"></div>
 
       <button
-        onClick={onClear}
+        onClick={() => {
+          trackEvent(MIXPANEL_EVENTS.CLICK_CLEAR_BTN);
+          onClear?.();
+        }}
         className="flex items-center gap-1 rounded-lg p-2 text-red-600 transition-colors hover:bg-red-100"
       >
         <span className="material-symbols-outlined">delete</span>

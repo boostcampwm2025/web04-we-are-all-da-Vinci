@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import {
   SunDoodle,
@@ -7,8 +7,11 @@ import {
   BrushDoodle,
   PaletteDoodle,
   NickDoodle,
+  JudyDoodle,
+  LionDoodle,
 } from '@/shared/ui/doodles';
 import { NicknameInputModal } from '@/features/nickname';
+import { registerUserProperties } from '@/shared/lib/mixpanel';
 
 const AppLayout = () => {
   const [isModalOpen, setIsModalOpen] = useState(() => {
@@ -16,9 +19,17 @@ const AppLayout = () => {
   });
   const [nickname, setNickname] = useState('');
 
+  useEffect(() => {
+    const storedNickname = localStorage.getItem('nickname');
+    if (storedNickname) {
+      registerUserProperties({ nickname: storedNickname });
+    }
+  }, []);
+
   const handleSubmit = () => {
     if (nickname.trim()) {
       localStorage.setItem('nickname', nickname.trim());
+      registerUserProperties({ nickname: nickname.trim() });
       setIsModalOpen(false);
     }
   };
@@ -55,6 +66,8 @@ const AppLayout = () => {
         <BrushDoodle />
         <PaletteDoodle />
         <NickDoodle />
+        <JudyDoodle />
+        <LionDoodle />
       </div>
 
       <div className="relative z-10 h-full w-full">

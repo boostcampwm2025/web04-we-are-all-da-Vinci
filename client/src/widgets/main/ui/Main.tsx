@@ -1,4 +1,4 @@
-import { PATHS, TITLES } from '@/shared/config';
+import { PATHS, TITLES, MIXPANEL_EVENTS } from '@/shared/config';
 import { CommonBtn, DecorateTitle, Title } from '@/shared/ui';
 
 import { AlertModal } from '@/entities';
@@ -10,6 +10,7 @@ import {
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { captureMessage } from '@/shared/lib/sentry';
+import { trackEvent } from '@/shared/lib/mixpanel';
 import { TEXT } from '@/widgets/main/config';
 
 export const Main = () => {
@@ -19,6 +20,7 @@ export const Main = () => {
   const [showGuideModal, setShowGuideModal] = useState(false);
 
   const handleCreateRoom = () => {
+    trackEvent(MIXPANEL_EVENTS.CLICK_CREATEROOM_BTN);
     setShowSettingsModal(true);
   };
 
@@ -40,6 +42,7 @@ export const Main = () => {
 
   const handleShowGuide = () => {
     captureMessage('설명서 버튼을 클릭했습니다.');
+    trackEvent(MIXPANEL_EVENTS.CLICK_DESCRIPTION_BTN);
     setShowGuideModal(true);
   };
 
