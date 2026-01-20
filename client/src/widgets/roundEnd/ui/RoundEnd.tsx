@@ -5,11 +5,18 @@ import {
 } from '@/entities/roundResult';
 import { Timer } from '@/entities/timer';
 import { useGameStore } from '@/entities/gameRoom/model';
+import { useEffect } from 'react';
+import { SoundManager } from '@/shared/lib/sound/soundManager';
 
 export const RoundEnd = () => {
   const roundResults = useGameStore((state) => state.roundResults);
   const currentRound = useGameStore((state) => state.currentRound);
   const promptStrokes = useGameStore((state) => state.promptStrokes);
+
+  useEffect(() => {
+    const manager = SoundManager.getInstance();
+    manager.playSound('roundEnd');
+  }, []);
 
   return (
     <>
