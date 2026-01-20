@@ -123,7 +123,7 @@ export class RoundService implements OnModuleInit {
     );
 
     const rankings = roundResults
-      .sort((a, b) => b.similarity - a.similarity)
+      .sort((a, b) => b.similarity.similarity - a.similarity.similarity)
       .map((value) => ({
         ...value,
         nickname: idNicknameMapper[value.socketId],

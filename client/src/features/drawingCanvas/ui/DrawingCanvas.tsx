@@ -103,7 +103,7 @@ export const DrawingCanvas = () => {
       getSocket().emit(SERVER_EVENTS.USER_DRAWING, {
         roomId,
         strokes,
-        similarity: similarity.similarity,
+        similarity: similarity,
       });
     }
   }, [timer, phase, preprocessedPrompt, preprocessedPlayer, strokes, roomId]);
