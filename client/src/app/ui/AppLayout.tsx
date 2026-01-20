@@ -13,6 +13,9 @@ import {
 } from '@/shared/ui/Doodles';
 import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
+import { NicknameInputModal } from '@/features/nickname';
+import { registerUserProperties } from '@/shared/lib/mixpanel';
+import { VolumeButton } from '@/features/volume';
 
 const AppLayout = () => {
   const [isModalOpen, setIsModalOpen] = useState(() => {
@@ -70,7 +73,19 @@ const AppLayout = () => {
         <Outlet />
       </div>
 
+      <div className="fixed bottom-4 left-4 z-50">
+        <VolumeButton />
+      </div>
+
       <ProfileSettingsModal isOpen={isModalOpen} onClose={handleClose} />
+
+      <NicknameInputModal
+        isOpen={isModalOpen}
+        onClose={handleClose}
+        nickname={nickname}
+        setNickname={setNickname}
+        onSubmit={handleSubmit}
+      />
     </div>
   );
 };
