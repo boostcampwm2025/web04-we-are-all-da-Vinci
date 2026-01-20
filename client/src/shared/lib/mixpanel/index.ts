@@ -24,6 +24,8 @@ export const trackEvent = (
   eventName: string,
   properties?: Record<string, unknown>,
 ) => {
+  if (import.meta.env.MODE === 'test') return;
+
   mixpanel.track(eventName, properties);
 };
 
