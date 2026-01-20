@@ -24,10 +24,13 @@ export const Waiting = () => {
   const settings = useGameStore(selectSettings);
   const isHostUser = useIsHost();
 
-  const copyRoomId = () => {
-    navigator.clipboard.writeText(globalThis.location.href);
-    trackEvent(MIXPANEL_EVENTS.CLICK_COPYLINK);
-    alert('방 링크가 복사되었습니다!');
+  const copyRoomId = async () => {
+    try {
+      await navigator.clipboard.writeText(globalThis.location.href);
+      trackEvent(MIXPANEL_EVENTS.CLICK_COPYLINK);
+    } catch (e) {
+      console.error('클립보드 복사 실패', e);
+    }
   };
 
   const handleSettingsChange = () => {
