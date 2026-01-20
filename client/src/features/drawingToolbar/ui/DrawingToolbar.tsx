@@ -1,5 +1,5 @@
 import type { Color } from '@/entities/similarity';
-import { COLOR_MAP } from '@/features/drawingCanvas/config/colors';
+import { ColorButton } from './ColorButton';
 
 interface DrawingToolbarProps {
   onColorSelect?: (color: string) => void;
@@ -9,23 +9,6 @@ interface DrawingToolbarProps {
   selectedColor: Color;
 }
 
-const isColorSelected = (colorName: string, selectedColor: Color): boolean => {
-  const color = COLOR_MAP[colorName];
-  return (
-    color[0] === selectedColor[0] &&
-    color[1] === selectedColor[1] &&
-    color[2] === selectedColor[2]
-  );
-};
-
-const RING_COLOR_MAP: Record<string, string> = {
-  black: 'ring-black',
-  red: 'ring-red-500',
-  blue: 'ring-blue-500',
-  green: 'ring-green-500',
-  yellow: 'ring-yellow-400',
-};
-
 export const DrawingToolbar = ({
   onColorSelect,
   onUndo,
@@ -33,36 +16,14 @@ export const DrawingToolbar = ({
   canUndo = false,
   selectedColor = [0, 0, 0],
 }: DrawingToolbarProps) => {
-  const getColorButtonClass = (colorName: string, bgColor: string) => {
-    const selected = isColorSelected(colorName, selectedColor);
-    return `cursor-pointer h-6 w-6 rounded-full ${bgColor} transition-transform hover:scale-110 ${
-      selected ? `ring-2 ${RING_COLOR_MAP[colorName]} ring-offset-2` : ''
-    }`;
-  };
-
   return (
     <div className="flex shrink-0 items-center gap-4 border-b-2 border-gray-300 bg-gray-100 px-4 py-3">
       <div className="flex items-center gap-2">
-        <button
-          onClick={() => onColorSelect?.('black')}
-          className={getColorButtonClass('black', 'bg-black')}
-        ></button>
-        <button
-          onClick={() => onColorSelect?.('red')}
-          className={getColorButtonClass('red', 'bg-red-500')}
-        ></button>
-        <button
-          onClick={() => onColorSelect?.('blue')}
-          className={getColorButtonClass('blue', 'bg-blue-500')}
-        ></button>
-        <button
-          onClick={() => onColorSelect?.('green')}
-          className={getColorButtonClass('green', 'bg-green-500')}
-        ></button>
-        <button
-          onClick={() => onColorSelect?.('yellow')}
-          className={getColorButtonClass('yellow', 'bg-yellow-400')}
-        ></button>
+        <ColorButton color="black" selectedColor={selectedColor} onSelect={onColorSelect} />
+        <ColorButton color="red" selectedColor={selectedColor} onSelect={onColorSelect} />
+        <ColorButton color="blue" selectedColor={selectedColor} onSelect={onColorSelect} />
+        <ColorButton color="green" selectedColor={selectedColor} onSelect={onColorSelect} />
+        <ColorButton color="yellow" selectedColor={selectedColor} onSelect={onColorSelect} />
       </div>
 
       <div className="h-6 w-px bg-gray-400"></div>
