@@ -14,6 +14,8 @@ import fs from 'fs/promises';
 
 @Injectable()
 export class GameService {
+  private readonly NEXT_HOST_INDEX = 1;
+
   constructor(
     private readonly cacheService: GameRoomCacheService,
     private readonly waitlistService: WaitlistCacheService,
@@ -63,9 +65,9 @@ export class GameService {
       return null;
     }
 
-    if (target.isHost && players.length > 1) {
-      const nextHost = players[1];
-      await this.cacheService.setPlayer(roomId, 1, {
+    if (target.isHost && players.length > this.NEXT_HOST_INDEX) {
+      const nextHost = players[this.NEXT_HOST_INDEX];
+      await this.cacheService.setPlayer(roomId, this.NEXT_HOST_INDEX, {
         ...nextHost,
         isHost: true,
       });
