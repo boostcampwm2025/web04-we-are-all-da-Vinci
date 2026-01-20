@@ -66,32 +66,51 @@ export const Waiting = () => {
 
   return (
     <>
-      <div className="flex h-full w-full items-center justify-center px-4 py-6">
-        <div className="flex w-full max-w-7xl flex-col">
-          <div className="mb-5 shrink-0 text-center">
+      <div className="page-center h-screen">
+        <div className="page-container">
+          {/* 타이틀 - 전체 화면 중앙 */}
+          <div className="mb-4 shrink-0 text-center">
             <Title title={TITLES.ROOM} fontSize="text-6xl" />
-            <p className="font-handwriting text-2xl text-gray-600">
+            <p className="font-handwriting text-content-secondary text-2xl">
               친구들이 모일 때까지 기다려주세요!
             </p>
           </div>
 
-          <div className="flex flex-2 gap-7">
-            <div className="flex-1">
-              <PlayerListSection
-                players={players}
-                maxPlayer={settings.maxPlayer}
-                roomCode={<RoomCodeCopy roomId={roomId} onCopy={copyRoomId} />}
-              />
+          {/* 컨텐츠 영역 */}
+          <div className="mt-20 flex gap-7">
+            {/* 왼쪽: 플레이어 리스트 + 버튼 */}
+            <div className="flex flex-1 flex-col gap-4">
+              <div>
+                <PlayerListSection
+                  players={players}
+                  maxPlayer={settings.maxPlayer}
+                  roomCode={
+                    <RoomCodeCopy roomId={roomId} onCopy={copyRoomId} />
+                  }
+                />
+              </div>
+              <div>
+                <WaitingRoomActions
+                  onStartClick={handleStartGame}
+                  isHost={isHostUser}
+                  canStart={!!roomId && players.length >= 2}
+                />
+              </div>
             </div>
 
-            <div className="flex w-96 flex-col justify-center gap-4">
-              <GameSettingsCard settings={settings} />
-              <WaitingRoomActions
-                onSettingsClick={handleSettingsChange}
-                onStartClick={handleStartGame}
+            {/* 오른쪽: 게임 설정 + 채팅 (예정) */}
+            <div className="flex w-80 flex-col gap-4">
+              <GameSettingsCard
+                settings={settings}
+                onEdit={handleSettingsChange}
                 isHost={isHostUser}
-                canStart={!!roomId && players.length >= 2}
               />
+              {/* TODO: 채팅 컴포넌트 */}
+              <div className="card flex flex-1 items-center justify-center">
+                <p className="font-handwriting text-content-disabled text-lg">
+                  💬 채팅 (예정)
+                </p>
+              </div>
             </div>
           </div>
         </div>

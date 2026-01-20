@@ -169,7 +169,7 @@ export const DrawingCanvas = () => {
     });
 
   return (
-    <div className="flex aspect-square w-full flex-col overflow-hidden rounded-2xl border-4 border-gray-800 bg-white shadow-2xl">
+    <div className="canvas-main">
       <DrawingToolbar
         onColorSelect={handleColorSelect}
         onUndo={handleUndo}

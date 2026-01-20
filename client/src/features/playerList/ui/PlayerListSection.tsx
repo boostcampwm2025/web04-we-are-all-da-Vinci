@@ -17,18 +17,18 @@ export const PlayerListSection = ({
   const emptySlots = TOTAL_SLOTS - players.length;
 
   return (
-    <div className="flex flex-col rounded-2xl border-2 border-gray-800 bg-white p-6 shadow-lg">
+    <div className="card flex h-140 flex-col p-6">
       <div className="mb-5 flex shrink-0 items-center justify-between">
         <h2 className="font-handwriting flex items-center gap-2 text-2xl font-bold">
           인원
-          <span className="text-lg text-gray-500">
+          <span className="text-content-tertiary text-lg">
             ({players.length}/{maxPlayer})
           </span>
         </h2>
         {roomCode}
       </div>
 
-      <div className="grid max-h-80 grid-cols-4 gap-4 overflow-y-scroll">
+      <div className="grid min-h-0 flex-1 grid-cols-4 content-start gap-4 overflow-y-auto">
         {players.map((player) => (
           <PlayerCard
             key={player.socketId}
