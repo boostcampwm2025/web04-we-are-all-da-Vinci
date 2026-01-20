@@ -33,7 +33,6 @@ export const WaitingRoomActions = ({
           disabled={!isHost || !canStart}
         />
       </div>
-      
     </div>
   );
 };
