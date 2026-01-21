@@ -3,7 +3,8 @@ import { SOUND_LIST, SOUND_PATH } from '@/shared/config/sound';
 export class SoundManager {
   private static instance: SoundManager;
   private readonly sounds;
-  private volume = 0.3;
+  private sfxVolume = 0.3;
+  private bgmVolume = 0.3;
 
   private constructor() {
     this.sounds = new Map<string, HTMLAudioElement>();
@@ -27,17 +28,25 @@ export class SoundManager {
     const sound = this.sounds.get(key);
     if (!sound) return;
 
-    sound.volume = this.volume;
+    sound.volume = this.sfxVolume;
     sound.play().catch(console.error);
     sound.currentTime = 0;
   }
 
-  setVolume(volume: number) {
-    this.volume = volume / 100;
+  setSFXVolume(volume: number) {
+    this.sfxVolume = volume / 100;
   }
 
-  getVolume() {
-    return this.volume * 100;
+  getSFXVolume() {
+    return this.sfxVolume * 100;
+  }
+
+  setBGMVolume(volume: number) {
+    this.bgmVolume = volume / 100;
+  }
+
+  getBGMVolume() {
+    return this.bgmVolume * 100;
   }
 
   private load() {

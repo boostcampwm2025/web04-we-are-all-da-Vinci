@@ -4,17 +4,25 @@ import { SoundManager } from '@/shared/lib';
 export const useVolumeControl = () => {
   const manager = SoundManager.getInstance();
 
-  const [volume, setVolume] = useState(manager.getVolume());
+  const [sfxVolume, setSFXVolume] = useState(manager.getSFXVolume());
+  const [bgmVolume, setBGMVolume] = useState(manager.getBGMVolume());
 
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSFXVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = Number(e.target.value);
-    setVolume(value);
-    const manager = SoundManager.getInstance();
-    manager.setVolume(value);
+    setSFXVolume(value);
+    manager.setSFXVolume(value);
+  };
+
+  const handleBGMVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(e.target.value);
+    setBGMVolume(value);
+    manager.setBGMVolume(value);
   };
 
   return {
-    volume,
-    handleVolumeChange,
+    sfxVolume,
+    bgmVolume,
+    handleSFXVolumeChange,
+    handleBGMVolumeChange,
   };
 };
