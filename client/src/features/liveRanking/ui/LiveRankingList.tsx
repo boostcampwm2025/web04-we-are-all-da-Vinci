@@ -42,6 +42,7 @@ export const LiveRankingList = () => {
           key={entry.socketId}
           rank={entry.rank}
           nickname={entry.nickname}
+          profileId={entry.profileId}
           percent={Math.round(entry.similarity)}
           rankChange={entry.rankChange}
           isCurrentUser={entry.isCurrentUser}

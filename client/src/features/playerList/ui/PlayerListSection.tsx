@@ -34,6 +34,7 @@ export const PlayerListSection = ({
             key={player.socketId}
             id={player.socketId}
             nickname={player.nickname}
+            profileId={player.profileId}
             isHost={player.isHost ?? false}
             status="대기중"
           />

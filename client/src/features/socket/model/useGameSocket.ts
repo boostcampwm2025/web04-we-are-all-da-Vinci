@@ -13,6 +13,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 interface ServerRankingEntry {
   socketId: string;
   nickname: string;
+  profileId: string;
   similarity: number;
 }
 
@@ -20,9 +21,12 @@ export const useGameSocket = () => {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
 
-  // 닉네임 상태 추적 - localStorage 변경 감지
+  // 닉네임, profileId 상태 추적 - localStorage 변경 감지
   const [nickname, setNickname] = useState<string | null>(() =>
     localStorage.getItem('nickname'),
+  );
+  const [profileId, setProfileId] = useState<string | null>(() =>
+    localStorage.getItem('profileId'),
   );
 
   // Zustand actions
@@ -38,19 +42,21 @@ export const useGameSocket = () => {
 
   // localStorage 변경 감지
   useEffect(() => {
-    const checkNickname = () => {
+    const checkLocalStorage = () => {
       const storedNickname = localStorage.getItem('nickname');
+      const storedProfileId = localStorage.getItem('profileId');
       setNickname(storedNickname);
+      setProfileId(storedProfileId);
     };
 
     // storage 이벤트 리스너 (다른 탭에서 변경 시)
-    window.addEventListener('storage', checkNickname);
+    window.addEventListener('storage', checkLocalStorage);
 
     // 같은 탭에서 변경 감지를 위한 interval
-    const interval = setInterval(checkNickname, 100);
+    const interval = setInterval(checkLocalStorage, 100);
 
     return () => {
-      window.removeEventListener('storage', checkNickname);
+      window.removeEventListener('storage', checkLocalStorage);
       clearInterval(interval);
     };
   }, []);
@@ -62,9 +68,9 @@ export const useGameSocket = () => {
       return;
     }
 
-    // 닉네임이 없으면 소켓 연결하지 않음
-    if (!nickname) {
-      console.log('닉네임이 없어서 소켓 연결 대기 중...');
+    // 닉네임 또는 profileId가 없으면 소켓 연결하지 않음
+    if (!nickname || !profileId) {
+      console.log('닉네임 또는 profileId가 없어서 소켓 연결 대기 중...');
       return;
     }
 
@@ -78,7 +84,7 @@ export const useGameSocket = () => {
       setConnected(true);
 
       // 방 입장
-      socket.emit(SERVER_EVENTS.USER_JOIN, { roomId, nickname });
+      socket.emit(SERVER_EVENTS.USER_JOIN, { roomId, nickname, profileId });
     });
 
     socket.on('disconnect', () => {
@@ -132,6 +138,7 @@ export const useGameSocket = () => {
             return {
               socketId: entry.socketId,
               nickname: entry.nickname,
+              profileId: entry.profileId,
               similarity: entry.similarity,
               rank,
               previousRank: prevEntry?.rank ?? null,
@@ -192,6 +199,7 @@ export const useGameSocket = () => {
   }, [
     roomId,
     nickname,
+    profileId,
     navigate,
     setConnected,
     updateRoom,
