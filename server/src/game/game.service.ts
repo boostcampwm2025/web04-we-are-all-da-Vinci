@@ -27,20 +27,20 @@ export class GameService {
   async createRoom(createRoomDto: CreateRoomDto) {
     const roomId = await this.generateRoomId();
 
-    const promptId = await this.promptService.getRandomPromptId();
+    const { drawingTime, maxPlayer, totalRounds } = createRoomDto;
+
     const gameRoom: GameRoom = {
       roomId,
       players: [],
       phase: GamePhase.WAITING,
       currentRound: 0,
       settings: {
-        drawingTime: createRoomDto.drawingTime,
-        maxPlayer: createRoomDto.maxPlayer,
-        totalRounds: createRoomDto.totalRounds,
+        drawingTime: drawingTime,
+        maxPlayer: maxPlayer,
+        totalRounds: totalRounds,
       },
-      promptId: promptId,
     };
-
+    await this.promptService.setPromptIds(roomId, totalRounds);
     await this.cacheService.saveRoom(roomId, gameRoom);
 
     return roomId;

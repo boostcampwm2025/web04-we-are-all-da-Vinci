@@ -82,7 +82,7 @@ export class RoundService implements OnModuleInit {
     room.currentRound += 1;
 
     const promptStrokes = await this.promptService.getPromptForRound(
-      room.promptId,
+      room.roomId,
       room.currentRound,
     );
     if (!promptStrokes) {
@@ -133,7 +133,7 @@ export class RoundService implements OnModuleInit {
       rankings: rankings,
       promptStrokes:
         (await this.promptService.getPromptForRound(
-          room.promptId,
+          room.roomId,
           room.currentRound,
         )) || [],
     };
@@ -198,7 +198,7 @@ export class RoundService implements OnModuleInit {
       highlight: {
         promptStrokes:
           (await this.promptService.getPromptForRound(
-            room.promptId,
+            room.roomId,
             highlight.round,
           )) || [],
         playerStrokes: highlight.strokes,
@@ -224,8 +224,6 @@ export class RoundService implements OnModuleInit {
 
     room.phase = GamePhase.WAITING;
     room.currentRound = 0;
-
-    room.promptId = await this.promptService.getRandomPromptId();
 
     await this.cacheService.saveRoom(room.roomId, room);
 
