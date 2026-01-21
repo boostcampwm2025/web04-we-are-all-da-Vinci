@@ -119,6 +119,6 @@ export class GameRoomCacheService {
 
     const promptId = await client.lIndex(key, round - 1);
 
-    return Number(promptId);
+    return parseInt(promptId ?? '0');
   }
 }

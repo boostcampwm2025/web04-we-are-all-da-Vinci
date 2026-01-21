@@ -20,11 +20,13 @@ export class PromptService {
     round: number,
   ): Promise<Stroke[] | null> {
     const promptStrokesData = await this.loadPromptStrokes();
+
     const index = await this.cacheService.getPromptId(roomId, round);
-    if (!index) {
+
+    if (index === null) {
       throw new WebsocketException('프롬프트가 존재하지 않습니다.');
     }
-    this.logger.info({ length: promptStrokesData.length, index });
+
     return promptStrokesData[index];
   }
 
