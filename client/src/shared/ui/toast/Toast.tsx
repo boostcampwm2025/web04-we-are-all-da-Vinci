@@ -1,4 +1,4 @@
-import type { ToastType } from '@/shared/model/types';
+import type { ToastType } from '@/shared/model';
 import { useEffect } from 'react';
 
 interface ToastProps {

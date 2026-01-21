@@ -3,8 +3,8 @@ import {
   getStrokeBoundingBox,
   getStrokeDirection,
   getStrokeLength,
-} from '../strokeGeometry';
-import { getEuclideanDistance, getRelativeSimilarity } from '../../utils/math';
+} from './strokeGeometry';
+import { getEuclideanDistance, getRelativeSimilarity } from './math';
 
 // 두 스트로크를 일대일로 비교
 export const comparePairwiseStrokeSimilarity = (

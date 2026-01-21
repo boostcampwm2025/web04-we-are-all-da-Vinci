@@ -1,12 +1,12 @@
 import type { Point, Stroke } from '@/entities/similarity';
-import { cosineSimilarity, getRelativeSimilarity } from '../../utils/math';
+import { cosineSimilarity, getRelativeSimilarity } from './math';
 import {
   getConvexHull,
   getHullArea,
   getHullPerimeter,
   strokesToPoints,
-} from '../convexHullGeometry';
-import { getRadialSignature } from '../radialSignature';
+} from './convexHullGeometry';
+import { getRadialSignature } from './radialSignature';
 import type { PreprocessedStrokeData } from '@/features/similarity/model';
 
 // 스트로크 데이터로 형태 유사도 계산

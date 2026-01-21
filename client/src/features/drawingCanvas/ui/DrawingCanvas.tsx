@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { useCanvasSetup } from '@/shared/model/useCanvasSetup';
 import { useMouseDrawing } from '@/features/drawingCanvas/model/useMouseDrawing';
 import { useStrokes } from '@/features/drawingCanvas/model/useStrokes';
 import { useColorSelection } from '@/features/drawingCanvas/model/useColorSelection';
@@ -8,12 +7,13 @@ import { CANVAS_CONFIG, SERVER_EVENTS, MIXPANEL_EVENTS } from '@/shared/config';
 import { drawStrokesOnCanvas } from '@/entities/drawing/lib/drawStrokesOnCanvas';
 import { useGameStore, selectPhase } from '@/entities/gameRoom/model';
 import { getSocket } from '@/shared/api/socket';
+import { captureMessage } from '@/shared/lib/sentry';
+import { trackEvent } from '@/shared/lib/mixpanel';
+import { useCanvasSetup } from '@/shared/model';
 import {
   calculateFinalSimilarityByPreprocessed,
   preprocessStrokes,
-} from '@/features/similarity/lib';
-import { captureMessage } from '@/shared/lib/sentry';
-import { trackEvent } from '@/shared/lib/mixpanel';
+} from '@/features/similarity';
 
 // 기본 그리기 기능을 제공하는 캔버스 컴포넌트
 export const DrawingCanvas = () => {

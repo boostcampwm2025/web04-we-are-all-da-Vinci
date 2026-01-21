@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import type { ToastType } from './types';
 import { devtools } from 'zustand/middleware';
+import type { ToastType } from './types';
 
 interface ToastState {
   message: string | null;

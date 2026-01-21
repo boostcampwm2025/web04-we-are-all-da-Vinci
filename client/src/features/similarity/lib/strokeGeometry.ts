@@ -1,5 +1,5 @@
 import type { Point, Stroke } from '@/entities/similarity/model';
-import { getPathLength } from '../utils/math';
+import { getPathLength } from './math';
 
 // 스트로크 길이
 export const getStrokeLength = (stroke: Stroke): number => {

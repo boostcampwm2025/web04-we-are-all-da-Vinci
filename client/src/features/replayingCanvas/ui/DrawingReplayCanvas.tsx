@@ -1,7 +1,7 @@
 import type { Stroke } from '@/entities/similarity/model';
 import { CANVAS_CONFIG } from '@/shared/config';
-import { useCanvasSetup } from '@/shared/model/useCanvasSetup';
 import { useDrawingReplay } from '../model/useDrawingReplay';
+import { useCanvasSetup } from '@/shared/model';
 
 interface DrawingReplayCanvasProps {
   strokes: Stroke[];

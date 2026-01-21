@@ -1,6 +1,6 @@
 import type { Stroke } from '@/entities/similarity/model';
 import { comparePairwiseStrokeSimilarity } from './comparePairwiseStrokeSimilarity';
-import { calculateColorSimilarity } from '../../color/calculateColorSimilarity';
+import { calculateColorSimilarity } from './calculateColorSimilarity';
 
 // 두 그림의 스트로크를 모두 일대일로 매칭하여 최종 스트로크 유사도 산출
 export const calculateGreedyStrokeMatchScore = (
