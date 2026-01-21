@@ -5,7 +5,8 @@ import {
 } from '@/entities/gameRoom/model';
 import { TIMER } from '../config';
 import { useEffect, useState } from 'react';
-import { SoundManager } from '@/shared/lib/sound/soundManager';
+import { SoundManager } from '@/shared/lib';
+import { SOUND_LIST } from '@/shared/config/sound';
 
 export const Timer = () => {
   const timer = useGameStore(selectTimer);
@@ -44,7 +45,7 @@ export const Timer = () => {
       return;
     }
     const manager = SoundManager.getInstance();
-    manager.playSound('ticktock');
+    manager.playSound(SOUND_LIST.TIMER);
   }, [isUrgent, displayTime]);
 
   return (

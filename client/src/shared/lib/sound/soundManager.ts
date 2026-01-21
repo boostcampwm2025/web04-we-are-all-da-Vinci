@@ -1,3 +1,5 @@
+import { SOUND_LIST, SOUND_PATH } from '@/shared/config/sound';
+
 export class SoundManager {
   private static instance: SoundManager;
   private readonly sounds;
@@ -48,10 +50,11 @@ export class SoundManager {
       return;
     }
 
-    this.addSound('tick', new Audio('/audio/tick.mp3'));
-    this.addSound('beep', new Audio('/audio/beep.mp3'));
-    this.addSound('roundEnd', new Audio('/audio/roundEnd.mp3'));
-    this.addSound('ticktock', new Audio('/audio/ticktock.mp3'));
+    this.addSound(
+      SOUND_LIST.ROUND_END,
+      new Audio(SOUND_PATH[SOUND_LIST.ROUND_END]),
+    );
+    this.addSound(SOUND_LIST.TIMER, new Audio(SOUND_PATH[SOUND_LIST.TIMER]));
   }
 
   private addSound(key: string, element: HTMLAudioElement) {

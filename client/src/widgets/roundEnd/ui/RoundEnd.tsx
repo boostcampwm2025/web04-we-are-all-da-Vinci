@@ -6,7 +6,8 @@ import {
 import { Timer } from '@/entities/timer';
 import { useGameStore } from '@/entities/gameRoom/model';
 import { useEffect } from 'react';
-import { SoundManager } from '@/shared/lib/sound/soundManager';
+import { SoundManager } from '@/shared/lib';
+import { SOUND_LIST } from '@/shared/config/sound';
 
 export const RoundEnd = () => {
   const roundResults = useGameStore((state) => state.roundResults);
@@ -15,7 +16,7 @@ export const RoundEnd = () => {
 
   useEffect(() => {
     const manager = SoundManager.getInstance();
-    manager.playSound('roundEnd');
+    manager.playSound(SOUND_LIST.ROUND_END);
   }, []);
 
   return (
