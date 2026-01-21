@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { GameRoom, Stroke } from 'src/common/types';
+import { GameRoom } from 'src/common/types';
 import {
   ClientEvents,
   DRAWING_END_DELAY,
@@ -10,14 +10,13 @@ import {
 } from 'src/common/constants';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
-import * as fs from 'fs/promises';
-import * as path from 'path';
 import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
 import { PinoLogger } from 'nestjs-pino';
 import { TimerService } from 'src/timer/timer.service';
 import { Server } from 'socket.io';
 import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
 import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
+import { PromptService } from 'src/prompt/prompt.service';
 
 @Injectable()
 export class RoundService implements OnModuleInit {
@@ -29,6 +28,7 @@ export class RoundService implements OnModuleInit {
     private readonly standingsCacheService: StandingsCacheService,
     private readonly leaderboardCacheService: LeaderboardCacheService,
     private readonly timerService: TimerService,
+    private readonly promptService: PromptService,
     private readonly logger: PinoLogger,
   ) {
     this.logger.setContext(RoundService.name);
@@ -81,7 +81,7 @@ export class RoundService implements OnModuleInit {
     room.phase = GamePhase.PROMPT;
     room.currentRound += 1;
 
-    const promptStrokes = await this.getPromptForRound(
+    const promptStrokes = await this.promptService.getPromptForRound(
       room.promptId,
       room.currentRound,
     );
@@ -132,7 +132,10 @@ export class RoundService implements OnModuleInit {
     const result = {
       rankings: rankings,
       promptStrokes:
-        (await this.getPromptForRound(room.promptId, room.currentRound)) || [],
+        (await this.promptService.getPromptForRound(
+          room.promptId,
+          room.currentRound,
+        )) || [],
     };
 
     await this.timerService.startTimer(room.roomId, ROUND_END_TIME);
@@ -194,7 +197,10 @@ export class RoundService implements OnModuleInit {
       finalRankings: rankings,
       highlight: {
         promptStrokes:
-          (await this.getPromptForRound(room.promptId, highlight.round)) || [],
+          (await this.promptService.getPromptForRound(
+            room.promptId,
+            highlight.round,
+          )) || [],
         playerStrokes: highlight.strokes,
         similarity: highlight.similarity,
       },
@@ -219,7 +225,7 @@ export class RoundService implements OnModuleInit {
     room.phase = GamePhase.WAITING;
     room.currentRound = 0;
 
-    room.promptId = await this.getRandomPromptId();
+    room.promptId = await this.promptService.getRandomPromptId();
 
     await this.cacheService.saveRoom(room.roomId, room);
 
@@ -230,31 +236,5 @@ export class RoundService implements OnModuleInit {
     this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
 
     this.logger.info({ roomId: room.roomId }, 'Game Waiting Start');
-  }
-
-  private async loadPromptStrokes(): Promise<Stroke[][]> {
-    const promptPath = path.join(process.cwd(), 'data', 'promptStrokes.json');
-    const data = await fs.readFile(promptPath, 'utf-8');
-    const promptStrokesData = JSON.parse(data) as Stroke[][];
-    return promptStrokesData;
-  }
-
-  private async getPromptForRound(
-    promptId: number,
-    round: number,
-  ): Promise<Stroke[] | null> {
-    const promptStrokesData = await this.loadPromptStrokes();
-    const index = (promptId + round - 1) % promptStrokesData.length;
-    if (index < 0 || index >= promptStrokesData.length) {
-      return null;
-    }
-    return promptStrokesData[index];
-  }
-
-  private async getRandomPromptId(): Promise<number> {
-    const promptStrokesData = await this.loadPromptStrokes();
-
-    const id = Math.floor(Math.random() * promptStrokesData.length);
-    return id;
   }
 }
