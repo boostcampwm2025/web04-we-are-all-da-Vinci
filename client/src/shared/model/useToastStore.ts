@@ -1,0 +1,24 @@
+import { create } from 'zustand';
+import type { ToastType } from './types';
+import { devtools } from 'zustand/middleware';
+
+interface ToastState {
+  message: string;
+  type: ToastType;
+  duration?: number;
+  setShow: (message: string, type: ToastType, duration?: number) => void;
+  setHide: () => void;
+}
+
+export const useToastStore = create<ToastState>()(
+  devtools(
+    (set) => ({
+      message: null,
+      type: 'info',
+      duration: 2000,
+      setShow: (message, type, duration) => set({ message, type, duration }),
+      setHide: () => set({ message: '' }),
+    }),
+    { name: 'Toast Store' },
+  ),
+);

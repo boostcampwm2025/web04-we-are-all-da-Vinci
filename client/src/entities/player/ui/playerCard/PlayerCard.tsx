@@ -46,7 +46,7 @@ const PlayerCard = ({
       {isHost && <span className="absolute top-2 right-2 text-xl">👑</span>}
       {!isHost && isCurrentUserHost && (
         <button
-          className="absolute top-2 right-2 text-xl hover:text-red-500"
+          className="absolute top-2 right-2 cursor-pointer text-xl hover:text-red-500"
           onClick={(e) => {
             e.stopPropagation();
             onKickClick?.();

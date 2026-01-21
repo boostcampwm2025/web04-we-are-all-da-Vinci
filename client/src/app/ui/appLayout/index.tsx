@@ -12,12 +12,15 @@ import {
 } from '@/shared/ui/doodles';
 import { NicknameInputModal } from '@/features/nickname';
 import { registerUserProperties } from '@/shared/lib/mixpanel';
+import { useToastStore } from '@/shared/model';
+import { Toast } from '@/shared/ui';
 
 const AppLayout = () => {
   const [isModalOpen, setIsModalOpen] = useState(() => {
     return !localStorage.getItem('nickname');
   });
   const [nickname, setNickname] = useState('');
+  const { message, type, duration, setHide } = useToastStore();
 
   useEffect(() => {
     const storedNickname = localStorage.getItem('nickname');
@@ -81,6 +84,15 @@ const AppLayout = () => {
         setNickname={setNickname}
         onSubmit={handleSubmit}
       />
+
+      {message && (
+        <Toast
+          message={message}
+          type={type}
+          duration={duration}
+          onClose={setHide}
+        />
+      )}
     </div>
   );
 };

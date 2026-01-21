@@ -3,6 +3,7 @@ import { EmptySlot, PlayerCard } from '@/entities/player';
 import type { Player } from '@/entities/player/model';
 import { getSocket } from '@/shared/api/socket';
 import { SERVER_EVENTS } from '@/shared/config';
+import { CommonBtn } from '@/shared/ui';
 import { useState, type ReactNode } from 'react';
 
 interface PlayerListSectionProps {
@@ -72,9 +73,19 @@ export const PlayerListSection = ({
             <h2 className="font-handwriting mb-6 text-center text-4xl font-bold">
               {targetPlayer?.nickname}님을 퇴장시키겠습니까?
             </h2>
-            <div className="mt-6">
-              <button onClick={handleConfirmKick}>퇴장</button>
-              <button onClick={() => setIsOpen(false)}>X</button>
+            <div className="mt-6 flex justify-between gap-4">
+              <CommonBtn
+                variant="scribble"
+                icon="check_circle"
+                text="퇴장"
+                onClick={handleConfirmKick}
+              />
+              <CommonBtn
+                variant="scribble"
+                icon="cancel"
+                text="취소"
+                onClick={() => setIsOpen(false)}
+              />
             </div>
           </div>
         </div>

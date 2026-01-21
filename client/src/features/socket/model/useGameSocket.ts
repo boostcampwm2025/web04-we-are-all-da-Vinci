@@ -7,6 +7,7 @@ import type { RoundEndResponse } from '@/entities/roundResult/model';
 import type { Stroke } from '@/entities/similarity';
 import { disconnectSocket, getSocket } from '@/shared/api/socket';
 import { CLIENT_EVENTS, SERVER_EVENTS } from '@/shared/config';
+import { useToastStore } from '@/shared/model';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -36,6 +37,7 @@ export const useGameSocket = () => {
   const setHighlight = useGameStore((state) => state.setHighlight);
   const setPromptStrokes = useGameStore((state) => state.setPromptStrokes);
   const reset = useGameStore((state) => state.reset);
+  const setShow = useToastStore((state) => state.setShow);
 
   // localStorage 변경 감지
   useEffect(() => {
@@ -119,9 +121,9 @@ export const useGameSocket = () => {
           disconnectSocket();
           reset();
           navigate('/');
-          alert('방에서 퇴장당했습니다.');
+          setShow(`방에서 퇴장당했습니다.`, 'error');
         } else {
-          alert(`${kickedPlayer.nickname}님이 방에서 퇴장당했습니다.`);
+          setShow(`${kickedPlayer.nickname}님이 퇴장당했습니다.`, 'info');
         }
       },
     );
@@ -219,6 +221,7 @@ export const useGameSocket = () => {
     setFinalResults,
     setHighlight,
     reset,
+    setShow,
   ]);
 
   return getSocket();
