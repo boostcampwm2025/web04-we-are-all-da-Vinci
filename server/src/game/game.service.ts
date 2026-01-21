@@ -105,7 +105,7 @@ export class GameService {
     }
 
     if (maxPlayer < room.players.length) {
-      throw new WebsocketException('현재 인원보다 작게 설정할 수 없습니다.');
+      return;
     }
 
     Object.assign(room.settings, { maxPlayer, totalRounds, drawingTime });
