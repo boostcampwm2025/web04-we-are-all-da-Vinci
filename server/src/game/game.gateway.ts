@@ -92,6 +92,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       drawingTime,
     );
 
+    if (!room) {
+      return 'ok';
+    }
+
     this.broadcastMetadata(room);
 
     this.logger.info(
