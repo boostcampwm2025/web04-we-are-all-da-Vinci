@@ -217,6 +217,44 @@ export class GameService {
     await this.roundService.nextPhase(room);
   }
 
+  async kickUser(roomId: string, hostSocketId: string, targetSocketId: string) {
+    const room = await this.cacheService.getRoom(roomId);
+    if (!room) {
+      throw new WebsocketException('방이 존재하지 않습니다.');
+    }
+
+    if (room.phase !== GamePhase.WAITING) {
+      throw new WebsocketException('대기 상태에서만 퇴장시킬 수 있습니다.');
+    }
+
+    const hostPlayer = room.players.find(
+      (player) => player.socketId === hostSocketId,
+    );
+    const targetPlayer = room.players.find(
+      (player) => player.socketId === targetSocketId,
+    );
+
+    if (!hostPlayer || !targetPlayer) {
+      throw new WebsocketException('플레이어가 존재하지 않습니다.');
+    }
+
+    if (!hostPlayer.isHost) {
+      throw new WebsocketException('방장만 퇴장시킬 수 있습니다.');
+    }
+
+    if (targetPlayer.isHost) {
+      throw new WebsocketException('방장을 퇴장시킬 수 없습니다.');
+    }
+
+    const kickedPlayer = {
+      socketId: targetPlayer.socketId,
+      nickname: targetPlayer.nickname,
+    };
+
+    await this.leaveRoom(targetSocketId);
+    return { kickedPlayer };
+  }
+
   private async loadPromptStrokes(): Promise<Stroke[][]> {
     const promptPath = path.join(process.cwd(), 'data', 'promptStrokes.json');
     const data = await fs.readFile(promptPath, 'utf-8');

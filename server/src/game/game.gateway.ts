@@ -17,6 +17,7 @@ import { GameService } from './game.service';
 import { GameRoom } from 'src/common/types';
 import { UseFilters } from '@nestjs/common';
 import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
+import { UserKickDto } from './dto/user-kick.dto';
 
 @WebSocketGateway({
   cors: {
@@ -121,6 +122,25 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     await this.gameService.restartGame(roomId, client.id);
 
     this.logger.info({ clientId: client.id, ...payload }, 'Game Restarted');
+    return 'ok';
+  }
+
+  @SubscribeMessage(ServerEvents.USER_KICK)
+  async kickUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: UserKickDto,
+  ): Promise<string> {
+    const { roomId, targetPlayerId } = payload;
+    const { kickedPlayer } = await this.gameService.kickUser(
+      roomId,
+      client.id,
+      targetPlayerId,
+    );
+    this.server
+      .to(roomId)
+      .emit(ClientEvents.ROOM_KICKED, { roomId, kickedPlayer });
+
+    this.logger.info({ clientId: client.id, ...payload }, 'User Kicked');
     return 'ok';
   }
 
