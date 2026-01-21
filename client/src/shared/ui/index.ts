@@ -7,6 +7,7 @@ export {
   LionDoodle,
   NickDoodle,
   PaletteDoodle,
+  PainterDoodle,
   ScribbleDoodle,
   StarDoodle,
   SunDoodle,

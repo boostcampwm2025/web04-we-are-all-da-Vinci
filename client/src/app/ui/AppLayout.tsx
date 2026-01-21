@@ -1,17 +1,18 @@
-import { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
-import {
-  SunDoodle,
-  ScribbleDoodle,
-  StarDoodle,
-  BrushDoodle,
-  PaletteDoodle,
-  NickDoodle,
-  JudyDoodle,
-  LionDoodle,
-} from '@/shared/ui/Doodles';
 import { NicknameInputModal } from '@/features/nickname';
 import { registerUserProperties } from '@/shared/lib/mixpanel';
+import {
+  BrushDoodle,
+  JudyDoodle,
+  LionDoodle,
+  NickDoodle,
+  PainterDoodle,
+  PaletteDoodle,
+  ScribbleDoodle,
+  StarDoodle,
+  SunDoodle,
+} from '@/shared/ui/Doodles';
+import { useEffect, useState } from 'react';
+import { Outlet } from 'react-router-dom';
 
 const AppLayout = () => {
   const [isModalOpen, setIsModalOpen] = useState(() => {
@@ -68,6 +69,7 @@ const AppLayout = () => {
         <NickDoodle />
         <JudyDoodle />
         <LionDoodle />
+        <PainterDoodle />
       </div>
 
       <div className="relative z-10 h-full w-full">

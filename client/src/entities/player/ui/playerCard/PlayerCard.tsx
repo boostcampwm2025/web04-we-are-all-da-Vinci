@@ -27,7 +27,7 @@ const PlayerCard = ({
       }`}
     >
       <UserAvatar name={profileId} size={56} />
-      <div className="font-handwriting mb-1 mt-2 text-lg font-bold">
+      <div className="font-handwriting mt-2 mb-1 text-lg font-bold">
         {nickname}
       </div>
       {isHost && <span className="absolute top-2 right-2 text-xl">👑</span>}
