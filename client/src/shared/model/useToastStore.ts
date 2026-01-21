@@ -3,7 +3,7 @@ import type { ToastType } from './types';
 import { devtools } from 'zustand/middleware';
 
 interface ToastState {
-  message: string;
+  message: string | null;
   type: ToastType;
   duration?: number;
   setShow: (message: string, type: ToastType, duration?: number) => void;
@@ -17,7 +17,7 @@ export const useToastStore = create<ToastState>()(
       type: 'info',
       duration: 2000,
       setShow: (message, type, duration) => set({ message, type, duration }),
-      setHide: () => set({ message: '' }),
+      setHide: () => set({ message: null }),
     }),
     { name: 'Toast Store' },
   ),

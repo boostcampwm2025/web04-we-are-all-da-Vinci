@@ -204,6 +204,7 @@ export const useGameSocket = () => {
       socket.off(CLIENT_EVENTS.ROOM_GAME_END);
       socket.off(CLIENT_EVENTS.USER_WAITLIST);
       socket.off(CLIENT_EVENTS.ERROR);
+      socket.off(CLIENT_EVENTS.ROOM_KICKED);
 
       disconnectSocket();
       reset(); // 소켓 연결 해제 시 전체 상태 초기화
