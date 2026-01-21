@@ -1,14 +1,22 @@
-import { useIsCurrentUser } from '@/entities/gameRoom/model';
+import { useIsCurrentUser, useIsHost } from '@/entities/gameRoom/model';
 
 interface PlayerCardProps {
   id: string;
   nickname: string;
   isHost: boolean;
   status?: string;
+  onKickClick?: () => void;
 }
 
-const PlayerCard = ({ id, isHost, nickname, status }: PlayerCardProps) => {
+const PlayerCard = ({
+  id,
+  isHost,
+  nickname,
+  status,
+  onKickClick,
+}: PlayerCardProps) => {
   const isCurrentUser = useIsCurrentUser(id);
+  const isCurrentUserHost = useIsHost();
   return (
     <div
       key={id}
@@ -36,6 +44,18 @@ const PlayerCard = ({ id, isHost, nickname, status }: PlayerCardProps) => {
       </svg>
       <div className="font-handwriting mb-1 text-lg font-bold">{nickname}</div>
       {isHost && <span className="absolute top-2 right-2 text-xl">👑</span>}
+      {!isHost && isCurrentUserHost && (
+        <button
+          className="absolute top-2 right-2 text-xl hover:text-red-500"
+          onClick={(e) => {
+            e.stopPropagation();
+            onKickClick?.();
+          }}
+        >
+          ✕
+        </button>
+      )}
+
       {status && (
         <div className="font-handwriting text-md text-content-tertiary">
           {status}

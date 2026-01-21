@@ -1,6 +1,7 @@
 import type { GameEndResponse } from '@/entities/gameResult/model';
 import type { GameRoom } from '@/entities/gameRoom/model';
 import { useGameStore } from '@/entities/gameRoom/model';
+import type { Player } from '@/entities/player/model';
 import type { RankingEntry } from '@/entities/ranking';
 import type { RoundEndResponse } from '@/entities/roundResult/model';
 import type { Stroke } from '@/entities/similarity';
@@ -108,6 +109,22 @@ export const useGameSocket = () => {
         settings: data.settings,
       });
     });
+
+    // 추방
+    socket.on(
+      CLIENT_EVENTS.ROOM_KICKED,
+      ({ kickedPlayer }: { kickedPlayer: Omit<Player, 'isHost'> }) => {
+        const socketId = socket.id;
+        if (socketId === kickedPlayer.socketId) {
+          disconnectSocket();
+          reset();
+          navigate('/');
+          alert('방에서 퇴장당했습니다.');
+        } else {
+          alert(`${kickedPlayer.nickname}님이 방에서 퇴장당했습니다.`);
+        }
+      },
+    );
 
     // 실시간 데이터
     socket.on(

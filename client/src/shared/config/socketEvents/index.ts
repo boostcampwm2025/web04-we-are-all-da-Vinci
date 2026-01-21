@@ -2,6 +2,7 @@ export const SERVER_EVENTS = {
   USER_JOIN: 'user:join',
   USER_SCORE: 'user:score',
   USER_DRAWING: 'user:drawing',
+  USER_KICK: 'user:kick',
   ROOM_SETTINGS: 'room:settings',
   ROOM_START: 'room:start',
   ROOM_RESTART: 'room:restart',
@@ -14,6 +15,7 @@ export const CLIENT_EVENTS = {
   ROOM_ROUND_END: 'room:round_end',
   ROOM_GAME_END: 'room:game_end',
   ROOM_PROMPT: 'room:prompt',
+  ROOM_KICKED: 'room:kicked',
   USER_WAITLIST: 'user:waitlist',
   ERROR: 'error',
 } as const;
