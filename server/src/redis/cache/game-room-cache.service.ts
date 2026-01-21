@@ -55,7 +55,6 @@ export class GameRoomCacheService {
       phase: data.phase,
       currentRound: parseInt(data.currentRound),
       settings: JSON.parse(data.settings) as Settings,
-      promptId: parseInt(data.promptId),
     };
   }
 

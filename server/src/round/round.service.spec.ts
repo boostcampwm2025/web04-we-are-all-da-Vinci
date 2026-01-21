@@ -6,6 +6,7 @@ import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
 import { TimerService } from 'src/timer/timer.service';
 import { PinoLogger } from 'nestjs-pino';
 import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
+import { PromptService } from 'src/prompt/prompt.service';
 
 describe('RoundService', () => {
   let service: RoundService;
@@ -32,6 +33,10 @@ describe('RoundService', () => {
     startTimer: jest.fn(),
   };
 
+  const mockPromptService = {
+    getPromptForRound: jest.fn(),
+  };
+
   const mockLogger = {
     info: jest.fn(),
     error: jest.fn(),
@@ -49,6 +54,7 @@ describe('RoundService', () => {
         },
         { provide: StandingsCacheService, useValue: mockStandingsCacheService },
         { provide: TimerService, useValue: mockTimerService },
+        { provide: PromptService, useValue: mockPromptService },
         { provide: PinoLogger, useValue: mockLogger },
         {
           provide: LeaderboardCacheService,
