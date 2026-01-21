@@ -13,9 +13,8 @@ import {
 } from '@/shared/ui/Doodles';
 import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { NicknameInputModal } from '@/features/nickname';
-import { registerUserProperties } from '@/shared/lib/mixpanel';
 import { VolumeButton } from '@/features/volume';
+import { SoundManager } from '@/shared/lib';
 
 const AppLayout = () => {
   const [isModalOpen, setIsModalOpen] = useState(() => {
@@ -29,6 +28,11 @@ const AppLayout = () => {
     if (storedNickname) {
       registerUserProperties({ nickname: storedNickname });
     }
+  }, []);
+
+  useEffect(() => {
+    // 사운드 매니저 생성 및 오디오 파일 로드
+    SoundManager.getInstance();
   }, []);
 
   const handleClose = () => {
@@ -78,14 +82,6 @@ const AppLayout = () => {
       </div>
 
       <ProfileSettingsModal isOpen={isModalOpen} onClose={handleClose} />
-
-      <NicknameInputModal
-        isOpen={isModalOpen}
-        onClose={handleClose}
-        nickname={nickname}
-        setNickname={setNickname}
-        onSubmit={handleSubmit}
-      />
     </div>
   );
 };

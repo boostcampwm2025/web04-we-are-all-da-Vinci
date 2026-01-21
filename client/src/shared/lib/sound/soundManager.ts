@@ -3,11 +3,13 @@ import { SOUND_LIST, SOUND_PATH } from '@/shared/config/sound';
 export class SoundManager {
   private static instance: SoundManager;
   private readonly sounds;
+  private bgm: HTMLAudioElement | null;
   private sfxVolume = 0.3;
-  private bgmVolume = 0.3;
+  private bgmVolume = 0;
 
   private constructor() {
     this.sounds = new Map<string, HTMLAudioElement>();
+    this.bgm = null;
 
     this.load();
   }
@@ -33,6 +35,20 @@ export class SoundManager {
     sound.currentTime = 0;
   }
 
+  playBGM() {
+    const bgm = this.bgm;
+    if (!bgm) return;
+
+    if (this.bgmVolume === 0) {
+      bgm.pause();
+      return;
+    }
+
+    bgm.volume = this.bgmVolume;
+    bgm.loop = true;
+    bgm.play().catch(console.error);
+  }
+
   setSFXVolume(volume: number) {
     this.sfxVolume = volume / 100;
   }
@@ -43,6 +59,8 @@ export class SoundManager {
 
   setBGMVolume(volume: number) {
     this.bgmVolume = volume / 100;
+
+    this.playBGM();
   }
 
   getBGMVolume() {
@@ -64,6 +82,9 @@ export class SoundManager {
       new Audio(SOUND_PATH[SOUND_LIST.ROUND_END]),
     );
     this.addSound(SOUND_LIST.TIMER, new Audio(SOUND_PATH[SOUND_LIST.TIMER]));
+
+    const WEB_SERVER_URL = import.meta.env.VITE_WEB_SERVER_URL;
+    this.bgm = new Audio(WEB_SERVER_URL + '/audio/bgm.mp3');
   }
 
   private addSound(key: string, element: HTMLAudioElement) {
