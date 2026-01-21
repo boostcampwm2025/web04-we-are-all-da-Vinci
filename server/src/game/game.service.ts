@@ -251,8 +251,11 @@ export class GameService {
       nickname: targetPlayer.nickname,
     };
 
-    await this.leaveRoom(targetSocketId);
-    return { kickedPlayer };
+    const updatedRoom = await this.leaveRoom(targetSocketId);
+    if (!updatedRoom) {
+      throw new WebsocketException('방이 없습니다.');
+    }
+    return { updatedRoom, kickedPlayer };
   }
 
   private async loadPromptStrokes(): Promise<Stroke[][]> {

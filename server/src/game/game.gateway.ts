@@ -131,7 +131,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() payload: UserKickDto,
   ): Promise<string> {
     const { roomId, targetPlayerId } = payload;
-    const { kickedPlayer } = await this.gameService.kickUser(
+    const { updatedRoom, kickedPlayer } = await this.gameService.kickUser(
       roomId,
       client.id,
       targetPlayerId,
@@ -139,6 +139,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server
       .to(roomId)
       .emit(ClientEvents.ROOM_KICKED, { roomId, kickedPlayer });
+    this.broadcastMetadata(updatedRoom);
 
     this.logger.info({ clientId: client.id, ...payload }, 'User Kicked');
     return 'ok';
