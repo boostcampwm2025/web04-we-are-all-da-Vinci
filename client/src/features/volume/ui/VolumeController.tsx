@@ -23,8 +23,8 @@ export const VolumeController = () => {
           <input
             type="range"
             className="h-2 w-full cursor-pointer appearance-none rounded-full bg-gray-200 accent-blue-500"
-            name="volume"
-            id="volume"
+            name="sfxVolume"
+            id="sfxVolume"
             value={sfxVolume}
             min={0}
             max={100}
@@ -48,8 +48,8 @@ export const VolumeController = () => {
           <input
             type="range"
             className="h-2 w-full cursor-pointer appearance-none rounded-full bg-gray-200 accent-blue-500"
-            name="volume"
-            id="volume"
+            name="bgmVolume"
+            id="bgmVolume"
             value={bgmVolume}
             min={0}
             max={100}

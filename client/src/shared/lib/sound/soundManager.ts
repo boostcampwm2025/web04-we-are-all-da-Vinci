@@ -30,9 +30,9 @@ export class SoundManager {
     const sound = this.sounds.get(key);
     if (!sound) return;
 
+    sound.currentTime = 0;
     sound.volume = this.sfxVolume;
     sound.play().catch(console.error);
-    sound.currentTime = 0;
   }
 
   playBGM() {
@@ -84,6 +84,14 @@ export class SoundManager {
     this.addSound(SOUND_LIST.TIMER, new Audio(SOUND_PATH[SOUND_LIST.TIMER]));
 
     const WEB_SERVER_URL = import.meta.env.VITE_WEB_SERVER_URL;
+
+    if (!WEB_SERVER_URL) {
+      console.warn(
+        'VITE_WEB_SERVER_URL이 설정되지 않았습니다. BGM 로드를 생략합니다.',
+      );
+      return;
+    }
+
     this.bgm = new Audio(WEB_SERVER_URL + '/audio/bgm.mp3');
   }
 
