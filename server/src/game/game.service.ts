@@ -105,6 +105,12 @@ export class GameService {
       throw new WebsocketException(ErrorCode.PLAYER_NOT_HOST);
     }
 
+    if (room.phase !== GamePhase.WAITING) {
+      throw new WebsocketException(
+        ErrorCode.UPDATE_SETTINGS_ONLY_WAITING_PHASE,
+      );
+    }
+
     if (maxPlayer < room.players.length) {
       return;
     }
@@ -117,14 +123,6 @@ export class GameService {
     await this.cacheService.saveRoom(roomId, room);
 
     return room;
-  }
-
-  private async generateRoomId() {
-    let roomId = randomUUID().toString().substring(0, 8);
-    while (await this.cacheService.getRoom(roomId)) {
-      roomId = randomUUID().toString().substring(0, 8);
-    }
-    return roomId;
   }
 
   async joinRoom(
@@ -226,7 +224,7 @@ export class GameService {
     }
 
     if (room.phase !== GamePhase.WAITING) {
-      throw new WebsocketException(ErrorCode.GAME_NOT_WAITING_PHASE);
+      throw new WebsocketException(ErrorCode.KICK_ONLY_WAITING_PHASE);
     }
 
     const hostPlayer = room.players.find(
@@ -258,5 +256,13 @@ export class GameService {
       throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
     }
     return { updatedRoom, kickedPlayer };
+  }
+
+  private async generateRoomId() {
+    let roomId = randomUUID().toString().substring(0, 8);
+    while (await this.cacheService.getRoom(roomId)) {
+      roomId = randomUUID().toString().substring(0, 8);
+    }
+    return roomId;
   }
 }

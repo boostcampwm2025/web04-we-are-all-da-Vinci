@@ -18,5 +18,7 @@ export const ErrorCode = {
   GAME_ALREADY_STARTED: '게임이 이미 시작되었습니다.',
   GAME_NOT_END: '게임이 종료되지 않았습니다.',
   GAME_NOT_DRAWING_PHASE: '그림 그리기 단계가 아닙니다.',
-  GAME_NOT_WAITING_PHASE: '대기 상태에서만 퇴장시킬 수 있습니다.',
+  KICK_ONLY_WAITING_PHASE: '대기 상태에서만 퇴장시킬 수 있습니다.',
+  UPDATE_SETTINGS_ONLY_WAITING_PHASE:
+    '대기 상태에서만 설정을 바꿀 수 있습니다.',
 } as const;
