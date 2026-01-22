@@ -17,7 +17,7 @@ export const useRoundStanding = () => {
   const [isSorted, setIsSorted] = useState(false);
 
   // 리스트 순서 변경 시 위치 이동을 자연스럽게 보여주기 위한 FLIP 애니메이션
-  const { setRowRef, playFlip } = useFlipAnimation<PlayerScore>();
+  const { setRowRef, playFlip } = useFlipAnimation();
 
   // 이전 점수를 빠르게 조회하기 위한 맵
   // → 점수 증가량 표시 등 이전 값 비교에 사용
@@ -67,7 +67,6 @@ export const useRoundStanding = () => {
   }, [displayResults, currentPlayer]);
 
   // 등수에 따라 사용자에게 보여줄 피드백 메시지
-  // → UI 레이어에서 조건 분기 로직을 제거하기 위한 책임 분리
   const rankMessage = useMemo(() => {
     if (myRank === -1) return '';
     if (myRank === 1) return `현재 ${myRank}등이에요! 이 기세를 유지하세요! 👑`;
