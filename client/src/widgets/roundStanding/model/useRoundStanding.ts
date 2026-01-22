@@ -14,8 +14,7 @@ export const useRoundStanding = () => {
   const [displayResults, setDisplayResults] = useState<PlayerScore[]>([]);
   const [isSorted, setIsSorted] = useState(false);
 
-  
-  // 리스트 순서 변경 시 위치 이동을 자연스럽게 보여주기 위한 FLIP 애니메이션 
+  // 리스트 순서 변경 시 위치 이동을 자연스럽게 보여주기 위한 FLIP 애니메이션
   const { setRowRef, playFlip } = useFlipAnimation<PlayerScore>();
 
   // 이전 점수를 빠르게 조회하기 위한 맵
@@ -28,12 +27,18 @@ export const useRoundStanding = () => {
   // 1) 이전 점수가 있으면: 정렬 전 상태 그대로 표시
   // 2) 첫 라운드면: 점수 0부터 시작해 증가하는 연출을 만들기 위해 초기화
   useEffect(() => {
-    if (previousStandingResults.length > 0) {
-      setDisplayResults(previousStandingResults);
-    } else if (standingResults.length > 0) {
-      setDisplayResults(standingResults.map((p) => ({ ...p, score: 0 })));
-    }
-  }, [previousStandingResults, standingResults]);
+    const timeout = setTimeout(() => {
+      setIsSorted(false);
+
+      if (previousStandingResults.length > 0) {
+        setDisplayResults(previousStandingResults);
+      } else if (standingResults.length > 0) {
+        setDisplayResults(standingResults.map((p) => ({ ...p, score: 0 })));
+      }
+    }, 0);
+
+    return () => clearTimeout(timeout);
+  }, [currentRound, previousStandingResults, standingResults]);
 
   // 일정 시간 후 점수 기준으로 정렬
   // → FLIP 애니메이션을 사용해 순위 변화가 자연스럽게 보이도록 처리
