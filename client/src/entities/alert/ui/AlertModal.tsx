@@ -1,4 +1,4 @@
-import { BaseModal } from '@/shared/ui/base-modal';
+import { BaseModal } from '@/shared/ui';
 
 interface AlertModalProps {
   isOpen: boolean;

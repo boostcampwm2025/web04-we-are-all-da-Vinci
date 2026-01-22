@@ -4,7 +4,7 @@
      FONTS
      ───────────────────────────────────────────────────────────── */
   --font-display: 'Be Vietnam Pro', sans-serif;
-  --font-handwriting: 'SchoolSafetyRoundedSmile', 'Nanum Pen Script', cursive;
+  --font-handwriting: 'Nanum Pen Script', cursive;
 
   /* ─────────────────────────────────────────────────────────────
      CONTENT COLORS (텍스트용) - text-content-*
@@ -209,6 +209,7 @@
   isolation: isolate;
 }
 
+/* 필기체 보더 */
 .scribble-border::before {
   content: '';
   position: absolute;
@@ -218,4 +219,9 @@
   filter: url(#wavy);
   pointer-events: none;
   opacity: 0.8;
+}
+
+/* 필기체 보더 사각형 */
+.scribble-border-box::before {
+  border-radius: 1rem;
 }

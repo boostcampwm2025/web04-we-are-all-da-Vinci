@@ -3,7 +3,7 @@ import { useGameStore } from '@/entities/gameRoom/model';
 import { Timer } from '@/entities/timer';
 import { DrawingCanvas } from '@/features/drawingCanvas';
 import { LiveRankingList } from '@/features/liveRanking';
-import { RoundBadge } from '@/shared/ui/round';
+import { RoundBadge } from '@/shared/ui';
 
 export const Drawing = () => {
   const currentRound = useGameStore((state) => state.currentRound);

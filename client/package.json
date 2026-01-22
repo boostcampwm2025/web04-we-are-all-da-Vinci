@@ -20,6 +20,7 @@
   "dependencies": {
     "@sentry/react": "^10.32.1",
     "@sentry/vite-plugin": "^4.6.1",
+    "boring-avatars": "^1.11.2",
     "mixpanel-browser": "^2.73.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

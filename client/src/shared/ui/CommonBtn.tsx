@@ -1,15 +1,19 @@
 import { useNavigate } from 'react-router-dom';
 
 type Variant = 'scribble' | 'radius';
+type Size = 'sm' | 'md' | 'lg';
 
 interface CommonBtnProps {
-  icon: string;
+  icon?: string;
   text: string;
   variant: Variant;
+  size?: Size;
   color?: string;
   path?: string;
   onClick?: () => void;
   disabled?: boolean;
+  ariaLabel?: string;
+  className?: string;
 }
 
 const CommonBtn = ({
@@ -17,9 +21,12 @@ const CommonBtn = ({
   text,
   path,
   variant,
+  size = 'lg',
   color = 'blue',
   onClick,
   disabled = false,
+  ariaLabel,
+  className = '',
 }: CommonBtnProps) => {
   const navigate = useNavigate();
 
@@ -46,31 +53,52 @@ const CommonBtn = ({
 
   const baseClasses = 'font-handwriting flex items-center justify-center';
 
+  const sizeClasses = {
+    sm: 'h-full px-3 text-lg',
+    md: 'h-12 px-4 text-xl',
+    lg: 'h-16 px-6 text-3xl',
+  };
+
   const variantClasses = {
-    scribble:
-      'scribble-border group h-16 w-full rounded-full bg-white/90 px-6 text-gray-800 transition-all hover:scale-105 hover:bg-white',
+    scribble: `scribble-border group w-full rounded-full bg-white/90 text-gray-800 transition-all hover:scale-105 hover:bg-white ${sizeClasses[size]}`,
     radius: `w-full gap-1 rounded-xl border-2 bg-white py-5 text-xl font-bold transition-colors ${getColorClasses(color)}`,
   };
 
   const iconClasses = {
-    scribble:
-      'material-symbols-outlined mr-2 text-3xl transition-transform group-hover:scale-110',
-    radius: 'material-symbols-outlined text-2xl',
+    scribble: {
+      sm: 'material-symbols-outlined mr-1 text-lg transition-transform group-hover:scale-110',
+      md: 'material-symbols-outlined mr-1 text-2xl transition-transform group-hover:scale-110',
+      lg: 'material-symbols-outlined mr-2 text-3xl transition-transform group-hover:scale-110',
+    },
+    radius: {
+      sm: 'material-symbols-outlined text-lg',
+      md: 'material-symbols-outlined text-xl',
+      lg: 'material-symbols-outlined text-2xl',
+    },
   };
 
   const textClasses = {
-    scribble: 'font-handwriting text-3xl font-bold',
-    radius: '',
+    scribble: {
+      sm: 'font-handwriting text-lg font-bold',
+      md: 'font-handwriting text-xl font-bold',
+      lg: 'font-handwriting text-3xl font-bold',
+    },
+    radius: {
+      sm: '',
+      md: '',
+      lg: '',
+    },
   };
 
   return (
     <button
       onClick={handleClick}
       disabled={disabled}
-      className={`${baseClasses} ${variantClasses[variant]} ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+      aria-label={ariaLabel || text}
+      className={`${baseClasses} ${variantClasses[variant]} ${disabled ? 'cursor-not-allowed opacity-50' : ''} ${className}`}
     >
-      <span className={iconClasses[variant]}>{icon}</span>
-      <span className={textClasses[variant]}>{text}</span>
+      {icon && <span className={iconClasses[variant][size]}>{icon}</span>}
+      <span className={textClasses[variant][size]}>{text}</span>
     </button>
   );
 };

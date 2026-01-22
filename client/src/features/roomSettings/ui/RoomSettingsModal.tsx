@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BaseModal } from '@/shared/ui/base-modal';
+import { BaseModal } from '@/shared/ui';
 import { trackEvent } from '@/shared/lib/mixpanel';
 import { MIXPANEL_EVENTS } from '@/shared/config';
 

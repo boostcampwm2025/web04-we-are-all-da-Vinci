@@ -1,16 +1,19 @@
-export { CommonBtn } from './button';
-export { Input } from './input';
-export { BaseModal } from './base-modal';
-export { Title } from './title';
-export { DecorateTitle } from './title';
-export { Toast } from './toast/Toast.tsx';
+export { default as BaseModal } from './BaseModal';
+export { default as CommonBtn } from './CommonBtn';
+export { default as DecorateTitle } from './DecorateTitle';
 export {
-  SunDoodle,
+  BrushDoodle,
+  JudyDoodle,
+  LionDoodle,
+  NickDoodle,
+  PaletteDoodle,
+  PainterDoodle,
   ScribbleDoodle,
   StarDoodle,
-  BrushDoodle,
-  PaletteDoodle,
-  NickDoodle,
-  LionDoodle,
-  JudyDoodle,
-} from './doodles';
+  SunDoodle,
+} from './Doodles';
+export { default as Input } from './Input';
+export { default as RoundBadge } from './RoundBadge';
+export { default as Title } from './Title';
+export { default as Toast } from './Toast';
+export { default as UserAvatar } from './UserAvatar';

@@ -1,6 +1,6 @@
 import { selectLiveRankings, useGameStore } from '@/entities/gameRoom/model';
 import { RANK_CHANGE, type RankChange } from '@/entities/ranking';
-import { getSocket } from '@/shared/api/socket';
+import { getSocket } from '@/shared/api';
 
 function calculateRankChange(
   previousRank: number | null,

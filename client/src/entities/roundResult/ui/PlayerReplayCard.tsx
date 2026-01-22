@@ -3,6 +3,7 @@ import type { Stroke } from '@/entities/similarity/model';
 import { DrawingReplayCanvas } from '@/features/replayingCanvas';
 import type { Similarity } from '@/features/similarity';
 import { PlayerSimilarityDetailTooltip } from '@/entities/similarity';
+import { UserAvatar } from '@/shared/ui';
 
 const getRankColor = (rank: number) => {
   if (rank === 1) return 'bg-yellow-400 text-yellow-900';
@@ -14,6 +15,7 @@ const getRankColor = (rank: number) => {
 interface PlayerReplayCardProps {
   rank: number;
   nickname: string;
+  profileId: string;
   similarity: Similarity;
   strokes: Stroke[];
   isCurrentUser?: boolean;
@@ -22,6 +24,7 @@ interface PlayerReplayCardProps {
 export const PlayerReplayCard = ({
   rank,
   nickname,
+  profileId,
   similarity,
   strokes,
   isCurrentUser = false,
@@ -52,12 +55,13 @@ export const PlayerReplayCard = ({
       <div className="flex flex-col rounded-xl border-2 border-gray-800 bg-white p-2 shadow-lg">
         {/* Player Info Header */}
         <div className="mb-1 flex shrink-0 items-center justify-between">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <span
               className={`flex h-6 min-w-[24px] shrink-0 items-center justify-center rounded-full px-1 text-xs font-bold ${getRankColor(rank)}`}
             >
               #{rank}
             </span>
+            <UserAvatar name={profileId} size={24} />
             <h3 className="font-handwriting truncate text-base font-bold">
               {nickname}
               {isCurrentUser && ' (You)'}
