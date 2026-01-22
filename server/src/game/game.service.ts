@@ -222,11 +222,11 @@ export class GameService {
   async kickUser(roomId: string, hostSocketId: string, targetSocketId: string) {
     const room = await this.cacheService.getRoom(roomId);
     if (!room) {
-      throw new WebsocketException('방이 존재하지 않습니다.');
+      throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
     }
 
     if (room.phase !== GamePhase.WAITING) {
-      throw new WebsocketException('대기 상태에서만 퇴장시킬 수 있습니다.');
+      throw new WebsocketException(ErrorCode.GAME_NOT_WAITING_PHASE);
     }
 
     const hostPlayer = room.players.find(
@@ -237,15 +237,15 @@ export class GameService {
     );
 
     if (!hostPlayer || !targetPlayer) {
-      throw new WebsocketException('플레이어가 존재하지 않습니다.');
+      throw new WebsocketException(ErrorCode.PLAYER_NOT_FOUND);
     }
 
     if (!hostPlayer.isHost) {
-      throw new WebsocketException('방장만 퇴장시킬 수 있습니다.');
+      throw new WebsocketException(ErrorCode.PLAYER_NOT_HOST);
     }
 
     if (targetPlayer.isHost) {
-      throw new WebsocketException('방장을 퇴장시킬 수 없습니다.');
+      throw new WebsocketException(ErrorCode.HOST_CAN_NOT_KICKED);
     }
 
     const kickedPlayer = {
@@ -255,7 +255,7 @@ export class GameService {
 
     const updatedRoom = await this.leaveRoom(targetSocketId);
     if (!updatedRoom) {
-      throw new WebsocketException('방이 없습니다.');
+      throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
     }
     return { updatedRoom, kickedPlayer };
   }
