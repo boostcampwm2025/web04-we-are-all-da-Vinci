@@ -1,11 +1,14 @@
 import type { Stroke } from '@/entities/similarity';
 import type { Similarity } from '@/features/similarity';
 
-export interface RoundResult {
+export interface PlayerScore {
   socketId: string;
   nickname: string;
   profileId: string;
   score: number;
+}
+
+export interface RoundResult extends PlayerScore {
   ranking: number;
   similarity: Similarity;
   strokes: Stroke[];
@@ -17,10 +20,5 @@ export interface RoundReplayResponse {
 }
 
 export interface RoundStandingResponse {
-  rankings: {
-    socketId: string;
-    nickname: string;
-    profileId: string;
-    score: number;
-  }[];
+  rankings: PlayerScore[];
 }
