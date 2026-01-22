@@ -1,1 +1,6 @@
-export type { PlayerScore, RoundResult, RoundReplayResponse, RoundStandingResponse } from './types';
+export type {
+  PlayerScore,
+  RoundResult,
+  RoundReplayResponse,
+  RoundStandingResponse,
+} from './types';

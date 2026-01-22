@@ -38,7 +38,8 @@ export const useFlipAnimation = <T extends { socketId: string }>() => {
 
         requestAnimationFrame(() => {
           el.style.transform = '';
-          el.style.transition = 'transform 700ms cubic-bezier(0.34,1.56,0.64,1)';
+          el.style.transition =
+            'transform 700ms cubic-bezier(0.34,1.56,0.64,1)';
         });
       });
     });

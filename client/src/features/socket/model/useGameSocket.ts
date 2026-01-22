@@ -3,7 +3,10 @@ import type { GameRoom } from '@/entities/gameRoom/model';
 import { useGameStore } from '@/entities/gameRoom/model';
 import type { Player } from '@/entities/player/model';
 import type { RankingEntry } from '@/entities/ranking';
-import type { RoundReplayResponse, RoundStandingResponse } from '@/entities/roundResult/model';
+import type {
+  RoundReplayResponse,
+  RoundStandingResponse,
+} from '@/entities/roundResult/model';
 import type { Stroke } from '@/entities/similarity';
 import { disconnectSocket, getSocket } from '@/shared/api';
 import { CLIENT_EVENTS, SERVER_EVENTS } from '@/shared/config';
@@ -177,14 +180,20 @@ export const useGameSocket = () => {
     });
 
     // 결과
-    socket.on(CLIENT_EVENTS.ROOM_ROUND_REPLAY, (response: RoundReplayResponse) => {
-      setRoundResults(response.rankings);
-      setPromptStrokes(response.promptStrokes);
-    });
+    socket.on(
+      CLIENT_EVENTS.ROOM_ROUND_REPLAY,
+      (response: RoundReplayResponse) => {
+        setRoundResults(response.rankings);
+        setPromptStrokes(response.promptStrokes);
+      },
+    );
 
-    socket.on(CLIENT_EVENTS.ROOM_ROUND_STANDING, (response: RoundStandingResponse) => {
-      setStandingResults(response.rankings);
-    });
+    socket.on(
+      CLIENT_EVENTS.ROOM_ROUND_STANDING,
+      (response: RoundStandingResponse) => {
+        setStandingResults(response.rankings);
+      },
+    );
 
     socket.on(CLIENT_EVENTS.ROOM_GAME_END, (response: GameEndResponse) => {
       setFinalResults(response.finalRankings);

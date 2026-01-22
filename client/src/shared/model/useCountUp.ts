@@ -5,7 +5,7 @@ export const useCountUp = (
   start: number,
   end: number,
   duration = 1000,
-  delay = 0
+  delay = 0,
 ) => {
   const [count, setCount] = useState(start);
 

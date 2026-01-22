@@ -7,7 +7,9 @@ const SORT_DELAY = 1500; // 점수 증가 연출 이후 순위 정렬을 시작�
 
 export const useRoundStanding = () => {
   const standingResults = useGameStore((s) => s.standingResults);
-  const previousStandingResults = useGameStore((s) => s.previousStandingResults);
+  const previousStandingResults = useGameStore(
+    (s) => s.previousStandingResults,
+  );
   const currentRound = useGameStore((s) => s.currentRound);
   const currentPlayer = useCurrentPlayer();
 
@@ -59,7 +61,7 @@ export const useRoundStanding = () => {
   const myRank = useMemo(() => {
     if (!currentPlayer) return -1;
     const index = displayResults.findIndex(
-      (p) => p.socketId === currentPlayer.socketId
+      (p) => p.socketId === currentPlayer.socketId,
     );
     return index !== -1 ? index + 1 : -1;
   }, [displayResults, currentPlayer]);

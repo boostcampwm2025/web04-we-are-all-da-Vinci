@@ -45,23 +45,13 @@ const RankingCard = ({
 
   return (
     <div
-      className={`
-        rounded-xl border-2 p-3 transition-all duration-300
-        ${rankStyle.border}
-        ${rankStyle.bg}
-        ${currentUserRing}
-      `}
+      className={`rounded-xl border-2 p-3 transition-all duration-300 ${rankStyle.border} ${rankStyle.bg} ${currentUserRing} `}
     >
       <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
           {rank && (
             <div
-              className={`
-                flex min-w-6 items-center justify-center
-                rounded-full px-1.5 py-0.5
-                text-xs font-bold text-white
-                ${rankStyle.badge}
-              `}
+              className={`flex min-w-6 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-bold text-white ${rankStyle.badge} `}
             >
               {rank}
             </div>

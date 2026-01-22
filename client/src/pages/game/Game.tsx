@@ -1,6 +1,13 @@
 import { selectPhase, useGameStore } from '@/entities/gameRoom/model';
 import { useGameSocket } from '@/features/socket/model';
-import { Drawing, GameEnd, Prompt, RoundReplay, RoundStanding, Waiting } from '@/widgets';
+import {
+  Drawing,
+  GameEnd,
+  Prompt,
+  RoundReplay,
+  RoundStanding,
+  Waiting,
+} from '@/widgets';
 
 const GAME_PHASE_COMPONENT_MAP = {
   WAITING: Waiting,
