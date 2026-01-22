@@ -20,7 +20,7 @@ const AppLayout = () => {
     return !localStorage.getItem('nickname');
   });
   const [nickname, setNickname] = useState('');
-  const { message, type, duration, setHide } = useToastStore();
+  const { toasts, removeToast } = useToastStore();
 
   useEffect(() => {
     const storedNickname = localStorage.getItem('nickname');
@@ -85,14 +85,17 @@ const AppLayout = () => {
         onSubmit={handleSubmit}
       />
 
-      {message && (
-        <Toast
-          message={message}
-          type={type}
-          duration={duration}
-          onClose={setHide}
-        />
-      )}
+      <div className="pointer-events-none fixed right-6 bottom-6 z-50 flex flex-col items-end gap-2">
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            message={toast.message}
+            type={toast.type}
+            duration={toast.duration}
+            onClose={() => removeToast(toast.id)}
+          />
+        ))}
+      </div>
     </div>
   );
 };

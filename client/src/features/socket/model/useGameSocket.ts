@@ -37,7 +37,7 @@ export const useGameSocket = () => {
   const setHighlight = useGameStore((state) => state.setHighlight);
   const setPromptStrokes = useGameStore((state) => state.setPromptStrokes);
   const reset = useGameStore((state) => state.reset);
-  const setShow = useToastStore((state) => state.setShow);
+  const addToast = useToastStore((state) => state.addToast);
 
   // localStorage 변경 감지
   useEffect(() => {
@@ -121,9 +121,9 @@ export const useGameSocket = () => {
           disconnectSocket();
           reset();
           navigate('/');
-          setShow(`방에서 퇴장당했습니다.`, 'error');
+          addToast(`방에서 퇴장당했습니다.`, 'error');
         } else {
-          setShow(`${kickedPlayer.nickname}님이 퇴장당했습니다.`, 'info');
+          addToast(`${kickedPlayer.nickname}님이 퇴장당했습니다.`, 'info');
         }
       },
     );
@@ -222,7 +222,7 @@ export const useGameSocket = () => {
     setFinalResults,
     setHighlight,
     reset,
-    setShow,
+    addToast,
   ]);
 
   return getSocket();

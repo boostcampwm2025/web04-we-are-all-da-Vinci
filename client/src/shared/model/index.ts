@@ -1,3 +1,3 @@
 export { useToastStore } from './useToastStore';
-export { type ToastType } from './types';
+export { type ToastType, type Toast } from './types';
 export { useCanvasSetup } from './useCanvasSetup';

@@ -38,14 +38,12 @@ export const Toast = ({
   }, [duration, onClose]);
 
   return (
-    <div className="pointer-events-none fixed right-6 bottom-6 z-50 flex">
-      <div
-        className={`font-handwriting pointer-events-auto flex items-center gap-2 rounded-xl px-6 py-4 text-2xl font-bold text-white shadow-lg backdrop-blur-sm ${typeColorMap[type]} `}
-        style={{ animation: 'var(--animate-toast)' }}
-      >
-        <span className={iconClasses.radius}>{typeIconMap[type]}</span>
-        <p>{message}</p>
-      </div>
+    <div
+      className={`font-handwriting pointer-events-auto flex items-center gap-2 rounded-xl px-6 py-4 text-2xl font-bold text-white shadow-lg backdrop-blur-sm ${typeColorMap[type]} `}
+      style={{ animation: 'var(--animate-toast)' }}
+    >
+      <span className={iconClasses.radius}>{typeIconMap[type]}</span>
+      <p>{message}</p>
     </div>
   );
 };
