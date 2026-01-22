@@ -15,6 +15,7 @@ export {
 export { default as Input } from './Input';
 export { default as RoundBadge } from './RoundBadge';
 export { GameHeader } from './GameHeader';
+export { default as PageBackground } from './PageBackground';
 export { default as Title } from './Title';
 export { default as Toast } from './Toast';
 export { default as UserAvatar } from './UserAvatar';

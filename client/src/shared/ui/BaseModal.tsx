@@ -1,17 +1,5 @@
 import { TITLES } from '@/shared/config';
-import { CommonBtn, Title, DecorateTitle } from '@/shared/ui';
-
-import {
-  BrushDoodle,
-  JudyDoodle,
-  LionDoodle,
-  NickDoodle,
-  PaletteDoodle,
-  ScribbleDoodle,
-  StarDoodle,
-  SunDoodle,
-  PainterDoodle,
-} from '@/shared/ui/Doodles';
+import { CommonBtn, DecorateTitle, PageBackground, Title } from '@/shared/ui';
 
 interface BaseModalProps {
   isOpen: boolean;
@@ -37,18 +25,9 @@ const BaseModal = ({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white bg-[linear-gradient(to_right,#e5e7eb_1px,transparent_1px),linear-gradient(to_bottom,#e5e7eb_1px,transparent_1px)] bg-[size:24px_24px]"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white"
     >
-      {/* Doodles */}
-      <BrushDoodle />
-      <JudyDoodle />
-      <LionDoodle />
-      <NickDoodle />
-      <PaletteDoodle />
-      <ScribbleDoodle />
-      <StarDoodle />
-      <SunDoodle />
-      <PainterDoodle />
+      <PageBackground />
 
       {/* 상단 로고 영역 */}
       <div className="mb-6 flex flex-col items-center text-center">
