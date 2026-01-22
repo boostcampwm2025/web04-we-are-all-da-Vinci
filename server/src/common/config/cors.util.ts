@@ -14,7 +14,10 @@ export function isAllowedOrigin(origin: string | undefined): boolean {
     return true; // 서버 간 요청 허용
   }
 
-  const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [];
+  const allowedOrigins = (process.env.CORS_ORIGIN ?? '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
 
   // 환경 변수에 설정된 origin 확인
   if (allowedOrigins.includes(origin)) {
@@ -47,8 +50,10 @@ export function corsOriginCallback(
  * Socket.IO CORS 설정용 origin 배열 또는 함수 반환
  */
 export function getSocketCorsOrigin(): (string | RegExp)[] {
-  const origins: (string | RegExp)[] =
-    process.env.CORS_ORIGIN?.split(',') || [];
+  const origins: (string | RegExp)[] = (process.env.CORS_ORIGIN ?? '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
   origins.push(NETLIFY_PREVIEW_PATTERN);
   return origins;
 }
