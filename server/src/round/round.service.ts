@@ -1,12 +1,13 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { GameRoom, Stroke } from 'src/common/types';
+import { GameRoom, Player, Stroke } from 'src/common/types';
 import {
   ClientEvents,
   DRAWING_END_DELAY,
   GAME_END_TIME,
   GamePhase,
   PROMPT_TIME,
-  ROUND_END_TIME,
+  ROUND_REPLAY_TIME,
+  ROUND_STANDING_TIME,
 } from 'src/common/constants';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
@@ -64,9 +65,12 @@ export class RoundService implements OnModuleInit {
         return await this.moveDrawing(room);
 
       case GamePhase.DRAWING:
-        return await this.moveRoundEnd(room);
+        return await this.moveRoundReplay(room);
 
-      case GamePhase.ROUND_END:
+      case GamePhase.ROUND_REPLAY:
+        return await this.moveRoundStanding(room);
+
+      case GamePhase.ROUND_STANDING:
         return await this.moveNextRoundOrEnd(room);
 
       case GamePhase.GAME_END:
@@ -123,8 +127,8 @@ export class RoundService implements OnModuleInit {
     this.logger.info({ room }, 'Drawing Phase Start');
   }
 
-  private async moveRoundEnd(room: GameRoom) {
-    room.phase = GamePhase.ROUND_END;
+  private async moveRoundReplay(room: GameRoom) {
+    room.phase = GamePhase.ROUND_REPLAY;
     await this.cacheService.saveRoom(room.roomId, room);
 
     const roundResults = await this.progressCacheService.getRoundResults(
@@ -148,13 +152,36 @@ export class RoundService implements OnModuleInit {
         (await this.getPromptForRound(room.promptId, room.currentRound)) || [],
     };
 
-    await this.timerService.startTimer(room.roomId, ROUND_END_TIME);
+    await this.timerService.startTimer(room.roomId, ROUND_REPLAY_TIME);
 
     this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
-    this.server.to(room.roomId).emit(ClientEvents.ROOM_ROUND_END, result);
+    this.server.to(room.roomId).emit(ClientEvents.ROOM_ROUND_REPLAY, result);
 
-    this.logger.info({ room }, 'Round End Phase Start');
+    this.logger.info({ room }, 'Round Replay Phase Start');
   }
+
+private async moveRoundStanding(room: GameRoom) {
+  room.phase = GamePhase.ROUND_STANDING;
+
+  const standings = await this.standingsCacheService.getStandings(room.roomId);
+  const playerMapper = this.createPlayerMapper(room.players);
+
+  const rankings = standings.map((value) => ({
+    ...value,
+    nickname: playerMapper[value.socketId]?.nickname,
+    profileId: playerMapper[value.socketId]?.profileId,
+  }));
+
+  await this.cacheService.saveRoom(room.roomId, room);
+  await this.timerService.startTimer(room.roomId, ROUND_STANDING_TIME);
+
+  this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
+  this.server.to(room.roomId).emit(ClientEvents.ROOM_ROUND_STANDING, {
+    rankings,
+  });
+
+  this.logger.info({ room }, 'Round Standing Phase Start');
+}
 
   private async moveNextRoundOrEnd(room: GameRoom) {
     if (room.currentRound < room.settings.totalRounds) {
