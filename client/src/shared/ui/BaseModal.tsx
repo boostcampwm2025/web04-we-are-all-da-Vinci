@@ -9,6 +9,9 @@ interface BaseModalProps {
   onConfirm: () => void;
   confirmText?: string;
   confirmDisabled?: boolean;
+  onCancel?: () => void;
+  cancelText?: string;
+  overlay?: boolean;
 }
 
 const BaseModal = ({
@@ -30,7 +33,7 @@ const BaseModal = ({
       <PageBackground />
 
       {/* 상단 로고 영역 */}
-      <div className="mb-6 flex flex-col items-center text-center">
+      <div className="relative z-10 mb-6 flex flex-col items-center text-center">
         <span className="border-accent-warm bg-accent/30 text-accent-warm mb-2 inline-block -rotate-1 rounded-full border border-dashed px-2 py-0.5 text-[10px] font-bold tracking-wide">
           ✨ 친구들과 함께하는 실시간 멀티플레이 드로잉 게임
         </span>
@@ -42,7 +45,7 @@ const BaseModal = ({
       {/* 모달 콘텐츠 */}
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-2xl border-2 border-gray-400 bg-white p-8 shadow-xl"
+        className="scribble-border scribble-border-box relative z-10 w-full max-w-md rounded-2xl border-2 border-gray-400 bg-white p-8 shadow-xl"
       >
         <h2 className="font-handwriting mb-6 text-center text-4xl font-bold">
           {title}
