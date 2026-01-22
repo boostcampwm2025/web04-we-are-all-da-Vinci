@@ -101,10 +101,11 @@ describe('랜딩페이지 - 방 생성', () => {
       );
     });
 
-    // 에러 발생 시 alert 표시
-    expect(alertSpy).toHaveBeenCalledWith(
-      '방 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-    );
+    // 에러 발생 시 UI에 에러 모달 표시 확인
+    expect(screen.getByText('오류')).toBeInTheDocument();
+    expect(
+      screen.getByText('방 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.'),
+    ).toBeInTheDocument();
 
     // 에러 발생 시 모달은 여전히 열려있음 (재시도 가능)
     expect(screen.getByText('방 설정')).toBeInTheDocument();
