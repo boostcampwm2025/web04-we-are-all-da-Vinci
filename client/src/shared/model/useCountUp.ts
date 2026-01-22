@@ -10,9 +10,8 @@ export const useCountUp = (
   const [count, setCount] = useState(start);
 
   useEffect(() => {
-    setCount(start);
-
     const timeout = setTimeout(() => {
+      setCount(start);
       const startTime = Date.now(); // 애니메이션 시작 시각
       const diff = end - start; // 총 이동해야 할 값
 
