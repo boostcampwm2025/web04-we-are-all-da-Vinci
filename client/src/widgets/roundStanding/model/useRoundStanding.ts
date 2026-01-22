@@ -42,14 +42,14 @@ export const useRoundStanding = () => {
     return () => clearTimeout(timeout);
   }, [currentRound, previousStandingResults, standingResults]);
 
-  // 일정 시간 후 점수 기준으로 정렬
+  // 일정 시간 후 정렬된 순위 표시
   // → FLIP 애니메이션을 사용해 순위 변화가 자연스럽게 보이도록 처리
+  // (서버에서 이미 점수 높은 순으로 정렬되어 옴)
   useEffect(() => {
     if (!standingResults.length) return;
 
     const timer = setTimeout(() => {
-      const sorted = [...standingResults].sort((a, b) => b.score - a.score);
-      playFlip(setDisplayResults, sorted);
+      playFlip(setDisplayResults, standingResults);
       setIsSorted(true);
     }, SORT_DELAY);
 
