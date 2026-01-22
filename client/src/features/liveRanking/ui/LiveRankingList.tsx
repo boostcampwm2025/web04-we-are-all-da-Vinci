@@ -46,7 +46,6 @@ export const LiveRankingList = () => {
           percent={Math.round(entry.similarity)}
           rankChange={entry.rankChange}
           isCurrentUser={entry.isCurrentUser}
-          color={getRankColor(entry.rank, entry.isCurrentUser)}
         />
       ))}
     </>
