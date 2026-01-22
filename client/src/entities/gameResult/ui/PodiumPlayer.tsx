@@ -1,4 +1,5 @@
 import { useIsCurrentUser } from '@/entities/gameRoom/model';
+import { UserAvatar } from '@/shared/ui';
 import type { FinalResult } from '../model/types';
 
 interface PodiumPlayerProps {
@@ -63,12 +64,6 @@ const PODIUM_CONFIG = {
   },
 };
 
-const MEDAL_EMOJI = {
-  first: '🏆',
-  second: '🥈',
-  third: '🥉',
-};
-
 export const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
   const isCurrentUser = useIsCurrentUser(player.socketId);
   const config = PODIUM_CONFIG[position];
@@ -79,15 +74,10 @@ export const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
         <div
           className={`${config.size} relative mb-3 flex items-center justify-center overflow-hidden rounded-full border-4 ${config.borderColor} bg-white shadow-${position === 'first' ? 'xl' : 'lg'}`}
         >
-          {/* {player.avatar ? (
-            <img
-              alt={`${player.nickname} avatar`}
-              className="h-full w-full object-cover"
-              src={player.avatar}
-            />
-          ) : ( */}
-          <span className="text-3xl select-none">{MEDAL_EMOJI[position]}</span>
-          {/* )} */}
+          <UserAvatar
+            name={player.profileId}
+            size={position === 'first' ? 80 : 64}
+          />
         </div>
 
         {config.badge && (

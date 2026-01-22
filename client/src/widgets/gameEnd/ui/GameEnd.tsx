@@ -4,7 +4,7 @@ import { useGameStore, useIsHost } from '@/entities/gameRoom/model';
 import { PlayerSimilarityDetailTooltip } from '@/entities/similarity';
 import { TIMER } from '@/entities/timer/config';
 import { DrawingReplayCanvas } from '@/features/replayingCanvas';
-import { getSocket } from '@/shared/api/socket';
+import { getSocket } from '@/shared/api';
 import { SERVER_EVENTS, TITLES } from '@/shared/config';
 import { CommonBtn, Title } from '@/shared/ui';
 import { useState } from 'react';

@@ -14,6 +14,9 @@ importers:
       '@sentry/vite-plugin':
         specifier: ^4.6.1
         version: 4.6.1
+      boring-avatars:
+        specifier: ^1.11.2
+        version: 1.11.2
       mixpanel-browser:
         specifier: ^2.73.0
         version: 2.73.0(@mixpanel/rrweb-utils@2.0.0-alpha.18.2)
@@ -1201,6 +1204,9 @@ packages:
   binary-extensions@2.3.0:
     resolution: {integrity: sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==}
     engines: {node: '>=8'}
+
+  boring-avatars@1.11.2:
+    resolution: {integrity: sha512-3+wkwPeObwS4R37FGXMYViqc4iTrIRj5yzfX9Qy4mnpZ26sX41dGMhsAgmKks1r/uufY1pl4vpgzMWHYfJRb2A==}
 
   brace-expansion@1.1.12:
     resolution: {integrity: sha512-9T9UjW3r0UW5c1Q7GTwllptXwhvYmEzFhzMfZ9H7FQWt+uZePjZPjBP/W1ZEyZ1twGWom5/56TF4lPcqjnDHcg==}
@@ -3577,6 +3583,8 @@ snapshots:
       require-from-string: 2.0.2
 
   binary-extensions@2.3.0: {}
+
+  boring-avatars@1.11.2: {}
 
   brace-expansion@1.1.12:
     dependencies:

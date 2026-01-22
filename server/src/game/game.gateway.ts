@@ -17,10 +17,11 @@ import { GameService } from './game.service';
 import { GameRoom } from 'src/common/types';
 import { UseFilters } from '@nestjs/common';
 import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
+import { getSocketCorsOrigin } from 'src/common/config/cors.util';
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [],
+    origin: getSocketCorsOrigin(),
     credentials: true,
   },
 })
@@ -56,8 +57,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: UserJoinDto,
   ): Promise<string> {
-    const { nickname, roomId } = payload;
-    const room = await this.gameService.joinRoom(roomId, nickname, client.id);
+    const { nickname, roomId, profileId } = payload;
+    const room = await this.gameService.joinRoom(
+      roomId,
+      nickname,
+      profileId,
+      client.id,
+    );
     if (room) {
       this.logger.info(
         { clientId: client.id, ...payload },

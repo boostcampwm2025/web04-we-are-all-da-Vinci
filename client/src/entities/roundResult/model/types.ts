@@ -4,6 +4,7 @@ import type { Similarity } from '@/features/similarity';
 export interface RoundResult {
   socketId: string;
   nickname: string;
+  profileId: string;
   score: number;
   ranking: number;
   similarity: Similarity;

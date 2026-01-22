@@ -1,23 +1,25 @@
-import { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { ProfileSettingsModal } from '@/features/profileSettings';
+import { registerUserProperties } from '@/shared/lib/mixpanel';
 import {
-  SunDoodle,
-  ScribbleDoodle,
-  StarDoodle,
   BrushDoodle,
-  PaletteDoodle,
-  NickDoodle,
   JudyDoodle,
   LionDoodle,
-} from '@/shared/ui/doodles';
-import { NicknameInputModal } from '@/features/nickname';
-import { registerUserProperties } from '@/shared/lib/mixpanel';
+  NickDoodle,
+  PainterDoodle,
+  PaletteDoodle,
+  ScribbleDoodle,
+  StarDoodle,
+  SunDoodle,
+} from '@/shared/ui/Doodles';
+import { useEffect, useState } from 'react';
+import { Outlet } from 'react-router-dom';
 
 const AppLayout = () => {
   const [isModalOpen, setIsModalOpen] = useState(() => {
-    return !localStorage.getItem('nickname');
+    const nickname = localStorage.getItem('nickname');
+    const profileId = localStorage.getItem('profileId');
+    return !nickname || !profileId;
   });
-  const [nickname, setNickname] = useState('');
 
   useEffect(() => {
     const storedNickname = localStorage.getItem('nickname');
@@ -26,17 +28,10 @@ const AppLayout = () => {
     }
   }, []);
 
-  const handleSubmit = () => {
-    if (nickname.trim()) {
-      localStorage.setItem('nickname', nickname.trim());
-      registerUserProperties({ nickname: nickname.trim() });
-      setIsModalOpen(false);
-    }
-  };
-
   const handleClose = () => {
-    const storedNickname = localStorage.getItem('nickname');
-    if (storedNickname) {
+    const nickname = localStorage.getItem('nickname');
+    const profileId = localStorage.getItem('profileId');
+    if (nickname && profileId) {
       setIsModalOpen(false);
     }
   };
@@ -68,19 +63,14 @@ const AppLayout = () => {
         <NickDoodle />
         <JudyDoodle />
         <LionDoodle />
+        <PainterDoodle />
       </div>
 
       <div className="relative z-10 h-full w-full">
         <Outlet />
       </div>
 
-      <NicknameInputModal
-        isOpen={isModalOpen}
-        onClose={handleClose}
-        nickname={nickname}
-        setNickname={setNickname}
-        onSubmit={handleSubmit}
-      />
+      <ProfileSettingsModal isOpen={isModalOpen} onClose={handleClose} />
     </div>
   );
 };

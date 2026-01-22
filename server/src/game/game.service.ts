@@ -126,6 +126,7 @@ export class GameService {
   async joinRoom(
     roomId: string,
     nickname: string,
+    profileId: string,
     socketId: string,
   ): Promise<GameRoom | null> {
     const room = await this.cacheService.getRoom(roomId);
@@ -149,6 +150,7 @@ export class GameService {
 
     await this.cacheService.addPlayer(roomId, {
       nickname,
+      profileId,
       socketId,
       isHost: players.length === 0,
     });

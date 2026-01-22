@@ -3,7 +3,7 @@ import type { Player } from '@/entities/player/model';
 import type { RankingEntry } from '@/entities/ranking';
 import type { RoundResult } from '@/entities/roundResult/model';
 import type { Stroke } from '@/entities/similarity';
-import { getSocket } from '@/shared/api/socket';
+import { getSocket } from '@/shared/api';
 import type { Phase } from '@/shared/config';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';

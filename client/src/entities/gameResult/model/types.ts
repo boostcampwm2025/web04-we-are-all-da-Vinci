@@ -4,6 +4,7 @@ import type { Similarity } from '@/features/similarity';
 export interface FinalResult {
   socketId: string;
   nickname: string;
+  profileId: string;
   score: number;
 }
 
