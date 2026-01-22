@@ -81,7 +81,7 @@ export class SoundManager {
 
     if (!WEB_SERVER_URL) {
       console.warn(
-        'VITE_WEB_SERVER_URL이 설정되지 않았습니다. BGM 로드를 생략합니다.',
+        'VITE_WEB_SERVER_URL이 설정되지 않았습니다. 사운드 로드를 생략합니다.',
       );
       return;
     }

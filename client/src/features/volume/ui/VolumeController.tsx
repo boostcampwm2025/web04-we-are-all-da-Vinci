@@ -25,6 +25,7 @@ export const VolumeController = () => {
             className="h-2 w-full cursor-pointer appearance-none rounded-full bg-gray-200 accent-blue-500"
             name="sfxVolume"
             id="sfxVolume"
+            aria-label="효과음 볼륨:"
             value={sfxVolume}
             min={0}
             max={100}
@@ -50,6 +51,7 @@ export const VolumeController = () => {
             className="h-2 w-full cursor-pointer appearance-none rounded-full bg-gray-200 accent-blue-500"
             name="bgmVolume"
             id="bgmVolume"
+            aria-label="배경음 볼륨"
             value={bgmVolume}
             min={0}
             max={100}
