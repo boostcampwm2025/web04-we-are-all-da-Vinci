@@ -50,7 +50,7 @@ export const Main = () => {
     <>
       <div className="page-center">
         <div className="w-l flex flex-col items-center justify-center text-center">
-          <h3 className="border-accent-warm bg-accent/30 text-accent-warm mb-4 inline-block -rotate-1 rounded-full border-2 border-dashed px-5 py-2 font-bold tracking-wide">
+          <h3 className="border-accent-warm bg-accent/30 text-accent-warm mb-2 inline-block -rotate-1 rounded-full border-2 border-dashed px-5 py-2 font-bold tracking-wide">
             {TEXT.SUB_TITLE}
           </h3>
 
@@ -60,7 +60,7 @@ export const Main = () => {
             {TEXT.DESCRIPTION}
           </h6>
 
-          <div className="mt-10 flex w-full max-w-2xl flex-col items-center gap-4">
+          <div className="mt-5 flex w-full max-w-2xl flex-col items-center gap-4">
             <div className="flex w-full flex-col justify-center gap-4 sm:flex-row">
               <CommonBtn
                 variant="scribble"
@@ -77,6 +77,12 @@ export const Main = () => {
               {TEXT.MANUAL}
             </button>
           </div>
+        </div>
+        <div
+          id="boostAD"
+          className="absolute bottom-1 z-1200 flex h-25 w-280 justify-center bg-black px-10 text-center"
+        >
+          광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고
         </div>
       </div>
 
