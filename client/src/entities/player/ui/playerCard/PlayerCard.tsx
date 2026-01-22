@@ -45,15 +45,15 @@ const PlayerCard = ({
       <div className="font-handwriting mb-1 text-lg font-bold">{nickname}</div>
       {isHost && <span className="absolute top-2 right-2 text-xl">👑</span>}
       {!isHost && isCurrentUserHost && (
-        <button
-          className="absolute top-2 right-2 cursor-pointer text-xl hover:text-red-500"
+        <span
+          className="material-symbols-outlined absolute top-2 right-2 cursor-pointer text-xl hover:text-red-500"
           onClick={(e) => {
             e.stopPropagation();
             onKickClick?.();
           }}
         >
-          ✕
-        </button>
+          close
+        </span>
       )}
 
       {status && (
