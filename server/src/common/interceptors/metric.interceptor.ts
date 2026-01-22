@@ -17,11 +17,11 @@ export class MetricInterceptor implements NestInterceptor {
     const eventName = ws.getPattern();
     const end = this.metricService.startTimer();
 
-    this.metricService.incEvent(eventName);
-
     return next.handle().pipe(
       tap({
-        complete: () => end({ eventName: eventName }),
+        complete: () => this.metricService.incEvent(eventName, 'ok'),
+        error: () => this.metricService.incEvent(eventName, 'error'),
+        finalize: () => end({ eventName }),
       }),
     );
   }
