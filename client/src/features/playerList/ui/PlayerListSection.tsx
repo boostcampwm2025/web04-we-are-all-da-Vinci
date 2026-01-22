@@ -46,7 +46,7 @@ export const PlayerListSection = ({
   };
 
   return (
-    <div className="card flex h-100 flex-col p-6">
+    <div className="card flex h-full flex-col p-6">
       <div className="mb-5 flex shrink-0 items-center justify-between">
         <h2 className="font-handwriting flex items-center gap-2 text-2xl font-bold">
           인원
@@ -57,7 +57,7 @@ export const PlayerListSection = ({
         {roomCode}
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-4 content-start gap-4 overflow-y-auto">
+      <div className="grid min-h-0 flex-1 grid-cols-2 content-start gap-2 overflow-y-auto sm:gap-4 md:grid-cols-4">
         {players.map((player) => (
           <PlayerCard
             key={player.socketId}

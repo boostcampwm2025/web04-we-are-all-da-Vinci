@@ -1,9 +1,9 @@
-import { DrawingHeader, RankingPanel } from '@/entities/drawing';
+import { RankingPanel } from '@/entities/drawing';
 import { useGameStore } from '@/entities/gameRoom/model';
 import { Timer } from '@/entities/timer';
 import { DrawingCanvas } from '@/features/drawingCanvas';
 import { LiveRankingList } from '@/features/liveRanking';
-import { RoundBadge } from '@/shared/ui';
+import { GameHeader } from '@/shared/ui';
 
 export const Drawing = () => {
   const currentRound = useGameStore((state) => state.currentRound);
@@ -11,11 +11,13 @@ export const Drawing = () => {
   return (
     <>
       <Timer />
-      <div className="page-center h-screen">
-        <div className="page-container">
-          <DrawingHeader
+      <div className="page-center">
+        <main className="game-container">
+          <GameHeader
             title="그림을 그려주세요!"
-            roundBadge={<RoundBadge round={currentRound} />}
+            round={currentRound}
+            showDecoration
+            showLogo={false}
           />
 
           <div className="flex min-h-0 flex-1 items-stretch justify-center gap-6">
@@ -29,7 +31,7 @@ export const Drawing = () => {
               </RankingPanel>
             </div>
           </div>
-        </div>
+        </main>
       </div>
     </>
   );

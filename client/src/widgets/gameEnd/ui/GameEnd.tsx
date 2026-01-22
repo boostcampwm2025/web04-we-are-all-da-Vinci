@@ -6,7 +6,7 @@ import { TIMER } from '@/entities/timer/config';
 import { DrawingReplayCanvas } from '@/features/replayingCanvas';
 import { getSocket } from '@/shared/api';
 import { SERVER_EVENTS, TITLES } from '@/shared/config';
-import { CommonBtn, Title } from '@/shared/ui';
+import { CommonBtn, GameHeader } from '@/shared/ui';
 import { useState } from 'react';
 
 const BUTTON_ENABLE_AFTER = 10; // 10초 후 버튼 활성화
@@ -41,13 +41,10 @@ export const GameEnd = () => {
   };
 
   return (
-    <div className="page-center h-screen">
-      <div className="page-container">
+    <div className="page-center">
+      <main className="game-container">
         {/* 타이틀 */}
-        <div className="mb-4 shrink-0 text-center">
-          <Title title={TITLES.END} fontSize="text-6xl" />
-          <div className="underline-decor mt-1" />
-        </div>
+        <GameHeader title={TITLES.END} showDecoration />
 
         {/* 컨텐츠 영역 */}
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-8 lg:flex-row lg:items-center lg:gap-16">
@@ -156,7 +153,7 @@ export const GameEnd = () => {
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
