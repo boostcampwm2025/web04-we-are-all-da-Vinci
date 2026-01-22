@@ -1,4 +1,4 @@
-import { useGameStore, useCurrentPlayer } from '@/entities/gameRoom/model';
+import { useGameStore } from '@/entities/gameRoom/model';
 import type { PlayerScore } from '@/entities/roundResult/model/types';
 import { useEffect, useMemo, useState } from 'react';
 import { useFlipAnimation } from './useFlipAnimation';
@@ -11,7 +11,6 @@ export const useRoundStanding = () => {
     (s) => s.previousStandingResults,
   );
   const currentRound = useGameStore((s) => s.currentRound);
-  const currentPlayer = useCurrentPlayer();
 
   const [displayResults, setDisplayResults] = useState<PlayerScore[]>([]);
   const [isSorted, setIsSorted] = useState(false);
