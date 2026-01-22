@@ -77,6 +77,21 @@ export class RoundService implements OnModuleInit {
     }
   }
 
+  private createPlayerMapper(
+    players: Player[],
+  ): Record<string, { nickname: string; profileId: string }> {
+    return players.reduce(
+      (prev, player) => ({
+        ...prev,
+        [player.socketId]: {
+          nickname: player.nickname,
+          profileId: player.profileId,
+        },
+      }),
+      {},
+    );
+  }
+
   private async movePrompt(room: GameRoom) {
     room.phase = GamePhase.PROMPT;
     room.currentRound += 1;
@@ -117,19 +132,7 @@ export class RoundService implements OnModuleInit {
       room.currentRound,
     );
 
-    const playerMapper: Record<
-      string,
-      { nickname: string; profileId: string }
-    > = room.players.reduce(
-      (prev, player) => ({
-        ...prev,
-        [player.socketId]: {
-          nickname: player.nickname,
-          profileId: player.profileId,
-        },
-      }),
-      {},
-    );
+    const playerMapper = this.createPlayerMapper(room.players);
 
     const rankings = roundResults
       .sort((a, b) => b.similarity.similarity - a.similarity.similarity)
@@ -166,19 +169,8 @@ export class RoundService implements OnModuleInit {
     const standings = await this.standingsCacheService.getStandings(
       room.roomId,
     );
-    const playerMapper: Record<
-      string,
-      { nickname: string; profileId: string }
-    > = room.players.reduce(
-      (prev, player) => ({
-        ...prev,
-        [player.socketId]: {
-          nickname: player.nickname,
-          profileId: player.profileId,
-        },
-      }),
-      {},
-    );
+
+    const playerMapper = this.createPlayerMapper(room.players);
 
     const rankings = standings.map((value) => ({
       ...value,
