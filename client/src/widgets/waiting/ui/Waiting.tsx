@@ -12,6 +12,7 @@ import { WaitingRoomActions } from '@/features/waitingRoomActions';
 import { getSocket } from '@/shared/api';
 import { MIXPANEL_EVENTS, SERVER_EVENTS, TITLES } from '@/shared/config';
 import { trackEvent } from '@/shared/lib/mixpanel';
+import { useToastStore } from '@/shared/model';
 import { GameHeader } from '@/shared/ui';
 import { useState } from 'react';
 
@@ -24,12 +25,16 @@ export const Waiting = () => {
   const settings = useGameStore(selectSettings);
   const isHostUser = useIsHost();
 
+  const { addToast } = useToastStore();
+
   const copyRoomId = async () => {
     try {
       await navigator.clipboard.writeText(globalThis.location.href);
       trackEvent(MIXPANEL_EVENTS.CLICK_COPYLINK_BTN);
+      addToast('초대 링크가 복사되었습니다!', 'success');
     } catch (e) {
       console.error('클립보드 복사 실패', e);
+      addToast('링크 복사에 실패했습니다.', 'error');
     }
   };
 
