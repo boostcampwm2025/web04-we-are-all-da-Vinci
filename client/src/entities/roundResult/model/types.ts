@@ -11,7 +11,16 @@ export interface RoundResult {
   strokes: Stroke[];
 }
 
-export interface RoundEndResponse {
+export interface RoundReplayResponse {
   rankings: RoundResult[];
   promptStrokes: Stroke[];
+}
+
+export interface RoundStandingResponse {
+  rankings: {
+    socketId: string;
+    nickname: string;
+    profileId: string;
+    score: number;
+  }[];
 }

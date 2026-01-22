@@ -20,6 +20,7 @@ interface GameState extends GameRoom {
 
   // 결과 데이터
   roundResults: RoundResult[];
+  previousStandingResults: FinalResult[]; // 이전 라운드 스탠딩 (순위 변동 애니메이션용)
   standingResults: FinalResult[]; // 라운드 스탠딩 (누적 점수)
   finalResults: FinalResult[];
   highlight: Highlight | null;
@@ -52,6 +53,7 @@ const initialState = {
   liveRankings: [],
   promptStrokes: [],
   roundResults: [],
+  previousStandingResults: [],
   standingResults: [],
   finalResults: [],
   highlight: null,
@@ -74,7 +76,11 @@ export const useGameStore = create<GameState>()(
 
       setRoundResults: (roundResults) => set({ roundResults }),
 
-      setStandingResults: (standingResults) => set({ standingResults }),
+      setStandingResults: (standingResults) =>
+        set((state) => ({
+          previousStandingResults: state.standingResults,
+          standingResults,
+        })),
 
       setFinalResults: (finalResults) => set({ finalResults }),
 

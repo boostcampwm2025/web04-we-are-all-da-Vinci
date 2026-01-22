@@ -3,7 +3,7 @@ import type { GameRoom } from '@/entities/gameRoom/model';
 import { useGameStore } from '@/entities/gameRoom/model';
 import type { Player } from '@/entities/player/model';
 import type { RankingEntry } from '@/entities/ranking';
-import type { RoundEndResponse } from '@/entities/roundResult/model';
+import type { RoundReplayResponse, RoundStandingResponse } from '@/entities/roundResult/model';
 import type { Stroke } from '@/entities/similarity';
 import { disconnectSocket, getSocket } from '@/shared/api';
 import { CLIENT_EVENTS, SERVER_EVENTS } from '@/shared/config';
@@ -37,6 +37,7 @@ export const useGameSocket = () => {
   const setTimer = useGameStore((state) => state.setTimer);
   const setLiveRankings = useGameStore((state) => state.setLiveRankings);
   const setRoundResults = useGameStore((state) => state.setRoundResults);
+  const setStandingResults = useGameStore((state) => state.setStandingResults);
   const setFinalResults = useGameStore((state) => state.setFinalResults);
   const setHighlight = useGameStore((state) => state.setHighlight);
   const setPromptStrokes = useGameStore((state) => state.setPromptStrokes);
@@ -103,6 +104,8 @@ export const useGameSocket = () => {
         useGameStore.setState({
           liveRankings: [],
           roundResults: [],
+          previousStandingResults: [],
+          standingResults: [],
           finalResults: [],
           highlight: null,
           promptStrokes: [],
@@ -174,9 +177,13 @@ export const useGameSocket = () => {
     });
 
     // 결과
-    socket.on(CLIENT_EVENTS.ROOM_ROUND_END, (response: RoundEndResponse) => {
+    socket.on(CLIENT_EVENTS.ROOM_ROUND_REPLAY, (response: RoundReplayResponse) => {
       setRoundResults(response.rankings);
       setPromptStrokes(response.promptStrokes);
+    });
+
+    socket.on(CLIENT_EVENTS.ROOM_ROUND_STANDING, (response: RoundStandingResponse) => {
+      setStandingResults(response.rankings);
     });
 
     socket.on(CLIENT_EVENTS.ROOM_GAME_END, (response: GameEndResponse) => {
@@ -207,7 +214,8 @@ export const useGameSocket = () => {
       socket.off(CLIENT_EVENTS.ROOM_TIMER);
       socket.off(CLIENT_EVENTS.ROOM_LEADERBOARD);
       socket.off(CLIENT_EVENTS.ROOM_PROMPT);
-      socket.off(CLIENT_EVENTS.ROOM_ROUND_END);
+      socket.off(CLIENT_EVENTS.ROOM_ROUND_REPLAY);
+      socket.off(CLIENT_EVENTS.ROOM_ROUND_STANDING);
       socket.off(CLIENT_EVENTS.ROOM_GAME_END);
       socket.off(CLIENT_EVENTS.USER_WAITLIST);
       socket.off(CLIENT_EVENTS.ERROR);
@@ -227,6 +235,7 @@ export const useGameSocket = () => {
     setLiveRankings,
     setPromptStrokes,
     setRoundResults,
+    setStandingResults,
     setFinalResults,
     setHighlight,
     reset,
