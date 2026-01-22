@@ -50,7 +50,7 @@ const BaseModal = ({
           {title}
         </h2>
         {message && (
-          <p className="font-handwriting whitespace-pre-line text-2xl text-gray-700">
+          <p className="font-handwriting text-2xl whitespace-pre-line text-gray-700">
             {message}
           </p>
         )}

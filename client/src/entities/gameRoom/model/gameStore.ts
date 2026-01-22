@@ -23,6 +23,9 @@ interface GameState extends GameRoom {
   finalResults: FinalResult[];
   highlight: Highlight | null;
 
+  // 알림 상태
+  alertMessage: string | null;
+
   // Actions
   setConnected: (isConnected: boolean) => void;
   updateRoom: (room: Partial<GameRoom>) => void;
@@ -32,6 +35,7 @@ interface GameState extends GameRoom {
   setRoundResults: (results: RoundResult[]) => void;
   setFinalResults: (results: FinalResult[]) => void;
   setHighlight: (highlight: Highlight) => void;
+  setAlertMessage: (message: string | null) => void;
   reset: () => void;
 }
 
@@ -52,6 +56,7 @@ const initialState = {
   roundResults: [],
   finalResults: [],
   highlight: null,
+  alertMessage: null,
 };
 
 export const useGameStore = create<GameState>()(
@@ -74,6 +79,8 @@ export const useGameStore = create<GameState>()(
       setFinalResults: (finalResults) => set({ finalResults }),
 
       setHighlight: (highlight) => set({ highlight }),
+
+      setAlertMessage: (alertMessage) => set({ alertMessage }),
 
       reset: () => set(initialState),
     }),

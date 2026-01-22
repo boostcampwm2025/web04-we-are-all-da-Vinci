@@ -1,5 +1,6 @@
 import { selectPhase, useGameStore } from '@/entities/gameRoom/model';
 import { useGameSocket } from '@/features/socket/model';
+import { OverlayModal } from '@/shared/ui';
 import { Drawing, GameEnd, Prompt, RoundEnd, Waiting } from '@/widgets';
 
 const GAME_PHASE_COMPONENT_MAP = {
@@ -13,9 +14,22 @@ const GAME_PHASE_COMPONENT_MAP = {
 const Game = () => {
   useGameSocket();
   const phase = useGameStore(selectPhase);
+  const alertMessage = useGameStore((state) => state.alertMessage);
+  const setAlertMessage = useGameStore((state) => state.setAlertMessage);
   const PhaseComponent = GAME_PHASE_COMPONENT_MAP[phase];
 
-  return <PhaseComponent />;
+  return (
+    <>
+      <PhaseComponent />
+      <OverlayModal
+        isOpen={!!alertMessage}
+        onClose={() => setAlertMessage(null)}
+        title="알림"
+        message={alertMessage ?? ''}
+        onConfirm={() => setAlertMessage(null)}
+      />
+    </>
+  );
 };
 
 export default Game;

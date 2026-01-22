@@ -3,7 +3,7 @@ import { EmptySlot, PlayerCard } from '@/entities/player';
 import type { Player } from '@/entities/player/model';
 import { getSocket } from '@/shared/api/socket';
 import { SERVER_EVENTS } from '@/shared/config';
-import { CommonBtn } from '@/shared/ui';
+import { OverlayModal } from '@/shared/ui';
 import { useState, type ReactNode } from 'react';
 
 interface PlayerListSectionProps {
@@ -75,29 +75,15 @@ export const PlayerListSection = ({
         ))}
       </div>
 
-      {kickModalConfig.isOpen && (
-        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center">
-          <div className="w-full max-w-md rounded-2xl border-2 border-gray-400 bg-white p-8 shadow-xl">
-            <h2 className="font-handwriting mb-6 text-center text-4xl font-bold">
-              {kickModalConfig.targetPlayerNickname}님을 퇴장시키겠습니까?
-            </h2>
-            <div className="mt-6 flex justify-between gap-4">
-              <CommonBtn
-                variant="scribble"
-                icon="check_circle"
-                text="퇴장"
-                onClick={kickModalConfig.onConfirm}
-              />
-              <CommonBtn
-                variant="scribble"
-                icon="cancel"
-                text="취소"
-                onClick={() => setKickModalConfig({ isOpen: false })}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <OverlayModal
+        isOpen={kickModalConfig.isOpen}
+        onClose={() => setKickModalConfig({ isOpen: false })}
+        title={`${kickModalConfig.targetPlayerNickname}님을 퇴장시키겠습니까?`}
+        onConfirm={kickModalConfig.onConfirm ?? (() => {})}
+        confirmText="퇴장"
+        onCancel={() => setKickModalConfig({ isOpen: false })}
+        cancelText="취소"
+      />
     </div>
   );
 };
