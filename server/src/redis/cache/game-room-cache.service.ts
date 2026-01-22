@@ -130,6 +130,6 @@ export class GameRoomCacheService {
 
     const promptId = await client.lIndex(key, round - 1);
 
-    return parseInt(promptId ?? '0');
+    return promptId !== null ? parseInt(promptId) : promptId;
   }
 }
