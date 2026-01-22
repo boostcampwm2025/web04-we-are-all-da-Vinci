@@ -20,6 +20,7 @@ interface GameState extends GameRoom {
 
   // 결과 데이터
   roundResults: RoundResult[];
+  standingResults: FinalResult[]; // 라운드 스탠딩 (누적 점수)
   finalResults: FinalResult[];
   highlight: Highlight | null;
 
@@ -30,6 +31,7 @@ interface GameState extends GameRoom {
   setLiveRankings: (rankings: RankingEntry[]) => void;
   setPromptStrokes: (strokes: Stroke[]) => void;
   setRoundResults: (results: RoundResult[]) => void;
+  setStandingResults: (results: FinalResult[]) => void;
   setFinalResults: (results: FinalResult[]) => void;
   setHighlight: (highlight: Highlight) => void;
   reset: () => void;
@@ -50,6 +52,7 @@ const initialState = {
   liveRankings: [],
   promptStrokes: [],
   roundResults: [],
+  standingResults: [],
   finalResults: [],
   highlight: null,
 };
@@ -70,6 +73,8 @@ export const useGameStore = create<GameState>()(
       setPromptStrokes: (promptStrokes) => set({ promptStrokes }),
 
       setRoundResults: (roundResults) => set({ roundResults }),
+
+      setStandingResults: (standingResults) => set({ standingResults }),
 
       setFinalResults: (finalResults) => set({ finalResults }),
 
