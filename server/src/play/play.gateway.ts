@@ -13,10 +13,11 @@ import { PinoLogger } from 'nestjs-pino';
 import { UseFilters } from '@nestjs/common';
 import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
 import { PlayService } from './play.service';
+import { getSocketCorsOrigin } from 'src/common/config/cors.util';
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [],
+    origin: getSocketCorsOrigin(),
     credentials: true,
   },
 })

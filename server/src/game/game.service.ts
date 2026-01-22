@@ -106,7 +106,7 @@ export class GameService {
     }
 
     if (maxPlayer < room.players.length) {
-      throw new WebsocketException('현재 인원보다 작게 설정할 수 없습니다.');
+      return;
     }
 
     if (totalRounds !== room.settings.totalRounds) {
@@ -130,6 +130,7 @@ export class GameService {
   async joinRoom(
     roomId: string,
     nickname: string,
+    profileId: string,
     socketId: string,
   ): Promise<GameRoom | null> {
     const room = await this.cacheService.getRoom(roomId);
@@ -153,6 +154,7 @@ export class GameService {
 
     await this.cacheService.addPlayer(roomId, {
       nickname,
+      profileId,
       socketId,
       isHost: players.length === 0,
     });
@@ -215,5 +217,46 @@ export class GameService {
     }
 
     await this.roundService.nextPhase(room);
+  }
+
+  async kickUser(roomId: string, hostSocketId: string, targetSocketId: string) {
+    const room = await this.cacheService.getRoom(roomId);
+    if (!room) {
+      throw new WebsocketException('방이 존재하지 않습니다.');
+    }
+
+    if (room.phase !== GamePhase.WAITING) {
+      throw new WebsocketException('대기 상태에서만 퇴장시킬 수 있습니다.');
+    }
+
+    const hostPlayer = room.players.find(
+      (player) => player.socketId === hostSocketId,
+    );
+    const targetPlayer = room.players.find(
+      (player) => player.socketId === targetSocketId,
+    );
+
+    if (!hostPlayer || !targetPlayer) {
+      throw new WebsocketException('플레이어가 존재하지 않습니다.');
+    }
+
+    if (!hostPlayer.isHost) {
+      throw new WebsocketException('방장만 퇴장시킬 수 있습니다.');
+    }
+
+    if (targetPlayer.isHost) {
+      throw new WebsocketException('방장을 퇴장시킬 수 없습니다.');
+    }
+
+    const kickedPlayer = {
+      socketId: targetPlayer.socketId,
+      nickname: targetPlayer.nickname,
+    };
+
+    const updatedRoom = await this.leaveRoom(targetSocketId);
+    if (!updatedRoom) {
+      throw new WebsocketException('방이 없습니다.');
+    }
+    return { updatedRoom, kickedPlayer };
   }
 }

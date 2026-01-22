@@ -121,8 +121,17 @@ export class RoundService implements OnModuleInit {
       room.currentRound,
     );
 
-    const idNicknameMapper: Record<string, string> = room.players.reduce(
-      (prev, player) => ({ ...prev, [player.socketId]: player.nickname }),
+    const playerMapper: Record<
+      string,
+      { nickname: string; profileId: string }
+    > = room.players.reduce(
+      (prev, player) => ({
+        ...prev,
+        [player.socketId]: {
+          nickname: player.nickname,
+          profileId: player.profileId,
+        },
+      }),
       {},
     );
 
@@ -130,7 +139,8 @@ export class RoundService implements OnModuleInit {
       .sort((a, b) => b.similarity.similarity - a.similarity.similarity)
       .map((value) => ({
         ...value,
-        nickname: idNicknameMapper[value.socketId],
+        nickname: playerMapper[value.socketId]?.nickname,
+        profileId: playerMapper[value.socketId]?.profileId,
       }));
 
     const result = {
@@ -163,14 +173,24 @@ export class RoundService implements OnModuleInit {
     const standings = await this.standingsCacheService.getStandings(
       room.roomId,
     );
-    const idNicknameMapper: Record<string, string> = room.players.reduce(
-      (prev, player) => ({ ...prev, [player.socketId]: player.nickname }),
+    const playerMapper: Record<
+      string,
+      { nickname: string; profileId: string }
+    > = room.players.reduce(
+      (prev, player) => ({
+        ...prev,
+        [player.socketId]: {
+          nickname: player.nickname,
+          profileId: player.profileId,
+        },
+      }),
       {},
     );
 
     const rankings = standings.map((value) => ({
       ...value,
-      nickname: idNicknameMapper[value.socketId],
+      nickname: playerMapper[value.socketId]?.nickname,
+      profileId: playerMapper[value.socketId]?.profileId,
     }));
 
     const champion = rankings[0];

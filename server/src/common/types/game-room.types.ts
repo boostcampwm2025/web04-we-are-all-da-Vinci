@@ -3,6 +3,7 @@ import { GamePhase } from '../constants';
 export interface Player {
   socketId: string;
   nickname: string;
+  profileId: string;
   isHost: boolean;
 }
 

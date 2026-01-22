@@ -1,4 +1,4 @@
-import { fetchClient } from '@/shared/api/rest';
+import { fetchClient } from '@/shared/api';
 
 interface CreateRoomRequest {
   maxPlayer: number;

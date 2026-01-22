@@ -17,10 +17,12 @@ import { GameService } from './game.service';
 import { GameRoom } from 'src/common/types';
 import { UseFilters } from '@nestjs/common';
 import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
+import { UserKickDto } from './dto/user-kick.dto';
+import { getSocketCorsOrigin } from 'src/common/config/cors.util';
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [],
+    origin: getSocketCorsOrigin(),
     credentials: true,
   },
 })
@@ -56,8 +58,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: UserJoinDto,
   ): Promise<string> {
-    const { nickname, roomId } = payload;
-    const room = await this.gameService.joinRoom(roomId, nickname, client.id);
+    const { nickname, roomId, profileId } = payload;
+    const room = await this.gameService.joinRoom(
+      roomId,
+      nickname,
+      profileId,
+      client.id,
+    );
     if (room) {
       this.logger.info(
         { clientId: client.id, ...payload },
@@ -91,6 +98,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       drawingTime,
     );
 
+    if (!room) {
+      return 'ok';
+    }
+
     this.broadcastMetadata(room);
 
     this.logger.info(
@@ -121,6 +132,37 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     await this.gameService.restartGame(roomId, client.id);
 
     this.logger.info({ clientId: client.id, ...payload }, 'Game Restarted');
+    return 'ok';
+  }
+
+  @SubscribeMessage(ServerEvents.USER_KICK)
+  async kickUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: UserKickDto,
+  ): Promise<string> {
+    const { roomId, targetPlayerId } = payload;
+    const { updatedRoom, kickedPlayer } = await this.gameService.kickUser(
+      roomId,
+      client.id,
+      targetPlayerId,
+    );
+
+    this.server
+      .to(targetPlayerId)
+      .emit(ClientEvents.ROOM_KICKED, { roomId, kickedPlayer });
+    this.broadcastMetadata(updatedRoom);
+
+    const targetPlayerSocket = this.server.sockets.sockets.get(targetPlayerId);
+    if (targetPlayerSocket) {
+      await targetPlayerSocket.leave(roomId);
+    }
+
+    this.server
+      .to(roomId)
+      .emit(ClientEvents.ROOM_KICKED, { roomId, kickedPlayer });
+    this.broadcastMetadata(updatedRoom);
+
+    this.logger.info({ clientId: client.id, ...payload }, 'User Kicked');
     return 'ok';
   }
 

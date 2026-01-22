@@ -34,10 +34,16 @@ export class PlayService {
       throw new WebsocketException('서버 오류');
     }
 
-    const idNicknameMapper: Record<string, string> = players.reduce(
+    const playerMapper: Record<
+      string,
+      { nickname: string; profileId: string }
+    > = players.reduce(
       (prev, player) => ({
         ...prev,
-        [player.socketId]: player.nickname,
+        [player.socketId]: {
+          nickname: player.nickname,
+          profileId: player.profileId,
+        },
       }),
       {},
     );
@@ -47,7 +53,8 @@ export class PlayService {
     const rankings = leaderboard.map(({ value, score }) => ({
       socketId: value,
       similarity: score,
-      nickname: idNicknameMapper[value],
+      nickname: playerMapper[value]?.nickname,
+      profileId: playerMapper[value]?.profileId,
     }));
 
     return rankings;

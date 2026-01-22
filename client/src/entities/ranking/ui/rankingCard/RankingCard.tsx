@@ -1,8 +1,10 @@
 import { SimilarityProgressBar } from '@/entities/similarity/ui/progress-bar';
+import { UserAvatar } from '@/shared/ui';
 import { RANK_CHANGE, type PlayerColor, type RankChange } from '../../model';
 
 interface RankingCardProps {
   nickname: string;
+  profileId: string;
   percent: number;
   color?: PlayerColor;
   rank?: number;
@@ -42,6 +44,7 @@ const RankChangeIndicator = ({ change }: { change: RankChange }) => {
 
 const RankingCard = ({
   nickname,
+  profileId,
   percent,
   color = 'blue',
   rank,
@@ -112,6 +115,7 @@ const RankingCard = ({
             </div>
           )}
           {rankChange && <RankChangeIndicator change={rankChange} />}
+          <UserAvatar name={profileId} size={24} />
           <span className="font-handwriting text-sm font-bold">
             {nickname}
             {isCurrentUser && (

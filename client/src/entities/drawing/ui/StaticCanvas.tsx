@@ -1,8 +1,8 @@
 import type { Stroke } from '@/entities/similarity/model';
 import { drawStrokesOnCanvas } from '../lib/drawStrokesOnCanvas';
 import { CANVAS_CONFIG } from '@/shared/config';
-import { useCanvasSetup } from '@/shared/model/useCanvasSetup';
 import { useEffect } from 'react';
+import { useCanvasSetup } from '@/shared/model';
 
 interface StaticCanvasProps {
   strokes: Stroke[];

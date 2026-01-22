@@ -5,10 +5,11 @@ import {
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import { RoundService } from './round.service';
+import { getSocketCorsOrigin } from 'src/common/config/cors.util';
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [],
+    origin: getSocketCorsOrigin(),
     credentials: true,
   },
 })

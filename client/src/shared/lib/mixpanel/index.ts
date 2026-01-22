@@ -20,16 +20,21 @@ export const initMixpanel = (config: MixpanelConfig) => {
   });
 };
 
+const isDisabledEnv = () =>
+  import.meta.env.MODE === 'test' || import.meta.env.MODE === 'development';
+
 export const trackEvent = (
   eventName: string,
   properties?: Record<string, unknown>,
 ) => {
-  if (import.meta.env.MODE === 'test') return;
+  if (isDisabledEnv()) return;
 
   mixpanel.track(eventName, properties);
 };
 
 export const registerUserProperties = (properties: Record<string, unknown>) => {
+  if (isDisabledEnv()) return;
+
   mixpanel.register(properties);
 };
 
