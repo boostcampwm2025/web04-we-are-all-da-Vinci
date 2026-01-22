@@ -77,7 +77,6 @@ export class RoundService implements OnModuleInit {
 
       default:
         this.logger.error({ room }, '알 수 없는 phase입니다');
-        throw new InternalServerErrorException('알 수 없는 phase입니다');
     }
   }
 
