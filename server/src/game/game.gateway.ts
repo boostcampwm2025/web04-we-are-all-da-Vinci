@@ -140,6 +140,17 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.id,
       targetPlayerId,
     );
+
+    this.server
+      .to(targetPlayerId)
+      .emit(ClientEvents.ROOM_KICKED, { roomId, kickedPlayer });
+    this.broadcastMetadata(updatedRoom);
+
+    const targetPlayerSocket = this.server.sockets.sockets.get(targetPlayerId);
+    if (targetPlayerSocket) {
+      targetPlayerSocket.leave(roomId);
+    }
+
     this.server
       .to(roomId)
       .emit(ClientEvents.ROOM_KICKED, { roomId, kickedPlayer });
