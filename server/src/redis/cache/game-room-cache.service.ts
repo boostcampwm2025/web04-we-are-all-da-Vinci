@@ -109,6 +109,17 @@ export class GameRoomCacheService {
     await client.expire(key, REDIS_TTL);
   }
 
+  async resetPromptIds(roomId: string, ...promptIds: number[]) {
+    const client = this.redisService.getClient();
+    const key = this.getPromptKey(roomId);
+
+    const values = promptIds.map((id) => String(id));
+
+    await client.unlink(key);
+    await client.rPush(key, values);
+    await client.expire(key, REDIS_TTL);
+  }
+
   async getPromptId(roomId: string, round: number): Promise<number | null> {
     if (round < 1) {
       return null;

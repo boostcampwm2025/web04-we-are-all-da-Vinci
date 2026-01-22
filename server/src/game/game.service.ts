@@ -108,8 +108,11 @@ export class GameService {
       throw new WebsocketException('현재 인원보다 작게 설정할 수 없습니다.');
     }
 
-    Object.assign(room.settings, { maxPlayer, totalRounds, drawingTime });
+    if (totalRounds !== room.settings.totalRounds) {
+      await this.promptService.resetPromptIds(roomId, totalRounds);
+    }
 
+    Object.assign(room.settings, { maxPlayer, totalRounds, drawingTime });
     await this.cacheService.saveRoom(roomId, room);
 
     return room;

@@ -46,6 +46,22 @@ export class PromptService {
     return ids;
   }
 
+  async resetPromptIds(roomId: string, totalRounds: number) {
+    const promptStrokesData = await this.loadPromptStrokes();
+
+    const length = promptStrokesData.length;
+    if (length < totalRounds) {
+      throw new BadRequestException('준비된 그림이 부족합니다.');
+    }
+
+    const ids = this.generateIds(length, totalRounds);
+
+    await this.cacheService.resetPromptIds(roomId, ...ids);
+
+    this.logger.info({ ids }, 'PromptIds Regenerated.');
+    return ids;
+  }
+
   private generateIds(totalPrompts: number, totalRounds: number) {
     const ids = [...new Array<number>(totalPrompts)]
       .map((_, idx) => ({
