@@ -5,19 +5,18 @@ interface BaseModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  children: React.ReactNode;
+  message?: string;
+  children?: React.ReactNode;
   onConfirm: () => void;
   confirmText?: string;
   confirmDisabled?: boolean;
-  onCancel?: () => void;
-  cancelText?: string;
-  overlay?: boolean;
 }
 
 const BaseModal = ({
   isOpen,
   onClose,
   title,
+  message,
   children,
   onConfirm,
   confirmText = '확인',
@@ -50,6 +49,11 @@ const BaseModal = ({
         <h2 className="font-handwriting mb-6 text-center text-4xl font-bold">
           {title}
         </h2>
+        {message && (
+          <p className="font-handwriting whitespace-pre-line text-2xl text-gray-700">
+            {message}
+          </p>
+        )}
         {children}
         <div className="mt-6">
           <CommonBtn
