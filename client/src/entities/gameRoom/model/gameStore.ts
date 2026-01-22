@@ -1,7 +1,7 @@
 import type { FinalResult, Highlight } from '@/entities/gameResult/model';
 import type { Player } from '@/entities/player/model';
 import type { RankingEntry } from '@/entities/ranking';
-import type { RoundResult } from '@/entities/roundResult/model';
+import type { RoundResult, PlayerScore } from '@/entities/roundResult/model';
 import type { Stroke } from '@/entities/similarity';
 import { getSocket } from '@/shared/api';
 import type { Phase } from '@/shared/config';
@@ -32,7 +32,7 @@ interface GameState extends GameRoom {
   setLiveRankings: (rankings: RankingEntry[]) => void;
   setPromptStrokes: (strokes: Stroke[]) => void;
   setRoundResults: (results: RoundResult[]) => void;
-  setStandingResults: (results: FinalResult[]) => void;
+  setStandingResults: (results: PlayerScore[]) => void;
   setFinalResults: (results: FinalResult[]) => void;
   setHighlight: (highlight: Highlight) => void;
   reset: () => void;
