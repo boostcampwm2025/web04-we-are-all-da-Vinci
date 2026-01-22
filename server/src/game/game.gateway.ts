@@ -148,7 +148,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const targetPlayerSocket = this.server.sockets.sockets.get(targetPlayerId);
     if (targetPlayerSocket) {
-      targetPlayerSocket.leave(roomId);
+      await targetPlayerSocket.leave(roomId);
     }
 
     this.server

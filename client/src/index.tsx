@@ -11,15 +11,11 @@ initSentry({
   release: import.meta.env.VITE_SENTRY_RELEASE,
 });
 
-// if (!import.meta.env.DEV) {
-//   initMixpanel({
-//     token: import.meta.env.VITE_MIXPANEL_TOKEN,
-//   });
-// }
-
-initMixpanel({
-  token: import.meta.env.VITE_MIXPANEL_TOKEN,
-});
+if (!import.meta.env.DEV) {
+  initMixpanel({
+    token: import.meta.env.VITE_MIXPANEL_TOKEN,
+  });
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
