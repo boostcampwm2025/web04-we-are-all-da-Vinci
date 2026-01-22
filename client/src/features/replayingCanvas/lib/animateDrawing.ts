@@ -1,8 +1,4 @@
 import type { Stroke } from '@/entities/similarity/model';
-import {
-  calculateStrokeScale,
-  transformPoint,
-} from '@/shared/lib/scaleStrokesToCanvas';
 import type { RefObject } from 'react';
 
 const LOOP_DELAY_MS = 1000; // 루프 재시작 전 대기 시간(ms)
@@ -17,13 +13,6 @@ export const animateDrawing = (
   const canvas = canvasRef.current;
   const ctx = ctxRef.current;
   if (!canvas || !ctx || strokes.length === 0) return () => {};
-
-  // strokes를 캔버스에 맞게 스케일링
-  const { scale, offsetX, offsetY } = calculateStrokeScale(
-    strokes,
-    canvas.width,
-    canvas.height,
-  );
 
   const state = {
     strokeIndex: 0, // 현재 그리는 스트로크 인덱스
@@ -46,14 +35,8 @@ export const animateDrawing = (
     const [xPoints, yPoints] = stroke.points;
     const [r, g, b] = stroke.color ?? [0, 0, 0];
 
-    // 좌표 스케일링 및 중앙 정렬
-    const { x, y } = transformPoint(
-      xPoints[state.pointIndex],
-      yPoints[state.pointIndex],
-      scale,
-      offsetX,
-      offsetY,
-    );
+    const x = xPoints[state.pointIndex];
+    const y = yPoints[state.pointIndex];
 
     if (state.pointIndex === 0) {
       // 시작점

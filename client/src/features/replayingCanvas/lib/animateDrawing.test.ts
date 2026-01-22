@@ -1,10 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import type { Stroke } from '@/entities/similarity/model';
 import { animateDrawing } from './animateDrawing';
-import {
-  calculateStrokeScale,
-  transformPoint,
-} from '@/shared/lib/scaleStrokesToCanvas';
 import type { RefObject } from 'react';
 
 describe('animateDrawing', () => {
@@ -44,26 +40,6 @@ describe('animateDrawing', () => {
     vi.restoreAllMocks();
     vi.useRealTimers();
   });
-
-  // 스케일링된 좌표를 계산하는 헬퍼 함수
-  const getScaledCoordinates = (
-    strokes: Stroke[],
-    canvasWidth: number,
-    canvasHeight: number,
-  ) => {
-    const { scale, offsetX, offsetY } = calculateStrokeScale(
-      strokes,
-      canvasWidth,
-      canvasHeight,
-    );
-
-    return strokes.map((stroke) => {
-      const [xPoints, yPoints] = stroke.points;
-      return xPoints.map((x, i) =>
-        transformPoint(x, yPoints[i], scale, offsetX, offsetY),
-      );
-    });
-  };
 
   describe('초기화 및 기본 동작', () => {
     it('빈 strokes 배열일 때 cleanup 함수를 반환해야 한다', () => {
@@ -118,31 +94,20 @@ describe('animateDrawing', () => {
         },
       ];
 
-      const scaledCoords = getScaledCoordinates(strokes, 500, 500);
-
       animateDrawing(canvasRef, ctxRef, strokes, 0, false);
 
       // Frame 1
       vi.advanceTimersByTime(16);
       expect(mockCtx.beginPath).toHaveBeenCalled();
-      expect(mockCtx.moveTo).toHaveBeenCalledWith(
-        scaledCoords[0][0].x,
-        scaledCoords[0][0].y,
-      );
+      expect(mockCtx.moveTo).toHaveBeenCalledWith(10, 15);
 
       // Frame 2
       vi.advanceTimersByTime(16);
-      expect(mockCtx.lineTo).toHaveBeenCalledWith(
-        scaledCoords[0][1].x,
-        scaledCoords[0][1].y,
-      );
+      expect(mockCtx.lineTo).toHaveBeenCalledWith(20, 25);
 
       // Frame 3
       vi.advanceTimersByTime(16);
-      expect(mockCtx.lineTo).toHaveBeenCalledWith(
-        scaledCoords[0][2].x,
-        scaledCoords[0][2].y,
-      );
+      expect(mockCtx.lineTo).toHaveBeenCalledWith(30, 35);
     });
 
     it('speed > 0일 때 지정된 속도만큼 대기 후 점을 그려야 한다', () => {
@@ -157,8 +122,6 @@ describe('animateDrawing', () => {
         },
       ];
 
-      const scaledCoords = getScaledCoordinates(strokes, 500, 500);
-
       animateDrawing(canvasRef, ctxRef, strokes, speed, false);
 
       vi.advanceTimersByTime(16);
@@ -167,10 +130,7 @@ describe('animateDrawing', () => {
 
       vi.advanceTimersByTime(25);
       expect(mockCtx.beginPath).toHaveBeenCalled();
-      expect(mockCtx.moveTo).toHaveBeenCalledWith(
-        scaledCoords[0][0].x,
-        scaledCoords[0][0].y,
-      );
+      expect(mockCtx.moveTo).toHaveBeenCalledWith(10, 15);
     });
   });
 
@@ -186,33 +146,22 @@ describe('animateDrawing', () => {
         },
       ];
 
-      const scaledCoords = getScaledCoordinates(strokes, 500, 500);
-
       animateDrawing(canvasRef, ctxRef, strokes, 0, false);
 
       // 첫 점
       vi.advanceTimersByTime(16);
       expect(mockCtx.beginPath).toHaveBeenCalled();
-      expect(mockCtx.moveTo).toHaveBeenCalledWith(
-        scaledCoords[0][0].x,
-        scaledCoords[0][0].y,
-      );
+      expect(mockCtx.moveTo).toHaveBeenCalledWith(10, 15);
       expect(mockCtx.strokeStyle).toBe('rgb(100, 150, 200)');
 
       // 두 번째 점
       vi.advanceTimersByTime(16);
-      expect(mockCtx.lineTo).toHaveBeenCalledWith(
-        scaledCoords[0][1].x,
-        scaledCoords[0][1].y,
-      );
+      expect(mockCtx.lineTo).toHaveBeenCalledWith(20, 25);
       expect(mockCtx.stroke).toHaveBeenCalled();
 
       // 세 번째 점
       vi.advanceTimersByTime(16);
-      expect(mockCtx.lineTo).toHaveBeenCalledWith(
-        scaledCoords[0][2].x,
-        scaledCoords[0][2].y,
-      );
+      expect(mockCtx.lineTo).toHaveBeenCalledWith(30, 35);
     });
 
     it('여러 스트로크를 순서대로 그려야 한다', () => {
@@ -233,37 +182,23 @@ describe('animateDrawing', () => {
         },
       ];
 
-      const scaledCoords = getScaledCoordinates(strokes, 500, 500);
-
       animateDrawing(canvasRef, ctxRef, strokes, 0, false);
 
       // 첫 번째 스트로크
       vi.advanceTimersByTime(16);
       expect(mockCtx.strokeStyle).toBe('rgb(255, 0, 0)');
-      expect(mockCtx.moveTo).toHaveBeenCalledWith(
-        scaledCoords[0][0].x,
-        scaledCoords[0][0].y,
-      );
+      expect(mockCtx.moveTo).toHaveBeenCalledWith(10, 15);
 
       vi.advanceTimersByTime(16);
-      expect(mockCtx.lineTo).toHaveBeenCalledWith(
-        scaledCoords[0][1].x,
-        scaledCoords[0][1].y,
-      );
+      expect(mockCtx.lineTo).toHaveBeenCalledWith(20, 25);
 
       // 두 번째 스트로크
       vi.advanceTimersByTime(16);
       expect(mockCtx.strokeStyle).toBe('rgb(0, 255, 0)');
-      expect(mockCtx.moveTo).toHaveBeenCalledWith(
-        scaledCoords[1][0].x,
-        scaledCoords[1][0].y,
-      );
+      expect(mockCtx.moveTo).toHaveBeenCalledWith(30, 35);
 
       vi.advanceTimersByTime(16);
-      expect(mockCtx.lineTo).toHaveBeenCalledWith(
-        scaledCoords[1][1].x,
-        scaledCoords[1][1].y,
-      );
+      expect(mockCtx.lineTo).toHaveBeenCalledWith(40, 45);
     });
 
     it('color가 undefined일 때 기본 색상(검정)을 사용해야 한다', () => {

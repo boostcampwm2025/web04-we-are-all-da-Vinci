@@ -72,9 +72,9 @@ const RoomSettingsModal = ({
       onConfirm={handleComplete}
       confirmText="완료"
     >
-      <div className="space-y-5">
+      <div className="space-y-3">
         <div>
-          <div className="mb-2 flex w-full items-center justify-between">
+          <div className="mb-1 flex w-full items-center justify-between">
             <label className="font-handwriting text-2xl font-bold">
               플레이어
             </label>

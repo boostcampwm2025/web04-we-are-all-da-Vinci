@@ -45,7 +45,7 @@ const AppLayout = () => {
   };
 
   return (
-    <div className="font-display relative h-screen w-full overflow-hidden bg-white text-[#111318]">
+    <div className="font-display relative flex h-screen w-full justify-center overflow-hidden bg-white text-[#111318]">
       <svg width="0" height="0" className="invisible absolute" aria-hidden>
         <defs>
           <filter id="wavy">

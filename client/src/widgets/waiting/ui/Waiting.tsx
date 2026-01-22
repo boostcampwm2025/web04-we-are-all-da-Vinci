@@ -66,9 +66,8 @@ export const Waiting = () => {
 
   return (
     <>
-      <div className="page-center h-screen">
+      <div className="page-center">
         <div className="page-container">
-          {/* 타이틀 - 전체 화면 중앙 */}
           <div className="mb-4 shrink-0 text-center">
             <Title title={TITLES.ROOM} fontSize="text-6xl" />
             <p className="font-handwriting text-content-secondary text-2xl">
@@ -76,11 +75,9 @@ export const Waiting = () => {
             </p>
           </div>
 
-          {/* 컨텐츠 영역 */}
-          <div className="mt-20 flex gap-7">
-            {/* 왼쪽: 플레이어 리스트 + 버튼 */}
-            <div className="flex flex-1 flex-col gap-4">
-              <div>
+          <div className="flex h-fit gap-7">
+            <div className="flex h-fit flex-1 flex-col gap-4">
+              <div className="h-fit">
                 <PlayerListSection
                   players={players}
                   maxPlayer={settings.maxPlayer}
@@ -98,14 +95,12 @@ export const Waiting = () => {
               </div>
             </div>
 
-            {/* 오른쪽: 게임 설정 + 채팅 (예정) */}
-            <div className="flex w-80 flex-col gap-4">
+            <div className="flex h-full w-80 flex-col gap-4">
               <GameSettingsCard
                 settings={settings}
                 onEdit={handleSettingsChange}
                 isHost={isHostUser}
               />
-              {/* TODO: 채팅 컴포넌트 */}
               <div className="card flex flex-1 items-center justify-center">
                 <p className="font-handwriting text-content-disabled text-lg">
                   💬 채팅 (예정)
@@ -113,6 +108,12 @@ export const Waiting = () => {
               </div>
             </div>
           </div>
+        </div>
+        <div
+          id="boostAD"
+          className="absolute bottom-1 z-1200 flex h-20 w-280 justify-center bg-black px-10 text-center"
+        >
+          광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고
         </div>
       </div>
 
