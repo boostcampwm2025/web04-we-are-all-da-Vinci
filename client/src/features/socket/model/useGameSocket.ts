@@ -1,11 +1,13 @@
 import type { GameEndResponse } from '@/entities/gameResult/model';
 import type { GameRoom } from '@/entities/gameRoom/model';
 import { useGameStore } from '@/entities/gameRoom/model';
+import type { Player } from '@/entities/player/model';
 import type { RankingEntry } from '@/entities/ranking';
 import type { RoundEndResponse } from '@/entities/roundResult/model';
 import type { Stroke } from '@/entities/similarity';
 import { disconnectSocket, getSocket } from '@/shared/api';
 import { CLIENT_EVENTS, SERVER_EVENTS } from '@/shared/config';
+import { useToastStore } from '@/shared/model';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -39,6 +41,7 @@ export const useGameSocket = () => {
   const setHighlight = useGameStore((state) => state.setHighlight);
   const setPromptStrokes = useGameStore((state) => state.setPromptStrokes);
   const reset = useGameStore((state) => state.reset);
+  const addToast = useToastStore((state) => state.addToast);
 
   // localStorage 변경 감지
   useEffect(() => {
@@ -114,6 +117,22 @@ export const useGameSocket = () => {
         settings: data.settings,
       });
     });
+
+    // 추방
+    socket.on(
+      CLIENT_EVENTS.ROOM_KICKED,
+      ({ kickedPlayer }: { kickedPlayer: Omit<Player, 'isHost'> }) => {
+        const socketId = socket.id;
+        if (socketId === kickedPlayer.socketId) {
+          disconnectSocket();
+          reset();
+          navigate('/');
+          addToast(`방에서 퇴장당했습니다.`, 'error');
+        } else {
+          addToast(`${kickedPlayer.nickname}님이 퇴장당했습니다.`, 'info');
+        }
+      },
+    );
 
     // 실시간 데이터
     socket.on(
@@ -192,6 +211,7 @@ export const useGameSocket = () => {
       socket.off(CLIENT_EVENTS.ROOM_GAME_END);
       socket.off(CLIENT_EVENTS.USER_WAITLIST);
       socket.off(CLIENT_EVENTS.ERROR);
+      socket.off(CLIENT_EVENTS.ROOM_KICKED);
 
       disconnectSocket();
       reset(); // 소켓 연결 해제 시 전체 상태 초기화
@@ -210,6 +230,7 @@ export const useGameSocket = () => {
     setFinalResults,
     setHighlight,
     reset,
+    addToast,
   ]);
 
   return getSocket();

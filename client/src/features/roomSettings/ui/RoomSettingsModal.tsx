@@ -7,6 +7,7 @@ interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onComplete?: (settings: RoomSettings) => void;
+  currentPlayerCount?: number;
 }
 
 export interface RoomSettings {
@@ -19,6 +20,7 @@ const RoomSettingsModal = ({
   isOpen,
   onClose,
   onComplete,
+  currentPlayerCount = 1,
 }: SettingsModalProps) => {
   const [selectedPlayers, setSelectedPlayers] = useState(4);
   const [selectedRounds, setSelectedRounds] = useState(5);
@@ -86,7 +88,12 @@ const RoomSettingsModal = ({
             className="font-handwriting w-full cursor-pointer appearance-none rounded-lg border-2 border-gray-300 bg-white px-4 py-2.5 text-2xl transition-colors hover:border-gray-400"
           >
             {playerOptions.map((players) => (
-              <option key={players} value={players} className="text-2xl">
+              <option
+                key={players}
+                value={players}
+                className="text-2xl"
+                disabled={players < currentPlayerCount}
+              >
                 {players}명
               </option>
             ))}

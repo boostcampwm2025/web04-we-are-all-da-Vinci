@@ -11,6 +11,8 @@ import {
   StarDoodle,
   SunDoodle,
 } from '@/shared/ui/Doodles';
+import { useToastStore } from '@/shared/model';
+import { Toast } from '@/shared/ui';
 import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { VolumeButton } from '@/features/volume';
@@ -22,6 +24,7 @@ const AppLayout = () => {
     const profileId = localStorage.getItem('profileId');
     return !nickname || !profileId;
   });
+  const { toasts, removeToast } = useToastStore();
 
   useEffect(() => {
     const storedNickname = localStorage.getItem('nickname');
@@ -77,6 +80,17 @@ const AppLayout = () => {
         <Outlet />
       </div>
 
+      <div className="pointer-events-none fixed right-6 bottom-6 z-50 flex flex-col items-end gap-2">
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            message={toast.message}
+            type={toast.type}
+            duration={toast.duration}
+            onClose={() => removeToast(toast.id)}
+          />
+        ))}
+      </div>
       <div className="fixed bottom-4 left-4 z-50">
         <VolumeButton />
       </div>

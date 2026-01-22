@@ -7,7 +7,7 @@ import { DrawingToolbar } from '@/features/drawingToolbar/ui/DrawingToolbar';
 import {
   calculateFinalSimilarityByPreprocessed,
   preprocessStrokes,
-} from '@/features/similarity/lib';
+} from '@/features/similarity';
 import { getSocket } from '@/shared/api';
 import { CANVAS_CONFIG, MIXPANEL_EVENTS, SERVER_EVENTS } from '@/shared/config';
 import { trackEvent } from '@/shared/lib/mixpanel';

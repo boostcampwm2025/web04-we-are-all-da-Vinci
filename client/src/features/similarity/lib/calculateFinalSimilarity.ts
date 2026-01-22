@@ -1,14 +1,14 @@
 import type { Stroke } from '@/entities/similarity/model';
-import { calculateGreedyStrokeMatchScore } from './stroke/strokeSimilarity/calculateGreedyStrokeMatchScore';
+import { calculateGreedyStrokeMatchScore } from './calculateGreedyStrokeMatchScore';
 import {
   getConvexHull,
   getHullArea,
   getHullPerimeter,
   strokesToPoints,
-} from './shape/convexHullGeometry';
-import { getRadialSignature } from './shape/radialSignature';
+} from './convexHullGeometry';
+import { getRadialSignature } from './radialSignature';
 import type { PreprocessedStrokeData } from '../model';
-import { calculateShapeSimilarityByPreprocessed } from './shape/shapeSimilarity/calculateShapeSimilarity';
+import { calculateShapeSimilarityByPreprocessed } from './calculateShapeSimilarity';
 import type { Similarity } from '../model/similarity';
 
 // 스트로크에서 유사도 계산에 필요한 수학적 데이터를 미리 계산하는 함수

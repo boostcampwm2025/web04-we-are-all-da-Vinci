@@ -121,6 +121,7 @@ export const Waiting = () => {
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
         onComplete={handleSettingsComplete}
+        currentPlayerCount={players.length}
       />
     </>
   );
