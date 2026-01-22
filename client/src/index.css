@@ -88,7 +88,7 @@
      LAYOUT - 페이지 레이아웃 패턴
      ───────────────────────────────────────────────────────────── */
   .page-center {
-    @apply m-auto flex h-full w-full items-center justify-center px-4 py-6;
+    @apply m-auto flex h-full w-full items-center justify-center px-4;
   }
 
   .page-container {
