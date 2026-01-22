@@ -30,7 +30,8 @@ export const Timer = () => {
   const getInitialTimeForPhase = () => {
     if (phase === 'PROMPT') return TIMER.PROMPT_TIME;
     if (phase === 'DRAWING') return settings.drawingTime;
-    if (phase === 'ROUND_END') return TIMER.ROUND_END_TIME;
+    if (phase === 'ROUND_REPLAY') return TIMER.ROUND_REPLAY_TIME;
+    if (phase === 'ROUND_STANDING') return TIMER.ROUND_STANDING_TIME;
     if (phase === 'GAME_END') return TIMER.GAME_END_TIME;
     return 0;
   };

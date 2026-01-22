@@ -84,7 +84,10 @@ const RankingCard = ({
         </span>
       </div>
 
-      <SimilarityProgressBar percent={`${percent}%`} />
+      <SimilarityProgressBar
+        color={isCurrentUser ? 'blue' : rankStyle.progressColor}
+        percent={`${percent}%`}
+      />
     </div>
   );
 };

@@ -5,6 +5,7 @@ export const RANK_STYLES = {
     badge: 'bg-rank-gold',
     text: 'text-rank-gold-text',
     color: 'text-rank-gold',
+    progressColor: 'gold',
     icon: 'emoji_events',
   },
   2: {
@@ -13,6 +14,7 @@ export const RANK_STYLES = {
     badge: 'bg-rank-silver',
     text: 'text-rank-silver-text',
     color: 'text-rank-silver',
+    progressColor: 'silver',
     icon: 'military_tech',
   },
   3: {
@@ -21,6 +23,7 @@ export const RANK_STYLES = {
     badge: 'bg-rank-bronze',
     text: 'text-rank-bronze-text',
     color: 'text-rank-bronze',
+    progressColor: 'bronze',
     icon: 'military_tech',
   },
   default: {
@@ -29,6 +32,7 @@ export const RANK_STYLES = {
     badge: 'bg-gray-400',
     text: 'text-content-secondary',
     color: 'text-content-secondary',
+    progressColor: 'gray',
     icon: '',
   },
 } as const;
