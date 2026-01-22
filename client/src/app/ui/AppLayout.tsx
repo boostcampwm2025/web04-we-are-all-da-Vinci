@@ -15,6 +15,8 @@ import { useToastStore } from '@/shared/model';
 import { Toast } from '@/shared/ui';
 import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
+import { VolumeButton } from '@/features/volume';
+import { SoundManager } from '@/shared/lib';
 
 const AppLayout = () => {
   const [isModalOpen, setIsModalOpen] = useState(() => {
@@ -29,6 +31,11 @@ const AppLayout = () => {
     if (storedNickname) {
       registerUserProperties({ nickname: storedNickname });
     }
+  }, []);
+
+  useEffect(() => {
+    // 사운드 매니저 생성 및 오디오 파일 로드
+    SoundManager.getInstance();
   }, []);
 
   const handleClose = () => {
@@ -84,6 +91,10 @@ const AppLayout = () => {
           />
         ))}
       </div>
+      <div className="fixed bottom-4 left-4 z-50">
+        <VolumeButton />
+      </div>
+
       <ProfileSettingsModal isOpen={isModalOpen} onClose={handleClose} />
     </div>
   );
