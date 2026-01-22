@@ -2,7 +2,7 @@ import { PATHS, TITLES, MIXPANEL_EVENTS } from '@/shared/config';
 import { CommonBtn, DecorateTitle, Title } from '@/shared/ui';
 
 import { AlertModal } from '@/entities';
-import { ProfileEditor } from '@/entities/profile';
+import { ProfileSettingsModal } from '@/features/profileSettings';
 import {
   RoomSettingsModal,
   type RoomSettings,
@@ -19,6 +19,7 @@ export const Main = () => {
 
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const handleCreateRoom = () => {
     trackEvent(MIXPANEL_EVENTS.CLICK_CREATEROOM_BTN);
@@ -62,15 +63,18 @@ export const Main = () => {
           </h6>
 
           <div className="mt-10 flex w-full max-w-2xl flex-col items-center gap-4">
-            {/* 사용자 프로필 설정 */}
-            <ProfileEditor />
-
             <div className="flex w-full flex-col justify-center gap-4 sm:flex-row">
               <CommonBtn
                 variant="scribble"
                 icon="add_circle"
                 text="방 만들기"
                 onClick={handleCreateRoom}
+              />
+              <CommonBtn
+                variant="scribble"
+                icon="person"
+                text="프로필 설정"
+                onClick={() => setShowProfileModal(true)}
               />
             </div>
 
@@ -95,6 +99,11 @@ export const Main = () => {
         onClose={() => setShowGuideModal(false)}
         title="게임 설명서"
         message={TEXT.MANUAL_MESSAGE}
+      />
+
+      <ProfileSettingsModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
       />
     </>
   );

@@ -318,7 +318,7 @@ export const PaletteDoodle = () => (
 
 export const PainterDoodle = () => (
   <svg
-    className="--color-brand-hover pointer-events-none absolute right-[10%] bottom-24 hidden h-16 w-14 rotate-12 opacity-50 md:block"
+    className="text-brand-primary/30 pointer-events-none absolute right-[10%] bottom-24 hidden h-16 w-14 rotate-12 opacity-50 md:block"
     xmlns="http://www.w3.org/2000/svg"
     version="1.0"
     viewBox="0 0 512 512"

@@ -1,4 +1,5 @@
 import { VALIDATION } from '@/shared/config';
+import { registerUserProperties } from '@/shared/lib/mixpanel';
 import { CommonBtn, Input, UserAvatar } from '@/shared/ui';
 import { useState } from 'react';
 import { getProfileId, regenerateProfileId } from '../lib/profileId';
@@ -23,6 +24,7 @@ const ProfileEditor = ({ onNicknameChange }: UserProfileEditorProps) => {
     const trimmedNickname = nickname.trim();
     if (trimmedNickname) {
       localStorage.setItem('nickname', trimmedNickname);
+      registerUserProperties({ nickname: trimmedNickname });
       onNicknameChange?.(trimmedNickname);
       setNickname(''); // 입력 필드 초기화
     }

@@ -1,4 +1,4 @@
-import { NicknameInputModal } from '@/features/nickname';
+import { ProfileSettingsModal } from '@/features/profileSettings';
 import { registerUserProperties } from '@/shared/lib/mixpanel';
 import {
   BrushDoodle,
@@ -16,9 +16,10 @@ import { Outlet } from 'react-router-dom';
 
 const AppLayout = () => {
   const [isModalOpen, setIsModalOpen] = useState(() => {
-    return !localStorage.getItem('nickname');
+    const nickname = localStorage.getItem('nickname');
+    const profileId = localStorage.getItem('profileId');
+    return !nickname || !profileId;
   });
-  const [nickname, setNickname] = useState('');
 
   useEffect(() => {
     const storedNickname = localStorage.getItem('nickname');
@@ -27,17 +28,10 @@ const AppLayout = () => {
     }
   }, []);
 
-  const handleSubmit = () => {
-    if (nickname.trim()) {
-      localStorage.setItem('nickname', nickname.trim());
-      registerUserProperties({ nickname: nickname.trim() });
-      setIsModalOpen(false);
-    }
-  };
-
   const handleClose = () => {
-    const storedNickname = localStorage.getItem('nickname');
-    if (storedNickname) {
+    const nickname = localStorage.getItem('nickname');
+    const profileId = localStorage.getItem('profileId');
+    if (nickname && profileId) {
       setIsModalOpen(false);
     }
   };
@@ -76,13 +70,7 @@ const AppLayout = () => {
         <Outlet />
       </div>
 
-      <NicknameInputModal
-        isOpen={isModalOpen}
-        onClose={handleClose}
-        nickname={nickname}
-        setNickname={setNickname}
-        onSubmit={handleSubmit}
-      />
+      <ProfileSettingsModal isOpen={isModalOpen} onClose={handleClose} />
     </div>
   );
 };
