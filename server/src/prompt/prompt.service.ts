@@ -5,6 +5,7 @@ import { Stroke } from 'src/common/types';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import { PinoLogger } from 'nestjs-pino';
+import { ErrorCode } from 'src/common/constants/error-code';
 
 @Injectable()
 export class PromptService {
@@ -24,7 +25,7 @@ export class PromptService {
     const index = await this.cacheService.getPromptId(roomId, round);
 
     if (index === null) {
-      throw new WebsocketException('프롬프트가 존재하지 않습니다.');
+      throw new WebsocketException(ErrorCode.PROMPT_NOT_FOUND);
     }
 
     return promptStrokesData[index];
@@ -35,7 +36,7 @@ export class PromptService {
 
     const length = promptStrokesData.length;
     if (length < totalRounds) {
-      throw new BadRequestException('준비된 그림이 부족합니다.');
+      throw new BadRequestException(ErrorCode.PROMPT_NOT_ENOUGH);
     }
 
     const ids = this.generateIds(length, totalRounds);
@@ -51,7 +52,7 @@ export class PromptService {
 
     const length = promptStrokesData.length;
     if (length < totalRounds) {
-      throw new BadRequestException('준비된 그림이 부족합니다.');
+      throw new BadRequestException(ErrorCode.PROMPT_NOT_ENOUGH);
     }
 
     const ids = this.generateIds(length, totalRounds);

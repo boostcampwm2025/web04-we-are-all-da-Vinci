@@ -1,4 +1,8 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { GameRoom } from 'src/common/types';
 import {
   ClientEvents,
@@ -9,7 +13,6 @@ import {
   ROUND_END_TIME,
 } from 'src/common/constants';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
-import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
 import { PinoLogger } from 'nestjs-pino';
 import { TimerService } from 'src/timer/timer.service';
@@ -73,7 +76,8 @@ export class RoundService implements OnModuleInit {
         return await this.moveWaiting(room);
 
       default:
-        throw new WebsocketException(`알 수 없는 phase입니다: ${room.phase}`);
+        this.logger.error({ room }, '알 수 없는 phase입니다');
+        throw new InternalServerErrorException('알 수 없는 phase입니다');
     }
   }
 
@@ -176,7 +180,7 @@ export class RoundService implements OnModuleInit {
         { roomId: room.roomId },
         '게임 결과를 계산할 수 없습니다. Standings이 비어져있습니다.',
       );
-      throw new WebsocketException('게임 결과를 계산할 수 없습니다.');
+      throw new InternalServerErrorException('게임 결과를 계산할 수 없습니다.');
     }
 
     const highlight = await this.progressCacheService.getHighlight(
@@ -190,7 +194,9 @@ export class RoundService implements OnModuleInit {
         { roomId: room.roomId },
         '하이라이트가 존재하지 않습니다.',
       );
-      throw new WebsocketException('하이라이트를 불러올 수 없습니다.');
+      throw new InternalServerErrorException(
+        '하이라이트를 불러올 수 없습니다.',
+      );
     }
 
     const finalResult = {
