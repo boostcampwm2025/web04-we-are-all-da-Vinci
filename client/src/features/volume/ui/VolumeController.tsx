@@ -6,7 +6,7 @@ export const VolumeController = () => {
     useVolumeControl();
 
   return (
-    <div className="scribble-border w-[260px] rounded-3xl bg-white/90 p-8">
+    <div className="scribble-border scribble-border-box w-[260px] rounded-3xl bg-white/90 p-8">
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
