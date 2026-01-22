@@ -1,5 +1,9 @@
-import { Injectable, OnModuleInit, InternalServerErrorException } from '@nestjs/common';
-import { GameRoom, Player, Stroke } from 'src/common/types';
+import {
+  Injectable,
+  OnModuleInit,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { GameRoom, Player } from 'src/common/types';
 import {
   ClientEvents,
   DRAWING_END_DELAY,
@@ -162,28 +166,30 @@ export class RoundService implements OnModuleInit {
     this.logger.info({ room }, 'Round Replay Phase Start');
   }
 
-private async moveRoundStanding(room: GameRoom) {
-  room.phase = GamePhase.ROUND_STANDING;
+  private async moveRoundStanding(room: GameRoom) {
+    room.phase = GamePhase.ROUND_STANDING;
 
-  const standings = await this.standingsCacheService.getStandings(room.roomId);
-  const playerMapper = this.createPlayerMapper(room.players);
+    const standings = await this.standingsCacheService.getStandings(
+      room.roomId,
+    );
+    const playerMapper = this.createPlayerMapper(room.players);
 
-  const rankings = standings.map((value) => ({
-    ...value,
-    nickname: playerMapper[value.socketId]?.nickname,
-    profileId: playerMapper[value.socketId]?.profileId,
-  }));
+    const rankings = standings.map((value) => ({
+      ...value,
+      nickname: playerMapper[value.socketId]?.nickname,
+      profileId: playerMapper[value.socketId]?.profileId,
+    }));
 
-  const result = { rankings };
+    const result = { rankings };
 
-  await this.cacheService.saveRoom(room.roomId, room);
-  await this.timerService.startTimer(room.roomId, ROUND_STANDING_TIME);
+    await this.cacheService.saveRoom(room.roomId, room);
+    await this.timerService.startTimer(room.roomId, ROUND_STANDING_TIME);
 
-  this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
-  this.server.to(room.roomId).emit(ClientEvents.ROOM_ROUND_STANDING, result);
+    this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
+    this.server.to(room.roomId).emit(ClientEvents.ROOM_ROUND_STANDING, result);
 
-  this.logger.info({ room }, 'Round Standing Phase Start');
-}
+    this.logger.info({ room }, 'Round Standing Phase Start');
+  }
 
   private async moveNextRoundOrEnd(room: GameRoom) {
     if (room.currentRound < room.settings.totalRounds) {
