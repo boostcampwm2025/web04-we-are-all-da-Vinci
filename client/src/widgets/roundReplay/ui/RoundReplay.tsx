@@ -9,7 +9,7 @@ import { useEffect } from 'react';
 import { SoundManager } from '@/shared/lib';
 import { SOUND_LIST } from '@/shared/config/sound';
 
-export const RoundEnd = () => {
+export const RoundReplay = () => {
   const roundResults = useGameStore((state) => state.roundResults);
   const currentRound = useGameStore((state) => state.currentRound);
   const promptStrokes = useGameStore((state) => state.promptStrokes);
