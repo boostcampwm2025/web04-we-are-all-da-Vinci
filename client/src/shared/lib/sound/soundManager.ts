@@ -77,12 +77,6 @@ export class SoundManager {
       return;
     }
 
-    this.addSound(
-      SOUND_LIST.ROUND_END,
-      new Audio(SOUND_PATH[SOUND_LIST.ROUND_END]),
-    );
-    this.addSound(SOUND_LIST.TIMER, new Audio(SOUND_PATH[SOUND_LIST.TIMER]));
-
     const WEB_SERVER_URL = import.meta.env.VITE_WEB_SERVER_URL;
 
     if (!WEB_SERVER_URL) {
@@ -91,6 +85,15 @@ export class SoundManager {
       );
       return;
     }
+
+    this.addSound(
+      SOUND_LIST.ROUND_END,
+      new Audio(WEB_SERVER_URL + SOUND_PATH[SOUND_LIST.ROUND_END]),
+    );
+    this.addSound(
+      SOUND_LIST.TIMER,
+      new Audio(WEB_SERVER_URL + SOUND_PATH[SOUND_LIST.TIMER]),
+    );
 
     this.bgm = new Audio(WEB_SERVER_URL + '/audio/bgm.mp3');
   }
