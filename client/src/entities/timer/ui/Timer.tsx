@@ -4,7 +4,9 @@ import {
   useGameStore,
 } from '@/entities/gameRoom/model';
 import { TIMER } from '../config';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { SoundManager } from '@/shared/lib';
+import { SOUND_LIST } from '@/shared/config/sound';
 
 export const Timer = () => {
   const timer = useGameStore(selectTimer);
@@ -37,6 +39,14 @@ export const Timer = () => {
   const displayTime =
     timer === 0 && !hasStarted ? getInitialTimeForPhase() : timer;
   const isUrgent = timer <= TIMER.URGENT_THRESHOLD && timer > TIMER.LOWER_LIMIT;
+
+  useEffect(() => {
+    if (!isUrgent) {
+      return;
+    }
+    const manager = SoundManager.getInstance();
+    manager.playSound(SOUND_LIST.TIMER);
+  }, [isUrgent, displayTime]);
 
   return (
     <div className="absolute top-8 right-8 z-20">
