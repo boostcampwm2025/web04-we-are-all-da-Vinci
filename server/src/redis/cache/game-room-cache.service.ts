@@ -19,6 +19,10 @@ export class GameRoomCacheService {
     return `room:${roomId}:players`;
   }
 
+  private getPromptKey(roomId: string) {
+    return `room:${roomId}:prompts`;
+  }
+
   async saveRoom(roomId: string, gameRoom: GameRoom) {
     const client = this.redisService.getClient();
     const key = this.getRoomKey(roomId);
@@ -28,7 +32,6 @@ export class GameRoomCacheService {
       phase: gameRoom.phase,
       currentRound: String(gameRoom.currentRound),
       settings: JSON.stringify(gameRoom.settings),
-      promptId: gameRoom.promptId,
     });
 
     await client.expire(key, REDIS_TTL);
@@ -52,7 +55,6 @@ export class GameRoomCacheService {
       phase: data.phase,
       currentRound: parseInt(data.currentRound),
       settings: JSON.parse(data.settings) as Settings,
-      promptId: parseInt(data.promptId),
     };
   }
 
@@ -95,5 +97,39 @@ export class GameRoomCacheService {
     return (await client.lRange(key, 0, -1)).map(
       (value) => JSON.parse(value) as Player,
     );
+  }
+
+  async addPromptIds(roomId: string, ...promptIds: number[]) {
+    const client = this.redisService.getClient();
+    const key = this.getPromptKey(roomId);
+
+    const values = promptIds.map((id) => String(id));
+
+    await client.rPush(key, values);
+    await client.expire(key, REDIS_TTL);
+  }
+
+  async resetPromptIds(roomId: string, ...promptIds: number[]) {
+    const client = this.redisService.getClient();
+    const key = this.getPromptKey(roomId);
+
+    const values = promptIds.map((id) => String(id));
+
+    await client.unlink(key);
+    await client.rPush(key, values);
+    await client.expire(key, REDIS_TTL);
+  }
+
+  async getPromptId(roomId: string, round: number): Promise<number | null> {
+    if (round < 1) {
+      return null;
+    }
+
+    const client = this.redisService.getClient();
+    const key = this.getPromptKey(roomId);
+
+    const promptId = await client.lIndex(key, round - 1);
+
+    return promptId !== null ? parseInt(promptId) : promptId;
   }
 }
