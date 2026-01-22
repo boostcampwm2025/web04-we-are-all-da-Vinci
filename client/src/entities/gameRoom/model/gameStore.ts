@@ -135,3 +135,16 @@ export const useIsCurrentUser = (socketId: string): boolean => {
 
   return mySocketId === socketId;
 };
+
+// Helper: 현재 플레이어의 등수 계산 (displayResults 기준)
+export const useMyRank = (displayResults: PlayerScore[]): number => {
+  const currentPlayer = useCurrentPlayer();
+
+  if (!currentPlayer) return -1;
+
+  const index = displayResults.findIndex(
+    (p) => p.socketId === currentPlayer.socketId,
+  );
+
+  return index !== -1 ? index + 1 : -1;
+};
