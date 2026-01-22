@@ -21,9 +21,7 @@ export class MetricInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       tap({
-        complete: () => {
-          this.metricService.observe(eventName, end({ eventName: eventName }));
-        },
+        complete: () => end({ eventName: eventName }),
       }),
     );
   }
