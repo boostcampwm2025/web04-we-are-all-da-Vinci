@@ -172,13 +172,13 @@ private async moveRoundStanding(room: GameRoom) {
     profileId: playerMapper[value.socketId]?.profileId,
   }));
 
+  const result = { rankings };
+
   await this.cacheService.saveRoom(room.roomId, room);
   await this.timerService.startTimer(room.roomId, ROUND_STANDING_TIME);
 
   this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
-  this.server.to(room.roomId).emit(ClientEvents.ROOM_ROUND_STANDING, {
-    rankings,
-  });
+  this.server.to(room.roomId).emit(ClientEvents.ROOM_ROUND_STANDING, result);
 
   this.logger.info({ room }, 'Round Standing Phase Start');
 }
