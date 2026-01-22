@@ -56,30 +56,11 @@ export const useRoundStanding = () => {
     return () => clearTimeout(timer);
   }, [standingResults, playFlip]);
 
-  // 현재 표시 중인 결과 기준으로 내 등수 계산 (1-based index)
-  // → 애니메이션 중에도 UI와 일관된 등수 표시를 위해 displayResults 기준 사용
-  const myRank = useMemo(() => {
-    if (!currentPlayer) return -1;
-    const index = displayResults.findIndex(
-      (p) => p.socketId === currentPlayer.socketId,
-    );
-    return index !== -1 ? index + 1 : -1;
-  }, [displayResults, currentPlayer]);
-
-  // 등수에 따라 사용자에게 보여줄 피드백 메시지
-  const rankMessage = useMemo(() => {
-    if (myRank === -1) return '';
-    if (myRank === 1) return `현재 ${myRank}등이에요! 이 기세를 유지하세요! 👑`;
-    if (myRank <= 3) return `현재 ${myRank}등이에요! 1등이 코앞이에요! 🔥`;
-    return `현재 ${myRank}등이에요! 조금만 더 노력해서 1등 해봐요! 👊`;
-  }, [myRank]);
-
   return {
     displayResults,
     isSorted,
     currentRound,
     previousScoreMap,
-    rankMessage,
     setRowRef,
   };
 };

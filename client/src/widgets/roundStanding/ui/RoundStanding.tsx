@@ -3,6 +3,8 @@ import { RoundBadge } from '@/shared/ui';
 import { DrawingHeader } from '@/entities/drawing';
 import { StandingRow } from '@/entities/ranking';
 import { useRoundStanding } from '../model/useRoundStanding';
+import { useMyRank } from '@/entities/gameRoom/model';
+import { getRankMessage } from '../lib/getRankMessage';
 
 export const RoundStanding = () => {
   const {
@@ -10,9 +12,11 @@ export const RoundStanding = () => {
     isSorted,
     currentRound,
     previousScoreMap,
-    rankMessage,
     setRowRef,
   } = useRoundStanding();
+
+  const myRank = useMyRank(displayResults);
+  const rankMessage = getRankMessage(myRank);
 
   return (
     <>
