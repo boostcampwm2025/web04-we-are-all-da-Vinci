@@ -21,28 +21,29 @@ export const useFlipAnimation = () => {
     onUpdate: (next: PlayerScore[]) => void,
     next: PlayerScore[],
   ) => {
-    const prevRects = new Map<string, DOMRect>();
+    const previousPositions = new Map<string, DOMRect>();
 
-    rowRefs.current.forEach((el, id) => {
-      prevRects.set(id, el.getBoundingClientRect());
+    rowRefs.current.forEach((row, key) => {
+      previousPositions.set(key, row.getBoundingClientRect());
     });
 
     onUpdate(next);
 
     requestAnimationFrame(() => {
-      rowRefs.current.forEach((el, id) => {
-        const prev = prevRects.get(id);
-        if (!prev) return;
+      rowRefs.current.forEach((row, key) => {
+        const previousPosition = previousPositions.get(key);
+        if (!previousPosition) return;
 
-        const dy = prev.top - el.getBoundingClientRect().top;
-        if (dy === 0) return;
+        const currentPosition = row.getBoundingClientRect();
+        const deltaY = previousPosition.top - currentPosition.top;
+        if (deltaY === 0) return;
 
-        el.style.transform = `translateY(${dy}px)`;
-        el.style.transition = 'transform 0s';
+        row.style.transform = `translateY(${deltaY}px)`;
+        row.style.transition = 'transform 0s';
 
         requestAnimationFrame(() => {
-          el.style.transform = '';
-          el.style.transition =
+          row.style.transform = '';
+          row.style.transition =
             'transform 700ms cubic-bezier(0.34,1.56,0.64,1)';
         });
       });
