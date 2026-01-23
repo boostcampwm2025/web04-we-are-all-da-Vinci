@@ -43,9 +43,13 @@ const RankingCard = ({
     ? 'ring-2 ring-offset-1 ring-blue-500'
     : '';
 
+  const currentUserStyle = isCurrentUser
+    ? 'bg-blue-50 border-blue-400'
+    : `${rankStyle.bg} ${rankStyle.border}`;
+
   return (
     <div
-      className={`rounded-xl border-2 p-3 transition-all duration-300 ${rankStyle.border} ${rankStyle.bg} ${currentUserRing} `}
+      className={`rounded-xl border-2 p-3 transition-all duration-300 ${currentUserStyle} ${currentUserRing} `}
     >
       <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
