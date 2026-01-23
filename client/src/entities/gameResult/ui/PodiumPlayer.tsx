@@ -103,7 +103,7 @@ export const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
       </h3>
 
       <p className={`${config.textColor} ${config.scoreSize} font-bold`}>
-        {player.score.toLocaleString()} pts
+        {player.score.toLocaleString()} 점
       </p>
 
       <div

@@ -6,7 +6,7 @@ import { SoundManager } from '@/shared/lib';
 import { GameHeader } from '@/shared/ui';
 import { useEffect } from 'react';
 
-export const RoundEnd = () => {
+export const RoundReplay = () => {
   const roundResults = useGameStore((state) => state.roundResults);
   const currentRound = useGameStore((state) => state.currentRound);
   const promptStrokes = useGameStore((state) => state.promptStrokes);

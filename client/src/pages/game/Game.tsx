@@ -1,14 +1,22 @@
 import { selectPhase, useGameStore } from '@/entities/gameRoom/model';
 import { useGameSocket } from '@/features/socket/model';
 import { OverlayModal } from '@/shared/ui';
-import { Drawing, GameEnd, Prompt, RoundEnd, Waiting } from '@/widgets';
+import {
+  Drawing,
+  GameEnd,
+  Prompt,
+  RoundReplay,
+  RoundStanding,
+  Waiting,
+} from '@/widgets';
 import { useNavigate } from 'react-router-dom';
 
 const GAME_PHASE_COMPONENT_MAP = {
   WAITING: Waiting,
   DRAWING: Drawing,
   PROMPT: Prompt,
-  ROUND_END: RoundEnd,
+  ROUND_REPLAY: RoundReplay,
+  ROUND_STANDING: RoundStanding,
   GAME_END: GameEnd,
 } as const;
 
