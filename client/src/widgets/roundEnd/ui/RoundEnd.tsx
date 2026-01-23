@@ -1,13 +1,10 @@
-import {
-  PlayerReplaysSection,
-  PromptSection,
-  RoundResultHeader,
-} from '@/entities/roundResult';
-import { Timer } from '@/entities/timer';
 import { useGameStore } from '@/entities/gameRoom/model';
-import { useEffect } from 'react';
-import { SoundManager } from '@/shared/lib';
+import { PlayerReplaysSection, PromptSection } from '@/entities/roundResult';
+import { Timer } from '@/entities/timer';
 import { SOUND_LIST } from '@/shared/config/sound';
+import { SoundManager } from '@/shared/lib';
+import { GameHeader } from '@/shared/ui';
+import { useEffect } from 'react';
 
 export const RoundEnd = () => {
   const roundResults = useGameStore((state) => state.roundResults);
@@ -22,16 +19,14 @@ export const RoundEnd = () => {
   return (
     <>
       <Timer />
-      <div className="page-center h-screen">
-        <div className="page-container">
-          <div className="mb-4">
-            <RoundResultHeader title={`라운드 ${currentRound} 결과`} />
-          </div>
+      <div className="page-center">
+        <main className="game-container">
+          <GameHeader title={`라운드 ${currentRound} 결과`} showDecoration />
           <div className="flex min-h-0 flex-1 gap-4">
             <PromptSection promptStrokes={promptStrokes} />
             <PlayerReplaysSection players={roundResults} />
           </div>
-        </div>
+        </main>
       </div>
     </>
   );
