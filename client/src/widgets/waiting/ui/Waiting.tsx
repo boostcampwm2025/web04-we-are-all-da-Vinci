@@ -115,9 +115,9 @@ export const Waiting = () => {
           </div>
           <div
             id="boostAD"
-            className="mt-4 flex h-20 w-full shrink-0 justify-center bg-black text-center text-white"
+            className="absolute bottom-10 z-40 flex h-25 w-280 justify-center px-10 text-center"
           >
-            광고 배너 영역
+            <div data-boostad-zone className="h-full w-full"></div>
           </div>
         </main>
       </div>
