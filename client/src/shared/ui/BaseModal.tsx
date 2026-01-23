@@ -10,6 +10,8 @@ interface BaseModalProps {
   onConfirm: () => void;
   confirmText?: string;
   confirmDisabled?: boolean;
+  variant?: 'default' | 'scribble';
+  buttonVariant?: 'default' | 'scribble';
 }
 
 const BaseModal = ({
@@ -21,8 +23,20 @@ const BaseModal = ({
   onConfirm,
   confirmText = '확인',
   confirmDisabled = false,
+  variant = 'scribble',
+  buttonVariant = 'scribble',
 }: BaseModalProps) => {
   if (!isOpen) return null;
+
+  const containerClasses =
+    variant === 'scribble' ? 'scribble-border scribble-border-box' : '';
+
+  const titleClasses = 'font-handwriting mb-6 text-center text-4xl font-bold';
+
+  const messageClasses =
+    'font-handwriting text-2xl whitespace-pre-line text-gray-700';
+
+  const btnVariant = buttonVariant === 'scribble' ? 'scribble' : 'radius';
 
   return (
     <div
@@ -44,23 +58,19 @@ const BaseModal = ({
       {/* 모달 콘텐츠 */}
       <div
         onClick={(e) => e.stopPropagation()}
-        className="scribble-border scribble-border-box relative z-10 w-full max-w-md rounded-2xl border-2 border-gray-400 bg-white p-8 shadow-xl"
+        className={`relative z-10 w-full max-w-md rounded-2xl border-2 border-gray-400 bg-white p-8 shadow-xl ${containerClasses}`}
       >
-        <h2 className="font-handwriting mb-6 text-center text-4xl font-bold">
-          {title}
-        </h2>
-        {message && (
-          <p className="font-handwriting text-2xl whitespace-pre-line text-gray-700">
-            {message}
-          </p>
-        )}
+        <h2 className={titleClasses}>{title}</h2>
+        {message && <p className={messageClasses}>{message}</p>}
         {children}
         <div className="mt-6">
           <CommonBtn
-            variant="scribble"
-            icon="check_circle"
+            variant={btnVariant}
+            icon={buttonVariant === 'scribble' ? 'check_circle' : undefined}
             text={confirmText}
             onClick={confirmDisabled ? undefined : onConfirm}
+            disabled={confirmDisabled}
+            color="blue"
           />
         </div>
       </div>
