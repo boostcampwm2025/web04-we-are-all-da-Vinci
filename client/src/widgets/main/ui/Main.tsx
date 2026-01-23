@@ -91,11 +91,12 @@ export const Main = () => {
             </button>
           </div>
         </div>
+
         <div
           id="boostAD"
-          className="absolute bottom-1 z-1200 flex h-25 w-280 justify-center bg-black px-10 text-center"
+          className="absolute bottom-20 z-1200 flex h-25 w-280 justify-center px-10 text-center"
         >
-          광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고
+          <div data-boostad-zone className="h-full w-full"></div>
         </div>
       </div>
 
