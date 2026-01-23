@@ -1,6 +1,5 @@
 import { Timer } from '@/entities/timer';
-import { RoundBadge } from '@/shared/ui';
-import { DrawingHeader } from '@/entities/drawing';
+import { GameHeader } from '@/shared/ui';
 import { StandingRow } from '@/entities/ranking';
 import { useRoundStanding } from '../model/useRoundStanding';
 import { useMyRank } from '@/entities/gameRoom/model';
@@ -22,12 +21,9 @@ export const RoundStanding = () => {
     <>
       <Timer />
 
-      <div className="page-center h-screen">
-        <div className="page-container">
-          <DrawingHeader
-            title="현재 순위"
-            roundBadge={<RoundBadge round={currentRound} />}
-          />
+      <div className="page-center">
+        <main className="game-container">
+          <GameHeader title="현재 순위" round={currentRound} showLogo={false} />
 
           {isSorted && rankMessage && (
             <div className="mb-4 text-center">
@@ -49,7 +45,7 @@ export const RoundStanding = () => {
               </div>
             ))}
           </div>
-        </div>
+        </main>
       </div>
     </>
   );
