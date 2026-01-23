@@ -41,6 +41,9 @@ export const useGameSocket = () => {
   const setHighlight = useGameStore((state) => state.setHighlight);
   const setPromptStrokes = useGameStore((state) => state.setPromptStrokes);
   const setAlertMessage = useGameStore((state) => state.setAlertMessage);
+  const setPendingNavigation = useGameStore(
+    (state) => state.setPendingNavigation,
+  );
   const reset = useGameStore((state) => state.reset);
   const addToast = useToastStore((state) => state.addToast);
 
@@ -196,10 +199,10 @@ export const useGameSocket = () => {
       },
     );
 
-    // 에러
+    // 에러: 모달 확인 후 메인 페이지로 이동
     socket.on(CLIENT_EVENTS.ERROR, (error: { message: string }) => {
       setAlertMessage(error.message);
-      navigate('/');
+      setPendingNavigation('/');
     });
 
     // Cleanup

@@ -25,6 +25,7 @@ interface GameState extends GameRoom {
 
   // 알림 상태
   alertMessage: string | null;
+  pendingNavigation: string | null; // 모달 확인 후 이동할 경로
 
   // Actions
   setConnected: (isConnected: boolean) => void;
@@ -36,6 +37,7 @@ interface GameState extends GameRoom {
   setFinalResults: (results: FinalResult[]) => void;
   setHighlight: (highlight: Highlight) => void;
   setAlertMessage: (message: string | null) => void;
+  setPendingNavigation: (path: string | null) => void;
   reset: () => void;
 }
 
@@ -57,6 +59,7 @@ const initialState = {
   finalResults: [],
   highlight: null,
   alertMessage: null,
+  pendingNavigation: null,
 };
 
 export const useGameStore = create<GameState>()(
@@ -81,6 +84,8 @@ export const useGameStore = create<GameState>()(
       setHighlight: (highlight) => set({ highlight }),
 
       setAlertMessage: (alertMessage) => set({ alertMessage }),
+
+      setPendingNavigation: (pendingNavigation) => set({ pendingNavigation }),
 
       reset: () => set(initialState),
     }),
