@@ -1,9 +1,9 @@
 import type { FinalResult, Highlight } from '@/entities/gameResult/model';
 import type { Player } from '@/entities/player/model';
 import type { RankingEntry } from '@/entities/ranking';
-import type { RoundResult } from '@/entities/roundResult/model';
+import type { RoundResult, PlayerScore } from '@/entities/roundResult/model';
 import type { Stroke } from '@/entities/similarity';
-import { getSocket } from '@/shared/api/socket';
+import { getSocket } from '@/shared/api';
 import type { Phase } from '@/shared/config';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
@@ -20,8 +20,14 @@ interface GameState extends GameRoom {
 
   // 결과 데이터
   roundResults: RoundResult[];
+  previousStandingResults: FinalResult[]; // 이전 라운드 스탠딩 (순위 변동 애니메이션용)
+  standingResults: FinalResult[]; // 라운드 스탠딩 (누적 점수)
   finalResults: FinalResult[];
   highlight: Highlight | null;
+
+  // 알림 상태
+  alertMessage: string | null;
+  pendingNavigation: string | null; // 모달 확인 후 이동할 경로
 
   // Actions
   setConnected: (isConnected: boolean) => void;
@@ -30,8 +36,11 @@ interface GameState extends GameRoom {
   setLiveRankings: (rankings: RankingEntry[]) => void;
   setPromptStrokes: (strokes: Stroke[]) => void;
   setRoundResults: (results: RoundResult[]) => void;
+  setStandingResults: (results: PlayerScore[]) => void;
   setFinalResults: (results: FinalResult[]) => void;
   setHighlight: (highlight: Highlight) => void;
+  setAlertMessage: (message: string | null) => void;
+  setPendingNavigation: (path: string | null) => void;
   reset: () => void;
 }
 
@@ -50,8 +59,12 @@ const initialState = {
   liveRankings: [],
   promptStrokes: [],
   roundResults: [],
+  previousStandingResults: [],
+  standingResults: [],
   finalResults: [],
   highlight: null,
+  alertMessage: null,
+  pendingNavigation: null,
 };
 
 export const useGameStore = create<GameState>()(
@@ -71,9 +84,19 @@ export const useGameStore = create<GameState>()(
 
       setRoundResults: (roundResults) => set({ roundResults }),
 
+      setStandingResults: (standingResults) =>
+        set((state) => ({
+          previousStandingResults: state.standingResults,
+          standingResults,
+        })),
+
       setFinalResults: (finalResults) => set({ finalResults }),
 
       setHighlight: (highlight) => set({ highlight }),
+
+      setAlertMessage: (alertMessage) => set({ alertMessage }),
+
+      setPendingNavigation: (pendingNavigation) => set({ pendingNavigation }),
 
       reset: () => set(initialState),
     }),
@@ -123,4 +146,17 @@ export const useIsCurrentUser = (socketId: string): boolean => {
   const mySocketId = socket?.id;
 
   return mySocketId === socketId;
+};
+
+// Helper: 현재 플레이어의 등수 계산 (displayResults 기준)
+export const useMyRank = (displayResults: PlayerScore[]): number => {
+  const currentPlayer = useCurrentPlayer();
+
+  if (!currentPlayer) return -1;
+
+  const index = displayResults.findIndex(
+    (p) => p.socketId === currentPlayer.socketId,
+  );
+
+  return index !== -1 ? index + 1 : -1;
 };

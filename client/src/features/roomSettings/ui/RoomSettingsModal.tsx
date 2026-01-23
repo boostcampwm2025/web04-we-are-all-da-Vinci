@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import { BaseModal } from '@/shared/ui/base-modal';
+import { BaseModal } from '@/shared/ui';
+import { trackEvent } from '@/shared/lib/mixpanel';
+import { MIXPANEL_EVENTS } from '@/shared/config';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onComplete?: (settings: RoomSettings) => void;
+  currentPlayerCount?: number;
 }
 
 export interface RoomSettings {
@@ -17,10 +20,35 @@ const RoomSettingsModal = ({
   isOpen,
   onClose,
   onComplete,
+  currentPlayerCount = 1,
 }: SettingsModalProps) => {
   const [selectedPlayers, setSelectedPlayers] = useState(4);
   const [selectedRounds, setSelectedRounds] = useState(5);
   const [selectedTime, setSelectedTime] = useState(15);
+
+  const handlePlayersChange = (players: number) => {
+    setSelectedPlayers(players);
+    trackEvent(MIXPANEL_EVENTS.CLICK_SETTINGROOM_PROPERTIES, {
+      설정: '플레이어 수',
+      값: players,
+    });
+  };
+
+  const handleRoundsChange = (rounds: number) => {
+    setSelectedRounds(rounds);
+    trackEvent(MIXPANEL_EVENTS.CLICK_SETTINGROOM_PROPERTIES, {
+      설정: '라운드 수',
+      값: rounds,
+    });
+  };
+
+  const handleTimeChange = (time: number) => {
+    setSelectedTime(time);
+    trackEvent(MIXPANEL_EVENTS.CLICK_SETTINGROOM_PROPERTIES, {
+      설정: '제한 시간',
+      값: time,
+    });
+  };
 
   const playerOptions = [2, 3, 4, 5, 6, 8, 10, 20, 30];
   const roundOptions = [3, 5, 7, 10];
@@ -44,9 +72,9 @@ const RoomSettingsModal = ({
       onConfirm={handleComplete}
       confirmText="완료"
     >
-      <div className="space-y-5">
+      <div className="space-y-3">
         <div>
-          <div className="mb-2 flex w-full items-center justify-between">
+          <div className="mb-1 flex w-full items-center justify-between">
             <label className="font-handwriting text-2xl font-bold">
               플레이어
             </label>
@@ -56,11 +84,16 @@ const RoomSettingsModal = ({
           </div>
           <select
             value={selectedPlayers}
-            onChange={(e) => setSelectedPlayers(Number(e.target.value))}
+            onChange={(e) => handlePlayersChange(Number(e.target.value))}
             className="font-handwriting w-full cursor-pointer appearance-none rounded-lg border-2 border-gray-300 bg-white px-4 py-2.5 text-2xl transition-colors hover:border-gray-400"
           >
             {playerOptions.map((players) => (
-              <option key={players} value={players} className="text-2xl">
+              <option
+                key={players}
+                value={players}
+                className="text-2xl"
+                disabled={players < currentPlayerCount}
+              >
                 {players}명
               </option>
             ))}
@@ -80,7 +113,7 @@ const RoomSettingsModal = ({
             {roundOptions.map((rounds) => (
               <button
                 key={rounds}
-                onClick={() => setSelectedRounds(rounds)}
+                onClick={() => handleRoundsChange(rounds)}
                 className={`font-handwriting rounded-lg py-2.5 text-2xl font-bold transition-all ${
                   selectedRounds === rounds
                     ? 'border-2 border-blue-500 bg-blue-100 text-blue-700'
@@ -104,7 +137,7 @@ const RoomSettingsModal = ({
             {timeOptions.map((time) => (
               <button
                 key={time}
-                onClick={() => setSelectedTime(time)}
+                onClick={() => handleTimeChange(time)}
                 className={`font-handwriting rounded-lg py-2.5 text-xl font-bold transition-all ${
                   selectedTime === time
                     ? 'border-2 border-blue-500 bg-blue-100 text-blue-700'

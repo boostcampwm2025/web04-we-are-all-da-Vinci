@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { GamePhase } from 'src/common/constants';
+import { ErrorCode } from 'src/common/constants/error-code';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
-import { Stroke } from 'src/common/types';
+import { Similarity, Stroke } from 'src/common/types';
 import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
@@ -33,10 +34,16 @@ export class PlayService {
       throw new WebsocketException('서버 오류');
     }
 
-    const idNicknameMapper: Record<string, string> = players.reduce(
+    const playerMapper: Record<
+      string,
+      { nickname: string; profileId: string }
+    > = players.reduce(
       (prev, player) => ({
         ...prev,
-        [player.socketId]: player.nickname,
+        [player.socketId]: {
+          nickname: player.nickname,
+          profileId: player.profileId,
+        },
       }),
       {},
     );
@@ -46,7 +53,8 @@ export class PlayService {
     const rankings = leaderboard.map(({ value, score }) => ({
       socketId: value,
       similarity: score,
-      nickname: idNicknameMapper[value],
+      nickname: playerMapper[value]?.nickname,
+      profileId: playerMapper[value]?.profileId,
     }));
 
     return rankings;
@@ -55,21 +63,21 @@ export class PlayService {
   async submitDrawing(
     roomId: string,
     socketId: string,
-    similarity: number,
+    similarity: Similarity,
     strokes: Stroke[],
   ) {
     const room = await this.cacheService.getRoom(roomId);
 
     if (!room) {
-      throw new WebsocketException('방이 존재하지 않습니다.');
+      throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
     }
 
     if (room.phase !== GamePhase.DRAWING) {
-      throw new WebsocketException('그리기 단계에 제출해야 합니다.');
+      throw new WebsocketException(ErrorCode.GAME_NOT_DRAWING_PHASE);
     }
 
     if (!room.players.find((player) => player.socketId === socketId)) {
-      throw new WebsocketException('현재 게임에 참여 중이지 않습니다.');
+      throw new WebsocketException(ErrorCode.PLAYER_NOT_IN_ROOM);
     }
 
     const currentRound = room.currentRound;

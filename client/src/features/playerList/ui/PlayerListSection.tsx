@@ -1,11 +1,21 @@
+import { useGameStore } from '@/entities/gameRoom/model';
 import { EmptySlot, PlayerCard } from '@/entities/player';
 import type { Player } from '@/entities/player/model';
-import type { ReactNode } from 'react';
+import { getSocket } from '@/shared/api/socket';
+import { SERVER_EVENTS } from '@/shared/config';
+import { OverlayModal } from '@/shared/ui';
+import { useState, type ReactNode } from 'react';
 
 interface PlayerListSectionProps {
   players: Player[];
   maxPlayer: number;
   roomCode?: ReactNode;
+}
+
+interface KickModalConfig {
+  isOpen: boolean;
+  targetPlayerNickname?: string;
+  onConfirm?: () => void;
 }
 
 export const PlayerListSection = ({
@@ -15,27 +25,48 @@ export const PlayerListSection = ({
 }: PlayerListSectionProps) => {
   const TOTAL_SLOTS = 8;
   const emptySlots = TOTAL_SLOTS - players.length;
+  const [kickModalConfig, setKickModalConfig] = useState<KickModalConfig>({
+    isOpen: false,
+  });
+  const socket = getSocket();
+  const roomId = useGameStore((state) => state.roomId);
+
+  const handleKick = (player: Player) => {
+    setKickModalConfig({
+      isOpen: true,
+      targetPlayerNickname: player.nickname,
+      onConfirm: () => {
+        socket.emit(SERVER_EVENTS.USER_KICK, {
+          roomId,
+          targetPlayerId: player.socketId,
+        });
+        setKickModalConfig({ isOpen: false });
+      },
+    });
+  };
 
   return (
-    <div className="flex flex-col rounded-2xl border-2 border-gray-800 bg-white p-6 shadow-lg">
+    <div className="card flex h-full flex-col p-6">
       <div className="mb-5 flex shrink-0 items-center justify-between">
         <h2 className="font-handwriting flex items-center gap-2 text-2xl font-bold">
           인원
-          <span className="text-lg text-gray-500">
+          <span className="text-content-tertiary text-lg">
             ({players.length}/{maxPlayer})
           </span>
         </h2>
         {roomCode}
       </div>
 
-      <div className="grid max-h-80 grid-cols-4 gap-4 overflow-y-scroll">
+      <div className="grid min-h-0 flex-1 grid-cols-2 content-start gap-2 overflow-y-auto sm:gap-4 md:grid-cols-4">
         {players.map((player) => (
           <PlayerCard
             key={player.socketId}
             id={player.socketId}
             nickname={player.nickname}
+            profileId={player.profileId}
             isHost={player.isHost ?? false}
             status="대기중"
+            onKickClick={() => handleKick(player)}
           />
         ))}
 
@@ -43,6 +74,16 @@ export const PlayerListSection = ({
           <EmptySlot key={`empty-${i}`} />
         ))}
       </div>
+
+      <OverlayModal
+        isOpen={kickModalConfig.isOpen}
+        onClose={() => setKickModalConfig({ isOpen: false })}
+        title={`${kickModalConfig.targetPlayerNickname}님을 퇴장시키겠습니까?`}
+        onConfirm={kickModalConfig.onConfirm ?? (() => {})}
+        confirmText="퇴장"
+        onCancel={() => setKickModalConfig({ isOpen: false })}
+        cancelText="취소"
+      />
     </div>
   );
 };

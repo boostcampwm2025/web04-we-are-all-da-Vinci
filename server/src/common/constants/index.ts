@@ -1,7 +1,8 @@
 export const REDIS_TTL = 3600;
 export const PROMPT_TIME = 5;
 export const DRAWING_END_DELAY = 1800; // 그림 그리기 종료 후 대기 시간 (ms)
-export const ROUND_END_TIME = 15; // 라운드 결과 표시 시간 (초)
+export const ROUND_REPLAY_TIME = 15; // 라운드 결과(리플레이) 표시 시간 (초)
+export const ROUND_STANDING_TIME = 10; // 라운드 점수 및 랭킹 표시 시간 (초)
 export const GAME_END_TIME = 30; // 게임 종료 화면 표시 시간 (초)
 
 export const ServerEvents = {
@@ -9,6 +10,7 @@ export const ServerEvents = {
   USER_JOIN: 'user:join',
   USER_SCORE: 'user:score',
   USER_DRAWING: 'user:drawing',
+  USER_KICK: 'user:kick',
   ROOM_SETTINGS: 'room:settings',
   ROOM_START: 'room:start',
   ROOM_RESTART: 'room:restart',
@@ -20,9 +22,11 @@ export const ClientEvents = {
   ROOM_METADATA: 'room:metadata',
   ROOM_LEADERBOARD: 'room:leaderboard',
   ROOM_TIMER: 'room:timer',
-  ROOM_ROUND_END: 'room:round_end',
+  ROOM_ROUND_REPLAY: 'room:round_replay',
+  ROOM_ROUND_STANDING: 'room:round_standing',
   ROOM_GAME_END: 'room:game_end',
   ROOM_PROMPT: 'room:prompt',
+  ROOM_KICKED: 'room:kicked',
   ERROR: 'error',
 } as const;
 
@@ -30,6 +34,7 @@ export const GamePhase = {
   WAITING: 'WAITING',
   PROMPT: 'PROMPT',
   DRAWING: 'DRAWING',
-  ROUND_END: 'ROUND_END',
+  ROUND_REPLAY: 'ROUND_REPLAY',
+  ROUND_STANDING: 'ROUND_STANDING',
   GAME_END: 'GAME_END',
 };

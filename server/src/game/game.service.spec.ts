@@ -9,6 +9,7 @@ import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { PinoLogger } from 'nestjs-pino';
 import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
 import { RoundService } from 'src/round/round.service';
+import { PromptService } from 'src/prompt/prompt.service';
 
 describe('GameService', () => {
   let service: GameService;
@@ -32,6 +33,9 @@ describe('GameService', () => {
     };
     const mockRoundService = {
       nextPhase: jest.fn(),
+    };
+    const mockPromptService = {
+      setPromptIds: jest.fn(),
     };
 
     const mockLogger = {
@@ -61,6 +65,10 @@ describe('GameService', () => {
         {
           provide: RoundService,
           useValue: mockRoundService,
+        },
+        {
+          provide: PromptService,
+          useValue: mockPromptService,
         },
         {
           provide: PinoLogger,
@@ -124,7 +132,6 @@ describe('GameService', () => {
           maxPlayer: 4,
           totalRounds: 5,
         },
-        promptId: 1,
       };
 
       cacheService.getRoom

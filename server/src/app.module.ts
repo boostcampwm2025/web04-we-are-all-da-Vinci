@@ -5,6 +5,7 @@ import { RedisModule } from './redis/redis.module';
 import { GameModule } from './game/game.module';
 import { PlayModule } from './play/play.module';
 import { RoundModule } from './round/round.module';
+import { PromptModule } from './prompt/prompt.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { RoundModule } from './round/round.module';
     GameModule,
     PlayModule,
     RoundModule,
+    PromptModule,
   ],
 })
 export class AppModule {}

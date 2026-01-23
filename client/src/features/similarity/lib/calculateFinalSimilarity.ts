@@ -1,14 +1,15 @@
 import type { Stroke } from '@/entities/similarity/model';
-import { calculateGreedyStrokeMatchScore } from './stroke/strokeSimilarity/calculateGreedyStrokeMatchScore';
+import { calculateGreedyStrokeMatchScore } from './calculateGreedyStrokeMatchScore';
 import {
   getConvexHull,
   getHullArea,
   getHullPerimeter,
   strokesToPoints,
-} from './shape/convexHullGeometry';
-import { getRadialSignature } from './shape/radialSignature';
+} from './convexHullGeometry';
+import { getRadialSignature } from './radialSignature';
 import type { PreprocessedStrokeData } from '../model';
-import { calculateShapeSimilarityByPreprocessed } from './shape/shapeSimilarity/calculateShapeSimilarity';
+import { calculateShapeSimilarityByPreprocessed } from './calculateShapeSimilarity';
+import type { Similarity } from '../model/similarity';
 
 // 스트로크에서 유사도 계산에 필요한 수학적 데이터를 미리 계산하는 함수
 export const preprocessStrokes = (
@@ -37,7 +38,7 @@ export const preprocessStrokes = (
 export const calculateFinalSimilarityByStrokes = (
   promptStrokes: Stroke[],
   playerStrokes: Stroke[],
-) => {
+): Similarity => {
   const preprocessedPrompt = preprocessStrokes(promptStrokes);
   const preprocessPlayer = preprocessStrokes(playerStrokes);
   return calculateFinalSimilarityByPreprocessed(
@@ -50,7 +51,7 @@ export const calculateFinalSimilarityByStrokes = (
 export const calculateFinalSimilarityByPreprocessed = (
   preprocessedPrompt: PreprocessedStrokeData,
   preprocessedPlayer: PreprocessedStrokeData,
-) => {
+): Similarity => {
   const normalizedPromptStrokes = preprocessedPrompt.normalizedStrokes;
   const normalizedPlayerStrokes = preprocessedPlayer.normalizedStrokes;
 
@@ -102,15 +103,19 @@ export const calculateFinalSimilarityByPreprocessed = (
   }
 
   // 최종 유사도 계산
+  const weightedStrokeCountSim = strokeCountSimilarity * weights.strokeCount;
+  const weightedStrokeMatchSim = strokeMatchSimilarity * weights.strokeMatch;
+  const weightedShapeSim = scaledShapeScore * weights.shape;
   const similarity =
-    strokeCountSimilarity * weights.strokeCount +
-    strokeMatchSimilarity * weights.strokeMatch +
-    scaledShapeScore * weights.shape;
+    weightedStrokeCountSim + weightedStrokeMatchSim + weightedShapeSim;
 
   const roundedSimilarity = Math.round(similarity * 100) / 100;
 
   return {
     similarity: roundedSimilarity,
+    strokeCountSimilarity: Math.round(weightedStrokeCountSim * 100) / 100,
+    strokeMatchSimilarity: Math.round(weightedStrokeMatchSim * 100) / 100,
+    shapeSimilarity: Math.round(weightedShapeSim * 100) / 100,
   };
 };
 

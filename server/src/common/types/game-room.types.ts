@@ -3,6 +3,7 @@ import { GamePhase } from '../constants';
 export interface Player {
   socketId: string;
   nickname: string;
+  profileId: string;
   isHost: boolean;
 }
 
@@ -18,7 +19,6 @@ export interface GameRoom {
   phase: Phase;
   currentRound: number;
   settings: Settings;
-  promptId: number;
 }
 
 export type Phase = (typeof GamePhase)[keyof typeof GamePhase];

@@ -1,8 +1,14 @@
+import { trackEvent } from '@/shared/lib/mixpanel';
+import { MIXPANEL_EVENTS } from '@/shared/config';
+import type { Color } from '@/entities/similarity';
+import { ColorButton } from './ColorButton';
+
 interface DrawingToolbarProps {
   onColorSelect?: (color: string) => void;
   onUndo?: () => void;
   onClear?: () => void;
   canUndo?: boolean;
+  selectedColor: Color;
 }
 
 export const DrawingToolbar = ({
@@ -10,37 +16,46 @@ export const DrawingToolbar = ({
   onUndo,
   onClear,
   canUndo = false,
+  selectedColor = [0, 0, 0],
 }: DrawingToolbarProps) => {
   return (
     <div className="flex shrink-0 items-center gap-4 border-b-2 border-gray-300 bg-gray-100 px-4 py-3">
       <div className="flex items-center gap-2">
-        <button
-          onClick={() => onColorSelect?.('black')}
-          className="h-8 w-8 rounded-full border-2 border-gray-400 bg-black transition-transform hover:scale-110"
-        ></button>
-        <button
-          onClick={() => onColorSelect?.('red')}
-          className="h-8 w-8 rounded-full border-2 border-gray-300 bg-red-500 transition-transform hover:scale-110"
-        ></button>
-        <button
-          onClick={() => onColorSelect?.('blue')}
-          className="h-8 w-8 rounded-full border-2 border-gray-300 bg-blue-500 transition-transform hover:scale-110"
-        ></button>
-        <button
-          onClick={() => onColorSelect?.('green')}
-          className="h-8 w-8 rounded-full border-2 border-gray-300 bg-green-500 transition-transform hover:scale-110"
-        ></button>
-        <button
-          onClick={() => onColorSelect?.('yellow')}
-          className="h-8 w-8 rounded-full border-2 border-gray-300 bg-yellow-400 transition-transform hover:scale-110"
-        ></button>
+        <ColorButton
+          color="black"
+          selectedColor={selectedColor}
+          onSelect={onColorSelect}
+        />
+        <ColorButton
+          color="red"
+          selectedColor={selectedColor}
+          onSelect={onColorSelect}
+        />
+        <ColorButton
+          color="blue"
+          selectedColor={selectedColor}
+          onSelect={onColorSelect}
+        />
+        <ColorButton
+          color="green"
+          selectedColor={selectedColor}
+          onSelect={onColorSelect}
+        />
+        <ColorButton
+          color="yellow"
+          selectedColor={selectedColor}
+          onSelect={onColorSelect}
+        />
       </div>
 
       <div className="h-6 w-px bg-gray-400"></div>
 
       <div className="flex items-center gap-2">
         <button
-          onClick={onUndo}
+          onClick={() => {
+            trackEvent(MIXPANEL_EVENTS.CLICK_UNDO_BTN);
+            onUndo?.();
+          }}
           disabled={!canUndo}
           className="rounded-lg p-2 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40"
         >
@@ -51,7 +66,10 @@ export const DrawingToolbar = ({
       <div className="h-6 w-px bg-gray-400"></div>
 
       <button
-        onClick={onClear}
+        onClick={() => {
+          trackEvent(MIXPANEL_EVENTS.CLICK_CLEAR_BTN);
+          onClear?.();
+        }}
         className="flex items-center gap-1 rounded-lg p-2 text-red-600 transition-colors hover:bg-red-100"
       >
         <span className="material-symbols-outlined">delete</span>

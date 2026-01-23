@@ -3,10 +3,17 @@ export interface Stroke {
   color: [number, number, number];
 }
 
+export interface Similarity {
+  similarity: number;
+  strokeCountSimilarity: number;
+  strokeMatchSimilarity: number;
+  shapeSimilarity: number;
+}
+
 export interface PlayerResult {
   socketId: string;
   nickname: string;
-  similarity: number;
+  similarity: Similarity;
 }
 
 export interface RoundResultEntry extends PlayerResult {

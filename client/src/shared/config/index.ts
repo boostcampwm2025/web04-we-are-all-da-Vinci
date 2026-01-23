@@ -3,3 +3,5 @@ export { GAME_PHASE, type Phase } from './gamePhase';
 export { PATHS } from './paths';
 export { CLIENT_EVENTS, SERVER_EVENTS } from './socketEvents';
 export { TITLES } from './titles';
+export { MIXPANEL_EVENTS } from './mixpanelEvents';
+export { VALIDATION } from './validation';

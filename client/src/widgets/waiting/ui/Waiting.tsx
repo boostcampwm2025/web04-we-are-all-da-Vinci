@@ -9,9 +9,11 @@ import { PlayerListSection } from '@/features/playerList';
 import { RoomCodeCopy } from '@/features/roomCode';
 import { RoomSettingsModal, type RoomSettings } from '@/features/roomSettings';
 import { WaitingRoomActions } from '@/features/waitingRoomActions';
-import { getSocket } from '@/shared/api/socket';
-import { SERVER_EVENTS, TITLES } from '@/shared/config';
-import { Title } from '@/shared/ui';
+import { getSocket } from '@/shared/api';
+import { MIXPANEL_EVENTS, SERVER_EVENTS, TITLES } from '@/shared/config';
+import { trackEvent } from '@/shared/lib/mixpanel';
+import { useToastStore } from '@/shared/model';
+import { GameHeader } from '@/shared/ui';
 import { useState } from 'react';
 
 export const Waiting = () => {
@@ -23,9 +25,17 @@ export const Waiting = () => {
   const settings = useGameStore(selectSettings);
   const isHostUser = useIsHost();
 
-  const copyRoomId = () => {
-    navigator.clipboard.writeText(globalThis.location.href);
-    alert('방 링크가 복사되었습니다!');
+  const { addToast } = useToastStore();
+
+  const copyRoomId = async () => {
+    try {
+      await navigator.clipboard.writeText(globalThis.location.href);
+      trackEvent(MIXPANEL_EVENTS.CLICK_COPYLINK_BTN);
+      addToast('초대 링크가 복사되었습니다!', 'success');
+    } catch (e) {
+      console.error('클립보드 복사 실패', e);
+      addToast('링크 복사에 실패했습니다.', 'error');
+    }
   };
 
   const handleSettingsChange = () => {
@@ -61,41 +71,62 @@ export const Waiting = () => {
 
   return (
     <>
-      <div className="flex h-full w-full items-center justify-center px-4 py-6">
-        <div className="flex w-full max-w-7xl flex-col">
-          <div className="mb-5 shrink-0 text-center">
-            <Title title={TITLES.ROOM} fontSize="text-6xl" />
-            <p className="font-handwriting text-2xl text-gray-600">
-              친구들이 모일 때까지 기다려주세요!
-            </p>
-          </div>
+      <div className="page-center">
+        <main className="game-container mx-25">
+          <GameHeader
+            title={TITLES.ROOM}
+            description="친구들이 모일 때까지 기다려주세요!"
+          />
 
-          <div className="flex flex-2 gap-7">
-            <div className="flex-1">
-              <PlayerListSection
-                players={players}
-                maxPlayer={settings.maxPlayer}
-                roomCode={<RoomCodeCopy roomId={roomId} onCopy={copyRoomId} />}
-              />
+          <div className="flex min-h-0 flex-1 gap-7">
+            <div className="flex h-full flex-1 flex-col gap-4">
+              <div className="flex h-full min-h-0 flex-col gap-4">
+                <div className="min-h-0 flex-1">
+                  <PlayerListSection
+                    players={players}
+                    maxPlayer={settings.maxPlayer}
+                    roomCode={
+                      <RoomCodeCopy roomId={roomId} onCopy={copyRoomId} />
+                    }
+                  />
+                </div>
+                <div>
+                  <WaitingRoomActions
+                    onStartClick={handleStartGame}
+                    isHost={isHostUser}
+                    canStart={!!roomId && players.length >= 2}
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="flex w-96 flex-col justify-center gap-4">
-              <GameSettingsCard settings={settings} />
-              <WaitingRoomActions
-                onSettingsClick={handleSettingsChange}
-                onStartClick={handleStartGame}
+            <div className="flex h-full w-80 flex-col gap-4">
+              <GameSettingsCard
+                settings={settings}
+                onEdit={handleSettingsChange}
                 isHost={isHostUser}
-                canStart={!!roomId && players.length >= 2}
               />
+              <div className="card flex flex-1 items-center justify-center">
+                <p className="font-handwriting text-content-disabled text-lg">
+                  💬 채팅 (예정)
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+          {/* <div
+            id="boostAD"
+            className="absolute bottom-10 z-40 flex h-25 w-280 justify-center px-10 text-center"
+          >
+            <div data-boostad-zone className="h-full w-full"></div>
+          </div> */}
+        </main>
       </div>
 
       <RoomSettingsModal
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
         onComplete={handleSettingsComplete}
+        currentPlayerCount={players.length}
       />
     </>
   );

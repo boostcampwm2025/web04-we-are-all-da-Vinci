@@ -1,5 +1,9 @@
+import { useState } from 'react';
 import type { Stroke } from '@/entities/similarity/model';
 import { DrawingReplayCanvas } from '@/features/replayingCanvas';
+import type { Similarity } from '@/features/similarity';
+import { PlayerSimilarityDetailTooltip } from '@/entities/similarity';
+import { UserAvatar } from '@/shared/ui';
 
 const getRankColor = (rank: number) => {
   if (rank === 1) return 'bg-yellow-400 text-yellow-900';
@@ -11,7 +15,8 @@ const getRankColor = (rank: number) => {
 interface PlayerReplayCardProps {
   rank: number;
   nickname: string;
-  similarity: number;
+  profileId: string;
+  similarity: Similarity;
   strokes: Stroke[];
   isCurrentUser?: boolean;
 }
@@ -19,21 +24,44 @@ interface PlayerReplayCardProps {
 export const PlayerReplayCard = ({
   rank,
   nickname,
+  profileId,
   similarity,
   strokes,
   isCurrentUser = false,
 }: PlayerReplayCardProps) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+  };
+
   return (
-    <div className="flex flex-col">
+    <div
+      className="relative flex flex-col"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {/* Similarity Detail Tooltip */}
+      {isHovered && (
+        <div className="absolute top-0 left-full z-20 ml-2 w-48">
+          <PlayerSimilarityDetailTooltip similarity={similarity} />
+        </div>
+      )}
+
       <div className="flex flex-col rounded-xl border-2 border-gray-800 bg-white p-2 shadow-lg">
         {/* Player Info Header */}
         <div className="mb-1 flex shrink-0 items-center justify-between">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <span
               className={`flex h-6 min-w-[24px] shrink-0 items-center justify-center rounded-full px-1 text-xs font-bold ${getRankColor(rank)}`}
             >
               #{rank}
             </span>
+            <UserAvatar name={profileId} size={24} />
             <h3 className="font-handwriting truncate text-base font-bold">
               {nickname}
               {isCurrentUser && ' (You)'}
@@ -64,13 +92,13 @@ export const PlayerReplayCard = ({
               유사도
             </span>
             <span className="font-handwriting text-lg font-bold text-blue-600">
-              {similarity}%
+              {similarity.similarity}%
             </span>
           </div>
           <div className="h-1.5 w-full rounded-full bg-gray-200">
             <div
               className="h-1.5 rounded-full bg-blue-600"
-              style={{ width: `${similarity}%` }}
+              style={{ width: `${similarity.similarity}%` }}
             />
           </div>
         </div>

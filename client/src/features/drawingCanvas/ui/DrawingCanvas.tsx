@@ -1,18 +1,19 @@
-import { useEffect, useMemo, useRef } from 'react';
-import { useCanvasSetup } from '@/shared/model/useCanvasSetup';
+import { drawStrokesOnCanvas } from '@/entities/drawing/lib/drawStrokesOnCanvas';
+import { selectPhase, useGameStore } from '@/entities/gameRoom/model';
+import { useColorSelection } from '@/features/drawingCanvas/model/useColorSelection';
 import { useMouseDrawing } from '@/features/drawingCanvas/model/useMouseDrawing';
 import { useStrokes } from '@/features/drawingCanvas/model/useStrokes';
-import { useColorSelection } from '@/features/drawingCanvas/model/useColorSelection';
 import { DrawingToolbar } from '@/features/drawingToolbar/ui/DrawingToolbar';
-import { CANVAS_CONFIG, SERVER_EVENTS } from '@/shared/config';
-import { drawStrokesOnCanvas } from '@/entities/drawing/lib/drawStrokesOnCanvas';
-import { useGameStore, selectPhase } from '@/entities/gameRoom/model';
-import { getSocket } from '@/shared/api/socket';
 import {
   calculateFinalSimilarityByPreprocessed,
   preprocessStrokes,
-} from '@/features/similarity/lib';
+} from '@/features/similarity';
+import { getSocket } from '@/shared/api';
+import { CANVAS_CONFIG, MIXPANEL_EVENTS, SERVER_EVENTS } from '@/shared/config';
+import { trackEvent } from '@/shared/lib/mixpanel';
 import { captureMessage } from '@/shared/lib/sentry';
+import { useCanvasSetup } from '@/shared/model/useCanvasSetup';
+import { useEffect, useMemo, useRef } from 'react';
 
 // 기본 그리기 기능을 제공하는 캔버스 컴포넌트
 export const DrawingCanvas = () => {
@@ -56,6 +57,14 @@ export const DrawingCanvas = () => {
           actualDrawingTime: actualDrawingTimeSec.toFixed(2),
           waitingTime: thinkingTimeSec.toFixed(2),
           drawingRatio: drawingRatio.toFixed(1),
+        });
+
+        trackEvent(MIXPANEL_EVENTS.DRAWING_TIME, {
+          총_제한시간: totalRoundTimeSec,
+          실제_그리기시간: Number(actualDrawingTimeSec.toFixed(2)),
+          대기시간: Number(thinkingTimeSec.toFixed(2)),
+          그리기_비율: Number(drawingRatio.toFixed(1)),
+          라운드: currentRound,
         });
       }
     };
@@ -103,7 +112,7 @@ export const DrawingCanvas = () => {
       getSocket().emit(SERVER_EVENTS.USER_DRAWING, {
         roomId,
         strokes,
-        similarity: similarity.similarity,
+        similarity: similarity,
       });
     }
   }, [timer, phase, preprocessedPrompt, preprocessedPlayer, strokes, roomId]);
@@ -160,19 +169,21 @@ export const DrawingCanvas = () => {
     });
 
   return (
-    <div className="flex aspect-square w-full flex-col overflow-hidden rounded-2xl border-4 border-gray-800 bg-white shadow-2xl">
+    <div className="canvas-main">
       <DrawingToolbar
         onColorSelect={handleColorSelect}
         onUndo={handleUndo}
         onClear={handleClearStrokes}
         canUndo={canUndo}
+        selectedColor={selectedColor}
       />
       <div className="relative aspect-square w-full bg-white">
         <canvas
           ref={canvasRef}
           width={CANVAS_CONFIG.width}
           height={CANVAS_CONFIG.height}
-          className="h-full w-full cursor-crosshair"
+          className="h-full w-full"
+          style={{ cursor: 'url(/cursors/pencil.png), auto' }}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}

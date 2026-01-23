@@ -12,6 +12,7 @@ export type PlayerColor = 'blue' | 'gray' | 'gold' | 'silver' | 'bronze';
 export interface RankingEntry {
   socketId: string;
   nickname: string;
+  profileId: string;
   similarity: number;
   rank: number;
   previousRank: number | null; // null = 신규 진입

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { GameRoom, Stroke } from 'src/common/types';
+import { GameRoom } from 'src/common/types';
 import { GamePhase } from 'src/common/constants';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
@@ -9,36 +9,39 @@ import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
 import { RoundService } from 'src/round/round.service';
-import path from 'node:path';
-import fs from 'fs/promises';
+import { PromptService } from 'src/prompt/prompt.service';
+import { ErrorCode } from 'src/common/constants/error-code';
 
 @Injectable()
 export class GameService {
+  private readonly NEXT_HOST_INDEX = 1;
+
   constructor(
     private readonly cacheService: GameRoomCacheService,
     private readonly waitlistService: WaitlistCacheService,
     private readonly playerCacheService: PlayerCacheService,
     private readonly leaderboardCacheService: LeaderboardCacheService,
     private readonly roundService: RoundService,
+    private readonly promptService: PromptService,
   ) {}
 
   async createRoom(createRoomDto: CreateRoomDto) {
     const roomId = await this.generateRoomId();
 
-    const promptId = await this.getRandomPromptId();
+    const { drawingTime, maxPlayer, totalRounds } = createRoomDto;
+
     const gameRoom: GameRoom = {
       roomId,
       players: [],
       phase: GamePhase.WAITING,
       currentRound: 0,
       settings: {
-        drawingTime: createRoomDto.drawingTime,
-        maxPlayer: createRoomDto.maxPlayer,
-        totalRounds: createRoomDto.totalRounds,
+        drawingTime: drawingTime,
+        maxPlayer: maxPlayer,
+        totalRounds: totalRounds,
       },
-      promptId: promptId,
     };
-
+    await this.promptService.setPromptIds(roomId, totalRounds);
     await this.cacheService.saveRoom(roomId, gameRoom);
 
     return roomId;
@@ -63,10 +66,12 @@ export class GameService {
       return null;
     }
 
-    if (target.isHost && players.length > 1) {
-      const nextHost = players[1];
-      await this.cacheService.addPlayer(roomId, { ...nextHost, isHost: true });
-      await this.cacheService.deletePlayer(roomId, nextHost);
+    if (target.isHost && players.length > this.NEXT_HOST_INDEX) {
+      const nextHost = players[this.NEXT_HOST_INDEX];
+      await this.cacheService.setPlayer(roomId, this.NEXT_HOST_INDEX, {
+        ...nextHost,
+        isHost: true,
+      });
     }
 
     await this.cacheService.deletePlayer(roomId, target);
@@ -77,27 +82,63 @@ export class GameService {
     return updatedRoom;
   }
 
-  private async generateRoomId() {
-    let roomId = randomUUID().toString().substring(0, 8);
-    while (await this.cacheService.getRoom(roomId)) {
-      roomId = randomUUID().toString().substring(0, 8);
+  async updateGameSettings(
+    roomId: string,
+    socketId: string,
+    maxPlayer: number,
+    totalRounds: number,
+    drawingTime: number,
+  ) {
+    const room = await this.cacheService.getRoom(roomId);
+
+    if (!room) {
+      throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
     }
-    return roomId;
+
+    const player = room.players.find((player) => player.socketId === socketId);
+
+    if (!player) {
+      throw new WebsocketException(ErrorCode.PLAYER_NOT_FOUND);
+    }
+
+    if (!player.isHost) {
+      throw new WebsocketException(ErrorCode.PLAYER_NOT_HOST);
+    }
+
+    if (room.phase !== GamePhase.WAITING) {
+      throw new WebsocketException(
+        ErrorCode.UPDATE_SETTINGS_ONLY_WAITING_PHASE,
+      );
+    }
+
+    if (maxPlayer < room.players.length) {
+      return;
+    }
+
+    if (totalRounds !== room.settings.totalRounds) {
+      await this.promptService.resetPromptIds(roomId, totalRounds);
+    }
+
+    Object.assign(room.settings, { maxPlayer, totalRounds, drawingTime });
+    await this.cacheService.saveRoom(roomId, room);
+
+    return room;
   }
 
   async joinRoom(
     roomId: string,
     nickname: string,
+    profileId: string,
     socketId: string,
   ): Promise<GameRoom | null> {
     const room = await this.cacheService.getRoom(roomId);
 
     if (!room) {
-      throw new WebsocketException('방이 존재하지 않습니다.');
+      throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
     }
 
     if (room.players.length >= room.settings.maxPlayer) {
-      throw new WebsocketException('방이 꽉 찼습니다.');
+      throw new WebsocketException(ErrorCode.ROOM_FULL);
     }
 
     const phase = room.phase;
@@ -111,6 +152,7 @@ export class GameService {
 
     await this.cacheService.addPlayer(roomId, {
       nickname,
+      profileId,
       socketId,
       isHost: players.length === 0,
     });
@@ -125,27 +167,25 @@ export class GameService {
   async startGame(roomId: string, socketId: string) {
     const room = await this.cacheService.getRoom(roomId);
     if (!room) {
-      throw new WebsocketException('방이 존재하지 않습니다.');
+      throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
     }
 
     if (room.phase !== GamePhase.WAITING) {
-      throw new WebsocketException('게임이 이미 진행 중입니다.');
+      throw new WebsocketException(ErrorCode.GAME_ALREADY_STARTED);
     }
 
     const player = room.players.find((player) => player.socketId === socketId);
 
     if (!player) {
-      throw new WebsocketException(
-        '플레이어가 존재하지 않습니다. 재접속이 필요합니다.',
-      );
+      throw new WebsocketException(ErrorCode.PLAYER_NOT_FOUND);
     }
 
     if (!player.isHost) {
-      throw new WebsocketException('방장 권한이 없습니다.');
+      throw new WebsocketException(ErrorCode.PLAYER_NOT_HOST);
     }
 
     if (room.players.length < 2) {
-      throw new WebsocketException('게임을 시작하려면 최소 2명이 필요합니다.');
+      throw new WebsocketException(ErrorCode.PLAYER_ATLEAST_TWO);
     }
     await this.roundService.nextPhase(room);
   }
@@ -157,39 +197,72 @@ export class GameService {
   async restartGame(roomId: string, socketId: string) {
     const room = await this.cacheService.getRoom(roomId);
     if (!room) {
-      throw new WebsocketException('방이 존재하지 않습니다.');
+      throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
     }
 
     if (room.phase !== GamePhase.GAME_END) {
-      throw new WebsocketException('게임이 종료 상태가 아닙니다.');
+      throw new WebsocketException(ErrorCode.GAME_NOT_END);
     }
 
     const player = room.players.find((player) => player.socketId === socketId);
 
     if (!player) {
-      throw new WebsocketException(
-        '플레이어가 존재하지 않습니다. 재접속이 필요합니다.',
-      );
+      throw new WebsocketException(ErrorCode.PLAYER_NOT_FOUND);
     }
 
     if (!player.isHost) {
-      throw new WebsocketException('방장만 재시작할 수 있습니다.');
+      throw new WebsocketException(ErrorCode.PLAYER_NOT_HOST);
     }
 
     await this.roundService.nextPhase(room);
   }
 
-  private async loadPromptStrokes(): Promise<Stroke[][]> {
-    const promptPath = path.join(process.cwd(), 'data', 'promptStrokes.json');
-    const data = await fs.readFile(promptPath, 'utf-8');
-    const promptStrokesData = JSON.parse(data) as Stroke[][];
-    return promptStrokesData;
+  async kickUser(roomId: string, hostSocketId: string, targetSocketId: string) {
+    const room = await this.cacheService.getRoom(roomId);
+    if (!room) {
+      throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
+    }
+
+    if (room.phase !== GamePhase.WAITING) {
+      throw new WebsocketException(ErrorCode.KICK_ONLY_WAITING_PHASE);
+    }
+
+    const hostPlayer = room.players.find(
+      (player) => player.socketId === hostSocketId,
+    );
+    const targetPlayer = room.players.find(
+      (player) => player.socketId === targetSocketId,
+    );
+
+    if (!hostPlayer || !targetPlayer) {
+      throw new WebsocketException(ErrorCode.PLAYER_NOT_FOUND);
+    }
+
+    if (!hostPlayer.isHost) {
+      throw new WebsocketException(ErrorCode.PLAYER_NOT_HOST);
+    }
+
+    if (targetPlayer.isHost) {
+      throw new WebsocketException(ErrorCode.HOST_CAN_NOT_KICKED);
+    }
+
+    const kickedPlayer = {
+      socketId: targetPlayer.socketId,
+      nickname: targetPlayer.nickname,
+    };
+
+    const updatedRoom = await this.leaveRoom(targetSocketId);
+    if (!updatedRoom) {
+      throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
+    }
+    return { updatedRoom, kickedPlayer };
   }
 
-  private async getRandomPromptId(): Promise<number> {
-    const promptStrokesData = await this.loadPromptStrokes();
-
-    const id = Math.floor(Math.random() * promptStrokesData.length);
-    return id;
+  private async generateRoomId() {
+    let roomId = randomUUID().toString().substring(0, 8);
+    while (await this.cacheService.getRoom(roomId)) {
+      roomId = randomUUID().toString().substring(0, 8);
+    }
+    return roomId;
   }
 }

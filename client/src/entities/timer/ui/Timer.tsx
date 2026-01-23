@@ -4,7 +4,9 @@ import {
   useGameStore,
 } from '@/entities/gameRoom/model';
 import { TIMER } from '../config';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { SoundManager } from '@/shared/lib';
+import { SOUND_LIST } from '@/shared/config/sound';
 
 export const Timer = () => {
   const timer = useGameStore(selectTimer);
@@ -28,7 +30,8 @@ export const Timer = () => {
   const getInitialTimeForPhase = () => {
     if (phase === 'PROMPT') return TIMER.PROMPT_TIME;
     if (phase === 'DRAWING') return settings.drawingTime;
-    if (phase === 'ROUND_END') return TIMER.ROUND_END_TIME;
+    if (phase === 'ROUND_REPLAY') return TIMER.ROUND_REPLAY_TIME;
+    if (phase === 'ROUND_STANDING') return TIMER.ROUND_STANDING_TIME;
     if (phase === 'GAME_END') return TIMER.GAME_END_TIME;
     return 0;
   };
@@ -37,6 +40,14 @@ export const Timer = () => {
   const displayTime =
     timer === 0 && !hasStarted ? getInitialTimeForPhase() : timer;
   const isUrgent = timer <= TIMER.URGENT_THRESHOLD && timer > TIMER.LOWER_LIMIT;
+
+  useEffect(() => {
+    if (!isUrgent) {
+      return;
+    }
+    const manager = SoundManager.getInstance();
+    manager.playSound(SOUND_LIST.TIMER);
+  }, [isUrgent, displayTime]);
 
   return (
     <div className="absolute top-8 right-8 z-20">

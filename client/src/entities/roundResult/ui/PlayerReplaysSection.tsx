@@ -2,10 +2,12 @@ import { useState } from 'react';
 import type { Stroke } from '@/entities/similarity/model';
 import { PlayerReplayCard } from './PlayerReplayCard';
 import { useCurrentPlayer } from '@/entities/gameRoom/model';
+import type { Similarity } from '@/features/similarity';
 
 interface Player {
   nickname: string;
-  similarity: number;
+  profileId: string;
+  similarity: Similarity;
   strokes: Stroke[];
   socketId: string;
 }
@@ -85,6 +87,7 @@ export const PlayerReplaysSection = ({
               key={player.socketId}
               rank={rank}
               nickname={player.nickname}
+              profileId={player.profileId}
               similarity={player.similarity}
               strokes={player.strokes}
               isCurrentUser={isCurrentUser}
