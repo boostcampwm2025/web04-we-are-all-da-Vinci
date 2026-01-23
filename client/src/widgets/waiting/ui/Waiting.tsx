@@ -113,12 +113,12 @@ export const Waiting = () => {
               </div>
             </div>
           </div>
-          <div
+          {/* <div
             id="boostAD"
             className="absolute bottom-10 z-40 flex h-25 w-280 justify-center px-10 text-center"
           >
             <div data-boostad-zone className="h-full w-full"></div>
-          </div>
+          </div> */}
         </main>
       </div>
 
