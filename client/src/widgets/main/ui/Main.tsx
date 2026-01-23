@@ -1,7 +1,11 @@
 import { PATHS, TITLES, MIXPANEL_EVENTS } from '@/shared/config';
-import { CommonBtn, DecorateTitle, Title } from '@/shared/ui';
-
-import { AlertModal } from '@/entities';
+import {
+  CommonBtn,
+  DecorateTitle,
+  OverlayModal,
+  Title,
+  BaseModal,
+} from '@/shared/ui';
 import { ProfileSettingsModal } from '@/features/profileSettings';
 import {
   RoomSettingsModal,
@@ -20,6 +24,7 @@ export const Main = () => {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const handleCreateRoom = () => {
     trackEvent(MIXPANEL_EVENTS.CLICK_CREATEROOM_BTN);
@@ -38,7 +43,7 @@ export const Main = () => {
       navigate(`${PATHS.GAME}/${roomId}`);
     } catch (error) {
       console.error('Failed to create room:', error);
-      globalThis.alert('방 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+      setShowErrorModal(true);
     }
   };
 
@@ -101,16 +106,25 @@ export const Main = () => {
         onComplete={handleSettingsComplete}
       />
 
-      <AlertModal
+      <BaseModal
         isOpen={showGuideModal}
         onClose={() => setShowGuideModal(false)}
         title="게임 설명서"
         message={TEXT.MANUAL_MESSAGE}
+        onConfirm={() => setShowGuideModal(false)}
       />
 
       <ProfileSettingsModal
         isOpen={showProfileModal}
         onClose={() => setShowProfileModal(false)}
+      />
+
+      <OverlayModal
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        title="오류"
+        message="방 생성에 실패했습니다. 잠시 후 다시 시도해 주세요."
+        onConfirm={() => setShowErrorModal(false)}
       />
     </>
   );

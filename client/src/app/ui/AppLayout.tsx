@@ -1,18 +1,7 @@
 import { ProfileSettingsModal } from '@/features/profileSettings';
 import { registerUserProperties } from '@/shared/lib/mixpanel';
-import {
-  BrushDoodle,
-  JudyDoodle,
-  LionDoodle,
-  NickDoodle,
-  PainterDoodle,
-  PaletteDoodle,
-  ScribbleDoodle,
-  StarDoodle,
-  SunDoodle,
-} from '@/shared/ui/Doodles';
+import { PageBackground, Toast } from '@/shared/ui';
 import { useToastStore } from '@/shared/model';
-import { Toast } from '@/shared/ui';
 import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { VolumeButton } from '@/features/volume';
@@ -62,19 +51,7 @@ const AppLayout = () => {
         </defs>
       </svg>
 
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#e5e7eb_1px,transparent_1px),linear-gradient(to_bottom,#e5e7eb_1px,transparent_1px)] bg-size-[24px_24px]" />
-
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <SunDoodle />
-        <ScribbleDoodle />
-        <StarDoodle />
-        <BrushDoodle />
-        <PaletteDoodle />
-        <NickDoodle />
-        <JudyDoodle />
-        <LionDoodle />
-        <PainterDoodle />
-      </div>
+      <PageBackground />
 
       <div className="relative z-10 h-full w-full">
         <Outlet />
