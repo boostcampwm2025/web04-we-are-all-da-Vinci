@@ -25,13 +25,13 @@ export const RoundStanding = () => {
         <main className="game-container">
           <GameHeader title="현재 순위" round={currentRound} showLogo={false} />
 
-          {isSorted && rankMessage && (
-            <div className="mb-4 text-center">
+          <div className="mb-4 min-h-14 text-center">
+            {isSorted && rankMessage && (
               <p className="font-handwriting animate-bounce text-2xl font-bold text-blue-600 transition-opacity duration-500">
                 {rankMessage}
               </p>
-            </div>
-          )}
+            )}
+          </div>
 
           <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 overflow-y-auto p-3 pl-20">
             {displayResults.map((player, index) => (
