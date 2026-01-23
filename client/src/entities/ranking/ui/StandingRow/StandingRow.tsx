@@ -55,13 +55,13 @@ export const StandingRow = ({
         </p>
 
         <p
-          className={`font-handwriting text-2xl font-bold tabular-nums ${isSorted ? style.text : 'text-gray-600'} `}
+          className={`font-handwriting text-3xl font-bold tabular-nums ${isSorted ? style.text : 'text-gray-600'} `}
         >
           {animatedScore.toLocaleString(undefined, {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           })}
-          <span className="ml-1 text-sm">점</span>
+          <span className="ml-1 text-2xl">점</span>
         </p>
       </div>
     </div>
