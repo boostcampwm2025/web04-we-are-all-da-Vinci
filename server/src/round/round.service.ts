@@ -246,6 +246,10 @@ export class RoundService implements OnModuleInit {
 
     // GAME_END 타이머 취소 (재시작 시 자동 시작 방지)
     await this.timerService.cancelTimer(room.roomId);
+    await this.promptService.resetPromptIds(
+      room.roomId,
+      room.settings.totalRounds,
+    );
 
     room.phase = GamePhase.WAITING;
     room.currentRound = 0;
