@@ -12,7 +12,8 @@ import { WaitingRoomActions } from '@/features/waitingRoomActions';
 import { getSocket } from '@/shared/api';
 import { MIXPANEL_EVENTS, SERVER_EVENTS, TITLES } from '@/shared/config';
 import { trackEvent } from '@/shared/lib/mixpanel';
-import { Title } from '@/shared/ui';
+import { useToastStore } from '@/shared/model';
+import { GameHeader } from '@/shared/ui';
 import { useState } from 'react';
 
 export const Waiting = () => {
@@ -24,12 +25,16 @@ export const Waiting = () => {
   const settings = useGameStore(selectSettings);
   const isHostUser = useIsHost();
 
+  const { addToast } = useToastStore();
+
   const copyRoomId = async () => {
     try {
       await navigator.clipboard.writeText(globalThis.location.href);
       trackEvent(MIXPANEL_EVENTS.CLICK_COPYLINK_BTN);
+      addToast('초대 링크가 복사되었습니다!', 'success');
     } catch (e) {
       console.error('클립보드 복사 실패', e);
+      addToast('링크 복사에 실패했습니다.', 'error');
     }
   };
 
@@ -67,31 +72,31 @@ export const Waiting = () => {
   return (
     <>
       <div className="page-center">
-        <div className="page-container">
-          <div className="mb-4 shrink-0 text-center">
-            <Title title={TITLES.ROOM} fontSize="text-6xl" />
-            <p className="font-handwriting text-content-secondary text-2xl">
-              친구들이 모일 때까지 기다려주세요!
-            </p>
-          </div>
+        <main className="game-container mx-25">
+          <GameHeader
+            title={TITLES.ROOM}
+            description="친구들이 모일 때까지 기다려주세요!"
+          />
 
-          <div className="flex h-fit gap-7">
-            <div className="flex h-fit flex-1 flex-col gap-4">
-              <div className="h-fit">
-                <PlayerListSection
-                  players={players}
-                  maxPlayer={settings.maxPlayer}
-                  roomCode={
-                    <RoomCodeCopy roomId={roomId} onCopy={copyRoomId} />
-                  }
-                />
-              </div>
-              <div>
-                <WaitingRoomActions
-                  onStartClick={handleStartGame}
-                  isHost={isHostUser}
-                  canStart={!!roomId && players.length >= 2}
-                />
+          <div className="flex min-h-0 flex-1 gap-7">
+            <div className="flex h-full flex-1 flex-col gap-4">
+              <div className="flex h-full min-h-0 flex-col gap-4">
+                <div className="min-h-0 flex-1">
+                  <PlayerListSection
+                    players={players}
+                    maxPlayer={settings.maxPlayer}
+                    roomCode={
+                      <RoomCodeCopy roomId={roomId} onCopy={copyRoomId} />
+                    }
+                  />
+                </div>
+                <div>
+                  <WaitingRoomActions
+                    onStartClick={handleStartGame}
+                    isHost={isHostUser}
+                    canStart={!!roomId && players.length >= 2}
+                  />
+                </div>
               </div>
             </div>
 
@@ -108,13 +113,13 @@ export const Waiting = () => {
               </div>
             </div>
           </div>
-        </div>
-        <div
-          id="boostAD"
-          className="absolute bottom-1 z-1200 flex h-20 w-280 justify-center bg-black px-10 text-center"
-        >
-          광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고광고
-        </div>
+          <div
+            id="boostAD"
+            className="mt-4 flex h-20 w-full shrink-0 justify-center bg-black text-center text-white"
+          >
+            광고 배너 영역
+          </div>
+        </main>
       </div>
 
       <RoomSettingsModal

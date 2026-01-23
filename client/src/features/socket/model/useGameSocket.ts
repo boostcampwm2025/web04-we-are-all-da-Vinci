@@ -44,6 +44,10 @@ export const useGameSocket = () => {
   const setFinalResults = useGameStore((state) => state.setFinalResults);
   const setHighlight = useGameStore((state) => state.setHighlight);
   const setPromptStrokes = useGameStore((state) => state.setPromptStrokes);
+  const setAlertMessage = useGameStore((state) => state.setAlertMessage);
+  const setPendingNavigation = useGameStore(
+    (state) => state.setPendingNavigation,
+  );
   const reset = useGameStore((state) => state.reset);
   const addToast = useToastStore((state) => state.addToast);
 
@@ -57,13 +61,13 @@ export const useGameSocket = () => {
     };
 
     // storage 이벤트 리스너 (다른 탭에서 변경 시)
-    window.addEventListener('storage', checkLocalStorage);
+    globalThis.addEventListener('storage', checkLocalStorage);
 
     // 같은 탭에서 변경 감지를 위한 interval
     const interval = setInterval(checkLocalStorage, 100);
 
     return () => {
-      window.removeEventListener('storage', checkLocalStorage);
+      globalThis.removeEventListener('storage', checkLocalStorage);
       clearInterval(interval);
     };
   }, []);
@@ -205,14 +209,16 @@ export const useGameSocket = () => {
       CLIENT_EVENTS.USER_WAITLIST,
       ({ roomId: waitRoomId }: { roomId: string }) => {
         console.log(waitRoomId);
-        alert('현재 게임이 진행 중입니다. 다음 라운드부터 참여할 수 있습니다.');
+        setAlertMessage(
+          '현재 게임이 진행 중입니다. 다음 라운드부터 참여할 수 있습니다.',
+        );
       },
     );
 
-    // 에러
+    // 에러: 모달 확인 후 메인 페이지로 이동
     socket.on(CLIENT_EVENTS.ERROR, (error: { message: string }) => {
-      alert(error.message);
-      navigate('/');
+      setAlertMessage(error.message);
+      setPendingNavigation('/');
     });
 
     // Cleanup
