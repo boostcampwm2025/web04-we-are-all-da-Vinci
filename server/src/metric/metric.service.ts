@@ -13,7 +13,6 @@ export class MetricService {
 
     PromClient.collectDefaultMetrics({
       register: this.register,
-      prefix: 'nestjs_',
     });
 
     const wsResTimeHist = new PromClient.Histogram({
