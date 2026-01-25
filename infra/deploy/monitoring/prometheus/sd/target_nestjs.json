@@ -1,5 +1,5 @@
 [
   {
-    "target": ["IP:PORT"]
+    "targets": ["IP:PORT"]
   }
 ]
