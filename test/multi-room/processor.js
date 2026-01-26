@@ -111,6 +111,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOMS_FILE = path.join(__dirname, "rooms.json");
+const COUNTER_FILE = path.join(__dirname, "counter.json");
 
 const ROOM_COUNT = parseInt(process.env.ROOM_COUNT ?? "1", 10);
 const PLAYER_PER_ROOM = parseInt(process.env.PLAYER_PER_ROOM ?? "1", 10);
@@ -119,6 +120,11 @@ const beforeAll = (context, events, done) => {
   if (fs.existsSync(ROOMS_FILE)) {
     fs.unlinkSync(ROOMS_FILE);
   }
+  if (fs.existsSync(COUNTER_FILE)) {
+    fs.unlinkSync(COUNTER_FILE);
+  }
+
+  fs.writeFileSync(COUNTER_FILE, JSON.stringify({ count: 0 }));
   return done();
 };
 
@@ -135,17 +141,24 @@ const afterPostRoom = (requestParams, response, context, events, next) => {
   return next();
 };
 
+function getNextPlayerNumber() {
+  const data = JSON.parse(fs.readFileSync(COUNTER_FILE, "utf-8"));
+  const playerNumber = data.count;
+  data.count += 1;
+  fs.writeFileSync(COUNTER_FILE, JSON.stringify(data));
+  return playerNumber;
+}
+
 function initUser(userContext, events, done) {
-  const vu =
-    userContext.vars.__vu ??
-    Math.floor(Math.random() * (ROOM_COUNT * PLAYER_PER_ROOM));
-  const roomIndex = Math.floor(vu / PLAYER_PER_ROOM) % ROOM_COUNT;
+  const playerNumber = getNextPlayerNumber();
+  const roomIndex = Math.floor(playerNumber / PLAYER_PER_ROOM) % ROOM_COUNT;
 
   const rooms = JSON.parse(fs.readFileSync(ROOMS_FILE));
 
   userContext.vars.roomId = rooms[roomIndex];
-  userContext.vars.isFirstInRoom = vu % PLAYER_PER_ROOM === 0;
-  userContext.vars.nickname = `bot_${vu}_${Date.now()}`;
+  userContext.vars.playerNumber = playerNumber;
+  userContext.vars.isFirstInRoom = playerNumber % PLAYER_PER_ROOM === 0;
+  userContext.vars.nickname = `bot_${roomIndex}_${playerNumber}_${Date.now()}`;
 
   userContext.vars.strokes = DRAWING_DATA;
   userContext.vars.similarity = {
