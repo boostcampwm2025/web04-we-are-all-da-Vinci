@@ -6,6 +6,7 @@ export const SERVER_EVENTS = {
   ROOM_SETTINGS: 'room:settings',
   ROOM_START: 'room:start',
   ROOM_RESTART: 'room:restart',
+  USER_PRACTICE: 'user:practice',
 } as const;
 
 export const CLIENT_EVENTS = {
@@ -18,5 +19,6 @@ export const CLIENT_EVENTS = {
   ROOM_PROMPT: 'room:prompt',
   ROOM_KICKED: 'room:kicked',
   USER_WAITLIST: 'user:waitlist',
+  USER_PRACTICE_STARTED: 'user:practice:started',
   ERROR: 'error',
 } as const;

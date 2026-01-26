@@ -9,11 +9,13 @@ import { PlayerListSection } from '@/features/playerList';
 import { RoomCodeCopy } from '@/features/roomCode';
 import { RoomSettingsModal, type RoomSettings } from '@/features/roomSettings';
 import { WaitingRoomActions } from '@/features/waitingRoomActions';
+import { WaitingRoomOverlay } from '@/features/waitingRoomActions/ui/WaitingRoomOverlay';
 import { getSocket } from '@/shared/api';
 import { MIXPANEL_EVENTS, SERVER_EVENTS, TITLES } from '@/shared/config';
 import { trackEvent } from '@/shared/lib/mixpanel';
 import { useToastStore } from '@/shared/model';
 import { GameHeader } from '@/shared/ui';
+import { Practice } from '@/features/practice';
 import { useState } from 'react';
 
 export const Waiting = () => {
@@ -24,6 +26,8 @@ export const Waiting = () => {
   const players = useGameStore(selectPlayers);
   const settings = useGameStore(selectSettings);
   const isHostUser = useIsHost();
+  const isInWaitlist = useGameStore((state) => state.isInWaitlist);
+  const isPracticing = useGameStore((state) => state.isPracticing);
 
   const { addToast } = useToastStore();
 
@@ -89,6 +93,7 @@ export const Waiting = () => {
                       <RoomCodeCopy roomId={roomId} onCopy={copyRoomId} />
                     }
                   />
+                  {isInWaitlist && <WaitingRoomOverlay />}
                 </div>
                 <div>
                   <WaitingRoomActions
@@ -121,6 +126,8 @@ export const Waiting = () => {
           </div> */}
         </main>
       </div>
+
+      {isPracticing && <Practice />}
 
       <RoomSettingsModal
         isOpen={showSettingsModal}

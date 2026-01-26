@@ -29,6 +29,12 @@ interface GameState extends GameRoom {
   alertMessage: string | null;
   pendingNavigation: string | null; // 모달 확인 후 이동할 경로
 
+  // 대기열 및 연습모드 상태
+  isInWaitlist: boolean;
+  isPracticing: boolean;
+  practicePrompt: Stroke[] | null;
+  gameProgress: { currentRound: number; totalRounds: number };
+
   // Actions
   setConnected: (isConnected: boolean) => void;
   updateRoom: (room: Partial<GameRoom>) => void;
@@ -41,6 +47,16 @@ interface GameState extends GameRoom {
   setHighlight: (highlight: Highlight) => void;
   setAlertMessage: (message: string | null) => void;
   setPendingNavigation: (path: string | null) => void;
+
+  // 대기열 전용 Actions
+  setIsInWaitlist: (isInWaitlist: boolean) => void;
+  setIsPracticing: (isPracticing: boolean) => void;
+  setPracticePrompt: (strokes: Stroke[] | null) => void;
+  setGameProgress: (progress: {
+    currentRound: number;
+    totalRounds: number;
+  }) => void;
+
   reset: () => void;
 }
 
@@ -65,6 +81,11 @@ const initialState = {
   highlight: null,
   alertMessage: null,
   pendingNavigation: null,
+
+  isInWaitlist: false,
+  isPracticing: false,
+  practicePrompt: null,
+  gameProgress: { currentRound: 0, totalRounds: 0 },
 };
 
 export const useGameStore = create<GameState>()(
@@ -97,6 +118,14 @@ export const useGameStore = create<GameState>()(
       setAlertMessage: (alertMessage) => set({ alertMessage }),
 
       setPendingNavigation: (pendingNavigation) => set({ pendingNavigation }),
+
+      setIsInWaitlist: (isInWaitlist) => set({ isInWaitlist }),
+
+      setIsPracticing: (isPracticing) => set({ isPracticing }),
+
+      setPracticePrompt: (practicePrompt) => set({ practicePrompt }),
+
+      setGameProgress: (gameProgress) => set({ gameProgress }),
 
       reset: () => set(initialState),
     }),

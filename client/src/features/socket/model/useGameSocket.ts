@@ -8,6 +8,7 @@ import type {
   RoundStandingResponse,
 } from '@/entities/roundResult/model';
 import type { Stroke } from '@/entities/similarity';
+import type { WaitlistResponse } from '@/features/waitingRoomActions';
 import { disconnectSocket, getSocket } from '@/shared/api';
 import { CLIENT_EVENTS, SERVER_EVENTS } from '@/shared/config';
 import { useToastStore } from '@/shared/model';
@@ -44,6 +45,10 @@ export const useGameSocket = () => {
   const setFinalResults = useGameStore((state) => state.setFinalResults);
   const setHighlight = useGameStore((state) => state.setHighlight);
   const setPromptStrokes = useGameStore((state) => state.setPromptStrokes);
+  const setIsInWaitlist = useGameStore((state) => state.setIsInWaitlist);
+  const setIsPracticing = useGameStore((state) => state.setIsPracticing);
+  const setPracticePrompt = useGameStore((state) => state.setPracticePrompt);
+  const setGameProgress = useGameStore((state) => state.setGameProgress);
   const setAlertMessage = useGameStore((state) => state.setAlertMessage);
   const setPendingNavigation = useGameStore(
     (state) => state.setPendingNavigation,
@@ -117,6 +122,13 @@ export const useGameSocket = () => {
           highlight: null,
           promptStrokes: [],
         });
+      }
+
+      // 클라이언트가 방에 참여되었다면
+      const isJoined = data.players.some((p) => p.socketId === socket.id);
+      if (isJoined) {
+        setIsInWaitlist(false);
+        setIsPracticing(false);
       }
 
       updateRoom({
@@ -204,14 +216,23 @@ export const useGameSocket = () => {
       setHighlight(response.highlight);
     });
 
-    // 대기열 (DRAWING 중 입장 시)
+    // 대기열에 추가됨
     socket.on(
       CLIENT_EVENTS.USER_WAITLIST,
-      ({ roomId: waitRoomId }: { roomId: string }) => {
-        console.log(waitRoomId);
-        setAlertMessage(
-          '현재 게임이 진행 중입니다. 다음 라운드부터 참여할 수 있습니다.',
-        );
+      ({ roomId, currentRound, totalRounds, phase }: WaitlistResponse) => {
+        setIsInWaitlist(true);
+        setGameProgress({ currentRound, totalRounds });
+        // setAlertMessage(
+        //   '현재 게임이 진행 중입니다. 다음 라운드부터 참여할 수 있습니다.',
+        // );
+      },
+    );
+
+    socket.on(
+      CLIENT_EVENTS.USER_PRACTICE_STARTED,
+      (promptStrokes: Stroke[]) => {
+        setPracticePrompt(promptStrokes);
+        setIsPracticing(true);
       },
     );
 
@@ -235,6 +256,7 @@ export const useGameSocket = () => {
       socket.off(CLIENT_EVENTS.USER_WAITLIST);
       socket.off(CLIENT_EVENTS.ERROR);
       socket.off(CLIENT_EVENTS.ROOM_KICKED);
+      socket.off(CLIENT_EVENTS.USER_PRACTICE_STARTED);
 
       disconnectSocket();
       reset(); // 소켓 연결 해제 시 전체 상태 초기화
@@ -253,6 +275,8 @@ export const useGameSocket = () => {
     setStandingResults,
     setFinalResults,
     setHighlight,
+    setPracticePrompt,
+    setIsPracticing,
     reset,
     addToast,
   ]);
