@@ -293,4 +293,20 @@ export class GameService {
     }
     return roomId;
   }
+
+  async getSyncData(roomId: string) {
+    const room = await this.cacheService.getRoom(roomId);
+    if (!room) return null;
+
+    switch (room.phase) {
+      case GamePhase.ROUND_REPLAY:
+        return await this.roundService.getRoundReplayData(roomId);
+      case GamePhase.ROUND_STANDING:
+        return await this.roundService.getRoundStandingData(roomId);
+      case GamePhase.GAME_END:
+        return await this.roundService.getGameEndData(roomId);
+      default:
+        return null;
+    }
+  }
 }

@@ -11,7 +11,7 @@ import { Server, Socket } from 'socket.io';
 import { UserJoinDto } from './dto/user-join.dto';
 import { RoomSettingsDto } from './dto/room-settings.dto';
 import { RoomStartDto } from './dto/room-start.dto';
-import { ClientEvents, ServerEvents } from 'src/common/constants';
+import { ClientEvents, GamePhase, ServerEvents } from 'src/common/constants';
 import { PinoLogger } from 'nestjs-pino';
 import { GameService } from './game.service';
 import { GameRoom } from 'src/common/types';
@@ -65,7 +65,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       profileId,
       client.id,
     );
+
+    // 현재 대기열 확인
+    const joinedPlayers = await this.gameService.processWaitlist(roomId);
+
     if (room) {
+      // 대기 없이 바로 참여 가능한 경우
       this.logger.info(
         { clientId: client.id, ...payload },
         'Client Joined Game.',
@@ -73,12 +78,25 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       await client.join(room.roomId);
       this.broadcastMetadata(room);
+
+      // 중도 참여 유저를 위한 데이터 동기화
+      await this.syncCurrentPhaseData(client, room);
     } else {
+      // PROMPT, DRAWING PHASE에서 입장한 경우
       this.logger.info(
         { clientId: client.id, ...payload },
         'Client Pushed Waiting queue',
       );
-      client.emit(ClientEvents.USER_WAITLIST, { roomId });
+      const currentRoom = await this.gameService.getRoom(roomId);
+      if (!currentRoom) {
+        return 'ok';
+      }
+      client.emit(ClientEvents.USER_WAITLIST, {
+        roomId,
+        currentRound: currentRoom.currentRound,
+        totalRounds: currentRoom.settings.totalRounds,
+        phase: currentRoom.phase,
+      });
     }
 
     return 'ok';
@@ -168,5 +186,22 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   broadcastMetadata(room: GameRoom) {
     this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
+  }
+
+  private async syncCurrentPhaseData(client: Socket, room: GameRoom) {
+    const data = await this.gameService.getSyncData(room.roomId);
+    if (!data) return;
+
+    switch (room.phase) {
+      case GamePhase.ROUND_REPLAY:
+        client.emit(ClientEvents.ROOM_ROUND_REPLAY, data);
+        break;
+      case GamePhase.ROUND_STANDING:
+        client.emit(ClientEvents.ROOM_ROUND_STANDING, data);
+        break;
+      case GamePhase.GAME_END:
+        client.emit(ClientEvents.ROOM_GAME_END, data);
+        break;
+    }
   }
 }
