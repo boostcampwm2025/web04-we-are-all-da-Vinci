@@ -9,6 +9,7 @@ config:
 
 before:
   flow:
+    - function: "beforeAll"
     - loop:
         - post:
             url: "/room"
@@ -63,4 +64,4 @@ scenarios:
             roomId: "{{ roomId }}"
             similarity: "{{ similarity }}"
             strokes: "{{ strokes }}"
-      - think: 24
+      - think: 30

@@ -112,8 +112,15 @@ const path = require("path");
 
 const ROOMS_FILE = path.join(__dirname, "rooms.json");
 
-const ROOM_COUNT = 50;
-const PLAYER_PER_ROOM = 8;
+const ROOM_COUNT = parseInt(process.env.ROOM_COUNT ?? "1", 10);
+const PLAYER_PER_ROOM = parseInt(process.env.PLAYER_PER_ROOM ?? "1", 10);
+
+const beforeAll = (context, events, done) => {
+  if (fs.existsSync(ROOMS_FILE)) {
+    fs.unlinkSync(ROOMS_FILE);
+  }
+  return done();
+};
 
 const afterPostRoom = (requestParams, response, context, events, next) => {
   const { roomId } = JSON.parse(response.body);
@@ -129,7 +136,9 @@ const afterPostRoom = (requestParams, response, context, events, next) => {
 };
 
 function initUser(userContext, events, done) {
-  const vu = userContext.vars.__vu ?? Math.floor(Math.random() * 200);
+  const vu =
+    userContext.vars.__vu ??
+    Math.floor(Math.random() * (ROOM_COUNT * PLAYER_PER_ROOM));
   const roomIndex = Math.floor(vu / PLAYER_PER_ROOM) % ROOM_COUNT;
 
   const rooms = JSON.parse(fs.readFileSync(ROOMS_FILE));
@@ -139,7 +148,12 @@ function initUser(userContext, events, done) {
   userContext.vars.nickname = `bot_${vu}_${Date.now()}`;
 
   userContext.vars.strokes = DRAWING_DATA;
-  userContext.vars.similarity = Math.random() * 100;
+  userContext.vars.similarity = {
+    similarity: Math.random() * 100,
+    strokeCountSimilarity: 10,
+    strokeMatchSimilarity: 10,
+    shapeSimilarity: 10,
+  };
 
   userContext.vars.timeLeft = parseInt(process.env.DRAWING_TIME || "40", 10);
   userContext.vars.playerCount = 0;
@@ -206,4 +220,5 @@ module.exports = {
   waitDrawingPhase,
   waitRoundEnd,
   afterPostRoom,
+  beforeAll,
 };

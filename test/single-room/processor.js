@@ -112,7 +112,12 @@ function initUser(userContext, events, done) {
   userContext.vars.nickname = `bot_${vu}_${Date.now()}`;
 
   userContext.vars.strokes = DRAWING_DATA;
-  userContext.vars.similarity = Math.random() * 100;
+  userContext.vars.similarity = {
+    similarity: Math.random() * 100,
+    strokeCountSimilarity: 10,
+    strokeMatchSimilarity: 10,
+    shapeSimilarity: 10,
+  };
 
   userContext.vars.timeLeft = parseInt(process.env.DRAWING_TIME || "40", 10);
   userContext.vars.playerCount = 0;
