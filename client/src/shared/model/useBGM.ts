@@ -5,7 +5,5 @@ export const useBGM = (name: string) => {
   useEffect(() => {
     const manager = SoundManager.getInstance();
     manager.playBGM(name);
-
-    return () => manager.stopBGM();
   }, []);
 };
