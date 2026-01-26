@@ -14,9 +14,9 @@ export const WaitingRoomOverlay = () => {
   };
 
   return (
-    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center rounded-3xl bg-gray-300 opacity-60">
+    <div className="card font-handwriting absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/60 p-6 backdrop-blur-[2px]">
       <div className="mb-8 text-center">
-        <h2 className="mb-2 text-3xl font-bold">게임 진행 중</h2>
+        <h2 className="text-content-primary mb-2 text-3xl">게임 진행 중</h2>
         <p className="text-content-secondary text-xl">
           현재 {currentRound} / {totalRounds} 라운드가 진행되고 있습니다.
         </p>
@@ -25,7 +25,7 @@ export const WaitingRoomOverlay = () => {
         </p>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex min-w-20">
         <CommonBtn
           variant="radius"
           text="연습하기"

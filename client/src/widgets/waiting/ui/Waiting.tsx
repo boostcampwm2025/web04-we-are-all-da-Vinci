@@ -85,7 +85,7 @@ export const Waiting = () => {
           <div className="flex min-h-0 flex-1 gap-7">
             <div className="flex h-full flex-1 flex-col gap-4">
               <div className="flex h-full min-h-0 flex-col gap-4">
-                <div className="min-h-0 flex-1">
+                <div className="relative min-h-0 flex-1">
                   <PlayerListSection
                     players={players}
                     maxPlayer={settings.maxPlayer}
