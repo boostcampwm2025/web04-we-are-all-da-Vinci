@@ -124,20 +124,28 @@ export const useGameSocket = () => {
         });
       }
 
-      // 클라이언트가 방에 참여되었다면
       const isJoined = data.players.some((p) => p.socketId === socket.id);
       if (isJoined) {
+        // 클라이언트가 방에 참여되었다면: 대기상태 해제 후 방 상태 동기화
         setIsInWaitlist(false);
         setIsPracticing(false);
+        updateRoom({
+          roomId: data.roomId,
+          players: data.players,
+          phase: data.phase,
+          currentRound: data.currentRound,
+          settings: data.settings,
+        });
+      } else {
+        // 아직 참여 못한 상태(대기 중)라면 phase는 유지
+        updateRoom({
+          roomId: data.roomId,
+          players: data.players,
+          phase: currentPhase,
+          currentRound: data.currentRound,
+          settings: data.settings,
+        });
       }
-
-      updateRoom({
-        roomId: data.roomId,
-        players: data.players,
-        phase: data.phase,
-        currentRound: data.currentRound,
-        settings: data.settings,
-      });
     });
 
     // 추방

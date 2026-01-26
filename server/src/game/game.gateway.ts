@@ -92,6 +92,9 @@ export class GameGateway
       client.id,
     );
 
+    // 소켓 룸에는 항상 입장
+    await client.join(roomId);
+
     if (!room) {
       this.logger.info(
         { clientId: client.id, ...payload },
@@ -102,6 +105,7 @@ export class GameGateway
       if (!currentRoom) {
         return 'ok';
       }
+      client.emit(ClientEvents.ROOM_METADATA, currentRoom);
       client.emit(ClientEvents.USER_WAITLIST, {
         roomId,
         currentRound: currentRoom.currentRound,
