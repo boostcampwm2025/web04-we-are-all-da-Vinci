@@ -37,13 +37,10 @@ export class MetricService {
     });
 
     this.wsResTimeHist = wsResTimeHist;
-    this.register.registerMetric(this.wsResTimeHist);
 
     this.wsConnectionGauge = wsConnectionGauge;
-    this.register.registerMetric(this.wsConnectionGauge);
 
     this.wsEventCounter = wsEventCounter;
-    this.register.registerMetric(this.wsEventCounter);
   }
   startTimer() {
     return this.wsResTimeHist.startTimer();
