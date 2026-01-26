@@ -1,15 +1,27 @@
-import { SOUND_LIST, SOUND_PATH } from '@/shared/config/sound';
+import { BGM_LIST, BGM_PATH, SFX_LIST, SFX_PATH } from '@/shared/config/sound';
 
 export class SoundManager {
   private static instance: SoundManager;
   private readonly sounds;
-  private bgm: HTMLAudioElement | null;
+  private readonly bgms;
+  private bgm!: HTMLAudioElement;
   private sfxVolume = 0.3;
   private bgmVolume = 0;
 
+  private readonly WEB_SERVER_URL;
+
   private constructor() {
     this.sounds = new Map<string, HTMLAudioElement>();
-    this.bgm = null;
+    this.bgms = new Map<string, HTMLAudioElement>();
+
+    this.WEB_SERVER_URL = import.meta.env.VITE_WEB_SERVER_URL;
+
+    if (!this.WEB_SERVER_URL) {
+      console.warn(
+        'VITE_WEB_SERVER_URL이 설정되지 않았습니다. 사운드 로드를 생략합니다.',
+      );
+      return;
+    }
 
     this.load();
   }
@@ -35,18 +47,26 @@ export class SoundManager {
     sound.play().catch(console.error);
   }
 
-  playBGM() {
-    const bgm = this.bgm;
-    if (!bgm) return;
+  playBGM(name: string) {
+    const bgm = this.bgms.get(name);
 
-    if (this.bgmVolume === 0) {
-      bgm.pause();
+    if (!bgm) {
+      console.warn(`${name} bgm이 존재하지 않습니다.`);
       return;
+    }
+
+    if (this.bgm && this.bgm === bgm) {
+      return;
+    }
+
+    if (this.bgm) {
+      this.bgm.pause();
     }
 
     bgm.volume = this.bgmVolume;
     bgm.loop = true;
     bgm.play().catch(console.error);
+    this.bgm = bgm;
   }
 
   setSFXVolume(volume: number) {
@@ -60,7 +80,21 @@ export class SoundManager {
   setBGMVolume(volume: number) {
     this.bgmVolume = volume / 100;
 
-    this.playBGM();
+    if (!this.bgm) {
+      return;
+    }
+
+    this.bgm.volume = this.bgmVolume;
+    this.bgm.loop = true;
+    this.bgm.play().catch(console.error);
+  }
+
+  stopBGM() {
+    if (!this.bgm) {
+      return;
+    }
+
+    this.bgm.pause();
   }
 
   getBGMVolume() {
@@ -69,6 +103,7 @@ export class SoundManager {
 
   private load() {
     this.loadSounds();
+    this.loadBGMs();
     console.log('SoundManager completed');
   }
 
@@ -77,28 +112,37 @@ export class SoundManager {
       return;
     }
 
-    const WEB_SERVER_URL = import.meta.env.VITE_WEB_SERVER_URL;
+    this.addSound(
+      SFX_LIST.ROUND_END,
+      new Audio(this.WEB_SERVER_URL + SFX_PATH[SFX_LIST.ROUND_END]),
+    );
+    this.addSound(
+      SFX_LIST.TIMER,
+      new Audio(this.WEB_SERVER_URL + SFX_PATH[SFX_LIST.TIMER]),
+    );
+  }
 
-    if (!WEB_SERVER_URL) {
-      console.warn(
-        'VITE_WEB_SERVER_URL이 설정되지 않았습니다. 사운드 로드를 생략합니다.',
-      );
+  private loadBGMs() {
+    if (this.bgms.size > 0) {
       return;
     }
 
-    this.addSound(
-      SOUND_LIST.ROUND_END,
-      new Audio(WEB_SERVER_URL + SOUND_PATH[SOUND_LIST.ROUND_END]),
-    );
-    this.addSound(
-      SOUND_LIST.TIMER,
-      new Audio(WEB_SERVER_URL + SOUND_PATH[SOUND_LIST.TIMER]),
+    this.addBGM(
+      BGM_LIST.WAITING,
+      new Audio(this.WEB_SERVER_URL + BGM_PATH[BGM_LIST.WAITING]),
     );
 
-    this.bgm = new Audio(WEB_SERVER_URL + '/audio/bgm.mp3');
+    this.addBGM(
+      BGM_LIST.GAME_END,
+      new Audio(this.WEB_SERVER_URL + BGM_PATH[BGM_LIST.GAME_END]),
+    );
   }
 
   private addSound(key: string, element: HTMLAudioElement) {
     this.sounds.set(key, element);
+  }
+
+  private addBGM(key: string, element: HTMLAudioElement) {
+    this.bgms.set(key, element);
   }
 }
