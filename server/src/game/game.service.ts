@@ -137,33 +137,56 @@ export class GameService {
       throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
     }
 
-    if (room.players.length >= room.settings.maxPlayer) {
+    const waitlistSize = await this.waitlistService.getWaitlistSize(roomId);
+    if (room.players.length + waitlistSize >= room.settings.maxPlayer) {
       throw new WebsocketException(ErrorCode.ROOM_FULL);
+    }
+
+    // 무조건 대기열을 거쳐서 입장
+    await this.waitlistService.addWaitPlayer(roomId, {
+      nickname,
+      profileId,
+      socketId,
+      isHost: false,
+    });
+
+    return await this.processWaitlist(roomId);
+  }
+
+  async processWaitlist(roomId: string) {
+    const room = await this.cacheService.getRoom(roomId);
+    if (!room) {
+      throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
     }
 
     const phase = room.phase;
 
-    if (phase === GamePhase.DRAWING) {
-      await this.waitlistService.addWaitPlayer(roomId, {
-        nickname,
-        profileId,
-        socketId,
-        isHost: false,
-      });
+    // prompt, drawing 단계에서는 대기 유지
+    if (phase === GamePhase.PROMPT || phase === GamePhase.DRAWING) {
       return null;
     }
+
+    // 이외 phase에서는 참여
+    const waitlistSize = await this.waitlistService.getWaitlistSize(roomId);
+    if (waitlistSize === 0) return room;
+
+    // 대기열 가장 앞의 유저 pop
+    const waitPlayer = await this.waitlistService.popWaitPlayer(roomId);
+    if (!waitPlayer) return room;
 
     const players = await this.cacheService.getAllPlayers(roomId);
 
     await this.cacheService.addPlayer(roomId, {
-      nickname,
-      profileId,
-      socketId,
+      ...waitPlayer,
       isHost: players.length === 0,
     });
 
-    await this.playerCacheService.set(socketId, roomId);
-    await this.leaderboardCacheService.updateScore(roomId, socketId, 0);
+    await this.playerCacheService.set(waitPlayer.socketId, roomId);
+    await this.leaderboardCacheService.updateScore(
+      roomId,
+      waitPlayer.socketId,
+      0,
+    );
 
     const updatedRoom = await this.cacheService.getRoom(roomId);
     return updatedRoom;
