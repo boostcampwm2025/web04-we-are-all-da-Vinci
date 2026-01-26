@@ -1,9 +1,12 @@
 import { useGameStore } from '@/entities/gameRoom/model';
 import { ImagePreviewCard } from '@/entities/gameStart';
 import { DrawingCanvas } from '@/features/drawingCanvas';
-import { GameHeader, CommonBtn } from '@/shared/ui';
+import { GameHeader } from '@/shared/ui';
+import { useState } from 'react';
 
 export const Practice = () => {
+  const [similarity, setSimilarity] = useState(0);
+
   const practicePrompt = useGameStore((state) => state.practicePrompt);
   const setIsPracticing = useGameStore((state) => state.setIsPracticing);
 
@@ -18,7 +21,14 @@ export const Practice = () => {
 
         <div className="relative flex min-h-0 gap-2 overflow-hidden rounded-2xl bg-white/5">
           <ImagePreviewCard promptStrokes={practicePrompt || []} />
-          <DrawingCanvas />
+          <DrawingCanvas
+            isPractice
+            practicePrompt={practicePrompt}
+            onSimilarityChange={setSimilarity}
+          />
+        </div>
+        <div className="text-content-secondary font-handwriting text-right text-3xl">
+          유사도 점수: {similarity}점
         </div>
 
         <div className="absolute top-6 right-6">

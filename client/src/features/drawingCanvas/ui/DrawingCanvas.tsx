@@ -1,5 +1,6 @@
 import { drawStrokesOnCanvas } from '@/entities/drawing/lib/drawStrokesOnCanvas';
 import { selectPhase, useGameStore } from '@/entities/gameRoom/model';
+import type { Stroke } from '@/entities/similarity';
 import { useColorSelection } from '@/features/drawingCanvas/model/useColorSelection';
 import { useMouseDrawing } from '@/features/drawingCanvas/model/useMouseDrawing';
 import { useStrokes } from '@/features/drawingCanvas/model/useStrokes';
@@ -15,8 +16,18 @@ import { captureMessage } from '@/shared/lib/sentry';
 import { useCanvasSetup } from '@/shared/model/useCanvasSetup';
 import { useEffect, useMemo, useRef } from 'react';
 
+interface DrawingCanvasProps {
+  isPractice?: boolean;
+  practicePrompt?: Stroke[] | null;
+  onSimilarityChange?: (similarity: number) => void;
+}
+
 // 기본 그리기 기능을 제공하는 캔버스 컴포넌트
-export const DrawingCanvas = () => {
+export const DrawingCanvas = ({
+  isPractice = false,
+  practicePrompt,
+  onSimilarityChange,
+}: DrawingCanvasProps) => {
   const { canvasRef, ctxRef } = useCanvasSetup();
 
   const { strokes, canUndo, handleAddStroke, handleClearStrokes, handleUndo } =
@@ -27,7 +38,9 @@ export const DrawingCanvas = () => {
   const totalDrawingTimeRef = useRef<number>(0);
 
   const phase = useGameStore(selectPhase);
-  const promptStrokes = useGameStore((state) => state.promptStrokes);
+  const promptStrokes = isPractice
+    ? practicePrompt
+    : useGameStore((state) => state.promptStrokes);
   const roomId = useGameStore((state) => state.roomId);
   const timer = useGameStore((state) => state.timer);
   const currentRound = useGameStore((state) => state.currentRound);
@@ -72,7 +85,7 @@ export const DrawingCanvas = () => {
 
   // promptStrokes 전처리 (제시 그림이 바뀌지 않으면 캐시된 값 사용)
   const preprocessedPrompt = useMemo(() => {
-    if (promptStrokes.length === 0) return null;
+    if (!promptStrokes || promptStrokes.length === 0) return null;
     return preprocessStrokes(promptStrokes);
   }, [promptStrokes]);
 
@@ -127,13 +140,15 @@ export const DrawingCanvas = () => {
         preprocessedPlayer,
       );
 
-      // 서버에 점수 전송
-      const socket = getSocket();
-
-      socket.emit(SERVER_EVENTS.USER_SCORE, {
-        roomId,
-        similarity: similarity.similarity,
-      });
+      if (isPractice) {
+        onSimilarityChange?.(similarity.similarity);
+      } else {
+        const socket = getSocket();
+        socket.emit(SERVER_EVENTS.USER_SCORE, {
+          roomId,
+          similarity: similarity.similarity,
+        });
+      }
     } catch (error) {
       console.error('Failed to calculate/send similarity:', error);
     }
