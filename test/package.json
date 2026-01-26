@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test:perf": "DEBUG=socketio artillery run ./load.test.yml --env-file=.env"
+    "perf:single": "DEBUG=socketio artillery run ./single-room/load.test.yml --env-file=./single-room/.env",
+    "perf:multi": "DEBUG=socketio artillery run ./multi-room/load.test.yml --env-file=./multi-room/.env"
   },
   "keywords": [],
   "author": "",

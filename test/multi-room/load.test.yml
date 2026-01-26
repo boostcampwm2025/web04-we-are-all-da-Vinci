@@ -1,0 +1,66 @@
+config:
+  target: "{{ $env.TARGET }}"
+  phases:
+    - duration: "{{ $env.DURATION }}"
+      arrivalRate: "{{ $env.ARRIVAL_RATE }}"
+  processor: "./processor.js"
+  socketio:
+    transports: ["websocket"]
+
+before:
+  flow:
+    - loop:
+        - post:
+            url: "/room"
+            json:
+              maxPlayer: "{{ $env.MAX_PLAYER }}"
+              totalRounds: "{{ $env.TOTAL_ROUNDS }}"
+              drawingTime: "{{ $env.DRAWING_TIME }}"
+            afterResponse: "afterPostRoom"
+      count: "{{ $env.ROOM_COUNT }}"
+
+    - log: "Create Rooms"
+
+scenarios:
+  - name: "game"
+    engine: socketio
+    flow:
+      - function: "initUser"
+      - emit:
+          channel: "user:join"
+          data:
+            roomId: "{{ roomId }}"
+            nickname: "{{ nickname }}"
+      - log: "{{ nickname }} joined room {{ roomId }}"
+      - loop:
+          - think: 1
+        whileTrue: "waitAllPlayerReady"
+      - think: 1
+      - emit:
+          channel: "{{ startGame }}"
+          data:
+            roomId: "{{ roomId }}"
+          ifTrue: "{{ isHost }}"
+      - think: 1
+      - loop: # 프롬프트 단계가 끝나고 그리기 단계를 기다림.
+          - think: 1
+        whileTrue: "waitDrawingPhase"
+      - log: "Drawing Start"
+      - loop:
+          - function: "updateScore"
+          - emit:
+              channel: "user:score"
+              data:
+                similarity: "{{ randomScore }}"
+                roomId: "{{ roomId }}"
+          - think: 1
+        whileTrue: "waitRoundEnd"
+      - think: "0.5s" # 버퍼 타임
+      - log: "Drawing End"
+      - emit:
+          channel: "user:drawing"
+          data:
+            roomId: "{{ roomId }}"
+            similarity: "{{ similarity }}"
+            strokes: "{{ strokes }}"
+      - think: 24
