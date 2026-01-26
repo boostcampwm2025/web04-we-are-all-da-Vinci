@@ -144,7 +144,12 @@ export class GameService {
     const phase = room.phase;
 
     if (phase === GamePhase.DRAWING) {
-      await this.waitlistService.addPlayer(roomId, socketId);
+      await this.waitlistService.addWaitPlayer(roomId, {
+        nickname,
+        profileId,
+        socketId,
+        isHost: false,
+      });
       return null;
     }
 
