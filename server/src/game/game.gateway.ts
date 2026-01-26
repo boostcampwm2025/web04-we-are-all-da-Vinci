@@ -200,6 +200,12 @@ export class GameGateway
     return 'ok';
   }
 
+  @SubscribeMessage(ServerEvents.USER_PRACTICE)
+  async startPractice(@ConnectedSocket() client: Socket) {
+    const randomPrompt = await this.gameService.startPractice();
+    client.emit(ClientEvents.USER_PRACTICE_STARTED, randomPrompt);
+  }
+
   broadcastMetadata(room: GameRoom) {
     this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
   }

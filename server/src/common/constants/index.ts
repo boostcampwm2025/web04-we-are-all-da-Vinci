@@ -14,6 +14,7 @@ export const ServerEvents = {
   ROOM_SETTINGS: 'room:settings',
   ROOM_START: 'room:start',
   ROOM_RESTART: 'room:restart',
+  USER_PRACTICE: 'user:practice',
 } as const;
 
 export const ClientEvents = {
@@ -27,6 +28,7 @@ export const ClientEvents = {
   ROOM_GAME_END: 'room:game_end',
   ROOM_PROMPT: 'room:prompt',
   ROOM_KICKED: 'room:kicked',
+  USER_PRACTICE_STARTED: 'user:practice:started',
   ERROR: 'error',
 } as const;
 

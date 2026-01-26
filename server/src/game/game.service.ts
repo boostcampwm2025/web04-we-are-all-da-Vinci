@@ -333,6 +333,11 @@ export class GameService implements OnModuleInit {
     return { updatedRoom, kickedPlayer };
   }
 
+  async startPractice() {
+    const randomPrompt = await this.promptService.getRandomPrompt();
+    return randomPrompt;
+  }
+
   private async generateRoomId() {
     let roomId = randomUUID().toString().substring(0, 8);
     while (await this.cacheService.getRoom(roomId)) {
