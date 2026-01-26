@@ -14,8 +14,8 @@ import { RoomStartDto } from './dto/room-start.dto';
 import { ClientEvents, GamePhase, ServerEvents } from 'src/common/constants';
 import { PinoLogger } from 'nestjs-pino';
 import { GameService } from './game.service';
-import { GameRoom } from 'src/common/types';
-import { UseFilters } from '@nestjs/common';
+import { GameRoom, Player } from 'src/common/types';
+import { OnModuleInit, UseFilters } from '@nestjs/common';
 import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
 import { UserKickDto } from './dto/user-kick.dto';
 import { getSocketCorsOrigin } from 'src/common/config/cors.util';
@@ -27,7 +27,9 @@ import { getSocketCorsOrigin } from 'src/common/config/cors.util';
   },
 })
 @UseFilters(WebsocketExceptionFilter)
-export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class GameGateway
+  implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
+{
   @WebSocketServer()
   server!: Server;
 
@@ -36,6 +38,30 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly gameService: GameService,
   ) {
     this.logger.setContext(GameGateway.name);
+  }
+
+  onModuleInit() {
+    this.gameService.setPhaseChangeHandler(
+      async (roomId: string, joinedPlayers: Player[]) => {
+        await this.handleWaitlist(roomId, joinedPlayers);
+      },
+    );
+  }
+
+  private async handleWaitlist(roomId: string, joinedPlayers: Player[]) {
+    const room = await this.gameService.getRoom(roomId);
+    if (!room) {
+      return;
+    }
+
+    for (const player of joinedPlayers) {
+      const socket = this.server.sockets.sockets.get(player.socketId);
+      if (socket) {
+        await socket.join(roomId);
+        await this.syncCurrentPhaseData(socket, room);
+      }
+    }
+    this.broadcastMetadata(room);
   }
 
   handleConnection(client: Socket) {
@@ -66,27 +92,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.id,
     );
 
-    // 현재 대기열 확인
-    const joinedPlayers = await this.gameService.processWaitlist(roomId);
-
-    if (room) {
-      // 대기 없이 바로 참여 가능한 경우
-      this.logger.info(
-        { clientId: client.id, ...payload },
-        'Client Joined Game.',
-      );
-
-      await client.join(room.roomId);
-      this.broadcastMetadata(room);
-
-      // 중도 참여 유저를 위한 데이터 동기화
-      await this.syncCurrentPhaseData(client, room);
-    } else {
-      // PROMPT, DRAWING PHASE에서 입장한 경우
+    if (!room) {
       this.logger.info(
         { clientId: client.id, ...payload },
         'Client Pushed Waiting queue',
       );
+
       const currentRoom = await this.gameService.getRoom(roomId);
       if (!currentRoom) {
         return 'ok';
@@ -97,6 +108,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         totalRounds: currentRoom.settings.totalRounds,
         phase: currentRoom.phase,
       });
+    } else {
+      this.logger.info(
+        { clientId: client.id, ...payload },
+        'Client Joined Game.',
+      );
     }
 
     return 'ok';

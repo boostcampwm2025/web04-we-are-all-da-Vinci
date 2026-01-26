@@ -25,6 +25,7 @@ import { PromptService } from 'src/prompt/prompt.service';
 @Injectable()
 export class RoundService implements OnModuleInit {
   server!: Server;
+  private phaseChangeHandler?: (roomId: string) => Promise<void>;
 
   constructor(
     private readonly cacheService: GameRoomCacheService,
@@ -57,6 +58,14 @@ export class RoundService implements OnModuleInit {
 
   setServer(server: Server) {
     this.server = server;
+  }
+
+  setPhaseChangeHandler(handler: (roomId: string) => Promise<void>) {
+    this.phaseChangeHandler = handler;
+  }
+
+  private async notifyPhaseChange(roomId: string) {
+    if (this.phaseChangeHandler) await this.phaseChangeHandler(roomId);
   }
 
   async nextPhase(room: GameRoom) {
@@ -118,6 +127,8 @@ export class RoundService implements OnModuleInit {
 
     await this.timerService.startTimer(room.roomId, PROMPT_TIME);
     this.logger.info({ room }, 'Prompt Phase Start');
+
+    await this.notifyPhaseChange(room.roomId);
   }
 
   private async moveDrawing(room: GameRoom) {
@@ -128,6 +139,8 @@ export class RoundService implements OnModuleInit {
     this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
 
     this.logger.info({ room }, 'Drawing Phase Start');
+
+    await this.notifyPhaseChange(room.roomId);
   }
 
   private async moveRoundReplay(room: GameRoom) {
@@ -142,6 +155,8 @@ export class RoundService implements OnModuleInit {
     this.server.to(room.roomId).emit(ClientEvents.ROOM_ROUND_REPLAY, result);
 
     this.logger.info({ room }, 'Round Replay Phase Start');
+
+    await this.notifyPhaseChange(room.roomId);
   }
 
   async getRoundReplayData(roomId: string) {
@@ -185,6 +200,8 @@ export class RoundService implements OnModuleInit {
     this.server.to(room.roomId).emit(ClientEvents.ROOM_ROUND_STANDING, result);
 
     this.logger.info({ room }, 'Round Standing Phase Start');
+
+    await this.notifyPhaseChange(room.roomId);
   }
 
   async getRoundStandingData(roomId: string) {
@@ -223,6 +240,7 @@ export class RoundService implements OnModuleInit {
     await this.timerService.startTimer(room.roomId, GAME_END_TIME);
 
     this.logger.info('Game End Start');
+    await this.notifyPhaseChange(room.roomId);
   }
 
   async getGameEndData(roomId: string) {
@@ -295,5 +313,6 @@ export class RoundService implements OnModuleInit {
     this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
 
     this.logger.info({ roomId: room.roomId }, 'Game Waiting Start');
+    await this.notifyPhaseChange(room.roomId);
   }
 }

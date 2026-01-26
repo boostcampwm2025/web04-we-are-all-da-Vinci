@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { GameRoom } from 'src/common/types';
+import { GameRoom, Player } from 'src/common/types';
 import { GamePhase } from 'src/common/constants';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
@@ -12,9 +12,14 @@ import { RoundService } from 'src/round/round.service';
 import { PromptService } from 'src/prompt/prompt.service';
 import { ErrorCode } from 'src/common/constants/error-code';
 
+interface PhaseChangeHandler {
+  (roomId: string, joinedPlayers: Player[]): Promise<void>;
+}
+
 @Injectable()
-export class GameService {
+export class GameService implements OnModuleInit {
   private readonly NEXT_HOST_INDEX = 1;
+  private phaseChangeHandler?: PhaseChangeHandler;
 
   constructor(
     private readonly cacheService: GameRoomCacheService,
@@ -24,6 +29,20 @@ export class GameService {
     private readonly roundService: RoundService,
     private readonly promptService: PromptService,
   ) {}
+
+  onModuleInit() {
+    this.roundService.setPhaseChangeHandler(async (roomId: string) => {
+      const newlyJoinedPlayers =
+        await this.getNewlyJoinedUserFromWaitlist(roomId);
+      if (this.phaseChangeHandler) {
+        await this.phaseChangeHandler(roomId, newlyJoinedPlayers);
+      }
+    });
+  }
+
+  setPhaseChangeHandler(handler: PhaseChangeHandler) {
+    this.phaseChangeHandler = handler;
+  }
 
   async createRoom(createRoomDto: CreateRoomDto) {
     const roomId = await this.generateRoomId();
@@ -63,6 +82,9 @@ export class GameService {
     const target = players.find((player) => player.socketId === socketId);
 
     if (!target) {
+      // 대기자일 수 있으니 대기열 제거 처리
+      await this.waitlistService.deleteWaitPlayer(roomId, socketId);
+      await this.playerCacheService.delete(socketId);
       return null;
     }
 
@@ -149,47 +171,72 @@ export class GameService {
       socketId,
       isHost: false,
     });
+    await this.playerCacheService.set(socketId, roomId);
 
-    return await this.processWaitlist(roomId);
+    const newlyJoinedPlayers =
+      await this.getNewlyJoinedUserFromWaitlist(roomId);
+
+    // 유저가 이번에 join 가능한지 확인
+    const isJoined = newlyJoinedPlayers.some(
+      (player) => player.socketId === socketId,
+    );
+
+    if (newlyJoinedPlayers.length > 0 && this.phaseChangeHandler) {
+      await this.phaseChangeHandler(roomId, newlyJoinedPlayers); // gateway에 알림
+    }
+
+    // join 가능하면 room 정보 전달
+    if (isJoined) {
+      return await this.cacheService.getRoom(roomId);
+    }
+
+    // join 불가 상태일 때는 null 반환
+    return null;
   }
 
-  async processWaitlist(roomId: string) {
+  // 대기열 관리: 대기열에서 참여할 플레이어 리스트 반환
+  async getNewlyJoinedUserFromWaitlist(roomId: string): Promise<Player[]> {
     const room = await this.cacheService.getRoom(roomId);
     if (!room) {
       throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
     }
 
-    const phase = room.phase;
-
     // prompt, drawing 단계에서는 대기 유지
-    if (phase === GamePhase.PROMPT || phase === GamePhase.DRAWING) {
-      return null;
+    if (room.phase === GamePhase.PROMPT || room.phase === GamePhase.DRAWING) {
+      return [];
     }
 
+    const newlyJoinedPlayers: Player[] = [];
+
     // 이외 phase에서는 참여
-    const waitlistSize = await this.waitlistService.getWaitlistSize(roomId);
-    if (waitlistSize === 0) return room;
+    while (true) {
+      const currentRoom = await this.cacheService.getRoom(roomId);
+      if (!currentRoom) {
+        throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
+      }
+      const maxPlayer = currentRoom.settings.maxPlayer;
+      const currentPlayerCount = currentRoom.players.length;
 
-    // 대기열 가장 앞의 유저 pop
-    const waitPlayer = await this.waitlistService.popWaitPlayer(roomId);
-    if (!waitPlayer) return room;
+      if (currentPlayerCount >= maxPlayer) break;
 
-    const players = await this.cacheService.getAllPlayers(roomId);
+      const waitPlayer = await this.waitlistService.popWaitPlayer(roomId);
+      if (!waitPlayer) break;
 
-    await this.cacheService.addPlayer(roomId, {
-      ...waitPlayer,
-      isHost: players.length === 0,
-    });
+      const players = await this.cacheService.getAllPlayers(roomId);
+      const newPlayer = { ...waitPlayer, isHost: players.length === 0 };
 
-    await this.playerCacheService.set(waitPlayer.socketId, roomId);
-    await this.leaderboardCacheService.updateScore(
-      roomId,
-      waitPlayer.socketId,
-      0,
-    );
+      await this.cacheService.addPlayer(roomId, newPlayer);
+      await this.playerCacheService.set(newPlayer.socketId, roomId);
+      await this.leaderboardCacheService.updateScore(
+        roomId,
+        newPlayer.socketId,
+        0,
+      );
 
-    const updatedRoom = await this.cacheService.getRoom(roomId);
-    return updatedRoom;
+      newlyJoinedPlayers.push(newPlayer);
+    }
+
+    return newlyJoinedPlayers;
   }
 
   async startGame(roomId: string, socketId: string) {
