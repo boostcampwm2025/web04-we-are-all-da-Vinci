@@ -78,7 +78,7 @@ export const Waiting = () => {
             description="친구들이 모일 때까지 기다려주세요!"
           />
 
-          <div className="flex min-h-0 flex-1 gap-7">
+          <div className="flex min-h-0 flex-1 gap-4 xl:gap-7">
             <div className="flex h-full flex-1 flex-col gap-4">
               <div className="flex h-full min-h-0 flex-col gap-4">
                 <div className="min-h-0 flex-1">
@@ -100,7 +100,7 @@ export const Waiting = () => {
               </div>
             </div>
 
-            <div className="flex h-full w-60 flex-col gap-4 lg:w-80">
+            <div className="flex h-full w-50 flex-col gap-4 xl:w-80">
               <GameSettingsCard
                 settings={settings}
                 onEdit={handleSettingsChange}

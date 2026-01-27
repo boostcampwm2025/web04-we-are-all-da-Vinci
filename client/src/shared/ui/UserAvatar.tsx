@@ -2,7 +2,8 @@ import Avatar from 'boring-avatars';
 
 interface UserAvatarProps {
   name: string;
-  size?: number;
+  size?: string;
+  className?: string;
 }
 
 // 프로젝트 공통 색상 팔레트
@@ -14,9 +15,11 @@ const AVATAR_PALETTE = [
   '#22c55e', // success (그린)
 ];
 
-const UserAvatar = ({ name, size = 40 }: UserAvatarProps) => {
+const UserAvatar = ({ name, size = '100%', className }: UserAvatarProps) => {
   return (
-    <Avatar name={name} size={size} variant="beam" colors={AVATAR_PALETTE} />
+    <div className={className}>
+      <Avatar name={name} size={size} variant="beam" colors={AVATAR_PALETTE} />
+    </div>
   );
 };
 
