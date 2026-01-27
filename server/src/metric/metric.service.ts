@@ -1,5 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import * as PromClient from 'prom-client';
+import {
+  Registry,
+  collectDefaultMetrics,
+  Histogram,
+  Gauge,
+  Counter,
+  prometheusContentType,
+} from 'prom-client';
 
 @Injectable()
 export class MetricService {
@@ -9,13 +16,13 @@ export class MetricService {
   private readonly wsConnectionGauge;
   private readonly wsEventCounter;
   constructor() {
-    this.register = new PromClient.Registry();
+    this.register = new Registry();
 
-    PromClient.collectDefaultMetrics({
+    collectDefaultMetrics({
       register: this.register,
     });
 
-    const wsResTimeHist = new PromClient.Histogram({
+    const wsResTimeHist = new Histogram({
       name: 'ws_client_messages_latency_seconds',
       help: 'Response time of websocket message in seconds',
       buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
@@ -23,13 +30,13 @@ export class MetricService {
       registers: [this.register],
     });
 
-    const wsConnectionGauge = new PromClient.Gauge({
+    const wsConnectionGauge = new Gauge({
       name: 'ws_connection_active',
       help: 'Number of websocket connections',
       registers: [this.register],
     });
 
-    const wsEventCounter = new PromClient.Counter({
+    const wsEventCounter = new Counter({
       name: 'ws_event_total',
       help: 'Number of websocket events',
       labelNames: ['eventName', 'result'],
@@ -67,6 +74,6 @@ export class MetricService {
   }
 
   static getContentType() {
-    return PromClient.prometheusContentType;
+    return prometheusContentType;
   }
 }
