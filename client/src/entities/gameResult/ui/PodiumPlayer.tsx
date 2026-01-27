@@ -64,7 +64,7 @@ const PODIUM_CONFIG = {
   },
 };
 
-export const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
+const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
   const isCurrentUser = useIsCurrentUser(player.socketId);
   const config = PODIUM_CONFIG[position];
 
@@ -112,3 +112,4 @@ export const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
     </div>
   );
 };
+export default PodiumPlayer;

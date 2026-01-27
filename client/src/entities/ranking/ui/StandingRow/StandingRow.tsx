@@ -1,5 +1,5 @@
 import { useIsCurrentUser } from '@/entities/gameRoom/model';
-import type { FinalResult } from '@/entities/gameResult/model';
+import type { FinalResult } from '@/entities/gameResult';
 import { RANK_STYLES } from '@/entities/ranking';
 import { useCountUp } from '@/shared/lib';
 import { UserAvatar } from '@/shared/ui';

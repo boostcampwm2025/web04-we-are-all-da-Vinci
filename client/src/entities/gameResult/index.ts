@@ -1,2 +1,4 @@
-export { PodiumPlayer } from './ui';
-export type { FinalResult, Highlight, GameEndResponse } from './model';
+export { default as FinalRankingCard } from './ui/FinalRankingCard';
+export { default as PodiumPlayer } from './ui/PodiumPlayer';
+export { default as PotgCard } from './ui/PotgCard';
+export * from './model/types';
