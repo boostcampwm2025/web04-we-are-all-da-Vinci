@@ -106,12 +106,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Debug prom-client
-        run: |
-          pnpm -v
-          pnpm list prom-client
-          node -p "require.resolve('prom-client')"
-
       - name: Security Audit
         id: server-audit
         run: |
