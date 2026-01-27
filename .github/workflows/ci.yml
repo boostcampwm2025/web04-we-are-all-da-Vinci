@@ -140,7 +140,23 @@ jobs:
           grep -n "prom-client" package.json || true
           echo "=== grep prom-client (pnpm-lock.yaml) ==="
           grep -n "prom-client" pnpm-lock.yaml | head -n 40 || true
+      - name: Debug - pnpm dirs
+        run: |
+          echo "pnpm root = $(pnpm root)"
+          echo "virtual-store-dir = $(pnpm config get virtual-store-dir)"
+          echo "modules-dir = $(pnpm config get modules-dir)"
+          echo "node-linker = $(pnpm config get node-linker)"
+          echo "store-dir = $(pnpm config get store-dir)"
+          ls -la "$(pnpm root)" | head -n 50
 
+      - name: Debug - find prom-client in pnpm virtual store
+        run: |
+          ROOT="$(pnpm root)"
+          echo "ROOT=$ROOT"
+          ls -la "$ROOT" | head -n 80
+          # 가정 없이 검색
+          find "$ROOT" -maxdepth 3 -type d -name "prom-client" | head -n 50 || true
+          find "$ROOT" -maxdepth 2 -type d -name ".pnpm" | head -n 10 || true
       # 1) TS가 실제로 보는 최종 tsconfig에서 typeRoots/types 확인
       - name: Debug - effective tsconfig (types/typeRoots)
         run: |
