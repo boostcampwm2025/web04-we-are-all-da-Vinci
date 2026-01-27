@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { MemoryRouter } from 'react-router-dom';
-import { ChatBox } from './ChatBox';
+import ChatBox from './ChatBox';
 import type { ChatMessage } from '../model/types';
 
 const SAMPLE_MESSAGES: ChatMessage[] = [

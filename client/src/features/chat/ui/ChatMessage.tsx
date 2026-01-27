@@ -7,7 +7,7 @@ interface ChatMessageProps {
   message: ChatMessageType;
 }
 
-export const ChatMessageItem = ({ message }: ChatMessageProps) => {
+const ChatMessage = ({ message }: ChatMessageProps) => {
   const currentPlayer = useCurrentPlayer();
   const isMe = currentPlayer?.socketId === message.socketId;
   const isSystem = message.type === 'system';
@@ -64,3 +64,4 @@ export const ChatMessageItem = ({ message }: ChatMessageProps) => {
     </div>
   );
 };
+export default ChatMessage;

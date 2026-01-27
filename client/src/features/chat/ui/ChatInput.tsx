@@ -7,7 +7,7 @@ interface ChatInputProps {
   disabled?: boolean;
 }
 
-export const ChatInput = ({ onSendMessage, disabled }: ChatInputProps) => {
+const ChatInput = ({ onSendMessage, disabled }: ChatInputProps) => {
   const [message, setMessage] = useState('');
 
   const handleSend = () => {
@@ -30,3 +30,4 @@ export const ChatInput = ({ onSendMessage, disabled }: ChatInputProps) => {
     </div>
   );
 };
+export default ChatInput;

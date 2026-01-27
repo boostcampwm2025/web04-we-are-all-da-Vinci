@@ -1,20 +1,16 @@
-import { useEffect, useRef } from 'react';
-import { ChatMessageItem } from './ChatMessage';
-import { ChatInput } from './ChatInput';
-import type { ChatMessage as ChatMessageType } from '../model/types';
 import { cn } from '@/shared/lib';
+import { useEffect, useRef } from 'react';
+import type { ChatMessage } from '../model/types';
+import ChatInput from './ChatInput';
+import ChatMessageItem from './ChatMessage';
 
 interface ChatBoxProps {
-  messages: ChatMessageType[];
+  messages: ChatMessage[];
   onSendMessage: (message: string) => void;
   className?: string;
 }
 
-export const ChatBox = ({
-  messages,
-  onSendMessage,
-  className = '',
-}: ChatBoxProps) => {
+const ChatBox = ({ messages, onSendMessage, className = '' }: ChatBoxProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // 새 메시지가 오면 자동으로 스크롤 하단으로 이동
@@ -51,3 +47,4 @@ export const ChatBox = ({
     </div>
   );
 };
+export default ChatBox;
