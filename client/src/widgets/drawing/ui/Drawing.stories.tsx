@@ -17,7 +17,8 @@ const StoryWrapper = ({ rankingCount }: StoryArgs) => {
       currentRound: 1,
       timer: 90,
       promptStrokes: MOCK_STROKES,
-      liveRankings: rankingCount > 0 ? createMockLiveRankings(rankingCount) : [],
+      liveRankings:
+        rankingCount > 0 ? createMockLiveRankings(rankingCount) : [],
     });
   }, [rankingCount]);
 
