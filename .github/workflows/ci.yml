@@ -104,7 +104,7 @@ jobs:
             ${{ runner.os }}-pnpm-server-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --shamefully-hoist
+        run: pnpm install --frozen-lockfile
 
       - name: Security Audit
         id: server-audit
@@ -124,6 +124,9 @@ jobs:
       - name: Test
         run: pnpm run test
 
+      - name: Build
+        run: pnpm run build
+
       - name: Server Coverage Report
         uses: ArtiomTr/jest-coverage-report-action@v2
         if: github.event_name == 'pull_request'
@@ -131,9 +134,6 @@ jobs:
           working-directory: server
           package-manager: pnpm
           test-script: pnpm run test:cov
-
-      - name: Build
-        run: pnpm run build
 
   bundle-size:
     name: Bundle Size Check
