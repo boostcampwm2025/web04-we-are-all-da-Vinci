@@ -104,7 +104,7 @@ jobs:
             ${{ runner.os }}-pnpm-server-
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Security Audit
         id: server-audit
@@ -131,61 +131,7 @@ jobs:
           working-directory: server
           package-manager: pnpm
           test-script: pnpm run test:cov
-      - name: Debug - locate prom-client in virtual store
-        run: |
-          echo "=== find prom-client under node_modules/.pnpm ==="
-          find node_modules/.pnpm -maxdepth 2 -type d -name "prom-client*" | head -n 50 || true
-          echo "=== find prom-client package.json ==="
-          find node_modules/.pnpm -maxdepth 4 -path "*prom-client*/package.json" | head -n 20 || true
 
-      - name: Debug - prom-client in manifest/lockfile
-        run: |
-          echo "=== package.json ==="
-          cat package.json | sed -n '1,200p'
-          echo "=== grep prom-client (package.json) ==="
-          grep -n "prom-client" package.json || true
-          echo "=== grep prom-client (pnpm-lock.yaml) ==="
-          grep -n "prom-client" pnpm-lock.yaml | head -n 40 || true
-      - name: Debug - pnpm dirs
-        run: |
-          echo "pnpm root = $(pnpm root)"
-          echo "virtual-store-dir = $(pnpm config get virtual-store-dir)"
-          echo "modules-dir = $(pnpm config get modules-dir)"
-          echo "node-linker = $(pnpm config get node-linker)"
-          echo "store-dir = $(pnpm config get store-dir)"
-          ls -la "$(pnpm root)" | head -n 50
-
-      - name: Debug - find prom-client in pnpm virtual store
-        run: |
-          ROOT="$(pnpm root)"
-          echo "ROOT=$ROOT"
-          ls -la "$ROOT" | head -n 80
-          # 가정 없이 검색
-          find "$ROOT" -maxdepth 3 -type d -name "prom-client" | head -n 50 || true
-          find "$ROOT" -maxdepth 2 -type d -name ".pnpm" | head -n 10 || true
-      # 1) TS가 실제로 보는 최종 tsconfig에서 typeRoots/types 확인
-      - name: Debug - effective tsconfig (types/typeRoots)
-        run: |
-          pnpm exec tsc -p tsconfig.json --showConfig > /tmp/tsconfig.effective.json
-          node -p "const c=require('/tmp/tsconfig.effective.json'); console.log({module:c.compilerOptions.module, moduleResolution:c.compilerOptions.moduleResolution, resolvePackageJsonExports:c.compilerOptions.resolvePackageJsonExports, typeRoots:c.compilerOptions.typeRoots, types:c.compilerOptions.types, baseUrl:c.compilerOptions.baseUrl, paths:c.compilerOptions.paths})"
-
-      # 2) prom-client가 node_modules에 “폴더로” 보이는지 확인
-      - name: Debug - node_modules visibility (prom-client)
-        run: |
-          echo "=== ls node_modules/prom-client ==="
-          ls -la node_modules/prom-client || true
-          echo "=== read package.json if exists ==="
-          cat node_modules/prom-client/package.json || true
-          echo "=== ls pnpm store path for prom-client ==="
-          ls -la node_modules/.pnpm/prom-client@15.1.3/node_modules/prom-client || true
-          echo "=== node require.resolve ==="
-          node -p "require.resolve('prom-client')" || true
-
-      # 3) (선택) TS가 prom-client를 왜 폴더로 탐색 안 하는지 trace 일부 추출
-      - name: Debug - traceResolution (prom-client)
-        run: |
-          pnpm exec tsc -p tsconfig.json --noEmit --traceResolution > /tmp/trace.txt || true
-          grep -n "Resolving module 'prom-client'\\|Loading module 'prom-client'\\|Module name 'prom-client' was not resolved\\|package.json" /tmp/trace.txt | head -n 200 || true
       - name: Build
         run: pnpm run build
 
