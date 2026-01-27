@@ -103,13 +103,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-server-
 
-      # - name: Install dependencies
-      #   run: pnpm install --frozen-lockfile
-      - name: Install dependencies (debug)
-        run: |
-          pnpm install --frozen-lockfile --reporter=append-only 2>&1 | tee /tmp/pnpm-install.log
-          echo "=== grep prom-client / skipped / optional / fail ==="
-          grep -niE "prom-client|skip|skipp|optional|fail|ERR|error" /tmp/pnpm-install.log | head -n 200 || true
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts=false
+      - name: Approve builds (pnpm v10)
+        run: pnpm approve-builds
+      # - name: Install dependencies (debug)
+      #   run: |
+      #     pnpm install --frozen-lockfile --reporter=append-only 2>&1 | tee /tmp/pnpm-install.log
+      #     echo "=== grep prom-client / skipped / optional / fail ==="
+      #     grep -niE "prom-client|skip|skipp|optional|fail|ERR|error" /tmp/pnpm-install.log | head -n 200 || true
 
       - name: Security Audit
         id: server-audit
