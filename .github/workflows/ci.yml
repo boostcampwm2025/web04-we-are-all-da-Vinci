@@ -104,7 +104,7 @@ jobs:
             ${{ runner.os }}-pnpm-server-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --shamefully-hoist
 
       - name: Security Audit
         id: server-audit
