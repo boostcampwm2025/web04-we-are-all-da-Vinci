@@ -72,16 +72,16 @@ export const Waiting = () => {
   return (
     <>
       <div className="page-center">
-        <main className="game-container mx-25">
+        <main className="game-container md:mx-10 xl:mx-25">
           <GameHeader
             title={TITLES.ROOM}
             description="친구들이 모일 때까지 기다려주세요!"
           />
 
-          <div className="flex min-h-0 flex-1 gap-4 xl:gap-7">
-            <div className="flex h-full flex-1 flex-col gap-4">
-              <div className="flex h-full min-h-0 flex-col gap-4">
-                <div className="min-h-0 flex-1">
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto md:flex-row md:overflow-visible xl:gap-7">
+            <div className="flex flex-col gap-4 md:h-full md:flex-1">
+              <div className="flex min-h-0 flex-col gap-4 md:h-full">
+                <div className="min-h-0 md:flex-1">
                   <PlayerListSection
                     players={players}
                     maxPlayer={settings.maxPlayer}
@@ -93,6 +93,7 @@ export const Waiting = () => {
                 <div>
                   <WaitingRoomActions
                     onStartClick={handleStartGame}
+                    onSettingsClick={handleSettingsChange}
                     isHost={isHostUser}
                     canStart={!!roomId && players.length >= 2}
                   />
@@ -100,12 +101,14 @@ export const Waiting = () => {
               </div>
             </div>
 
-            <div className="flex h-full w-50 flex-col gap-4 xl:w-80">
-              <GameSettingsCard
-                settings={settings}
-                onEdit={handleSettingsChange}
-                isHost={isHostUser}
-              />
+            <div className="flex w-full flex-col gap-4 md:w-50 xl:w-80">
+              <div className="hidden md:block">
+                <GameSettingsCard
+                  settings={settings}
+                  onEdit={handleSettingsChange}
+                  isHost={isHostUser}
+                />
+              </div>
               <div className="card flex flex-1 items-center justify-center">
                 <p className="font-handwriting text-content-disabled text-lg">
                   💬 채팅 (예정)

@@ -46,7 +46,7 @@ export const StandingRow = ({
           )}
         </div>
 
-        <UserAvatar name={player.profileId} size={48} />
+        <UserAvatar name={player.profileId} className="h-12 w-12" />
 
         <p
           className={`font-handwriting min-w-0 flex-1 truncate text-xl font-bold ${isSorted ? style.text : 'text-gray-600'} `}

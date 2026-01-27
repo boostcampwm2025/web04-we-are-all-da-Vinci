@@ -61,7 +61,7 @@ const CommonBtn = ({
 
   const variantClasses = {
     scribble: `scribble-border group w-full rounded-full bg-white/90 text-gray-800 transition-all hover:scale-105 hover:bg-white ${sizeClasses[size]}`,
-    radius: `w-full gap-1 rounded-xl border-2 bg-white py-5 text-xl font-bold transition-colors ${getColorClasses(color)}`,
+    radius: `w-full gap-1 rounded-xl border-2 bg-white font-bold transition-colors ${getColorClasses(color)} ${sizeClasses[size]} ${!text ? 'px-0' : ''}`,
   };
 
   const iconClasses = {

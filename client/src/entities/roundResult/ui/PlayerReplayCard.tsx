@@ -61,7 +61,7 @@ export const PlayerReplayCard = ({
             >
               #{rank}
             </span>
-            <UserAvatar name={profileId} size={24} />
+            <UserAvatar name={profileId} className="h-8 w-8" />
             <h3 className="font-handwriting truncate text-base font-bold">
               {nickname}
               {isCurrentUser && ' (You)'}

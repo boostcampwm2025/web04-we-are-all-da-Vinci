@@ -76,7 +76,7 @@ export const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
         >
           <UserAvatar
             name={player.profileId}
-            size={position === 'first' ? 80 : 64}
+            className={position === 'first' ? 'h-20 w-20' : 'h-16 w-16'}
           />
         </div>
 
