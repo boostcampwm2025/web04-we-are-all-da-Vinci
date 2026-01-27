@@ -8,9 +8,9 @@ export default defineConfig({
   plugins: [
     react(),
     visualizer({
-      open: true, // 빌드 끝나면 자동으로 브라우저 열림
-      gzipSize: true, // gzip 기준 크기 표시
-      brotliSize: true, // brotli 기준도 같이
+      open: true,
+      gzipSize: true,
+      brotliSize: true,
       filename: 'stats.html',
     }),
     tailwindcss(),
@@ -20,6 +20,7 @@ export default defineConfig({
       authToken: process.env.SENTRY_AUTH_TOKEN,
       sourcemaps: {
         assets: './dist/**',
+        filesToDeleteAfterUpload: ['./dist/**/*.map'],
       },
       telemetry: false,
     }),
