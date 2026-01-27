@@ -24,7 +24,7 @@ export const useMouseDrawing = ({
   const strokeStartTimeRef = useRef<number | null>(null);
 
   // 브라우저 마우스 좌표를 캔버스 내부 픽셀 좌표로 변환
-  const getMousePosOnCanvas = (e: React.MouseEvent) => {
+  const getMousePosOnCanvas = (e: React.PointerEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
 
@@ -39,7 +39,7 @@ export const useMouseDrawing = ({
   };
 
   // 그리기 시작
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handleMouseDown = (e: React.PointerEvent) => {
     const ctx = ctxRef.current;
     if (!ctx) return;
 
@@ -56,7 +56,7 @@ export const useMouseDrawing = ({
   };
 
   // 그리기 진행
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleMouseMove = (e: React.PointerEvent) => {
     const ctx = ctxRef.current;
     if (!ctx || !isDrawing) return;
 
