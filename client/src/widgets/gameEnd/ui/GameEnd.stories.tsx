@@ -5,7 +5,7 @@ import {
   createMockFinalResults,
   MOCK_HIGHLIGHT,
   MOCK_SETTINGS,
-} from '@/test/mocks/mockGameStore';
+} from '@/test/mocks/mockData';
 
 interface StoryArgs {
   resultCount: number;

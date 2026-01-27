@@ -6,18 +6,6 @@ import {
 } from '@/entities/gameRoom/model';
 import { MOCK_STROKES, createMockPlayers } from './mockData';
 
-export {
-  MOCK_STROKES,
-  MOCK_SIMILARITY,
-  MOCK_HIGHLIGHT,
-  MOCK_SETTINGS,
-  createMockPlayers,
-  createMockStandingResults,
-  createMockFinalResults,
-  createMockRoundResults,
-  createMockLiveRankings,
-} from './mockData';
-
 // 기본 Mock State
 export const DEFAULT_GAME_STATE: Partial<GameState> = {
   ...initialState,
