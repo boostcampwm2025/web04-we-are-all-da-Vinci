@@ -90,18 +90,18 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
-      # - name: Get pnpm store directory
-      #   shell: bash
-      #   run: |
-      #     echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
-      # - name: Cache pnpm dependencies
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ${{ env.STORE_PATH }}
-      #     key: ${{ runner.os }}-pnpm-server-${{ hashFiles('server/pnpm-lock.yaml') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-pnpm-server-
+      - name: Cache pnpm dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-server-${{ hashFiles('server/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-server-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -131,6 +131,19 @@ jobs:
           working-directory: server
           package-manager: pnpm
           test-script: pnpm run test:cov
+
+      - name: Show effective TS config
+        run: |
+          pnpm exec tsc -p tsconfig.json --showConfig > /tmp/tsconfig.effective.json
+          node -p "const c=require('/tmp/tsconfig.effective.json'); console.log({module:c.compilerOptions.module, moduleResolution:c.compilerOptions.moduleResolution, resolvePackageJsonExports:c.compilerOptions.resolvePackageJsonExports, baseUrl:c.compilerOptions.baseUrl, paths:c.compilerOptions.paths})"
+
+      - name: TSC direct build
+        run: pnpm exec tsc -p tsconfig.json --noEmit
+
+      - name: Trace prom-client resolution
+        run: |
+          pnpm exec tsc -p tsconfig.json --noEmit --traceResolution > /tmp/trace.txt || true
+          grep -n "prom-client" /tmp/trace.txt | head -n 80 || true
 
       - name: Build
         run: pnpm run build
