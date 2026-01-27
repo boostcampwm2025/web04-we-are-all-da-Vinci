@@ -1,33 +1,13 @@
-import { lazy, Suspense, useEffect } from 'react';
 import { selectPhase, useGameStore } from '@/entities/gameRoom/model';
 import { useGameSocket } from '@/features/socket/model';
-import { Loading, OverlayModal } from '@/shared/ui';
+import { OverlayModal } from '@/shared/ui';
 import { useNavigate } from 'react-router-dom';
 import { Waiting } from '@/widgets/waiting';
-
-const Drawing = lazy(() =>
-  import('@/widgets/drawing').then((m) => ({ default: m.Drawing })),
-);
-const Prompt = lazy(() =>
-  import('@/widgets/prompt').then((m) => ({ default: m.Prompt })),
-);
-const RoundReplay = lazy(() =>
-  import('@/widgets/roundReplay').then((m) => ({ default: m.RoundReplay })),
-);
-const RoundStanding = lazy(() =>
-  import('@/widgets/roundStanding').then((m) => ({ default: m.RoundStanding })),
-);
-const GameEnd = lazy(() =>
-  import('@/widgets/gameEnd').then((m) => ({ default: m.GameEnd })),
-);
-
-const prefetchAllPhases = () => {
-  import('@/widgets/drawing');
-  import('@/widgets/prompt');
-  import('@/widgets/roundReplay');
-  import('@/widgets/roundStanding');
-  import('@/widgets/gameEnd');
-};
+import { Drawing } from '@/widgets/drawing';
+import { Prompt } from '@/widgets/prompt';
+import { RoundReplay } from '@/widgets/roundReplay';
+import { RoundStanding } from '@/widgets/roundStanding';
+import { GameEnd } from '@/widgets/gameEnd';
 
 const GAME_PHASE_COMPONENT_MAP = {
   WAITING: Waiting,
@@ -50,11 +30,6 @@ const Game = () => {
   );
   const PhaseComponent = GAME_PHASE_COMPONENT_MAP[phase];
 
-  // Game 페이지 진입 시 모든 Phase를 미리 로드
-  useEffect(() => {
-    prefetchAllPhases();
-  }, []);
-
   const handleAlertConfirm = () => {
     setAlertMessage(null);
     if (pendingNavigation) {
@@ -73,9 +48,7 @@ const Game = () => {
 
   return (
     <>
-      <Suspense fallback={<Loading />}>
-        <PhaseComponent />
-      </Suspense>
+      <PhaseComponent />
       <OverlayModal
         isOpen={!!alertMessage}
         onClose={handleAlertClose}
