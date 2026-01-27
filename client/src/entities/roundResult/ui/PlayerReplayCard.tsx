@@ -94,7 +94,7 @@ export const PlayerReplayCard = ({
             <UserAvatar name={profileId} size={24} />
             <h3 className="font-handwriting truncate text-base font-bold">
               {nickname}
-              {isCurrentUser && ' (You)'}
+              {isCurrentUser && ' (나)'}
             </h3>
           </div>
         </div>
