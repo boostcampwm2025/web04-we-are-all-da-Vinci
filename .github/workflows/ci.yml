@@ -137,9 +137,6 @@ jobs:
           pnpm exec tsc -p tsconfig.json --showConfig > /tmp/tsconfig.effective.json
           node -p "const c=require('/tmp/tsconfig.effective.json'); console.log({module:c.compilerOptions.module, moduleResolution:c.compilerOptions.moduleResolution, resolvePackageJsonExports:c.compilerOptions.resolvePackageJsonExports, baseUrl:c.compilerOptions.baseUrl, paths:c.compilerOptions.paths})"
 
-      - name: TSC direct build
-        run: pnpm exec tsc -p tsconfig.json --noEmit
-
       - name: Trace prom-client resolution
         run: |
           pnpm exec tsc -p tsconfig.json --noEmit --traceResolution > /tmp/trace.txt || true
