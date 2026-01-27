@@ -1,42 +1,42 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { useEffect } from 'react';
 import { Drawing } from './Drawing';
-import { withMockGameStore } from '@/test/mocks/mockGameStore';
+import { useGameStore, initialState } from '@/entities/gameRoom/model';
+import { createMockLiveRankings, MOCK_STROKES } from '@/test/mocks/mockGameStore';
 
-const meta = {
-  title: 'Widgets/Drawing',
-  component: Drawing,
-  parameters: {
-    layout: 'fullscreen',
-  },
-  decorators: [
-    withMockGameStore({
+interface StoryArgs {
+  rankingCount: number;
+}
+
+const StoryWrapper = ({ rankingCount }: StoryArgs) => {
+  useEffect(() => {
+    useGameStore.setState({
+      ...initialState,
+      isConnected: true,
       phase: 'DRAWING',
       currentRound: 1,
       timer: 90,
-      liveRankings: [],
-    }),
-  ],
-} satisfies Meta<typeof Drawing>;
+      promptStrokes: MOCK_STROKES,
+      liveRankings: rankingCount > 0 ? createMockLiveRankings(rankingCount) : [],
+    });
+  }, [rankingCount]);
+
+  return <Drawing />;
+};
+
+const meta: Meta<StoryArgs> = {
+  title: 'Widgets/Drawing',
+  component: Drawing,
+  parameters: { layout: 'fullscreen' },
+  argTypes: {
+    rankingCount: { control: { type: 'range', min: 0, max: 30, step: 1 } },
+  },
+  render: (args) => <StoryWrapper {...args} />,
+};
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<StoryArgs>;
 
-/**
- * 기본 그림 그리기 화면
- * - 1라운드, 90초 타이머
- * - 빈 캔버스 상태
- */
-export const Default: Story = {};
-
-/**
- * 3라운드 그림 그리기 화면
- */
-export const Round3: Story = {
-  decorators: [
-    withMockGameStore({
-      phase: 'DRAWING',
-      currentRound: 3,
-      timer: 45,
-    }),
-  ],
+export const Default: Story = {
+  args: { rankingCount: 4 },
 };

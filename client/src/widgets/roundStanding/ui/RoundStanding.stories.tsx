@@ -1,47 +1,40 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { RoundStanding } from './RoundStanding';
-import { withMockGameStore, createMockStandingResults } from '@/test/mocks/mockGameStore';
+import { useGameStore, initialState } from '@/entities/gameRoom/model';
+import { createMockStandingResults } from '@/test/mocks/mockGameStore';
 
-const meta = {
+interface StoryArgs {
+  resultCount: number;
+}
+
+const meta: Meta<StoryArgs> = {
   title: 'Widgets/RoundStanding',
   component: RoundStanding,
-  parameters: {
-    layout: 'fullscreen',
+  parameters: { layout: 'fullscreen' },
+  argTypes: {
+    resultCount: { control: { type: 'range', min: 1, max: 30, step: 1 } },
   },
-  decorators: [
-    withMockGameStore({
+  render: (args) => {
+    useGameStore.setState({
+      ...initialState,
+      isConnected: true,
       phase: 'ROUND_STANDING',
       currentRound: 1,
       timer: 10,
-      standingResults: createMockStandingResults(4),
+      standingResults: createMockStandingResults(args.resultCount),
       previousStandingResults: [],
-    }),
-  ],
-} satisfies Meta<typeof RoundStanding>;
+    });
+    return <RoundStanding />;
+  },
+};
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<StoryArgs>;
 
-/**
- * 기본 순위 화면
- * - 1라운드 후 누적 순위
- * - 4명의 플레이어
- */
-export const Default: Story = {};
+export const Default: Story = {
+  args: { resultCount: 4 },
+};
 
-/**
- * 30명의 플레이어 순위 (스크롤 테스트용)
- * - 이전 라운드(900점 기준) → 현재 라운드(1000점 기준)로 점수 증가
- * - 순서 변경으로 FLIP 애니메이션 확인
- */
 export const ManyPlayers: Story = {
-  decorators: [
-    withMockGameStore({
-      phase: 'ROUND_STANDING',
-      currentRound: 3,
-      timer: 10,
-      standingResults: createMockStandingResults(30, 1000),
-      previousStandingResults: createMockStandingResults(30, 900).reverse(),
-    }),
-  ],
+  args: { resultCount: 30 },
 };

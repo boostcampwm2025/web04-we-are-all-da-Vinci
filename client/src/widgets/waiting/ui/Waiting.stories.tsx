@@ -1,50 +1,47 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MemoryRouter } from 'react-router-dom';
 import { Waiting } from './Waiting';
-import { withMockGameStore, createMockPlayers, MOCK_SETTINGS } from '@/test/mocks/mockGameStore';
+import { useGameStore, initialState } from '@/entities/gameRoom/model';
+import { createMockPlayers, MOCK_SETTINGS } from '@/test/mocks/mockGameStore';
 
-const meta = {
+interface StoryArgs {
+  playerCount: number;
+}
+
+const meta: Meta<StoryArgs> = {
   title: 'Widgets/Waiting',
   component: Waiting,
-  parameters: {
-    layout: 'fullscreen',
+  parameters: { layout: 'fullscreen' },
+  argTypes: {
+    playerCount: { control: { type: 'range', min: 1, max: 30, step: 1 } },
   },
   decorators: [
-    withMockGameStore({
-      phase: 'WAITING',
-      players: createMockPlayers(4),
-      settings: MOCK_SETTINGS,
-      roomId: 'ABC123',
-    }),
     (Story) => (
       <MemoryRouter>
         <Story />
       </MemoryRouter>
     ),
   ],
-} satisfies Meta<typeof Waiting>;
+  render: (args) => {
+    useGameStore.setState({
+      ...initialState,
+      isConnected: true,
+      phase: 'WAITING',
+      players: createMockPlayers(args.playerCount),
+      settings: MOCK_SETTINGS,
+      roomId: 'ABC123',
+    });
+    return <Waiting />;
+  },
+};
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<StoryArgs>;
 
-/**
- * 기본 대기실 화면
- * - 4명의 플레이어가 입장한 상태
- * - 호스트 시점 (방장 버튼 표시)
- */
-export const Default: Story = {};
+export const Default: Story = {
+  args: { playerCount: 4 },
+};
 
-/**
- * 최대 인원이 찬 대기실
- * - 8명의 플레이어가 입장한 상태
- */
-export const FullRoom: Story = {
-  decorators: [
-    withMockGameStore({
-      phase: 'WAITING',
-      players: createMockPlayers(8),
-      settings: MOCK_SETTINGS,
-      roomId: 'FULL88',
-    }),
-  ],
+export const ManyPlayers: Story = {
+  args: { playerCount: 20 },
 };

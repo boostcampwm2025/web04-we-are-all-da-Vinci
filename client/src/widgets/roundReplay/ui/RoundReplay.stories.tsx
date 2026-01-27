@@ -1,49 +1,40 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { RoundReplay } from './RoundReplay';
-import {
-  withMockGameStore,
-  createMockRoundResults,
-  MOCK_STROKES,
-} from '@/test/mocks/mockGameStore';
+import { useGameStore, initialState } from '@/entities/gameRoom/model';
+import { createMockRoundResults, MOCK_STROKES } from '@/test/mocks/mockGameStore';
 
-const meta = {
+interface StoryArgs {
+  resultCount: number;
+}
+
+const meta: Meta<StoryArgs> = {
   title: 'Widgets/RoundReplay',
   component: RoundReplay,
-  parameters: {
-    layout: 'fullscreen',
+  parameters: { layout: 'fullscreen' },
+  argTypes: {
+    resultCount: { control: { type: 'range', min: 1, max: 30, step: 1 } },
   },
-  decorators: [
-    withMockGameStore({
+  render: (args) => {
+    useGameStore.setState({
+      ...initialState,
+      isConnected: true,
       phase: 'ROUND_REPLAY',
       currentRound: 1,
       timer: 15,
-      roundResults: createMockRoundResults(4),
+      roundResults: createMockRoundResults(args.resultCount),
       promptStrokes: MOCK_STROKES,
-    }),
-  ],
-} satisfies Meta<typeof RoundReplay>;
+    });
+    return <RoundReplay />;
+  },
+};
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<StoryArgs>;
 
-/**
- * 기본 라운드 리플레이 화면
- * - 1라운드 결과
- * - 4명의 플레이어 리플레이 표시
- */
-export const Default: Story = {};
+export const Default: Story = {
+  args: { resultCount: 4 },
+};
 
-/**
- * 30명의 플레이어 리플레이 (스크롤 테스트용)
- */
 export const ManyPlayers: Story = {
-  decorators: [
-    withMockGameStore({
-      phase: 'ROUND_REPLAY',
-      currentRound: 3,
-      timer: 15,
-      roundResults: createMockRoundResults(30),
-      promptStrokes: MOCK_STROKES,
-    }),
-  ],
+  args: { resultCount: 30 },
 };

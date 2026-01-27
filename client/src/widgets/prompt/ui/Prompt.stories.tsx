@@ -1,43 +1,39 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Prompt } from './Prompt';
-import { withMockGameStore, MOCK_STROKES } from '@/test/mocks/mockGameStore';
+import { useGameStore, initialState } from '@/entities/gameRoom/model';
+import { MOCK_STROKES } from '@/test/mocks/mockGameStore';
 
-const meta = {
+interface StoryArgs {
+  timer: number;
+  currentRound: number;
+  hasStrokes: boolean;
+}
+
+const meta: Meta<StoryArgs> = {
   title: 'Widgets/Prompt',
   component: Prompt,
-  parameters: {
-    layout: 'fullscreen',
+  parameters: { layout: 'fullscreen' },
+  argTypes: {
+    timer: { control: { type: 'range', min: 0, max: 60, step: 1 } },
+    currentRound: { control: { type: 'range', min: 1, max: 5, step: 1 } },
+    hasStrokes: { control: 'boolean', description: '제시어 스트로크 표시' },
   },
-  decorators: [
-    withMockGameStore({
+  render: (args) => {
+    useGameStore.setState({
+      ...initialState,
+      isConnected: true,
       phase: 'PROMPT',
-      currentRound: 1,
-      timer: 5,
-      promptStrokes: MOCK_STROKES,
-    }),
-  ],
-} satisfies Meta<typeof Prompt>;
+      timer: args.timer,
+      currentRound: args.currentRound,
+      promptStrokes: args.hasStrokes ? MOCK_STROKES : [],
+    });
+    return <Prompt />;
+  },
+};
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<StoryArgs>;
 
-/**
- * 기본 제시어 화면
- * - 1라운드, 5초 타이머
- * - 샘플 제시어 이미지 표시
- */
-export const Default: Story = {};
-
-/**
- * 마지막 라운드 제시어 화면
- */
-export const FinalRound: Story = {
-  decorators: [
-    withMockGameStore({
-      phase: 'PROMPT',
-      currentRound: 5,
-      timer: 5,
-      promptStrokes: MOCK_STROKES,
-    }),
-  ],
+export const Default: Story = {
+  args: { timer: 30, currentRound: 1, hasStrokes: true },
 };
