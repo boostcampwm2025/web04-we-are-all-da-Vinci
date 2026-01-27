@@ -61,19 +61,11 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           edit-mode: replace
           body: |
-            ## 🎨 Chromatic UI 리뷰
+            ## 🎨 Chromatic 리뷰
 
-            ${{ steps.chromatic.outputs.changeCount }}개 컴포넌트 변경 감지됨  
-            **변경 컴포넌트:** ${{ steps.chromatic.outputs.changedStories || '없음' }}
+            | 항목 | 링크 |
+            |------|------|
+            | 👀 UI 변경사항 리뷰 | [Chromatic에서 보기](${{ steps.chromatic.outputs.buildUrl }}) |
+            | 📖 Storybook | [Storybook 열기](${{ steps.chromatic.outputs.storybookUrl }}) |
 
-            ### 🔗 바로 확인
-            - [변경 UI 미리보기](${{ steps.chromatic.outputs.buildUrl }})
-            - [Storybook 전체 보기](${{ steps.chromatic.outputs.storybookUrl }})
-
-            **빌드 #${{ steps.chromatic.outputs.buildNumber }}**
-
-            {% if steps.chromatic.outputs.changeCount == '0' %}
-            ✅ 이번 PR에서는 시각적 변경사항이 없습니다.
-            {% else %}
-            ⚠️ 시각적 변경사항이 포함되어 있으니 리뷰 부탁드립니다.
-            {% endif %}
+            <sub>빌드 #${{ steps.chromatic.outputs.buildNumber }} • 변경된 스토리: ${{ steps.chromatic.outputs.changeCount }}개 • 총 컴포넌트: ${{ steps.chromatic.outputs.componentCount }}개</sub>
