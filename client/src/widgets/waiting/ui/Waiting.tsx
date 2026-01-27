@@ -5,6 +5,7 @@ import {
   useIsHost,
 } from '@/entities/gameRoom/model';
 import { GameSettingsCard } from '@/entities/gameSettings';
+import { ChatBox, useChatActions, useChatStore } from '@/features/chat';
 import { PlayerListSection } from '@/features/playerList';
 import { RoomCodeCopy } from '@/features/roomCode';
 import { RoomSettingsModal, type RoomSettings } from '@/features/roomSettings';
@@ -26,6 +27,10 @@ export const Waiting = () => {
   const isHostUser = useIsHost();
 
   const { addToast } = useToastStore();
+
+  // 채팅
+  const messages = useChatStore((state) => state.messages);
+  const { sendMessage } = useChatActions(roomId);
 
   const copyRoomId = async () => {
     try {
@@ -79,7 +84,7 @@ export const Waiting = () => {
           />
 
           <div className="flex min-h-0 flex-1 gap-7">
-            <div className="flex h-full flex-1 flex-col gap-4">
+            <section className="flex h-full flex-1 flex-col gap-4">
               <div className="flex h-full min-h-0 flex-col gap-4">
                 <div className="min-h-0 flex-1">
                   <PlayerListSection
@@ -98,20 +103,22 @@ export const Waiting = () => {
                   />
                 </div>
               </div>
-            </div>
+            </section>
 
-            <div className="flex h-full w-80 flex-col gap-4">
+            <section className="flex h-full w-80 flex-col gap-4">
               <GameSettingsCard
                 settings={settings}
                 onEdit={handleSettingsChange}
                 isHost={isHostUser}
               />
-              <div className="card flex flex-1 items-center justify-center">
-                <p className="font-handwriting text-content-disabled text-lg">
-                  💬 채팅 (예정)
-                </p>
+              <div className="flex min-h-0 flex-1 flex-col">
+                <ChatBox
+                  messages={messages}
+                  onSendMessage={sendMessage}
+                  className="h-full"
+                />
               </div>
-            </div>
+            </section>
           </div>
           {/* <div
             id="boostAD"
