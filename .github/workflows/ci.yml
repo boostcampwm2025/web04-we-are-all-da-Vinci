@@ -132,6 +132,15 @@ jobs:
           package-manager: pnpm
           test-script: pnpm run test:cov
 
+      - name: Debug - prom-client in manifest/lockfile
+        run: |
+          echo "=== package.json ==="
+          cat package.json | sed -n '1,200p'
+          echo "=== grep prom-client (package.json) ==="
+          grep -n "prom-client" package.json || true
+          echo "=== grep prom-client (pnpm-lock.yaml) ==="
+          grep -n "prom-client" pnpm-lock.yaml | head -n 40 || true
+
       # 1) TS가 실제로 보는 최종 tsconfig에서 typeRoots/types 확인
       - name: Debug - effective tsconfig (types/typeRoots)
         run: |
