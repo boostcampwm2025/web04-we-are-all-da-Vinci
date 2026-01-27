@@ -20,8 +20,9 @@ export class WaitlistCacheService {
   async popWaitPlayer(roomId: string): Promise<Player | null> {
     const client = this.redisService.getClient();
     const key = this.getKey(roomId);
-    const player = await client.lPop(key);
-    return player ? JSON.parse(player) : null;
+    const rawPlayer = await client.lPop(key);
+    if (!rawPlayer) return null;
+    return JSON.parse(rawPlayer) as Player;
   }
 
   // 대기열에서 특정유저 제거

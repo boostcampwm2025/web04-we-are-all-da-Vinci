@@ -227,7 +227,7 @@ export const useGameSocket = () => {
     // 대기열에 추가됨
     socket.on(
       CLIENT_EVENTS.USER_WAITLIST,
-      ({ roomId, currentRound, totalRounds, phase }: WaitlistResponse) => {
+      ({ currentRound, totalRounds }: WaitlistResponse) => {
         setIsInWaitlist(true);
         setGameProgress({ currentRound, totalRounds });
         // setAlertMessage(

@@ -38,9 +38,8 @@ export const DrawingCanvas = ({
   const totalDrawingTimeRef = useRef<number>(0);
 
   const phase = useGameStore(selectPhase);
-  const promptStrokes = isPractice
-    ? practicePrompt
-    : useGameStore((state) => state.promptStrokes);
+  const storedPromptStrokes = useGameStore((state) => state.promptStrokes);
+  const promptStrokes = isPractice ? practicePrompt : storedPromptStrokes;
   const roomId = useGameStore((state) => state.roomId);
   const timer = useGameStore((state) => state.timer);
   const currentRound = useGameStore((state) => state.currentRound);
