@@ -131,6 +131,12 @@ jobs:
           working-directory: server
           package-manager: pnpm
           test-script: pnpm run test:cov
+      - name: Debug - locate prom-client in virtual store
+        run: |
+          echo "=== find prom-client under node_modules/.pnpm ==="
+          find node_modules/.pnpm -maxdepth 2 -type d -name "prom-client*" | head -n 50 || true
+          echo "=== find prom-client package.json ==="
+          find node_modules/.pnpm -maxdepth 4 -path "*prom-client*/package.json" | head -n 20 || true
 
       - name: Debug - prom-client in manifest/lockfile
         run: |
