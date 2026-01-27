@@ -41,13 +41,13 @@ const RoundReplay = () => {
           <GameHeader title={`라운드 ${currentRound} 결과`} showDecoration />
           <div className="flex min-h-0 flex-1 gap-6">
             {/* 좌측: 제시 그림 + 내 유사도 */}
-            <div className="flex w-72 shrink-0 flex-col gap-4">
+            <div className="card flex w-72 shrink-0 flex-col gap-4 p-4">
               <PromptSection promptStrokes={promptStrokes} />
               {mySimilarity && <MySimilarityDetail similarity={mySimilarity} />}
             </div>
 
             {/* 중앙: 플레이어 리플레이 그리드 */}
-            <div className="min-h-0 flex-1 rounded-2xl bg-white/50 p-4 shadow-sm ring-1 ring-gray-900/5 backdrop-blur-sm">
+            <div className="card flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-white/50 p-4 shadow-sm ring-1 ring-gray-900/5 backdrop-blur-sm">
               <PlayerReplaysSection players={roundResults} />
             </div>
 

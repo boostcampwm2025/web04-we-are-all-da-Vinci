@@ -36,15 +36,16 @@ export const GameEnd = () => {
 
         <div className="flex min-h-0 flex-1 gap-6">
           {/* 1. 좌측: POTG 카드 */}
-          <section className="flex min-w-0 flex-1 flex-col items-center justify-center">
+          <section className="flex min-w-0 flex-[1.5] flex-col items-center justify-center">
             <PotgCard
               highlight={highlight}
               totalRounds={settings.totalRounds}
+              nickname={topThree[0]?.nickname}
             />
           </section>
 
-          {/* 2. 중앙: 순위 및 컨트롤 */}
-          <section className="flex min-w-0 flex-[1.5] flex-col gap-4">
+          {/* 2. 중앙: 순위 */}
+          <section className="flex min-w-0 flex-1 flex-col gap-4">
             <FinalRankingCard
               topThree={topThree}
               timer={timer}

@@ -26,7 +26,7 @@ export const StandingRow = ({
     <div className="relative flex items-center">
       {isCurrentUser && (
         <div className="absolute -left-16 flex items-center gap-1 font-bold text-blue-500">
-          ME
+          나
           <span className="material-symbols-outlined text-xl">
             arrow_forward
           </span>
