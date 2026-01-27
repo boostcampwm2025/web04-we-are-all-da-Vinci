@@ -110,7 +110,7 @@
   }
 
   .card-settings {
-    @apply border-stroke-strong bg-surface-warm rounded-2xl border-2 p-5 shadow-lg;
+    @apply border-stroke-strong bg-surface-warm rounded-2xl border-2 p-3 shadow-lg lg:p-5;
   }
 
   /* ─────────────────────────────────────────────────────────────

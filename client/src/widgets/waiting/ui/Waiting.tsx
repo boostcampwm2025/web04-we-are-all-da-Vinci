@@ -100,7 +100,7 @@ export const Waiting = () => {
               </div>
             </div>
 
-            <div className="flex h-full w-80 flex-col gap-4">
+            <div className="flex h-full w-60 flex-col gap-4 lg:w-80">
               <GameSettingsCard
                 settings={settings}
                 onEdit={handleSettingsChange}

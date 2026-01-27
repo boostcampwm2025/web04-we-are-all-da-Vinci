@@ -25,17 +25,19 @@ export const GameSettingsCard = ({
           </button>
         )}
       </div>
-      <div className="space-y-4">
+      <div className="flex flex-row flex-wrap justify-between gap-1 lg:flex-col lg:space-y-4">
         <SettingItem
           icon="group"
           label="최대 인원"
           value={`${settings.maxPlayer}명`}
         />
+        <span className="lg:hidden">/</span>
         <SettingItem
           icon="replay"
           label="라운드"
           value={`${settings.totalRounds} 라운드`}
         />
+        <span className="lg:hidden">/</span>
         <SettingItem
           icon="schedule"
           label="그리기 시간"
