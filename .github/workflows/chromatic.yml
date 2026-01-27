@@ -46,26 +46,17 @@ jobs:
           workingDir: ./client
           onlyChanged: true
 
-      - name: Find existing comment
-        uses: peter-evans/find-comment@v3
-        id: find-comment
+      - name: Comment PR
+        uses: marocchino/sticky-pull-request-comment@v2
         with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: 'github-actions[bot]'
-          body-includes: '🎨 Chromatic 리뷰'
-
-      - name: Create or update PR comment
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          issue-number: ${{ github.event.pull_request.number }}
-          edit-mode: replace
-          body: |
+          header: chromatic
+          skip_unchanged: true
+          message: |
             ## 🎨 Chromatic 리뷰
 
             | 항목 | 링크 |
             |------|------|
-            | 👀 UI 변경사항 리뷰 | [Chromatic에서 보기](${{ steps.chromatic.outputs.buildUrl }}) |
-            | 📖 Storybook | [Storybook 열기](${{ steps.chromatic.outputs.storybookUrl }}) |
+            | 👀 UI 변경사항 리뷰 | ${{ steps.chromatic.outputs.buildUrl }} |
+            | 📖 Storybook | ${{ steps.chromatic.outputs.storybookUrl }} |
 
-            <sub>빌드 #${{ steps.chromatic.outputs.buildNumber }} • 변경된 스토리: ${{ steps.chromatic.outputs.changeCount }}개 • 총 컴포넌트: ${{ steps.chromatic.outputs.componentCount }}개</sub>
+            변경된 스토리: ${{ steps.chromatic.outputs.changeCount }}개 • 총 컴포넌트: ${{ steps.chromatic.outputs.componentCount }}개
