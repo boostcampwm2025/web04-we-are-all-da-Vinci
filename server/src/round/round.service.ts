@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  OnModuleInit,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { GameRoom, Player } from 'src/common/types';
 import {
   ClientEvents,
