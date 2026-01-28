@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 import { ChatModule } from './chat/chat.module';
 import { GameModule } from './game/game.module';
+import { MetricModule } from './metric/metric.module';
 import { PlayModule } from './play/play.module';
 import { PromptModule } from './prompt/prompt.module';
 import { RedisModule } from './redis/redis.module';
@@ -42,6 +43,7 @@ import { RoundModule } from './round/round.module';
     RoundModule,
     PromptModule,
     ChatModule,
+    MetricModule,
   ],
 })
 export class AppModule {}

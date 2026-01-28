@@ -1,4 +1,4 @@
-import { UseFilters } from '@nestjs/common';
+import { UseFilters, UseInterceptors } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -15,7 +15,9 @@ import { ChatService } from 'src/chat/chat.service';
 import { getSocketCorsOrigin } from 'src/common/config/cors.util';
 import { ClientEvents, ServerEvents } from 'src/common/constants';
 import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
+import { MetricInterceptor } from 'src/common/interceptors/metric.interceptor';
 import { GameRoom } from 'src/common/types';
+import { MetricService } from 'src/metric/metric.service';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { RoomSettingsDto } from './dto/room-settings.dto';
@@ -31,6 +33,7 @@ import { GameService } from './game.service';
   },
 })
 @UseFilters(WebsocketExceptionFilter)
+@UseInterceptors(MetricInterceptor)
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
@@ -38,20 +41,25 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly logger: PinoLogger,
     private readonly gameService: GameService,
+
     private readonly chatService: ChatService,
     private readonly chatGateway: ChatGateway,
     private readonly playerCacheService: PlayerCacheService,
     private readonly gameRoomCacheService: GameRoomCacheService,
+
+    private readonly metricService: MetricService,
   ) {
     this.logger.setContext(GameGateway.name);
   }
 
   handleConnection(client: Socket) {
     this.logger.info({ clientId: client.id }, 'New User Connected');
+    this.metricService.incConnection();
   }
 
   async handleDisconnect(client: Socket) {
     this.logger.info({ clientId: client.id }, 'User Disconnected');
+    this.metricService.decConnection();
 
     // 퇴장 전 플레이어 정보 조회
     const roomId = await this.playerCacheService.getRoomId(client.id);

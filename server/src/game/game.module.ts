@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ChatModule } from 'src/chat/chat.module';
+import { MetricModule } from 'src/metric/metric.module';
 import { PromptModule } from 'src/prompt/prompt.module';
 import { RedisModule } from 'src/redis/redis.module';
 import { RoundModule } from 'src/round/round.module';
@@ -9,7 +10,15 @@ import { GameGateway } from './game.gateway';
 import { GameService } from './game.service';
 
 @Module({
-  imports: [RedisModule, RoundModule, TimerModule, PromptModule, ChatModule],
+  imports: [
+    RedisModule,
+    RoundModule,
+    TimerModule,
+    PromptModule,
+    ChatModule,
+    MetricModule,
+  ],
+
   controllers: [GameController],
   providers: [GameService, GameGateway],
 })
