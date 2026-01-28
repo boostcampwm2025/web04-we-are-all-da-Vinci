@@ -171,6 +171,6 @@ export class GameRoomCacheService {
       arguments: [String(REDIS_TTL)],
     });
 
-    return result ? JSON.parse(result as string) : null;
+    return result ? (JSON.parse(result as string) as Player) : null;
   }
 }
