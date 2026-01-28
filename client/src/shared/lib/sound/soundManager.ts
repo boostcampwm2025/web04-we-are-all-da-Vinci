@@ -1,4 +1,4 @@
-import { BGM_LIST, BGM_PATH, SFX_LIST, SFX_PATH } from '@/shared/config/sound';
+import { BGM_LIST, BGM_PATH, SFX_LIST, SFX_PATH } from '@/shared/config';
 
 export class SoundManager {
   private static instance: SoundManager;
@@ -135,6 +135,11 @@ export class SoundManager {
     this.addBGM(
       BGM_LIST.GAME_END,
       new Audio(this.WEB_SERVER_URL + BGM_PATH[BGM_LIST.GAME_END]),
+    );
+
+    this.addBGM(
+      BGM_LIST.DRAWING,
+      new Audio(this.WEB_SERVER_URL + BGM_PATH[BGM_LIST.DRAWING]),
     );
   }
 
