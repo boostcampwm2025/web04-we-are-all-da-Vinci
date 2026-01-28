@@ -6,7 +6,7 @@ import {
 import { TIMER } from '../config';
 import { useEffect, useState } from 'react';
 import { SoundManager } from '@/shared/lib';
-import { SFX_LIST } from '@/shared/config/sound';
+import { SFX_LIST } from '@/shared/config';
 
 export const Timer = () => {
   const timer = useGameStore(selectTimer);

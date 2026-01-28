@@ -11,8 +11,12 @@ import { RoomCodeCopy } from '@/features/roomCode';
 import { RoomSettingsModal, type RoomSettings } from '@/features/roomSettings';
 import { WaitingRoomActions } from '@/features/waitingRoomActions';
 import { getSocket } from '@/shared/api';
-import { MIXPANEL_EVENTS, SERVER_EVENTS, TITLES } from '@/shared/config';
-import { BGM_LIST } from '@/shared/config/sound';
+import {
+  MIXPANEL_EVENTS,
+  SERVER_EVENTS,
+  TITLES,
+  BGM_LIST,
+} from '@/shared/config';
 import { trackEvent } from '@/shared/lib/mixpanel';
 import { useBGM, useToastStore } from '@/shared/model';
 import { GameHeader } from '@/shared/ui';

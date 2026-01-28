@@ -3,9 +3,8 @@ import { useGameStore, useIsHost } from '@/entities/gameRoom/model';
 import { TIMER } from '@/entities/timer/config';
 import { ChatBox, useChatActions, useChatStore } from '@/features/chat';
 import { getSocket } from '@/shared/api';
-import { SERVER_EVENTS, TITLES } from '@/shared/config';
+import { SERVER_EVENTS, TITLES, BGM_LIST } from '@/shared/config';
 import { GameHeader } from '@/shared/ui';
-import { BGM_LIST } from '@/shared/config/sound';
 import { useBGM } from '@/shared/model/useBGM';
 
 const BUTTON_ENABLE_AFTER = 10; // 10초 후 버튼 활성화
