@@ -1,8 +1,8 @@
+import { initialState, useGameStore } from '@/entities/gameRoom';
+import { createMockLiveRankings, MOCK_STROKES } from '@/test/mocks/mockData';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect } from 'react';
 import { Drawing } from './Drawing';
-import { useGameStore, initialState } from '@/entities/gameRoom/model';
-import { createMockLiveRankings, MOCK_STROKES } from '@/test/mocks/mockData';
 
 interface StoryArgs {
   rankingCount: number;

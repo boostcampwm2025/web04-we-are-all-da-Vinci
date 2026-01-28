@@ -1,12 +1,8 @@
-import {
-  selectPhase,
-  selectTimer,
-  useGameStore,
-} from '@/entities/gameRoom/model';
-import { TIMER } from '../config';
-import { useEffect, useState } from 'react';
-import { SoundManager } from '@/shared/lib';
+import { selectPhase, selectTimer, useGameStore } from '@/entities/gameRoom';
 import { SOUND_LIST } from '@/shared/config/sound';
+import { SoundManager } from '@/shared/lib';
+import { useEffect, useState } from 'react';
+import { TIMER } from '../config';
 
 export const Timer = () => {
   const timer = useGameStore(selectTimer);

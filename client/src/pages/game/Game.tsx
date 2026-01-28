@@ -1,4 +1,4 @@
-import { selectPhase, useGameStore } from '@/entities/gameRoom/model';
+import { selectPhase, useGameStore } from '@/entities/gameRoom';
 import { useGameSocket } from '@/features/socket/model';
 import { OverlayModal } from '@/shared/ui';
 import { Drawing } from '@/widgets/drawing';

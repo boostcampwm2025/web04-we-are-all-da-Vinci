@@ -1,4 +1,4 @@
-import { useGameStore, useCurrentPlayer } from '@/entities/gameRoom/model';
+import { useCurrentPlayer, useGameStore } from '@/entities/gameRoom';
 import { PlayerReplaysSection, PromptSection } from '@/entities/roundResult';
 import { MySimilarityDetail } from '@/entities/similarity';
 import { Timer } from '@/entities/timer';
