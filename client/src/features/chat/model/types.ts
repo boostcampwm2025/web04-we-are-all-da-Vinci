@@ -24,5 +24,5 @@ export interface ChatMessage {
 }
 
 // 채팅 상수 (서버와 동기화 필요)
-export const CHAT_MAX_LENGTH = 100;
+export const CHAT_MAX_LENGTH = 50;
 export const CHAT_HISTORY_LIMIT = 50;
