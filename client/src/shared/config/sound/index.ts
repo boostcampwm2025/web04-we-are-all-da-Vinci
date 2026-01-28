@@ -17,5 +17,5 @@ export const SFX_PATH = {
 export const BGM_PATH = {
   [BGM_LIST.WAITING]: '/audio/bgm_waiting.mp3',
   [BGM_LIST.GAME_END]: '/audio/bgm_gameEnd.mp3',
-  [BGM_LIST.DRAWING]: '/audio/bgn_drawing.mp3',
+  [BGM_LIST.DRAWING]: '/audio/bgm_drawing.mp3',
 };
