@@ -17,6 +17,7 @@ import { ClientEvents, ServerEvents } from 'src/common/constants';
 import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
 import { MetricInterceptor } from 'src/common/interceptors/metric.interceptor';
 import { GameRoom } from 'src/common/types';
+import { escapeHtml } from 'src/common/utils/sanitize';
 import { MetricService } from 'src/metric/metric.service';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
@@ -92,7 +93,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: UserJoinDto,
   ): Promise<string> {
-    const { nickname, roomId, profileId } = payload;
+    const { roomId, profileId } = payload;
+    const nickname = escapeHtml(payload.nickname.trim());
     const room = await this.gameService.joinRoom(
       roomId,
       nickname,

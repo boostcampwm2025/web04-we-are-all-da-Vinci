@@ -1,4 +1,5 @@
 import { CHAT_MAX_LENGTH } from 'src/common/constants';
+import { escapeHtml } from 'src/common/utils/sanitize';
 import { z } from 'zod';
 
 export const ChatMessageSchema = z.object({
@@ -8,7 +9,8 @@ export const ChatMessageSchema = z.object({
     .min(1, '메시지를 입력해주세요.')
     .max(CHAT_MAX_LENGTH, `메시지는 ${CHAT_MAX_LENGTH}자 이내로 입력해주세요.`)
     .transform((val) => val.trim())
-    .refine((val) => val.length > 0, '메시지를 입력해주세요.'),
+    .refine((val) => val.length > 0, '메시지를 입력해주세요.')
+    .transform((val) => escapeHtml(val)),
 });
 
 export type ChatMessageDto = z.infer<typeof ChatMessageSchema>;
