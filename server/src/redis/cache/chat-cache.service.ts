@@ -58,7 +58,7 @@ export class ChatCacheService {
     if (current === 1) {
       await client.expire(key, windowSeconds);
     }
-
+    // 5초안에 8개 이상을 보냈을 시, 30초안에 30개 이상을 보냈을 시 false
     const isAllowed = current <= maxMessages;
     return isAllowed;
   }
