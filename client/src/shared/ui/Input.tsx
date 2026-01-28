@@ -35,7 +35,7 @@ const Input = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && onEnter && value.trim()) {
+    if (e.key === 'Enter' && !e.nativeEvent.isComposing && onEnter && value.trim()) {
       onEnter();
     }
   };
