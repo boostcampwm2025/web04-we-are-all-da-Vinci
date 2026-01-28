@@ -85,7 +85,6 @@ export class RoundService implements OnModuleInit {
     }
   }
 
-
   private async movePrompt(room: GameRoom) {
     room.phase = GamePhase.PROMPT;
     room.currentRound += 1;

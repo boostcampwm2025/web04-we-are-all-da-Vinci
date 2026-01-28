@@ -1,3 +1,4 @@
+import { UseFilters } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -7,18 +8,21 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
+import { PinoLogger } from 'nestjs-pino';
 import { Server, Socket } from 'socket.io';
-import { UserJoinDto } from './dto/user-join.dto';
+import { ChatGateway } from 'src/chat/chat.gateway';
+import { ChatService } from 'src/chat/chat.service';
+import { getSocketCorsOrigin } from 'src/common/config/cors.util';
+import { ClientEvents, ServerEvents } from 'src/common/constants';
+import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
+import { GameRoom } from 'src/common/types';
+import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
+import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { RoomSettingsDto } from './dto/room-settings.dto';
 import { RoomStartDto } from './dto/room-start.dto';
-import { ClientEvents, ServerEvents } from 'src/common/constants';
-import { PinoLogger } from 'nestjs-pino';
-import { GameService } from './game.service';
-import { GameRoom } from 'src/common/types';
-import { UseFilters } from '@nestjs/common';
-import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
+import { UserJoinDto } from './dto/user-join.dto';
 import { UserKickDto } from './dto/user-kick.dto';
-import { getSocketCorsOrigin } from 'src/common/config/cors.util';
+import { GameService } from './game.service';
 
 @WebSocketGateway({
   cors: {
@@ -34,6 +38,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly logger: PinoLogger,
     private readonly gameService: GameService,
+    private readonly chatService: ChatService,
+    private readonly chatGateway: ChatGateway,
+    private readonly playerCacheService: PlayerCacheService,
+    private readonly gameRoomCacheService: GameRoomCacheService,
   ) {
     this.logger.setContext(GameGateway.name);
   }
@@ -45,11 +53,29 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleDisconnect(client: Socket) {
     this.logger.info({ clientId: client.id }, 'User Disconnected');
 
+    // 퇴장 전 플레이어 정보 조회
+    const roomId = await this.playerCacheService.getRoomId(client.id);
+    let leavingPlayer = null;
+    if (roomId) {
+      const players = await this.gameRoomCacheService.getAllPlayers(roomId);
+      leavingPlayer = players.find((p) => p.socketId === client.id);
+    }
+
     const room = await this.gameService.leaveRoom(client.id);
 
     if (!room) {
       return;
     }
+
+    // 퇴장 시스템 메시지
+    if (leavingPlayer) {
+      const leaveMsg = await this.chatService.createLeaveMessage(
+        room.roomId,
+        leavingPlayer.nickname,
+      );
+      this.chatGateway.broadcastSystemMessage(room.roomId, leaveMsg);
+    }
+
     this.broadcastMetadata(room);
   }
 
@@ -72,6 +98,17 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
 
       await client.join(room.roomId);
+
+      // 채팅 히스토리 전송
+      await this.chatGateway.sendHistory(client, room.roomId);
+
+      // 입장 시스템 메시지
+      const joinMsg = await this.chatService.createJoinMessage(
+        room.roomId,
+        nickname,
+      );
+      this.chatGateway.broadcastSystemMessage(room.roomId, joinMsg);
+
       this.broadcastMetadata(room);
     } else {
       this.logger.info(
@@ -156,6 +193,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (targetPlayerSocket) {
       await targetPlayerSocket.leave(roomId);
     }
+
+    // 강퇴 시스템 메시지
+    const kickMsg = await this.chatService.createKickMessage(
+      roomId,
+      kickedPlayer.nickname,
+    );
+    this.chatGateway.broadcastSystemMessage(roomId, kickMsg);
 
     this.server
       .to(roomId)
