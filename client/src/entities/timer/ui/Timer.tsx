@@ -4,7 +4,7 @@ import { SoundManager } from '@/shared/lib';
 import { useEffect, useState } from 'react';
 import { TIMER } from '../config';
 
-export const Timer = () => {
+const Timer = () => {
   const timer = useGameStore(selectTimer);
   const settings = useGameStore((state) => state.settings);
   const phase = useGameStore(selectPhase);
@@ -78,3 +78,4 @@ export const Timer = () => {
     </div>
   );
 };
+export default Timer;
