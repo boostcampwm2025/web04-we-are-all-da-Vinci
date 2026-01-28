@@ -1,13 +1,13 @@
 import { selectPhase, useGameStore } from '@/entities/gameRoom/model';
 import { useGameSocket } from '@/features/socket/model';
 import { OverlayModal } from '@/shared/ui';
+import { useNavigate } from 'react-router-dom';
+import { Waiting } from '@/widgets/waiting';
 import { Drawing } from '@/widgets/drawing';
-import { GameEnd } from '@/widgets/gameEnd';
 import { Prompt } from '@/widgets/prompt';
 import { RoundReplay } from '@/widgets/roundReplay';
 import { RoundStanding } from '@/widgets/roundStanding';
-import { Waiting } from '@/widgets/waiting';
-import { useNavigate } from 'react-router-dom';
+import { GameEnd } from '@/widgets/gameEnd';
 
 const GAME_PHASE_COMPONENT_MAP = {
   WAITING: Waiting,

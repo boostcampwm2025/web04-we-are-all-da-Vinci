@@ -33,3 +33,5 @@ dist-ssr
 
 *storybook.log
 storybook-static
+
+stats.html
