@@ -9,7 +9,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import type { GameRoom } from './types';
 
-interface GameState extends GameRoom {
+export interface GameState extends GameRoom {
   // 소켓 연결 상태
   isConnected: boolean;
 
@@ -44,7 +44,7 @@ interface GameState extends GameRoom {
   reset: () => void;
 }
 
-const initialState = {
+export const initialState = {
   isConnected: false,
   roomId: '',
   players: [],
