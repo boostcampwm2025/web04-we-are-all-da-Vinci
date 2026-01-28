@@ -132,4 +132,45 @@ export class GameRoomCacheService {
 
     return promptId !== null ? parseInt(promptId) : promptId;
   }
+
+  async popAndAddPlayerAtomically(roomId: string): Promise<Player | null> {
+    const client = this.redisService.getClient();
+    const roomKey = this.getRoomKey(roomId);
+    const playerListKey = this.getPlayerListKey(roomId);
+    const waitlistKey = `waiting:${roomId}`;
+
+    const luaScript = `
+      local roomKey = KEYS[1]
+      local playerListKey = KEYS[2]
+      local waitlistKey = KEYS[3]
+      local ttl = tonumber(ARGV[1])
+
+      local settingsJson = redis.call('HGET', roomKey, 'settings')
+      if not settingsJson then return nil end
+      
+      local settings = cjson.decode(settingsJson)
+      local maxPlayer = tonumber(settings.maxPlayer)
+      local currentCount = redis.call('LLEN', playerListKey)
+
+      if currentCount < maxPlayer then
+          local playerJson = redis.call('LPOP', waitlistKey)
+          if playerJson then
+              local player = cjson.decode(playerJson)
+              player.isHost = (currentCount == 0)
+              local updatedJson = cjson.encode(player)
+              redis.call('RPUSH', playerListKey, updatedJson)
+              redis.call('EXPIRE', playerListKey, ttl)
+              return updatedJson
+          end
+      end
+      return nil
+    `;
+
+    const result = await client.eval(luaScript, {
+      keys: [roomKey, playerListKey, waitlistKey],
+      arguments: [String(REDIS_TTL)],
+    });
+
+    return result ? JSON.parse(result as string) : null;
+  }
 }

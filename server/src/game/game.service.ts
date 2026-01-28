@@ -210,22 +210,10 @@ export class GameService implements OnModuleInit {
 
     // 이외 phase에서는 참여
     while (true) {
-      const currentRoom = await this.cacheService.getRoom(roomId);
-      if (!currentRoom) {
-        throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
-      }
-      const maxPlayer = currentRoom.settings.maxPlayer;
-      const currentPlayerCount = currentRoom.players.length;
+      const newPlayer =
+        await this.cacheService.popAndAddPlayerAtomically(roomId);
+      if (!newPlayer) break;
 
-      if (currentPlayerCount >= maxPlayer) break;
-
-      const waitPlayer = await this.waitlistService.popWaitPlayer(roomId);
-      if (!waitPlayer) break;
-
-      const players = await this.cacheService.getAllPlayers(roomId);
-      const newPlayer = { ...waitPlayer, isHost: players.length === 0 };
-
-      await this.cacheService.addPlayer(roomId, newPlayer);
       await this.playerCacheService.set(newPlayer.socketId, roomId);
       await this.leaderboardCacheService.updateScore(
         roomId,
