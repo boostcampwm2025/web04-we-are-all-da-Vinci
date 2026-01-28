@@ -1,16 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { GameRoom } from 'src/common/types';
 import { GamePhase } from 'src/common/constants';
-import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
-import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
-import { WebsocketException } from 'src/common/exceptions/websocket-exception';
-import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
-import { CreateRoomDto } from './dto/create-room.dto';
-import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
-import { RoundService } from 'src/round/round.service';
-import { PromptService } from 'src/prompt/prompt.service';
 import { ErrorCode } from 'src/common/constants/error-code';
+import { WebsocketException } from 'src/common/exceptions/websocket-exception';
+import { GameRoom } from 'src/common/types';
+import { findPlayerOrThrow, requireHost } from 'src/common/utils/player.utils';
+import { PromptService } from 'src/prompt/prompt.service';
+import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
+import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
+import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
+import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
+import { RoundService } from 'src/round/round.service';
+import { CreateRoomDto } from './dto/create-room.dto';
 
 @Injectable()
 export class GameService {
@@ -95,15 +96,8 @@ export class GameService {
       throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
     }
 
-    const player = room.players.find((player) => player.socketId === socketId);
-
-    if (!player) {
-      throw new WebsocketException(ErrorCode.PLAYER_NOT_FOUND);
-    }
-
-    if (!player.isHost) {
-      throw new WebsocketException(ErrorCode.PLAYER_NOT_HOST);
-    }
+    const player = findPlayerOrThrow(room.players, socketId);
+    requireHost(player);
 
     if (room.phase !== GamePhase.WAITING) {
       throw new WebsocketException(
@@ -174,15 +168,8 @@ export class GameService {
       throw new WebsocketException(ErrorCode.GAME_ALREADY_STARTED);
     }
 
-    const player = room.players.find((player) => player.socketId === socketId);
-
-    if (!player) {
-      throw new WebsocketException(ErrorCode.PLAYER_NOT_FOUND);
-    }
-
-    if (!player.isHost) {
-      throw new WebsocketException(ErrorCode.PLAYER_NOT_HOST);
-    }
+    const player = findPlayerOrThrow(room.players, socketId);
+    requireHost(player);
 
     if (room.players.length < 2) {
       throw new WebsocketException(ErrorCode.PLAYER_ATLEAST_TWO);
@@ -204,15 +191,8 @@ export class GameService {
       throw new WebsocketException(ErrorCode.GAME_NOT_END);
     }
 
-    const player = room.players.find((player) => player.socketId === socketId);
-
-    if (!player) {
-      throw new WebsocketException(ErrorCode.PLAYER_NOT_FOUND);
-    }
-
-    if (!player.isHost) {
-      throw new WebsocketException(ErrorCode.PLAYER_NOT_HOST);
-    }
+    const player = findPlayerOrThrow(room.players, socketId);
+    requireHost(player);
 
     await this.roundService.nextPhase(room);
   }
@@ -227,20 +207,9 @@ export class GameService {
       throw new WebsocketException(ErrorCode.KICK_ONLY_WAITING_PHASE);
     }
 
-    const hostPlayer = room.players.find(
-      (player) => player.socketId === hostSocketId,
-    );
-    const targetPlayer = room.players.find(
-      (player) => player.socketId === targetSocketId,
-    );
-
-    if (!hostPlayer || !targetPlayer) {
-      throw new WebsocketException(ErrorCode.PLAYER_NOT_FOUND);
-    }
-
-    if (!hostPlayer.isHost) {
-      throw new WebsocketException(ErrorCode.PLAYER_NOT_HOST);
-    }
+    const hostPlayer = findPlayerOrThrow(room.players, hostSocketId);
+    const targetPlayer = findPlayerOrThrow(room.players, targetSocketId);
+    requireHost(hostPlayer);
 
     if (targetPlayer.isHost) {
       throw new WebsocketException(ErrorCode.HOST_CAN_NOT_KICKED);
