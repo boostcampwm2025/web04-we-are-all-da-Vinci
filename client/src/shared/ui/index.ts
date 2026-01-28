@@ -12,6 +12,7 @@ export {
   StarDoodle,
   SunDoodle,
 } from './Doodles';
+export { default as FireworkCanvas } from './FireworkCanvas';
 export { GameHeader } from './GameHeader';
 export { default as Input } from './Input';
 export { default as OverlayModal } from './overlayModal/OverlayModal';

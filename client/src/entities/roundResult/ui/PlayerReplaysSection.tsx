@@ -77,7 +77,7 @@ export const PlayerReplaysSection = ({
         )}
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid min-h-0 flex-1 grid-cols-4 grid-rows-2 content-start gap-2 overflow-hidden">
         {currentPlayers.map((player, index) => {
           const isCurrentUser = player.socketId === mySocketId;
           const rank = startIndex + index + 1;

@@ -94,7 +94,7 @@
   .game-container {
     @apply relative mx-auto flex w-full flex-col;
     aspect-ratio: 16 / 9;
-    max-width: 1920px;
+    max-width: 1420px;
     max-height: 100%;
   }
 
