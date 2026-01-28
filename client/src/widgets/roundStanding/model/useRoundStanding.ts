@@ -1,5 +1,5 @@
 import { useGameStore } from '@/entities/gameRoom';
-import type { PlayerScore } from '@/entities/roundResult/model/types';
+import type { PlayerScore } from '@/entities/roundResult';
 import { useEffect, useMemo, useState } from 'react';
 import { useFlipAnimation } from './useFlipAnimation';
 
