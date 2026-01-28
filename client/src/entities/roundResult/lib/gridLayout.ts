@@ -38,7 +38,6 @@ export const calculateCardSize = (
   cols: number,
   rows: number,
 ): CardSize => {
-
   // 1. 간격을 제외한 사용 가능한 공간 계산
   const availableWidth = containerWidth - GAP * (cols - 1);
   const availableHeight = containerHeight - GAP * (rows - 1);
