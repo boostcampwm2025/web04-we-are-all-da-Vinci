@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { RoundReplay } from './RoundReplay';
+import RoundReplay from './RoundReplay';
 import { useGameStore, initialState } from '@/entities/gameRoom/model';
 import { createMockRoundResults, MOCK_STROKES } from '@/test/mocks/mockData';
 
