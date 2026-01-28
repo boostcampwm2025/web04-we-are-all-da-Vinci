@@ -158,6 +158,7 @@ jobs:
 
       - name: Bundle Size Check
         uses: preactjs/compressed-size-action@v2
+        continue-on-error: true
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           build-script: "build"

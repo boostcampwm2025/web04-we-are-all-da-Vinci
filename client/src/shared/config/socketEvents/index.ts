@@ -6,6 +6,7 @@ export const SERVER_EVENTS = {
   ROOM_SETTINGS: 'room:settings',
   ROOM_START: 'room:start',
   ROOM_RESTART: 'room:restart',
+  CHAT_MESSAGE: 'chat:message',
 } as const;
 
 export const CLIENT_EVENTS = {
@@ -18,5 +19,8 @@ export const CLIENT_EVENTS = {
   ROOM_PROMPT: 'room:prompt',
   ROOM_KICKED: 'room:kicked',
   USER_WAITLIST: 'user:waitlist',
+  CHAT_BROADCAST: 'chat:broadcast',
+  CHAT_HISTORY: 'chat:history',
+  CHAT_ERROR: 'chat:error',
   ERROR: 'error',
 } as const;

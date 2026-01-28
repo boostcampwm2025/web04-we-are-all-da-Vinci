@@ -1,1 +1,1 @@
-export { RoundReplay } from './ui/RoundReplay';
+export { default as RoundReplay } from './ui/RoundReplay';

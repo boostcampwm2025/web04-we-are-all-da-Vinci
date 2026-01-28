@@ -5,11 +5,37 @@ import type { Similarity } from '@/features/similarity';
 import { PlayerSimilarityDetailTooltip } from '@/entities/similarity';
 import { UserAvatar } from '@/shared/ui';
 
-const getRankColor = (rank: number) => {
-  if (rank === 1) return 'bg-yellow-400 text-yellow-900';
-  if (rank === 2) return 'bg-indigo-400 text-indigo-900';
-  if (rank === 3) return 'bg-red-400 text-red-900';
-  return 'bg-gray-300 text-gray-700';
+const getRankStyles = (rank: number) => {
+  if (rank === 1) {
+    return {
+      bg: 'bg-surface-warm',
+      border: 'border-rank-gold',
+      badge: 'bg-rank-gold text-white',
+      text: 'text-rank-gold-text',
+    };
+  }
+  if (rank === 2) {
+    return {
+      bg: 'bg-surface-muted',
+      border: 'border-rank-silver',
+      badge: 'bg-rank-silver text-white',
+      text: 'text-rank-silver-text',
+    };
+  }
+  if (rank === 3) {
+    return {
+      bg: 'bg-surface-warm',
+      border: 'border-rank-bronze',
+      badge: 'bg-rank-bronze text-white',
+      text: 'text-rank-bronze-text',
+    };
+  }
+  return {
+    bg: 'bg-white',
+    border: 'border-gray-200',
+    badge: 'bg-gray-300 text-gray-700',
+    text: '',
+  };
 };
 
 interface PlayerReplayCardProps {
@@ -39,6 +65,8 @@ export const PlayerReplayCard = ({
     setIsHovered(false);
   };
 
+  const rankStyles = getRankStyles(rank);
+
   return (
     <div
       className="relative flex flex-col"
@@ -52,19 +80,21 @@ export const PlayerReplayCard = ({
         </div>
       )}
 
-      <div className="flex flex-col rounded-xl border-2 border-gray-800 bg-white p-2 shadow-lg">
+      <div
+        className={`flex flex-col rounded-xl border-2 p-2 shadow-lg transition-colors ${rankStyles.border} ${rankStyles.bg}`}
+      >
         {/* Player Info Header */}
         <div className="mb-1 flex shrink-0 items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span
-              className={`flex h-6 min-w-[24px] shrink-0 items-center justify-center rounded-full px-1 text-xs font-bold ${getRankColor(rank)}`}
+              className={`flex h-6 min-w-[24px] shrink-0 items-center justify-center rounded-full px-1 text-xs font-bold ${rankStyles.badge}`}
             >
               #{rank}
             </span>
             <UserAvatar name={profileId} size={24} />
             <h3 className="font-handwriting truncate text-base font-bold">
               {nickname}
-              {isCurrentUser && ' (You)'}
+              {isCurrentUser && ' (나)'}
             </h3>
           </div>
         </div>
@@ -91,7 +121,9 @@ export const PlayerReplayCard = ({
             <span className="font-handwriting text-sm font-semibold text-gray-700">
               유사도
             </span>
-            <span className="font-handwriting text-lg font-bold text-blue-600">
+            <span
+              className={`font-handwriting text-lg font-bold ${rankStyles.text || 'text-blue-600'}`}
+            >
               {similarity.similarity}%
             </span>
           </div>

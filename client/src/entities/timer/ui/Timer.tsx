@@ -78,9 +78,6 @@ export const Timer = () => {
             {displayTime}
           </span>
         </div>
-        <div className="mt-1 text-center">
-          <span className="font-handwriting text-xs text-gray-600">초</span>
-        </div>
       </div>
     </div>
   );
