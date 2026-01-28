@@ -61,12 +61,18 @@ export class SoundManager {
 
     if (this.bgm) {
       this.bgm.pause();
+      this.bgm.currentTime = 0;
     }
 
-    bgm.volume = this.bgmVolume;
-    bgm.loop = true;
-    bgm.play().catch(console.error);
     this.bgm = bgm;
+    this.bgm.volume = this.bgmVolume;
+
+    if (this.bgm.volume === 0) {
+      this.bgm.pause();
+      return;
+    }
+    this.bgm.loop = true;
+    this.bgm.play().catch(console.error);
   }
 
   setSFXVolume(volume: number) {
@@ -85,8 +91,12 @@ export class SoundManager {
     }
 
     this.bgm.volume = this.bgmVolume;
-    // this.bgm.loop = true;
-    // this.bgm.play().catch(console.error);
+    if (this.bgm.volume === 0) {
+      this.bgm.pause();
+      return;
+    }
+    this.bgm.loop = true;
+    this.bgm.play().catch(console.error);
   }
 
   stopBGM() {
