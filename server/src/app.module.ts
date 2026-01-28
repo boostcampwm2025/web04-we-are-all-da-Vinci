@@ -6,6 +6,7 @@ import { GameModule } from './game/game.module';
 import { PlayModule } from './play/play.module';
 import { RoundModule } from './round/round.module';
 import { PromptModule } from './prompt/prompt.module';
+import { MetricModule } from './metric/metric.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { PromptModule } from './prompt/prompt.module';
     PlayModule,
     RoundModule,
     PromptModule,
+    MetricModule,
   ],
 })
 export class AppModule {}
