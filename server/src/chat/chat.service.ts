@@ -38,21 +38,27 @@ export class ChatService {
     }
 
     // 2. Rate Limit 검증 (단기 + 장기)
-    const shortAllowed = await this.chatCacheService.checkAndIncrementRateLimit(
+    const shortResult = await this.chatCacheService.checkAndIncrementRateLimit(
       socketId,
       'short',
       CHAT_RATE_LIMIT_SHORT.messages,
       CHAT_RATE_LIMIT_SHORT.seconds,
     );
-    const longAllowed = await this.chatCacheService.checkAndIncrementRateLimit(
+    const longResult = await this.chatCacheService.checkAndIncrementRateLimit(
       socketId,
       'long',
       CHAT_RATE_LIMIT_LONG.messages,
       CHAT_RATE_LIMIT_LONG.seconds,
     );
 
-    if (!shortAllowed || !longAllowed) {
-      throw new WebsocketException(ErrorCode.CHAT_RATE_LIMIT_EXCEEDED);
+    if (!shortResult.allowed || !longResult.allowed) {
+      const retryAfter = Math.max(
+        shortResult.retryAfter,
+        longResult.retryAfter,
+      );
+      throw new WebsocketException(
+        `메시지를 너무 빠르게 보내고 있습니다. ${retryAfter}초 후에 다시 시도해주세요.`,
+      );
     }
 
     // 3. 플레이어 정보 조회

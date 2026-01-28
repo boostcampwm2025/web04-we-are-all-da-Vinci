@@ -42,14 +42,14 @@ export class ChatCacheService {
 
   /**
    * Rate Limit 확인 및 카운트 증가
-   * @returns 허용 여부 (true: 허용, false: 제한)
+   * @returns { allowed: 허용 여부, retryAfter: 남은 대기 시간(초) }
    */
   async checkAndIncrementRateLimit(
     socketId: string,
     window: 'short' | 'long',
     maxMessages: number,
     windowSeconds: number,
-  ): Promise<boolean> {
+  ): Promise<{ allowed: boolean; retryAfter: number }> {
     const client = this.redisService.getClient();
     const key = RedisKeys.chatRateLimit(socketId, window);
 
@@ -60,6 +60,12 @@ export class ChatCacheService {
     }
     // 5초안에 8개 이상을 보냈을 시, 30초안에 30개 이상을 보냈을 시 false
     const isAllowed = current <= maxMessages;
-    return isAllowed;
+
+    if (isAllowed) {
+      return { allowed: true, retryAfter: 0 };
+    }
+
+    const ttl = await client.ttl(key);
+    return { allowed: false, retryAfter: ttl > 0 ? ttl : windowSeconds };
   }
 }
