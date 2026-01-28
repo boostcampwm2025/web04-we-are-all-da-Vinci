@@ -4,7 +4,7 @@ export class SoundManager {
   private static instance: SoundManager;
   private readonly sounds;
   private readonly bgms;
-  private bgm!: HTMLAudioElement;
+  private bgm: HTMLAudioElement | null = null;
   private sfxVolume = 0.3;
   private bgmVolume = 0;
 
@@ -85,8 +85,8 @@ export class SoundManager {
     }
 
     this.bgm.volume = this.bgmVolume;
-    this.bgm.loop = true;
-    this.bgm.play().catch(console.error);
+    // this.bgm.loop = true;
+    // this.bgm.play().catch(console.error);
   }
 
   stopBGM() {

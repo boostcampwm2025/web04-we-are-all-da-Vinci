@@ -4,7 +4,7 @@ export const SFX_LIST = {
 };
 
 export const BGM_LIST = {
-  WAITING: 'BGB_WAITING',
+  WAITING: 'BGM_WAITING',
   GAME_END: 'BGM_GAME_END',
   DRAWING: 'BGM_DRAWING',
 };
