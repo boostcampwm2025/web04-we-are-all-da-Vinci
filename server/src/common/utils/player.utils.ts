@@ -23,3 +23,23 @@ export function requireHost(player: Player): void {
     throw new WebsocketException(ErrorCode.PLAYER_NOT_HOST);
   }
 }
+
+/**
+ * 플레이어 목록을 socketId를 키로 하는 맵으로 변환합니다.
+ * @param players 플레이어 배열
+ * @returns socketId -> { nickname, profileId } 매핑 객체
+ */
+export function createPlayerMapper(
+  players: Player[],
+): Record<string, { nickname: string; profileId: string }> {
+  return players.reduce(
+    (prev, player) => ({
+      ...prev,
+      [player.socketId]: {
+        nickname: player.nickname,
+        profileId: player.profileId,
+      },
+    }),
+    {},
+  );
+}
