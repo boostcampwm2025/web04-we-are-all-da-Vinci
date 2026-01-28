@@ -77,7 +77,7 @@ export const PlayerReplaysSection = ({
         )}
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
         {currentPlayers.map((player, index) => {
           const isCurrentUser = player.socketId === mySocketId;
           const rank = startIndex + index + 1;

@@ -32,7 +32,7 @@ export const GameHeader = ({
         {round !== undefined && <RoundBadge round={round} />}
 
         <div className="mb-2">
-          <h1 className="font-handwriting text-5xl font-black md:text-6xl">
+          <h1 className="font-handwriting text-4xl font-black md:text-6xl">
             {title}
           </h1>
         </div>

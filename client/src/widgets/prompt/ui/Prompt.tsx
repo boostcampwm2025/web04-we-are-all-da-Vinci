@@ -21,7 +21,7 @@ export const Prompt = () => {
             showLogo={false}
           />
 
-          <div className="flex min-h-0 flex-1 items-center justify-center">
+          <div className="flex min-h-0 items-center justify-center md:flex-1">
             <div className="canvas-wrapper">
               <ImagePreviewCard promptStrokes={promptStrokes} />
             </div>

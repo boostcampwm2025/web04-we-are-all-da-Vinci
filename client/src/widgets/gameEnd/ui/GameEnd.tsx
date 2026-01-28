@@ -47,7 +47,7 @@ export const GameEnd = () => {
         <GameHeader title={TITLES.END} showDecoration />
 
         {/* 컨텐츠 영역 */}
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-8 lg:flex-row lg:items-center lg:gap-16">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-start gap-8 md:justify-center lg:flex-row lg:items-center lg:gap-16">
           {/* 왼쪽: POTG 카드 */}
           <div className="flex w-full justify-center lg:w-3/5 lg:justify-end">
             <div className="card-lg flex w-full max-w-3xl flex-col">
@@ -122,7 +122,7 @@ export const GameEnd = () => {
 
           {/* 오른쪽: 순위 및 버튼 */}
           <div className="flex w-full flex-col items-center gap-10 lg:w-2/5 lg:items-start">
-            <div className="flex w-full flex-col items-end justify-center gap-6 sm:flex-row lg:justify-start">
+            <div className="flex w-full flex-row items-end justify-center gap-4 sm:gap-6 lg:justify-start">
               {topThree[1] && (
                 <PodiumPlayer player={topThree[1]} position="second" />
               )}
