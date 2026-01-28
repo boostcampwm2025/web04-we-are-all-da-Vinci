@@ -85,6 +85,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.chatGateway.broadcastSystemMessage(room.roomId, leaveMsg);
     }
 
+    // 빈 방이면 삭제 + 채팅 정리
+    if (room.players.length === 0) {
+      await this.gameRoomCacheService.deleteRoom(room.roomId);
+      await this.chatService.clearHistory(room.roomId);
+      return;
+    }
+
     this.broadcastMetadata(room);
   }
 
