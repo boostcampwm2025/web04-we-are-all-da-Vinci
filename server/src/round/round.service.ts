@@ -118,7 +118,6 @@ export class RoundService implements OnModuleInit {
 
     await this.cacheService.saveRoom(room.roomId, room);
 
-    this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
     this.server.to(room.roomId).emit(ClientEvents.ROOM_PROMPT, promptStrokes);
 
     await this.timerService.startTimer(room.roomId, PROMPT_TIME);
@@ -132,7 +131,6 @@ export class RoundService implements OnModuleInit {
     await this.cacheService.saveRoom(room.roomId, room);
 
     await this.timerService.startTimer(room.roomId, room.settings.drawingTime);
-    this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
 
     this.logger.info({ room }, 'Drawing Phase Start');
 
@@ -147,7 +145,6 @@ export class RoundService implements OnModuleInit {
 
     await this.timerService.startTimer(room.roomId, ROUND_REPLAY_TIME);
 
-    this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
     this.server.to(room.roomId).emit(ClientEvents.ROOM_ROUND_REPLAY, result);
 
     this.logger.info({ room }, 'Round Replay Phase Start');
@@ -192,7 +189,6 @@ export class RoundService implements OnModuleInit {
 
     await this.timerService.startTimer(room.roomId, ROUND_STANDING_TIME);
 
-    this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
     this.server.to(room.roomId).emit(ClientEvents.ROOM_ROUND_STANDING, result);
 
     this.logger.info({ room }, 'Round Standing Phase Start');
@@ -230,7 +226,6 @@ export class RoundService implements OnModuleInit {
 
     const finalResult = await this.getGameEndData(room.roomId);
 
-    this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
     this.server.to(room.roomId).emit(ClientEvents.ROOM_GAME_END, finalResult);
 
     await this.timerService.startTimer(room.roomId, GAME_END_TIME);
@@ -305,8 +300,6 @@ export class RoundService implements OnModuleInit {
     await this.progressCacheService.deleteAll(room.roomId);
     await this.standingsCacheService.deleteAll(room.roomId);
     await this.leaderboardCacheService.deleteAll(room.roomId);
-
-    this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
 
     this.logger.info({ roomId: room.roomId }, 'Game Waiting Start');
     await this.notifyPhaseChange(room.roomId);
