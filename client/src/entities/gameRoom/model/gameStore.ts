@@ -1,4 +1,4 @@
-import type { FinalResult, Highlight } from '@/entities/gameResult/model';
+import type { FinalResult, Highlight } from '@/entities/gameResult';
 import type { Player } from '@/entities/player/model';
 import type { RankingEntry } from '@/entities/ranking';
 import type { RoundResult, PlayerScore } from '@/entities/roundResult/model';
@@ -9,7 +9,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import type { GameRoom } from './types';
 
-interface GameState extends GameRoom {
+export interface GameState extends GameRoom {
   // 소켓 연결 상태
   isConnected: boolean;
 
@@ -60,7 +60,7 @@ interface GameState extends GameRoom {
   reset: () => void;
 }
 
-const initialState = {
+export const initialState = {
   isConnected: false,
   roomId: '',
   players: [],

@@ -15,10 +15,12 @@ import { ClientEvents, GamePhase, ServerEvents } from 'src/common/constants';
 import { PinoLogger } from 'nestjs-pino';
 import { GameService } from './game.service';
 import { GameRoom, Player } from 'src/common/types';
-import { OnModuleInit, UseFilters } from '@nestjs/common';
+import { OnModuleInit, UseFilters, UseInterceptors } from '@nestjs/common';
 import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
 import { UserKickDto } from './dto/user-kick.dto';
 import { getSocketCorsOrigin } from 'src/common/config/cors.util';
+import { MetricInterceptor } from 'src/common/interceptors/metric.interceptor';
+import { MetricService } from 'src/metric/metric.service';
 
 @WebSocketGateway({
   cors: {
@@ -27,6 +29,7 @@ import { getSocketCorsOrigin } from 'src/common/config/cors.util';
   },
 })
 @UseFilters(WebsocketExceptionFilter)
+@UseInterceptors(MetricInterceptor)
 export class GameGateway
   implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
 {
@@ -36,6 +39,7 @@ export class GameGateway
   constructor(
     private readonly logger: PinoLogger,
     private readonly gameService: GameService,
+    private readonly metricService: MetricService,
   ) {
     this.logger.setContext(GameGateway.name);
   }
@@ -66,10 +70,12 @@ export class GameGateway
 
   handleConnection(client: Socket) {
     this.logger.info({ clientId: client.id }, 'New User Connected');
+    this.metricService.incConnection();
   }
 
   async handleDisconnect(client: Socket) {
     this.logger.info({ clientId: client.id }, 'User Disconnected');
+    this.metricService.decConnection();
 
     const room = await this.gameService.leaveRoom(client.id);
 

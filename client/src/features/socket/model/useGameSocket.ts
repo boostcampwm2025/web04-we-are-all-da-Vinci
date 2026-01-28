@@ -1,4 +1,4 @@
-import type { GameEndResponse } from '@/entities/gameResult/model';
+import type { GameEndResponse } from '@/entities/gameResult';
 import type { GameRoom } from '@/entities/gameRoom/model';
 import { useGameStore } from '@/entities/gameRoom/model';
 import type { Player } from '@/entities/player/model';
@@ -9,6 +9,7 @@ import type {
 } from '@/entities/roundResult/model';
 import type { Stroke } from '@/entities/similarity';
 import type { WaitlistResponse } from '@/features/waitingRoomActions';
+import { useChatStore, type ChatMessage } from '@/features/chat';
 import { disconnectSocket, getSocket } from '@/shared/api';
 import { CLIENT_EVENTS, SERVER_EVENTS } from '@/shared/config';
 import { useToastStore } from '@/shared/model';
@@ -55,6 +56,11 @@ export const useGameSocket = () => {
   );
   const reset = useGameStore((state) => state.reset);
   const addToast = useToastStore((state) => state.addToast);
+
+  // Chat store 액션
+  const addChatMessage = useChatStore((state) => state.addMessage);
+  const setChatHistory = useChatStore((state) => state.setHistory);
+  const clearChat = useChatStore((state) => state.clear);
 
   // localStorage 변경 감지
   useEffect(() => {
@@ -250,6 +256,19 @@ export const useGameSocket = () => {
       setPendingNavigation('/');
     });
 
+    // 채팅 이벤트
+    socket.on(CLIENT_EVENTS.CHAT_BROADCAST, (message: ChatMessage) => {
+      addChatMessage(message);
+    });
+
+    socket.on(CLIENT_EVENTS.CHAT_HISTORY, (messages: ChatMessage[]) => {
+      setChatHistory(messages);
+    });
+
+    socket.on(CLIENT_EVENTS.CHAT_ERROR, (error: { message: string }) => {
+      addToast(error.message, 'error');
+    });
+
     // Cleanup
     return () => {
       socket.off('connect');
@@ -265,9 +284,13 @@ export const useGameSocket = () => {
       socket.off(CLIENT_EVENTS.ERROR);
       socket.off(CLIENT_EVENTS.ROOM_KICKED);
       socket.off(CLIENT_EVENTS.USER_PRACTICE_STARTED);
+      socket.off(CLIENT_EVENTS.CHAT_BROADCAST);
+      socket.off(CLIENT_EVENTS.CHAT_HISTORY);
+      socket.off(CLIENT_EVENTS.CHAT_ERROR);
 
       disconnectSocket();
       reset(); // 소켓 연결 해제 시 전체 상태 초기화
+      clearChat(); // 채팅 초기화
     };
   }, [
     roomId,
@@ -285,8 +308,13 @@ export const useGameSocket = () => {
     setHighlight,
     setPracticePrompt,
     setIsPracticing,
+    setAlertMessage,
+    setPendingNavigation,
     reset,
     addToast,
+    addChatMessage,
+    setChatHistory,
+    clearChat,
   ]);
 
   return getSocket();

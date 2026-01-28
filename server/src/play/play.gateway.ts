@@ -10,10 +10,11 @@ import { UserScoreDto } from './dto/user-score.dto';
 import { UserDrawingDto } from './dto/user-drawing.dto';
 import { ClientEvents, ServerEvents } from 'src/common/constants';
 import { PinoLogger } from 'nestjs-pino';
-import { UseFilters } from '@nestjs/common';
+import { UseFilters, UseInterceptors } from '@nestjs/common';
 import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
 import { PlayService } from './play.service';
 import { getSocketCorsOrigin } from 'src/common/config/cors.util';
+import { MetricInterceptor } from 'src/common/interceptors/metric.interceptor';
 
 @WebSocketGateway({
   cors: {
@@ -22,6 +23,7 @@ import { getSocketCorsOrigin } from 'src/common/config/cors.util';
   },
 })
 @UseFilters(WebsocketExceptionFilter)
+@UseInterceptors(MetricInterceptor)
 export class PlayGateway {
   @WebSocketServer()
   server!: Server;

@@ -1,5 +1,5 @@
 import { useIsCurrentUser } from '@/entities/gameRoom/model';
-import type { FinalResult } from '@/entities/gameResult/model';
+import type { FinalResult } from '@/entities/gameResult';
 import { RANK_STYLES } from '@/entities/ranking';
 import { useCountUp } from '@/shared/lib';
 import { UserAvatar } from '@/shared/ui';
@@ -26,7 +26,7 @@ export const StandingRow = ({
     <div className="relative flex items-center">
       {isCurrentUser && (
         <div className="absolute -left-16 flex items-center gap-1 font-bold text-blue-500">
-          ME
+          나
           <span className="material-symbols-outlined text-xl">
             arrow_forward
           </span>

@@ -5,6 +5,12 @@ export const ROUND_REPLAY_TIME = 15; // 라운드 결과(리플레이) 표시 �
 export const ROUND_STANDING_TIME = 10; // 라운드 점수 및 랭킹 표시 시간 (초)
 export const GAME_END_TIME = 30; // 게임 종료 화면 표시 시간 (초)
 
+// 채팅 관련 상수
+export const CHAT_MAX_LENGTH = 100; // 메시지 최대 글자 수
+export const CHAT_HISTORY_LIMIT = 50; // 이전 메시지 로드 개수
+export const CHAT_RATE_LIMIT_SHORT = { messages: 5, seconds: 5 }; // 단기 Rate Limit
+export const CHAT_RATE_LIMIT_LONG = { messages: 20, seconds: 30 }; // 장기 Rate Limit
+
 export const ServerEvents = {
   // 클라이언트 -> 서버
   USER_JOIN: 'user:join',
@@ -15,6 +21,7 @@ export const ServerEvents = {
   ROOM_START: 'room:start',
   ROOM_RESTART: 'room:restart',
   USER_PRACTICE: 'user:practice',
+  CHAT_MESSAGE: 'chat:message',
 } as const;
 
 export const ClientEvents = {
@@ -29,6 +36,9 @@ export const ClientEvents = {
   ROOM_PROMPT: 'room:prompt',
   ROOM_KICKED: 'room:kicked',
   USER_PRACTICE_STARTED: 'user:practice:started',
+  CHAT_BROADCAST: 'chat:broadcast',
+  CHAT_HISTORY: 'chat:history',
+  CHAT_ERROR: 'chat:error',
   ERROR: 'error',
 } as const;
 
