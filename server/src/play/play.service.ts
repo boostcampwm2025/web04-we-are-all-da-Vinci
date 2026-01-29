@@ -4,6 +4,7 @@ import { GamePhase } from 'src/common/constants';
 import { ErrorCode } from 'src/common/constants/error-code';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import { Similarity, Stroke } from 'src/common/types';
+import { createPlayerMapper } from 'src/common/utils/player.utils';
 import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
@@ -34,19 +35,7 @@ export class PlayService {
       throw new WebsocketException('서버 오류');
     }
 
-    const playerMapper: Record<
-      string,
-      { nickname: string; profileId: string }
-    > = players.reduce(
-      (prev, player) => ({
-        ...prev,
-        [player.socketId]: {
-          nickname: player.nickname,
-          profileId: player.profileId,
-        },
-      }),
-      {},
-    );
+    const playerMapper = createPlayerMapper(players);
 
     const leaderboard = await this.leaderboardCacheService.getAll(roomId);
 
