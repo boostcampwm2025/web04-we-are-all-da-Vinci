@@ -166,6 +166,8 @@ export const DrawingCanvas = ({
     roomId,
     canvasRef,
     ctxRef,
+    isPractice,
+    onSimilarityChange,
   ]);
 
   // 스트로크 지속시간을 누적하는 핸들러
