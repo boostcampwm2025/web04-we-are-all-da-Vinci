@@ -1,6 +1,6 @@
-import { selectPhase, selectTimer, useGameStore } from '@/entities/gameRoom';
-import { SOUND_LIST } from '@/shared/config/sound';
 import { SoundManager } from '@/shared/lib';
+import { SFX_LIST } from '@/shared/config';
+import { selectPhase, selectTimer, useGameStore } from '@/entities/gameRoom';
 import { useEffect, useState } from 'react';
 import { TIMER } from '../config';
 
@@ -42,7 +42,7 @@ const Timer = () => {
       return;
     }
     const manager = SoundManager.getInstance();
-    manager.playSound(SOUND_LIST.TIMER);
+    manager.playSound(SFX_LIST.TIMER);
   }, [isUrgent, displayTime]);
 
   return (

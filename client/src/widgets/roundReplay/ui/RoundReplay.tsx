@@ -3,7 +3,7 @@ import { PlayerReplaysSection, PromptSection } from '@/entities/roundResult';
 import { MySimilarityDetail } from '@/entities/similarity';
 import { Timer } from '@/entities/timer';
 import { ChatBox, useChatActions, useChatStore } from '@/features/chat';
-import { SOUND_LIST } from '@/shared/config/sound';
+import { SFX_LIST } from '@/shared/config';
 import { SoundManager } from '@/shared/lib';
 import { GameHeader } from '@/shared/ui';
 import { useEffect, useMemo } from 'react';
@@ -30,7 +30,7 @@ const RoundReplay = () => {
 
   useEffect(() => {
     const manager = SoundManager.getInstance();
-    manager.playSound(SOUND_LIST.ROUND_END);
+    manager.playSound(SFX_LIST.ROUND_END);
   }, []);
 
   return (

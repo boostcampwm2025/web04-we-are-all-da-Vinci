@@ -1,3 +1,4 @@
+import { OnModuleInit, UseFilters, UseInterceptors } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -7,20 +8,24 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
+import { PinoLogger } from 'nestjs-pino';
 import { Server, Socket } from 'socket.io';
-import { UserJoinDto } from './dto/user-join.dto';
+import { ChatGateway } from 'src/chat/chat.gateway';
+import { ChatService } from 'src/chat/chat.service';
+import { getSocketCorsOrigin } from 'src/common/config/cors.util';
+import { ClientEvents, GamePhase, ServerEvents } from 'src/common/constants';
+import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
+import { MetricInterceptor } from 'src/common/interceptors/metric.interceptor';
+import { GameRoom, Player } from 'src/common/types';
+import { escapeHtml } from 'src/common/utils/sanitize';
+import { MetricService } from 'src/metric/metric.service';
+import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
+import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { RoomSettingsDto } from './dto/room-settings.dto';
 import { RoomStartDto } from './dto/room-start.dto';
-import { ClientEvents, GamePhase, ServerEvents } from 'src/common/constants';
-import { PinoLogger } from 'nestjs-pino';
-import { GameService } from './game.service';
-import { GameRoom, Player } from 'src/common/types';
-import { OnModuleInit, UseFilters, UseInterceptors } from '@nestjs/common';
-import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
+import { UserJoinDto } from './dto/user-join.dto';
 import { UserKickDto } from './dto/user-kick.dto';
-import { getSocketCorsOrigin } from 'src/common/config/cors.util';
-import { MetricInterceptor } from 'src/common/interceptors/metric.interceptor';
-import { MetricService } from 'src/metric/metric.service';
+import { GameService } from './game.service';
 
 @WebSocketGateway({
   cors: {
@@ -39,6 +44,12 @@ export class GameGateway
   constructor(
     private readonly logger: PinoLogger,
     private readonly gameService: GameService,
+
+    private readonly chatService: ChatService,
+    private readonly chatGateway: ChatGateway,
+    private readonly playerCacheService: PlayerCacheService,
+    private readonly gameRoomCacheService: GameRoomCacheService,
+
     private readonly metricService: MetricService,
   ) {
     this.logger.setContext(GameGateway.name);
@@ -62,7 +73,15 @@ export class GameGateway
       const socket = this.server.sockets.sockets.get(player.socketId);
       if (socket) {
         await socket.join(roomId);
+        await this.chatGateway.sendHistory(socket, roomId);
         await this.syncCurrentPhaseData(socket, room);
+
+        // 입장 시스템 메시지
+        const joinMsg = await this.chatService.createJoinMessage(
+          roomId,
+          player.nickname,
+        );
+        this.chatGateway.broadcastSystemMessage(roomId, joinMsg);
       }
     }
     this.broadcastMetadata(room);
@@ -77,11 +96,36 @@ export class GameGateway
     this.logger.info({ clientId: client.id }, 'User Disconnected');
     this.metricService.decConnection();
 
+    // 퇴장 전 플레이어 정보 조회
+    const roomId = await this.playerCacheService.getRoomId(client.id);
+    let leavingPlayer = null;
+    if (roomId) {
+      const players = await this.gameRoomCacheService.getAllPlayers(roomId);
+      leavingPlayer = players.find((p) => p.socketId === client.id);
+    }
+
     const room = await this.gameService.leaveRoom(client.id);
 
     if (!room) {
       return;
     }
+
+    // 퇴장 시스템 메시지
+    if (leavingPlayer) {
+      const leaveMsg = await this.chatService.createLeaveMessage(
+        room.roomId,
+        leavingPlayer.nickname,
+      );
+      this.chatGateway.broadcastSystemMessage(room.roomId, leaveMsg);
+    }
+
+    // 빈 방이면 삭제 + 채팅 정리
+    if (room.players.length === 0) {
+      await this.gameRoomCacheService.deleteRoom(room.roomId);
+      await this.chatService.clearHistory(room.roomId);
+      return;
+    }
+
     this.broadcastMetadata(room);
   }
 
@@ -90,7 +134,8 @@ export class GameGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: UserJoinDto,
   ): Promise<string> {
-    const { nickname, roomId, profileId } = payload;
+    const { roomId, profileId } = payload;
+    const nickname = escapeHtml(payload.nickname.trim());
     const room = await this.gameService.joinRoom(
       roomId,
       nickname,
@@ -200,6 +245,13 @@ export class GameGateway
     if (targetPlayerSocket) {
       await targetPlayerSocket.leave(roomId);
     }
+
+    // 강퇴 시스템 메시지
+    const kickMsg = await this.chatService.createKickMessage(
+      roomId,
+      kickedPlayer.nickname,
+    );
+    this.chatGateway.broadcastSystemMessage(roomId, kickMsg);
 
     this.server
       .to(roomId)

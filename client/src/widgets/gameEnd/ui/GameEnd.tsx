@@ -3,8 +3,9 @@ import { useGameStore, useIsHost } from '@/entities/gameRoom';
 import { TIMER } from '@/entities/timer/config';
 import { ChatBox, useChatActions, useChatStore } from '@/features/chat';
 import { getSocket } from '@/shared/api';
-import { SERVER_EVENTS, TITLES } from '@/shared/config';
+import { SERVER_EVENTS, TITLES, BGM_LIST } from '@/shared/config';
 import { GameHeader } from '@/shared/ui';
+import { useBGM } from '@/shared/model/useBGM';
 
 const BUTTON_ENABLE_AFTER = 10; // 10초 후 버튼 활성화
 
@@ -22,6 +23,8 @@ export const GameEnd = () => {
   // 채팅
   const messages = useChatStore((state) => state.messages);
   const { sendMessage } = useChatActions(roomId);
+
+  useBGM(BGM_LIST.GAME_END);
 
   const handleRestart = () => {
     if (!isButtonEnabled) return;

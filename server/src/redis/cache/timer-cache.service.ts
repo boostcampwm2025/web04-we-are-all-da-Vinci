@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { RedisKeys } from '../redis-keys';
 import { RedisService } from '../redis.service';
 
 interface Timer {
@@ -10,13 +11,9 @@ interface Timer {
 export class TimerCacheService {
   constructor(private readonly redisService: RedisService) {}
 
-  private getKey(roomId: string) {
-    return `timer:${roomId}`;
-  }
-
   async addTimer(roomId: string, timeLeft: number) {
     const client = this.redisService.getClient();
-    const key = this.getKey(roomId);
+    const key = RedisKeys.timer(roomId);
     await client.hSet(key, {
       roomId,
       timeLeft,
@@ -25,7 +22,7 @@ export class TimerCacheService {
 
   async getTimer(roomId: string): Promise<Timer | null> {
     const client = this.redisService.getClient();
-    const key = this.getKey(roomId);
+    const key = RedisKeys.timer(roomId);
     const data = await client.hGetAll(key);
 
     if (!data || Object.keys(data).length === 0) {
@@ -77,7 +74,7 @@ export class TimerCacheService {
 
   async deleteTimer(roomId: string) {
     const client = this.redisService.getClient();
-    const key = this.getKey(roomId);
+    const key = RedisKeys.timer(roomId);
     await client.del(key);
   }
 }
