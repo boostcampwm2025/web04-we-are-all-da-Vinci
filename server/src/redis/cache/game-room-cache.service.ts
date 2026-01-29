@@ -79,11 +79,57 @@ export class GameRoomCacheService {
     await client.expire(key, REDIS_TTL);
   }
 
-  async deletePlayer(roomId: string, player: Player) {
+  async deletePlayer(roomId: string, socketId: string) {
     const client = this.redisService.getClient();
     const key = RedisKeys.players(roomId);
 
-    await client.lRem(key, 0, JSON.stringify(player));
+    const script = `local key = KEYS[1]
+    local socket_id = ARGV[1]
+
+    local players = redis.call("LRANGE", key, 0, -1)
+    local length = #players
+
+    if length == 0 then
+      return 0
+    end
+
+    local target_index = 0
+    local target_obj = nil
+    local target_raw = nil
+
+    for i, raw in ipairs(players) do
+      local obj = cjson.decode(raw)
+      if obj.socketId == socket_id then
+        target_index = i
+        target_obj = obj
+        target_raw = raw
+        break
+      end
+    end
+
+    if target_index == 0 then
+        return 0
+    end
+
+    if target_obj.isHost == true and length > 1 then
+        local host_index = 1
+        
+        local new_raw = players[host_index]
+        local new_obj = cjson.decode(new_raw)
+        
+        new_obj.isHost = true;
+        redis.call("LSET", key, 1, cjson.encode(new_obj)); 
+    end
+
+    redis.call("LREM", key, 1, target_raw)
+
+    return 1`;
+    const res = await client.eval(script, {
+      keys: [key],
+      arguments: [socketId],
+    });
+
+    return res === 1 ? true : false;
   }
 
   async getAllPlayers(roomId: string): Promise<Player[]> {

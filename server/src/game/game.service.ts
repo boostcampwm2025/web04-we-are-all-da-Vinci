@@ -92,15 +92,7 @@ export class GameService implements OnModuleInit {
       return null;
     }
 
-    if (target.isHost && players.length > this.NEXT_HOST_INDEX) {
-      const nextHost = players[this.NEXT_HOST_INDEX];
-      await this.cacheService.setPlayer(roomId, this.NEXT_HOST_INDEX, {
-        ...nextHost,
-        isHost: true,
-      });
-    }
-
-    await this.cacheService.deletePlayer(roomId, target);
+    await this.cacheService.deletePlayer(roomId, socketId);
     await this.playerCacheService.delete(socketId);
     await this.leaderboardCacheService.delete(roomId, socketId);
 
