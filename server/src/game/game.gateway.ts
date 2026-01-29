@@ -1,4 +1,4 @@
-import { UseFilters, UseInterceptors } from '@nestjs/common';
+import { OnModuleInit, UseFilters, UseInterceptors } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -13,10 +13,10 @@ import { Server, Socket } from 'socket.io';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { ChatService } from 'src/chat/chat.service';
 import { getSocketCorsOrigin } from 'src/common/config/cors.util';
-import { ClientEvents, ServerEvents } from 'src/common/constants';
+import { ClientEvents, GamePhase, ServerEvents } from 'src/common/constants';
 import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
 import { MetricInterceptor } from 'src/common/interceptors/metric.interceptor';
-import { GameRoom } from 'src/common/types';
+import { GameRoom, Player } from 'src/common/types';
 import { escapeHtml } from 'src/common/utils/sanitize';
 import { MetricService } from 'src/metric/metric.service';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
@@ -35,7 +35,9 @@ import { GameService } from './game.service';
 })
 @UseFilters(WebsocketExceptionFilter)
 @UseInterceptors(MetricInterceptor)
-export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class GameGateway
+  implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
+{
   @WebSocketServer()
   server!: Server;
 
@@ -51,6 +53,38 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly metricService: MetricService,
   ) {
     this.logger.setContext(GameGateway.name);
+  }
+
+  onModuleInit() {
+    this.gameService.setPhaseChangeHandler(
+      async (roomId: string, joinedPlayers: Player[]) => {
+        await this.handleWaitlist(roomId, joinedPlayers);
+      },
+    );
+  }
+
+  private async handleWaitlist(roomId: string, joinedPlayers: Player[]) {
+    const room = await this.gameService.getRoom(roomId);
+    if (!room) {
+      return;
+    }
+
+    for (const player of joinedPlayers) {
+      const socket = this.server.sockets.sockets.get(player.socketId);
+      if (socket) {
+        await socket.join(roomId);
+        await this.chatGateway.sendHistory(socket, roomId);
+        await this.syncCurrentPhaseData(socket, room);
+
+        // 입장 시스템 메시지
+        const joinMsg = await this.chatService.createJoinMessage(
+          roomId,
+          player.nickname,
+        );
+        this.chatGateway.broadcastSystemMessage(roomId, joinMsg);
+      }
+    }
+    this.broadcastMetadata(room);
   }
 
   handleConnection(client: Socket) {
@@ -108,13 +142,32 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       profileId,
       client.id,
     );
-    if (room) {
+
+    // 소켓 룸에는 항상 입장
+    await client.join(roomId);
+
+    if (!room) {
+      this.logger.info(
+        { clientId: client.id, ...payload },
+        'Client Pushed Waiting queue',
+      );
+
+      const currentRoom = await this.gameService.getRoom(roomId);
+      if (!currentRoom) {
+        return 'ok';
+      }
+      client.emit(ClientEvents.ROOM_METADATA, currentRoom);
+      client.emit(ClientEvents.USER_WAITLIST, {
+        roomId,
+        currentRound: currentRoom.currentRound,
+        totalRounds: currentRoom.settings.totalRounds,
+        phase: currentRoom.phase,
+      });
+    } else {
       this.logger.info(
         { clientId: client.id, ...payload },
         'Client Joined Game.',
       );
-
-      await client.join(room.roomId);
 
       // 채팅 히스토리 전송
       await this.chatGateway.sendHistory(client, room.roomId);
@@ -125,14 +178,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         nickname,
       );
       this.chatGateway.broadcastSystemMessage(room.roomId, joinMsg);
-
-      this.broadcastMetadata(room);
-    } else {
-      this.logger.info(
-        { clientId: client.id, ...payload },
-        'Client Pushed Waiting queue',
-      );
-      client.emit(ClientEvents.USER_WAITLIST, { roomId });
     }
 
     return 'ok';
@@ -227,7 +272,30 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return 'ok';
   }
 
+  @SubscribeMessage(ServerEvents.USER_PRACTICE)
+  async startPractice(@ConnectedSocket() client: Socket) {
+    const randomPrompt = await this.gameService.startPractice();
+    client.emit(ClientEvents.USER_PRACTICE_STARTED, randomPrompt);
+  }
+
   broadcastMetadata(room: GameRoom) {
     this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
+  }
+
+  private async syncCurrentPhaseData(client: Socket, room: GameRoom) {
+    const data = await this.gameService.getSyncData(room.roomId);
+    if (!data) return;
+
+    switch (room.phase) {
+      case GamePhase.ROUND_REPLAY:
+        client.emit(ClientEvents.ROOM_ROUND_REPLAY, data);
+        break;
+      case GamePhase.ROUND_STANDING:
+        client.emit(ClientEvents.ROOM_ROUND_STANDING, data);
+        break;
+      case GamePhase.GAME_END:
+        client.emit(ClientEvents.ROOM_GAME_END, data);
+        break;
+    }
   }
 }
