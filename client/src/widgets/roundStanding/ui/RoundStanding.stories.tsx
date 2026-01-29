@@ -1,7 +1,7 @@
+import { initialState, useGameStore } from '@/entities/gameRoom';
+import { createMockStandingResults } from '@/test/mocks/mockData';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { RoundStanding } from './RoundStanding';
-import { useGameStore, initialState } from '@/entities/gameRoom/model';
-import { createMockStandingResults } from '@/test/mocks/mockData';
 
 interface StoryArgs {
   resultCount: number;

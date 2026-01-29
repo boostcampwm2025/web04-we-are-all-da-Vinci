@@ -1,7 +1,7 @@
+import { initialState, useGameStore } from '@/entities/gameRoom';
+import { MOCK_STROKES } from '@/test/mocks/mockData';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Prompt } from './Prompt';
-import { useGameStore, initialState } from '@/entities/gameRoom/model';
-import { MOCK_STROKES } from '@/test/mocks/mockData';
 
 interface StoryArgs {
   timer: number;

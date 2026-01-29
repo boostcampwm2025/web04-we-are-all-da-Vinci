@@ -1,4 +1,4 @@
-import { selectLiveRankings, useGameStore } from '@/entities/gameRoom/model';
+import { selectLiveRankings, useGameStore } from '@/entities/gameRoom';
 import { RANK_CHANGE, type RankChange } from '@/entities/ranking';
 import { getSocket } from '@/shared/api';
 

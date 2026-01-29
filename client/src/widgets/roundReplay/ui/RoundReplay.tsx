@@ -1,4 +1,4 @@
-import { useGameStore, useCurrentPlayer } from '@/entities/gameRoom/model';
+import { useCurrentPlayer, useGameStore } from '@/entities/gameRoom';
 import { PlayerReplaysSection, PromptSection } from '@/entities/roundResult';
 import { MySimilarityDetail } from '@/entities/similarity';
 import { Timer } from '@/entities/timer';
@@ -41,24 +41,24 @@ const RoundReplay = () => {
           <GameHeader title={`라운드 ${currentRound} 결과`} showDecoration />
           <div className="flex min-h-0 flex-1 gap-6">
             {/* 좌측: 제시 그림 + 내 유사도 */}
-            <div className="card flex w-72 shrink-0 flex-col gap-4 p-4">
+            <section className="card flex w-72 shrink-0 flex-col gap-4 p-4">
               <PromptSection promptStrokes={promptStrokes} />
               {mySimilarity && <MySimilarityDetail similarity={mySimilarity} />}
-            </div>
+            </section>
 
             {/* 중앙: 플레이어 리플레이 그리드 */}
-            <div className="card flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-white/50 p-4 shadow-sm ring-1 ring-gray-900/5 backdrop-blur-sm">
+            <section className="card flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-white/50 p-4 shadow-sm ring-1 ring-gray-900/5 backdrop-blur-sm">
               <PlayerReplaysSection players={roundResults} />
-            </div>
+            </section>
 
             {/* 우측: 채팅 */}
-            <div className="flex w-72 shrink-0 flex-col">
+            <section className="flex w-72 shrink-0 flex-col">
               <ChatBox
                 messages={messages}
                 onSendMessage={sendMessage}
                 className="h-full"
               />
-            </div>
+            </section>
           </div>
         </main>
       </div>

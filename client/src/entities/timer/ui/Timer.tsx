@@ -1,14 +1,10 @@
-import {
-  selectPhase,
-  selectTimer,
-  useGameStore,
-} from '@/entities/gameRoom/model';
-import { TIMER } from '../config';
-import { useEffect, useState } from 'react';
 import { SoundManager } from '@/shared/lib';
 import { SFX_LIST } from '@/shared/config';
+import { selectPhase, selectTimer, useGameStore } from '@/entities/gameRoom';
+import { useEffect, useState } from 'react';
+import { TIMER } from '../config';
 
-export const Timer = () => {
+const Timer = () => {
   const timer = useGameStore(selectTimer);
   const settings = useGameStore((state) => state.settings);
   const phase = useGameStore(selectPhase);
@@ -82,3 +78,4 @@ export const Timer = () => {
     </div>
   );
 };
+export default Timer;

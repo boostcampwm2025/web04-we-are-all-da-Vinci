@@ -1,9 +1,9 @@
-import type { Decorator } from '@storybook/react-vite';
 import {
-  useGameStore,
   initialState,
+  useGameStore,
   type GameState,
-} from '@/entities/gameRoom/model';
+} from '@/entities/gameRoom';
+import type { Decorator } from '@storybook/react-vite';
 import { MOCK_STROKES, createMockPlayers } from './mockData';
 
 // 기본 Mock State

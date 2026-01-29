@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  OnModuleInit,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { GameRoom, Player } from 'src/common/types';
 import {
   ClientEvents,
@@ -25,6 +21,7 @@ import { PromptService } from 'src/prompt/prompt.service';
 @Injectable()
 export class RoundService implements OnModuleInit {
   server!: Server;
+  private phaseChangeHandler?: (roomId: string) => Promise<void>;
 
   constructor(
     private readonly cacheService: GameRoomCacheService,
@@ -57,6 +54,14 @@ export class RoundService implements OnModuleInit {
 
   setServer(server: Server) {
     this.server = server;
+  }
+
+  setPhaseChangeHandler(handler: (roomId: string) => Promise<void>) {
+    this.phaseChangeHandler = handler;
+  }
+
+  private async notifyPhaseChange(roomId: string) {
+    if (this.phaseChangeHandler) await this.phaseChangeHandler(roomId);
   }
 
   async nextPhase(room: GameRoom) {
@@ -113,11 +118,12 @@ export class RoundService implements OnModuleInit {
 
     await this.cacheService.saveRoom(room.roomId, room);
 
-    this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
     this.server.to(room.roomId).emit(ClientEvents.ROOM_PROMPT, promptStrokes);
 
     await this.timerService.startTimer(room.roomId, PROMPT_TIME);
     this.logger.info({ room }, 'Prompt Phase Start');
+
+    await this.notifyPhaseChange(room.roomId);
   }
 
   private async moveDrawing(room: GameRoom) {
@@ -125,14 +131,30 @@ export class RoundService implements OnModuleInit {
     await this.cacheService.saveRoom(room.roomId, room);
 
     await this.timerService.startTimer(room.roomId, room.settings.drawingTime);
-    this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
 
     this.logger.info({ room }, 'Drawing Phase Start');
+
+    await this.notifyPhaseChange(room.roomId);
   }
 
   private async moveRoundReplay(room: GameRoom) {
     room.phase = GamePhase.ROUND_REPLAY;
     await this.cacheService.saveRoom(room.roomId, room);
+
+    const result = await this.getRoundReplayData(room.roomId);
+
+    await this.timerService.startTimer(room.roomId, ROUND_REPLAY_TIME);
+
+    this.server.to(room.roomId).emit(ClientEvents.ROOM_ROUND_REPLAY, result);
+
+    this.logger.info({ room }, 'Round Replay Phase Start');
+
+    await this.notifyPhaseChange(room.roomId);
+  }
+
+  async getRoundReplayData(roomId: string) {
+    const room = await this.cacheService.getRoom(roomId);
+    if (!room) return null;
 
     const roundResults = await this.progressCacheService.getRoundResults(
       room.roomId,
@@ -149,7 +171,7 @@ export class RoundService implements OnModuleInit {
         profileId: playerMapper[value.socketId]?.profileId,
       }));
 
-    const result = {
+    return {
       rankings: rankings,
       promptStrokes:
         (await this.promptService.getPromptForRound(
@@ -157,17 +179,26 @@ export class RoundService implements OnModuleInit {
           room.currentRound,
         )) || [],
     };
-
-    await this.timerService.startTimer(room.roomId, ROUND_REPLAY_TIME);
-
-    this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
-    this.server.to(room.roomId).emit(ClientEvents.ROOM_ROUND_REPLAY, result);
-
-    this.logger.info({ room }, 'Round Replay Phase Start');
   }
 
   private async moveRoundStanding(room: GameRoom) {
     room.phase = GamePhase.ROUND_STANDING;
+    await this.cacheService.saveRoom(room.roomId, room);
+
+    const result = await this.getRoundStandingData(room.roomId);
+
+    await this.timerService.startTimer(room.roomId, ROUND_STANDING_TIME);
+
+    this.server.to(room.roomId).emit(ClientEvents.ROOM_ROUND_STANDING, result);
+
+    this.logger.info({ room }, 'Round Standing Phase Start');
+
+    await this.notifyPhaseChange(room.roomId);
+  }
+
+  async getRoundStandingData(roomId: string) {
+    const room = await this.cacheService.getRoom(roomId);
+    if (!room) return null;
 
     const standings = await this.standingsCacheService.getStandings(
       room.roomId,
@@ -180,15 +211,7 @@ export class RoundService implements OnModuleInit {
       profileId: playerMapper[value.socketId]?.profileId,
     }));
 
-    const result = { rankings };
-
-    await this.cacheService.saveRoom(room.roomId, room);
-    await this.timerService.startTimer(room.roomId, ROUND_STANDING_TIME);
-
-    this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
-    this.server.to(room.roomId).emit(ClientEvents.ROOM_ROUND_STANDING, result);
-
-    this.logger.info({ room }, 'Round Standing Phase Start');
+    return { rankings };
   }
 
   private async moveNextRoundOrEnd(room: GameRoom) {
@@ -200,6 +223,20 @@ export class RoundService implements OnModuleInit {
     // 게임 종료
     room.phase = GamePhase.GAME_END;
     await this.cacheService.saveRoom(room.roomId, room);
+
+    const finalResult = await this.getGameEndData(room.roomId);
+
+    this.server.to(room.roomId).emit(ClientEvents.ROOM_GAME_END, finalResult);
+
+    await this.timerService.startTimer(room.roomId, GAME_END_TIME);
+
+    this.logger.info('Game End Start');
+    await this.notifyPhaseChange(room.roomId);
+  }
+
+  async getGameEndData(roomId: string) {
+    const room = await this.cacheService.getRoom(roomId);
+    if (!room) return null;
 
     const standings = await this.standingsCacheService.getStandings(
       room.roomId,
@@ -216,11 +253,7 @@ export class RoundService implements OnModuleInit {
     const champion = rankings[0];
 
     if (!champion) {
-      this.logger.error(
-        { roomId: room.roomId },
-        '게임 결과를 계산할 수 없습니다. Standings이 비어져있습니다.',
-      );
-      throw new InternalServerErrorException('게임 결과를 계산할 수 없습니다.');
+      return null;
     }
 
     const highlight = await this.progressCacheService.getHighlight(
@@ -230,16 +263,10 @@ export class RoundService implements OnModuleInit {
     );
 
     if (!highlight) {
-      this.logger.error(
-        { roomId: room.roomId },
-        '하이라이트가 존재하지 않습니다.',
-      );
-      throw new InternalServerErrorException(
-        '하이라이트를 불러올 수 없습니다.',
-      );
+      return null;
     }
 
-    const finalResult = {
+    return {
       finalRankings: rankings,
       highlight: {
         promptStrokes:
@@ -251,13 +278,6 @@ export class RoundService implements OnModuleInit {
         similarity: highlight.similarity,
       },
     };
-
-    this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
-    this.server.to(room.roomId).emit(ClientEvents.ROOM_GAME_END, finalResult);
-
-    await this.timerService.startTimer(room.roomId, GAME_END_TIME);
-
-    this.logger.info('Game End Start');
   }
 
   private async moveWaiting(room: GameRoom) {
@@ -281,8 +301,7 @@ export class RoundService implements OnModuleInit {
     await this.standingsCacheService.deleteAll(room.roomId);
     await this.leaderboardCacheService.deleteAll(room.roomId);
 
-    this.server.to(room.roomId).emit(ClientEvents.ROOM_METADATA, room);
-
     this.logger.info({ roomId: room.roomId }, 'Game Waiting Start');
+    await this.notifyPhaseChange(room.roomId);
   }
 }

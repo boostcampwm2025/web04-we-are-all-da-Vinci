@@ -1,5 +1,5 @@
-import { useCallback, useRef } from 'react';
-import type { PlayerScore } from '@/entities/roundResult/model/types';
+import type { PlayerScore } from '@/entities/roundResult';
+import { useRef, useCallback } from 'react';
 
 // 리스트 순서가 바뀔 때 DOM 위치 변화만을 이용해
 // 자연스러운 이동 애니메이션을 만들기 위한 FLIP 애니메이션 훅

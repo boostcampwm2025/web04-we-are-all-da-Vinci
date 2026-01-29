@@ -1,11 +1,11 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import { GameEnd } from './GameEnd';
-import { useGameStore, initialState } from '@/entities/gameRoom/model';
+import { initialState, useGameStore } from '@/entities/gameRoom';
 import {
   createMockFinalResults,
   MOCK_HIGHLIGHT,
   MOCK_SETTINGS,
 } from '@/test/mocks/mockData';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { GameEnd } from './GameEnd';
 
 interface StoryArgs {
   resultCount: number;
