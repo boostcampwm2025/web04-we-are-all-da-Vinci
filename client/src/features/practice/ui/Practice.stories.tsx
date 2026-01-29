@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Practice } from './Practice';
-import { useGameStore } from '@/entities/gameRoom/model';
+import { useGameStore } from '@/entities/gameRoom';
 import { useEffect } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
