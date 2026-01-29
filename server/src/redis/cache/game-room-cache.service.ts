@@ -45,9 +45,20 @@ export class GameRoomCacheService {
 
   async deleteRoom(roomId: string) {
     const client = this.redisService.getClient();
-    await client.del(RedisKeys.players(roomId));
-    await client.sRem(RedisKeys.activeRooms(), roomId);
     await client.del(RedisKeys.room(roomId));
+    await client.del(RedisKeys.players(roomId));
+    await client.del(RedisKeys.prompts(roomId));
+    await client.del(RedisKeys.timer(roomId));
+    await client.del(RedisKeys.waitlist(roomId));
+    await client.del(RedisKeys.leaderboard(roomId));
+    await client.del(RedisKeys.standings(roomId));
+    await client.sRem(RedisKeys.activeRooms(), roomId);
+
+    // drawing:roomId:* 패턴 키 삭제
+    const drawingKeys = await client.keys(RedisKeys.drawingGameScan(roomId));
+    if (drawingKeys.length > 0) {
+      await client.del(drawingKeys);
+    }
   }
 
   async addPlayer(roomId: string, player: Player) {
