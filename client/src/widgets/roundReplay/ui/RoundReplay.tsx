@@ -39,20 +39,20 @@ const RoundReplay = () => {
       <div className="page-center">
         <main className="game-container">
           <GameHeader title={`라운드 ${currentRound} 결과`} showDecoration />
-          <div className="flex min-h-0 flex-1 gap-6">
+          <div className="flex min-h-0 flex-1 flex-col gap-6 md:flex-row">
             {/* 좌측: 제시 그림 + 내 유사도 */}
-            <section className="card flex w-72 shrink-0 flex-col gap-4 p-4">
+            <section className="card flex w-full shrink-0 gap-4 p-4 md:w-72 md:flex-col">
               <PromptSection promptStrokes={promptStrokes} />
               {mySimilarity && <MySimilarityDetail similarity={mySimilarity} />}
             </section>
 
             {/* 중앙: 플레이어 리플레이 그리드 */}
-            <section className="card flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-white/50 p-4 shadow-sm ring-1 ring-gray-900/5 backdrop-blur-sm">
+            <section className="card flex min-h-0 min-h-[500px] flex-1 flex-col overflow-hidden rounded-2xl bg-white/50 p-4 shadow-sm ring-1 ring-gray-900/5 backdrop-blur-sm">
               <PlayerReplaysSection players={roundResults} />
             </section>
 
             {/* 우측: 채팅 */}
-            <section className="flex w-72 shrink-0 flex-col">
+            <section className="flex w-72 shrink-0 flex-col md:w-72">
               <ChatBox
                 messages={messages}
                 onSendMessage={sendMessage}

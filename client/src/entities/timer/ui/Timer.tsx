@@ -46,7 +46,7 @@ const Timer = () => {
   }, [isUrgent, displayTime]);
 
   return (
-    <div className="absolute top-4 right-4 z-20 md:top-8 md:right-8 scale-70 md:scale-100 origin-top-right">
+    <div className="absolute top-4 right-4 z-20 origin-top-right scale-70 md:top-8 md:right-8 md:scale-100">
       <div className="relative inline-block">
         <div
           className={`relative flex h-24 w-24 items-center justify-center rounded-full border-4 bg-white shadow-xl transition-all ${

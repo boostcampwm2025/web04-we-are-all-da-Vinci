@@ -6,6 +6,7 @@ import { usePlayerPagination } from '../model/usePlayerPagination';
 import { useResponsiveCardSize } from '../model/useResponsiveCardSize';
 import PlayerReplayCard from './PlayerReplayCard';
 import PlayerReplayPagination from './PlayerReplayPagination';
+import { useMediaQuery } from '@/shared/model';
 
 interface Player {
   nickname: string;
@@ -22,6 +23,7 @@ interface PlayerReplaysSectionProps {
 const PlayerReplaysSection = ({ players = [] }: PlayerReplaysSectionProps) => {
   const currentPlayer = useCurrentPlayer();
   const mySocketId = currentPlayer?.socketId;
+  const isMobile = useMediaQuery('(max-width: 1024px)');
 
   // 페이지네이션
   const {
@@ -31,12 +33,12 @@ const PlayerReplaysSection = ({ players = [] }: PlayerReplaysSectionProps) => {
     currentPlayers,
     goToPrevPage,
     goToNextPage,
-  } = usePlayerPagination(players);
+  } = usePlayerPagination(players, isMobile);
 
   // 8명 초과 시(페이지네이션 있을 때) 모든 페이지에서 8명 기준 레이아웃 유지
   const layoutPlayerCount =
     totalPages > 1 ? PLAYERS_PER_PAGE : currentPlayers.length;
-  const layout = getGridLayout(layoutPlayerCount);
+  const layout = getGridLayout(layoutPlayerCount, isMobile);
 
   const { containerRef, cardSize } = useResponsiveCardSize(
     layout.cols,

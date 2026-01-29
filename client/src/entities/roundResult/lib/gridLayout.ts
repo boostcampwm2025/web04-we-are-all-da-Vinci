@@ -1,4 +1,5 @@
 export const PLAYERS_PER_PAGE = 8;
+export const MOBILE_PLAYERS_PER_PAGE = 4;
 export const CARD_ASPECT_RATIO = 4 / 5;
 export const GAP = 8;
 
@@ -15,7 +16,17 @@ export interface CardSize {
 /**
  * 인원에 따라 그리드의 열/행을 결정
  */
-export const getGridLayout = (playerCount: number): GridLayout => {
+export const getGridLayout = (
+  playerCount: number,
+  isMobile: boolean,
+): GridLayout => {
+  if (isMobile) {
+    if (playerCount <= 2) {
+      return { cols: Math.max(1, playerCount), rows: 1 };
+    }
+    return { cols: 2, rows: 2 };
+  }
+
   if (playerCount <= 2) {
     return { cols: Math.max(1, playerCount), rows: 1 };
   }
