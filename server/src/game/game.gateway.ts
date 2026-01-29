@@ -168,16 +168,6 @@ export class GameGateway
         { clientId: client.id, ...payload },
         'Client Joined Game.',
       );
-
-      // 채팅 히스토리 전송
-      await this.chatGateway.sendHistory(client, room.roomId);
-
-      // 입장 시스템 메시지
-      const joinMsg = await this.chatService.createJoinMessage(
-        room.roomId,
-        nickname,
-      );
-      this.chatGateway.broadcastSystemMessage(room.roomId, joinMsg);
     }
 
     return 'ok';
