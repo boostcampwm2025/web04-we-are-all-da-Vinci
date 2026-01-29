@@ -19,7 +19,7 @@ export const Practice = () => {
           showLogo={false}
         />
 
-        <div className="relative flex min-h-0 gap-2 overflow-hidden rounded-2xl bg-white/5">
+        <div className="relative flex min-h-0 flex-col gap-2 overflow-hidden rounded-2xl bg-white/5 md:flex-row">
           <ImagePreviewCard promptStrokes={practicePrompt || []} />
           <DrawingCanvas
             isPractice

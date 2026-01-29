@@ -90,7 +90,7 @@ export const Waiting = () => {
           <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto md:flex-row md:overflow-visible xl:gap-7">
             <section className="flex flex-col gap-4 md:h-full md:flex-1">
               <div className="flex min-h-0 flex-col gap-4 md:h-full">
-                <div className="min-h-0 md:flex-1">
+                <div className="relative min-h-0 md:flex-1">
                   <PlayerListSection
                     players={players}
                     maxPlayer={settings.maxPlayer}
