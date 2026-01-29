@@ -1,42 +1,10 @@
-import { useState } from 'react';
+import { PlayerSimilarityDetailTooltip } from '@/entities/similarity';
 import type { Stroke } from '@/entities/similarity/model';
 import { DrawingReplayCanvas } from '@/features/replayingCanvas';
 import type { Similarity } from '@/features/similarity';
-import { PlayerSimilarityDetailTooltip } from '@/entities/similarity';
 import { UserAvatar } from '@/shared/ui';
-
-const getRankStyles = (rank: number) => {
-  if (rank === 1) {
-    return {
-      bg: 'bg-surface-warm',
-      border: 'border-rank-gold',
-      badge: 'bg-rank-gold text-white',
-      text: 'text-rank-gold-text',
-    };
-  }
-  if (rank === 2) {
-    return {
-      bg: 'bg-surface-muted',
-      border: 'border-rank-silver',
-      badge: 'bg-rank-silver text-white',
-      text: 'text-rank-silver-text',
-    };
-  }
-  if (rank === 3) {
-    return {
-      bg: 'bg-surface-warm',
-      border: 'border-rank-bronze',
-      badge: 'bg-rank-bronze text-white',
-      text: 'text-rank-bronze-text',
-    };
-  }
-  return {
-    bg: 'bg-white',
-    border: 'border-gray-200',
-    badge: 'bg-gray-300 text-gray-700',
-    text: '',
-  };
-};
+import { useState } from 'react';
+import { getRankStyles } from '../lib/rankStyles';
 
 interface PlayerReplayCardProps {
   rank: number;
@@ -47,7 +15,7 @@ interface PlayerReplayCardProps {
   isCurrentUser?: boolean;
 }
 
-export const PlayerReplayCard = ({
+const PlayerReplayCard = ({
   rank,
   nickname,
   profileId,
@@ -69,7 +37,7 @@ export const PlayerReplayCard = ({
 
   return (
     <div
-      className="relative flex flex-col"
+      className="relative flex h-full w-full flex-col"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -81,7 +49,7 @@ export const PlayerReplayCard = ({
       )}
 
       <div
-        className={`flex flex-col rounded-xl border-2 p-2 shadow-lg transition-colors ${rankStyles.border} ${rankStyles.bg}`}
+        className={`flex h-full w-full flex-col rounded-xl border-2 p-2 shadow-lg transition-colors ${rankStyles.border} ${rankStyles.bg}`}
       >
         {/* Player Info Header */}
         <div className="mb-1 flex shrink-0 items-center justify-between">
@@ -89,7 +57,7 @@ export const PlayerReplayCard = ({
             <span
               className={`flex h-6 min-w-[24px] shrink-0 items-center justify-center rounded-full px-1 text-xs font-bold ${rankStyles.badge}`}
             >
-              #{rank}
+              {rank}
             </span>
             <UserAvatar name={profileId} size={24} />
             <h3 className="font-handwriting truncate text-base font-bold">
@@ -100,19 +68,19 @@ export const PlayerReplayCard = ({
         </div>
 
         {/* Canvas */}
-        <div className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg border-1 border-gray-300 bg-gray-50">
-          {strokes.length > 0 ? (
-            <div className="flex h-full w-full items-center justify-center">
+        <div className="relative min-h-0 flex-1 overflow-hidden rounded-lg bg-gray-50">
+          <div className="absolute inset-0 flex items-center justify-center">
+            {strokes.length > 0 ? (
               <DrawingReplayCanvas
                 strokes={strokes}
                 speed={0}
                 loop={true}
                 className="max-h-full max-w-full rounded-lg border-2 border-gray-300"
               />
-            </div>
-          ) : (
-            <span className="text-xs text-gray-400">그림 없음</span>
-          )}
+            ) : (
+              <span className="text-xs text-gray-400">그림 없음</span>
+            )}
+          </div>
         </div>
 
         {/* Similarity Score */}
@@ -138,3 +106,4 @@ export const PlayerReplayCard = ({
     </div>
   );
 };
+export default PlayerReplayCard;

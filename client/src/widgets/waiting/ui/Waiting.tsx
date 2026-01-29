@@ -3,7 +3,7 @@ import {
   selectSettings,
   useGameStore,
   useIsHost,
-} from '@/entities/gameRoom/model';
+} from '@/entities/gameRoom';
 import { GameSettingsCard } from '@/entities/gameSettings';
 import { ChatBox, useChatActions, useChatStore } from '@/features/chat';
 import { PlayerListSection } from '@/features/playerList';

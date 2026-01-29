@@ -1,8 +1,8 @@
+import { initialState, useGameStore } from '@/entities/gameRoom';
+import { createMockPlayers, MOCK_SETTINGS } from '@/test/mocks/mockData';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MemoryRouter } from 'react-router-dom';
 import { Waiting } from './Waiting';
-import { useGameStore, initialState } from '@/entities/gameRoom/model';
-import { createMockPlayers, MOCK_SETTINGS } from '@/test/mocks/mockData';
 
 interface StoryArgs {
   playerCount: number;

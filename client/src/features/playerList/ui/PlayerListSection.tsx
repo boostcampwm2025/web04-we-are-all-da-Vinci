@@ -1,4 +1,4 @@
-import { useGameStore } from '@/entities/gameRoom/model';
+import { useGameStore } from '@/entities/gameRoom';
 import { EmptySlot, PlayerCard } from '@/entities/player';
 import type { Player } from '@/entities/player/model';
 import { getSocket } from '@/shared/api/socket';

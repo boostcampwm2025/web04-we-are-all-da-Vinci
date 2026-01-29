@@ -1,9 +1,9 @@
+import { useMyRank } from '@/entities/gameRoom';
+import { StandingRow } from '@/entities/ranking';
 import { Timer } from '@/entities/timer';
 import { GameHeader } from '@/shared/ui';
-import { StandingRow } from '@/entities/ranking';
-import { useRoundStanding } from '../model/useRoundStanding';
-import { useMyRank } from '@/entities/gameRoom/model';
 import { getRankMessage } from '../lib/getRankMessage';
+import { useRoundStanding } from '../model/useRoundStanding';
 
 export const RoundStanding = () => {
   const {

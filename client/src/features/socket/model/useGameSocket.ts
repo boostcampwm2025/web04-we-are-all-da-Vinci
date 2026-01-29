@@ -1,12 +1,11 @@
 import type { GameEndResponse } from '@/entities/gameResult';
-import type { GameRoom } from '@/entities/gameRoom/model';
-import { useGameStore } from '@/entities/gameRoom/model';
+import { useGameStore, type GameRoom } from '@/entities/gameRoom';
 import type { Player } from '@/entities/player/model';
 import type { RankingEntry } from '@/entities/ranking';
 import type {
   RoundReplayResponse,
   RoundStandingResponse,
-} from '@/entities/roundResult/model';
+} from '@/entities/roundResult';
 import type { Stroke } from '@/entities/similarity';
 import type { WaitlistResponse } from '@/features/waitingRoomActions';
 import { useChatStore, type ChatMessage } from '@/features/chat';
@@ -261,12 +260,22 @@ export const useGameSocket = () => {
       addChatMessage(message);
     });
 
-    socket.on(CLIENT_EVENTS.CHAT_HISTORY, (messages: ChatMessage[]) => {
-      setChatHistory(messages);
-    });
+    socket.on(
+      CLIENT_EVENTS.CHAT_HISTORY,
+      (payload: { roomId: string; messages: ChatMessage[] }) => {
+        setChatHistory(payload.messages);
+      },
+    );
 
     socket.on(CLIENT_EVENTS.CHAT_ERROR, (error: { message: string }) => {
-      addToast(error.message, 'error');
+      // 채팅 에러는 해당 유저의 채팅창에만 시스템 메시지로 표시
+      const errorMessage: ChatMessage = {
+        type: 'system',
+        message: error.message,
+        timestamp: Date.now(),
+        systemType: 'timer_warning', // 경고 스타일로 표시
+      };
+      addChatMessage(errorMessage);
     });
 
     // Cleanup
