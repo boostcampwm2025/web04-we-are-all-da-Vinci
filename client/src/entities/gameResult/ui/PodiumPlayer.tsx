@@ -14,8 +14,8 @@ const PODIUM_CONFIG = {
     textColor: 'text-rank-gold-text',
     nameSize: 'text-2xl',
     scoreSize: 'text-2xl',
-    podiumHeight: 'h-28 sm:h-32',
-    podiumWidth: 'w-20 sm:w-28',
+    podiumHeight: 'h-42 xl:h-32',
+    podiumWidth: 'w-18 xl:w-28',
     podiumBg: 'bg-yellow-100',
     podiumBorder: 'border-yellow-200',
     badge: {
@@ -33,7 +33,7 @@ const PODIUM_CONFIG = {
     nameSize: 'text-lg',
     scoreSize: 'text-lg',
     podiumHeight: 'h-20 sm:h-24',
-    podiumWidth: 'w-16 sm:w-20',
+    podiumWidth: 'w-16 xl:w-20',
     podiumBg: 'bg-gray-100',
     podiumBorder: 'border-gray-200',
     badge: {
@@ -51,7 +51,7 @@ const PODIUM_CONFIG = {
     nameSize: 'text-lg',
     scoreSize: 'text-lg',
     podiumHeight: 'h-14 sm:h-16',
-    podiumWidth: 'w-16 sm:w-20',
+    podiumWidth: 'w-16 xl:w-20',
     podiumBg: 'bg-orange-100',
     podiumBorder: 'border-orange-200',
     badge: {
@@ -76,8 +76,8 @@ const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
             name={player.profileId}
             className={
               position === 'first'
-                ? 'h-16 w-16 xl:h-20 xl:w-20'
-                : 'h-12 w-12 xl:h-16 xl:w-16'
+                ? 'h-14 w-14 xl:h-20 xl:w-20'
+                : 'h-10 w-10 xl:h-16 xl:w-16'
             }
           />
         </div>

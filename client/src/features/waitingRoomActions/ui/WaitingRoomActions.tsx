@@ -37,6 +37,7 @@ export const WaitingRoomActions = ({
           text="나가기"
           path={PATHS.HOME}
           color="red"
+          className="text-lg md:text-xl"
         />
       </div>
       <div className="flex-1">
@@ -48,6 +49,7 @@ export const WaitingRoomActions = ({
           color="blue"
           onClick={onStartClick}
           disabled={!isHost || !canStart}
+          className="text-lg md:text-xl"
         />
       </div>
     </div>

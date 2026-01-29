@@ -2,6 +2,7 @@ export const PLAYERS_PER_PAGE = 8;
 export const MOBILE_PLAYERS_PER_PAGE = 4;
 export const CARD_ASPECT_RATIO = 4 / 5;
 export const GAP = 8;
+export const MOBILE_BREAKPOINT = 1280;
 
 export interface GridLayout {
   cols: number;

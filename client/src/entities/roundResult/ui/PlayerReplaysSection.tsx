@@ -1,7 +1,11 @@
 import { useCurrentPlayer } from '@/entities/gameRoom';
 import type { Stroke } from '@/entities/similarity/model';
 import type { Similarity } from '@/features/similarity';
-import { PLAYERS_PER_PAGE, getGridLayout } from '../lib/gridLayout';
+import {
+  MOBILE_BREAKPOINT,
+  PLAYERS_PER_PAGE,
+  getGridLayout,
+} from '../lib/gridLayout';
 import { usePlayerPagination } from '../model/usePlayerPagination';
 import { useResponsiveCardSize } from '../model/useResponsiveCardSize';
 import PlayerReplayCard from './PlayerReplayCard';
@@ -23,7 +27,7 @@ interface PlayerReplaysSectionProps {
 const PlayerReplaysSection = ({ players = [] }: PlayerReplaysSectionProps) => {
   const currentPlayer = useCurrentPlayer();
   const mySocketId = currentPlayer?.socketId;
-  const isMobile = useMediaQuery('(max-width: 1024px)');
+  const isMobile = useMediaQuery(`(max-width: ${MOBILE_BREAKPOINT}px)`);
 
   // 페이지네이션
   const {
@@ -47,12 +51,12 @@ const PlayerReplaysSection = ({ players = [] }: PlayerReplaysSectionProps) => {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="mb-2 flex shrink-0 items-center gap-4">
+      <div className="mb-2 flex shrink-0 items-center justify-between md:justify-start md:gap-4">
         <div className="flex items-center gap-1.5">
           <span className="material-symbols-outlined text-base text-indigo-500">
             replay
           </span>
-          <h2 className="font-handwriting text-xl font-bold text-gray-800">
+          <h2 className="font-handwriting text-sm font-bold text-gray-800 md:text-xl">
             플레이어 리플레이
           </h2>
         </div>
