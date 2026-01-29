@@ -30,6 +30,8 @@ export const RedisKeys = {
   drawingRoundScan: (roomId: string, round: number) =>
     `drawing:${roomId}:${round}:*`,
   drawingGameScan: (roomId: string) => `drawing:${roomId}:*`,
+  drawingPlayerScan: (roomId: string, socketId: string) =>
+    `drawing:${roomId}:*:${socketId}`,
 
   // Chat
   chat: (roomId: string) => `chat:${roomId}`,

@@ -15,6 +15,7 @@ import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
 import { RoundService } from 'src/round/round.service';
 import { CreateRoomDto } from './dto/create-room.dto';
+import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
 
 interface PhaseChangeHandler {
   (roomId: string, joinedPlayers: Player[]): Promise<void>;
@@ -29,6 +30,7 @@ export class GameService implements OnModuleInit {
     private readonly waitlistService: WaitlistCacheService,
     private readonly playerCacheService: PlayerCacheService,
     private readonly leaderboardCacheService: LeaderboardCacheService,
+    private readonly progressCacheService: GameProgressCacheService,
     private readonly roundService: RoundService,
     private readonly promptService: PromptService,
   ) {}
@@ -94,6 +96,7 @@ export class GameService implements OnModuleInit {
     await this.cacheService.deletePlayer(roomId, socketId);
     await this.playerCacheService.delete(socketId);
     await this.leaderboardCacheService.delete(roomId, socketId);
+    await this.progressCacheService.deletePlayer(roomId, socketId);
 
     const updatedRoom = await this.cacheService.getRoom(roomId);
     return updatedRoom;
