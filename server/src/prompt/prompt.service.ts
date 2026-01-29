@@ -82,4 +82,10 @@ export class PromptService {
     const promptStrokesData = JSON.parse(data) as Stroke[][];
     return promptStrokesData;
   }
+
+  async getRandomPrompt(): Promise<Stroke[]> {
+    const promptStrokesData = await this.loadPromptStrokes();
+    const randomIdx = Math.floor(Math.random() * promptStrokesData.length);
+    return promptStrokesData[randomIdx];
+  }
 }

@@ -1,93 +1,43 @@
+import { initialState, useGameStore } from '@/entities/gameRoom';
+import { createMockLiveRankings, MOCK_STROKES } from '@/test/mocks/mockData';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Drawing } from './Drawing';
-import { useGameStore } from '@/entities/gameRoom/model';
 import { useEffect } from 'react';
-import type { RankingEntry } from '@/entities/ranking';
+import { Drawing } from './Drawing';
 
-// 공통 더미 데이터
-const mockLiveRankings: RankingEntry[] = [
-  {
-    socketId: 'user1',
-    nickname: '다빈치',
-    profileId: '1',
-    similarity: 95.5,
-    rank: 1,
-    previousRank: 2,
-  },
-  {
-    socketId: 'user2',
-    nickname: '피카소',
-    profileId: '2',
-    similarity: 88.2,
-    rank: 2,
-    previousRank: 1,
-  },
-  {
-    socketId: 'user3',
-    nickname: '고흐',
-    profileId: '3',
-    similarity: 75.0,
-    rank: 3,
-    previousRank: 3,
-  },
-  {
-    socketId: 'user4',
-    nickname: '미켈란젤로',
-    profileId: '4',
-    similarity: 62.1,
-    rank: 4,
-    previousRank: null,
-  },
-];
+interface StoryArgs {
+  rankingCount: number;
+}
 
-const meta = {
-  title: 'widgets/Drawing',
+const StoryWrapper = ({ rankingCount }: StoryArgs) => {
+  useEffect(() => {
+    useGameStore.setState({
+      ...initialState,
+      isConnected: true,
+      phase: 'DRAWING',
+      currentRound: 1,
+      timer: 90,
+      promptStrokes: MOCK_STROKES,
+      liveRankings:
+        rankingCount > 0 ? createMockLiveRankings(rankingCount) : [],
+    });
+  }, [rankingCount]);
+
+  return <Drawing />;
+};
+
+const meta: Meta<StoryArgs> = {
+  title: 'Widgets/Drawing',
   component: Drawing,
-  parameters: {
-    layout: 'fullscreen',
+  parameters: { layout: 'fullscreen' },
+  argTypes: {
+    rankingCount: { control: { type: 'range', min: 0, max: 30, step: 1 } },
   },
-  decorators: [
-    (Story) => {
-      useEffect(() => {
-        // 스토리 로드시 상태 초기화
-        useGameStore.setState({
-          currentRound: 3,
-          timer: 45,
-          liveRankings: mockLiveRankings,
-          isConnected: true,
-        });
-      }, []);
-      return <Story />;
-    },
-  ],
-} satisfies Meta<typeof Drawing>;
+  render: (args) => <StoryWrapper {...args} />,
+};
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj<StoryArgs>;
 
-// 1. 데스크탑 뷰 (기본)
-export const Desktop: Story = {
-  parameters: {
-    viewport: {
-      defaultViewport: 'responsive',
-    },
-  },
-};
-
-// 2. 태블릿 뷰 (iPad)
-export const Tablet: Story = {
-  parameters: {
-    viewport: {
-      defaultViewport: 'ipad',
-    },
-  },
-};
-
-// 3. 모바일 뷰 (iPhone 14)
-export const Mobile: Story = {
-  parameters: {
-    viewport: {
-      defaultViewport: 'iphone14',
-    },
-  },
+export const Default: Story = {
+  args: { rankingCount: 4 },
 };

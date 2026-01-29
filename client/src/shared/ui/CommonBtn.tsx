@@ -1,11 +1,12 @@
 import { useNavigate } from 'react-router-dom';
+import { cn } from '../lib/classNames';
 
 type Variant = 'scribble' | 'radius';
 type Size = 'sm' | 'md' | 'lg';
 
 interface CommonBtnProps {
   icon?: string;
-  text: string;
+  text?: string;
   variant: Variant;
   size?: Size;
   color?: string;
@@ -13,7 +14,7 @@ interface CommonBtnProps {
   onClick?: () => void;
   disabled?: boolean;
   ariaLabel?: string;
-  className?: string;
+  className?: string; // 추가적인 스타일링을 위한 prop
 }
 
 const CommonBtn = ({
@@ -26,7 +27,7 @@ const CommonBtn = ({
   onClick,
   disabled = false,
   ariaLabel,
-  className = '',
+  className,
 }: CommonBtnProps) => {
   const navigate = useNavigate();
 
@@ -66,9 +67,9 @@ const CommonBtn = ({
 
   const iconClasses = {
     scribble: {
-      sm: 'material-symbols-outlined mr-1 text-lg transition-transform group-hover:scale-110',
-      md: 'material-symbols-outlined mr-1 text-2xl transition-transform group-hover:scale-110',
-      lg: 'material-symbols-outlined mr-2 text-3xl transition-transform group-hover:scale-110',
+      sm: 'material-symbols-outlined text-lg transition-transform group-hover:scale-110',
+      md: 'material-symbols-outlined text-2xl transition-transform group-hover:scale-110',
+      lg: 'material-symbols-outlined text-3xl transition-transform group-hover:scale-110',
     },
     radius: {
       sm: 'material-symbols-outlined text-lg',
@@ -95,10 +96,19 @@ const CommonBtn = ({
       onClick={handleClick}
       disabled={disabled}
       aria-label={ariaLabel || text}
-      className={`${baseClasses} ${variantClasses[variant]} ${disabled ? 'cursor-not-allowed opacity-50' : ''} ${className}`}
+      className={cn(
+        baseClasses,
+        variantClasses[variant],
+        disabled && 'cursor-not-allowed opacity-50',
+        className,
+      )}
     >
-      {icon && <span className={iconClasses[variant][size]}>{icon}</span>}
-      <span className={textClasses[variant][size]}>{text}</span>
+      {icon && (
+        <span className={cn(iconClasses[variant][size], text && 'mr-1')}>
+          {icon}
+        </span>
+      )}
+      {text && <span className={textClasses[variant][size]}>{text}</span>}
     </button>
   );
 };

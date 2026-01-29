@@ -6,9 +6,10 @@ import { RedisModule } from 'src/redis/redis.module';
 import { RoundModule } from 'src/round/round.module';
 import { TimerModule } from 'src/timer/timer.module';
 import { PromptModule } from 'src/prompt/prompt.module';
+import { MetricModule } from 'src/metric/metric.module';
 
 @Module({
-  imports: [RedisModule, RoundModule, TimerModule, PromptModule],
+  imports: [RedisModule, RoundModule, TimerModule, PromptModule, MetricModule],
   controllers: [GameController],
   providers: [GameService, GameGateway],
 })

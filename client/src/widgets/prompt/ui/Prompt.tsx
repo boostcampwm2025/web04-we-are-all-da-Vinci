@@ -1,6 +1,6 @@
 import { Timer } from '@/entities/timer';
 
-import { useGameStore } from '@/entities/gameRoom/model';
+import { useGameStore } from '@/entities/gameRoom';
 import { ImagePreviewCard } from '@/entities/gameStart';
 import { GameHeader } from '@/shared/ui';
 

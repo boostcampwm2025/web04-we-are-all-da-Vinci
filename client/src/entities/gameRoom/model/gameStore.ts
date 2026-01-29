@@ -1,7 +1,7 @@
-import type { FinalResult, Highlight } from '@/entities/gameResult/model';
+import type { FinalResult, Highlight } from '@/entities/gameResult';
 import type { Player } from '@/entities/player/model';
 import type { RankingEntry } from '@/entities/ranking';
-import type { RoundResult, PlayerScore } from '@/entities/roundResult/model';
+import type { RoundResult, PlayerScore } from '@/entities/roundResult';
 import type { Stroke } from '@/entities/similarity';
 import { getSocket } from '@/shared/api';
 import type { Phase } from '@/shared/config';
@@ -9,7 +9,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import type { GameRoom } from './types';
 
-interface GameState extends GameRoom {
+export interface GameState extends GameRoom {
   // 소켓 연결 상태
   isConnected: boolean;
 
@@ -29,6 +29,12 @@ interface GameState extends GameRoom {
   alertMessage: string | null;
   pendingNavigation: string | null; // 모달 확인 후 이동할 경로
 
+  // 대기열 및 연습모드 상태
+  isInWaitlist: boolean;
+  isPracticing: boolean;
+  practicePrompt: Stroke[] | null;
+  gameProgress: { currentRound: number; totalRounds: number };
+
   // Actions
   setConnected: (isConnected: boolean) => void;
   updateRoom: (room: Partial<GameRoom>) => void;
@@ -41,10 +47,20 @@ interface GameState extends GameRoom {
   setHighlight: (highlight: Highlight) => void;
   setAlertMessage: (message: string | null) => void;
   setPendingNavigation: (path: string | null) => void;
+
+  // 대기열 전용 Actions
+  setIsInWaitlist: (isInWaitlist: boolean) => void;
+  setIsPracticing: (isPracticing: boolean) => void;
+  setPracticePrompt: (strokes: Stroke[] | null) => void;
+  setGameProgress: (progress: {
+    currentRound: number;
+    totalRounds: number;
+  }) => void;
+
   reset: () => void;
 }
 
-const initialState = {
+export const initialState = {
   isConnected: false,
   roomId: '',
   players: [],
@@ -65,6 +81,11 @@ const initialState = {
   highlight: null,
   alertMessage: null,
   pendingNavigation: null,
+
+  isInWaitlist: false,
+  isPracticing: false,
+  practicePrompt: null,
+  gameProgress: { currentRound: 0, totalRounds: 0 },
 };
 
 export const useGameStore = create<GameState>()(
@@ -97,6 +118,14 @@ export const useGameStore = create<GameState>()(
       setAlertMessage: (alertMessage) => set({ alertMessage }),
 
       setPendingNavigation: (pendingNavigation) => set({ pendingNavigation }),
+
+      setIsInWaitlist: (isInWaitlist) => set({ isInWaitlist }),
+
+      setIsPracticing: (isPracticing) => set({ isPracticing }),
+
+      setPracticePrompt: (practicePrompt) => set({ practicePrompt }),
+
+      setGameProgress: (gameProgress) => set({ gameProgress }),
 
       reset: () => set(initialState),
     }),

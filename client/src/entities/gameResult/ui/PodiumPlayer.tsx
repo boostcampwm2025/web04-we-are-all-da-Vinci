@@ -1,4 +1,3 @@
-import { useIsCurrentUser } from '@/entities/gameRoom/model';
 import { UserAvatar } from '@/shared/ui';
 import type { FinalResult } from '../model/types';
 
@@ -10,17 +9,17 @@ interface PodiumPlayerProps {
 const PODIUM_CONFIG = {
   first: {
     order: 'order-1 sm:order-2',
-    size: 'h-28 w-28 sm:h-32 sm:w-32',
-    borderColor: 'border-yellow-400',
-    textColor: 'text-yellow-600',
-    nameSize: 'text-3xl',
+    size: '',
+    borderColor: 'border-rank-gold',
+    textColor: 'text-rank-gold-text',
+    nameSize: 'text-2xl',
     scoreSize: 'text-2xl',
     podiumHeight: 'h-28 sm:h-32',
-    podiumWidth: 'w-20 sm:w-24',
+    podiumWidth: 'w-20 sm:w-28',
     podiumBg: 'bg-yellow-100',
     podiumBorder: 'border-yellow-200',
     badge: {
-      bg: 'bg-yellow-500',
+      bg: 'bg-rank-gold',
       text: '#1',
     },
     showTrophy: true,
@@ -28,17 +27,17 @@ const PODIUM_CONFIG = {
   },
   second: {
     order: 'order-2 sm:order-1',
-    size: 'h-20 w-20 sm:h-24 sm:w-24',
-    borderColor: 'border-indigo-400',
-    textColor: 'text-indigo-600',
-    nameSize: 'text-xl',
+    size: '',
+    borderColor: 'border-rank-silver',
+    textColor: 'text-rank-silver-text',
+    nameSize: 'text-lg',
     scoreSize: 'text-lg',
     podiumHeight: 'h-20 sm:h-24',
     podiumWidth: 'w-16 sm:w-20',
-    podiumBg: 'bg-indigo-100',
-    podiumBorder: 'border-indigo-200',
+    podiumBg: 'bg-gray-100',
+    podiumBorder: 'border-gray-200',
     badge: {
-      bg: 'bg-indigo-500',
+      bg: 'bg-rank-silver',
       text: '#2',
     },
     showTrophy: false,
@@ -46,17 +45,17 @@ const PODIUM_CONFIG = {
   },
   third: {
     order: 'order-3',
-    size: 'h-20 w-20 sm:h-24 sm:w-24',
-    borderColor: 'border-pink-400',
-    textColor: 'text-pink-600',
-    nameSize: 'text-xl',
+    size: '',
+    borderColor: 'border-rank-bronze',
+    textColor: 'text-rank-bronze-text',
+    nameSize: 'text-lg',
     scoreSize: 'text-lg',
     podiumHeight: 'h-14 sm:h-16',
     podiumWidth: 'w-16 sm:w-20',
-    podiumBg: 'bg-pink-100',
-    podiumBorder: 'border-pink-200',
+    podiumBg: 'bg-orange-100',
+    podiumBorder: 'border-orange-200',
     badge: {
-      bg: 'bg-pink-400',
+      bg: 'bg-rank-bronze',
       text: '#3',
     },
     showTrophy: false,
@@ -64,8 +63,7 @@ const PODIUM_CONFIG = {
   },
 };
 
-export const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
-  const isCurrentUser = useIsCurrentUser(player.socketId);
+const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
   const config = PODIUM_CONFIG[position];
 
   return (
@@ -99,7 +97,6 @@ export const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
         className={`font-handwriting ${config.nameSize} font-bold text-gray-800 ${position === 'first' ? 'mt-4' : ''}`}
       >
         {player.nickname}
-        {isCurrentUser && ' (You)'}
       </h3>
 
       <p className={`${config.textColor} ${config.scoreSize} font-bold`}>
@@ -112,3 +109,4 @@ export const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
     </div>
   );
 };
+export default PodiumPlayer;

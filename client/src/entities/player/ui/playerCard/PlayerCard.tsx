@@ -1,4 +1,4 @@
-import { useIsCurrentUser, useIsHost } from '@/entities/gameRoom/model';
+import { useIsCurrentUser, useIsHost } from '@/entities/gameRoom';
 import { UserAvatar } from '@/shared/ui';
 
 interface PlayerCardProps {

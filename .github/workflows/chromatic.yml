@@ -38,9 +38,25 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run Chromatic
+        id: chromatic
         uses: chromaui/action@v13
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           token: ${{ secrets.GITHUB_TOKEN }}
           workingDir: ./client
           onlyChanged: true
+
+      - name: Comment PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: chromatic
+          skip_unchanged: true
+          message: |
+            ## 🎨 Chromatic 리뷰
+
+            | 항목 | 링크 |
+            |------|------|
+            | 👀 UI 변경사항 리뷰 | ${{ steps.chromatic.outputs.buildUrl }} |
+            | 📖 Storybook | ${{ steps.chromatic.outputs.storybookUrl }} |
+
+            변경된 스토리: ${{ steps.chromatic.outputs.changeCount }}개 • 총 컴포넌트: ${{ steps.chromatic.outputs.componentCount }}개
