@@ -1,5 +1,5 @@
 import { RankingPanel } from '@/entities/drawing';
-import { useGameStore } from '@/entities/gameRoom/model';
+import { useGameStore } from '@/entities/gameRoom';
 import { Timer } from '@/entities/timer';
 import { DrawingCanvas } from '@/features/drawingCanvas';
 import { LiveRankingList } from '@/features/liveRanking';

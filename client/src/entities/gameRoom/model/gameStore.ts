@@ -1,7 +1,7 @@
 import type { FinalResult, Highlight } from '@/entities/gameResult';
 import type { Player } from '@/entities/player/model';
 import type { RankingEntry } from '@/entities/ranking';
-import type { RoundResult, PlayerScore } from '@/entities/roundResult/model';
+import type { RoundResult, PlayerScore } from '@/entities/roundResult';
 import type { Stroke } from '@/entities/similarity';
 import { getSocket } from '@/shared/api';
 import type { Phase } from '@/shared/config';

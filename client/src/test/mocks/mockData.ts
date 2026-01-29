@@ -1,7 +1,7 @@
 import type { FinalResult, Highlight } from '@/entities/gameResult';
 import type { Player } from '@/entities/player/model';
 import type { RankingEntry } from '@/entities/ranking';
-import type { RoundResult, PlayerScore } from '@/entities/roundResult/model';
+import type { PlayerScore, RoundResult } from '@/entities/roundResult';
 import type { Similarity } from '@/features/similarity';
 import { MOCK_STROKES } from './mockStrokes';
 

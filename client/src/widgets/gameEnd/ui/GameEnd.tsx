@@ -1,5 +1,5 @@
 import { FinalRankingCard, PotgCard } from '@/entities/gameResult';
-import { useGameStore, useIsHost } from '@/entities/gameRoom/model';
+import { useGameStore, useIsHost } from '@/entities/gameRoom';
 import { TIMER } from '@/entities/timer/config';
 import { ChatBox, useChatActions, useChatStore } from '@/features/chat';
 import { getSocket } from '@/shared/api';

@@ -1,5 +1,5 @@
 import { drawStrokesOnCanvas } from '@/entities/drawing/lib/drawStrokesOnCanvas';
-import { selectPhase, useGameStore } from '@/entities/gameRoom/model';
+import { selectPhase, useGameStore } from '@/entities/gameRoom';
 import { useColorSelection } from '@/features/drawingCanvas/model/useColorSelection';
 import { useMouseDrawing } from '@/features/drawingCanvas/model/useMouseDrawing';
 import { useStrokes } from '@/features/drawingCanvas/model/useStrokes';
