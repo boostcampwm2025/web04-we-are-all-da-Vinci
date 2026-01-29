@@ -112,7 +112,7 @@ export class GameRoomCacheService {
     end
 
     if target_obj.isHost == true and length > 1 then
-        local host_index = 1
+        local host_index = 2
         
         local new_raw = players[host_index]
         local new_obj = cjson.decode(new_raw)
