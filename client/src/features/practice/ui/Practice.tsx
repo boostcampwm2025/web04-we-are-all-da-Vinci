@@ -1,4 +1,4 @@
-import { useGameStore } from '@/entities/gameRoom/model';
+import { useGameStore } from '@/entities/gameRoom';
 import { ImagePreviewCard } from '@/entities/gameStart';
 import { DrawingCanvas } from '@/features/drawingCanvas';
 import { GameHeader } from '@/shared/ui';

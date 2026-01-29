@@ -1,4 +1,4 @@
-import { useGameStore } from '@/entities/gameRoom/model';
+import { useGameStore } from '@/entities/gameRoom';
 import { CommonBtn } from '@/shared/ui';
 import { SERVER_EVENTS } from '@/shared/config';
 import { getSocket } from '@/shared/api';
