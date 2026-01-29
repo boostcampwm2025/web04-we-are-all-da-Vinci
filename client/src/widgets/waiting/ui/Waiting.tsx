@@ -123,7 +123,7 @@ export const Waiting = () => {
                 <ChatBox
                   messages={messages}
                   onSendMessage={sendMessage}
-                  className="h-full"
+                  className="h-72 md:h-full"
                 />
               </div>
             </section>

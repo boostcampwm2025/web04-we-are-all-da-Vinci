@@ -52,11 +52,11 @@ const RoundReplay = () => {
             </section>
 
             {/* 우측: 채팅 */}
-            <section className="flex w-72 shrink-0 flex-col md:w-72">
+            <section className="flex w-full shrink-0 flex-col md:w-72">
               <ChatBox
                 messages={messages}
                 onSendMessage={sendMessage}
-                className="h-full"
+                className="h-72 md:h-full"
               />
             </section>
           </div>
