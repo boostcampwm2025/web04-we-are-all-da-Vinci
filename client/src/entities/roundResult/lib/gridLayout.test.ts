@@ -24,45 +24,45 @@ describe('gridLayout 상수', () => {
 describe('getGridLayout', () => {
   describe('2명 이하일 때 1행 그리드', () => {
     it('0명일 때 최소 1열 보장 (1x1)', () => {
-      expect(getGridLayout(0)).toEqual({ cols: 1, rows: 1 });
+      expect(getGridLayout(0, false)).toEqual({ cols: 1, rows: 1 });
     });
 
     it('1명일 때 1x1 그리드', () => {
-      expect(getGridLayout(1)).toEqual({ cols: 1, rows: 1 });
+      expect(getGridLayout(1, false)).toEqual({ cols: 1, rows: 1 });
     });
 
     it('2명일 때 2x1 그리드', () => {
-      expect(getGridLayout(2)).toEqual({ cols: 2, rows: 1 });
+      expect(getGridLayout(2, false)).toEqual({ cols: 2, rows: 1 });
     });
   });
 
   describe('3~4명일 때 2x2 그리드', () => {
     it('3명일 때 2x2 그리드', () => {
-      expect(getGridLayout(3)).toEqual({ cols: 2, rows: 2 });
+      expect(getGridLayout(3, false)).toEqual({ cols: 2, rows: 2 });
     });
 
     it('4명일 때 2x2 그리드', () => {
-      expect(getGridLayout(4)).toEqual({ cols: 2, rows: 2 });
+      expect(getGridLayout(4, false)).toEqual({ cols: 2, rows: 2 });
     });
   });
 
   describe('5~6명일 때 3x2 그리드', () => {
     it('5명일 때 3x2 그리드', () => {
-      expect(getGridLayout(5)).toEqual({ cols: 3, rows: 2 });
+      expect(getGridLayout(5, false)).toEqual({ cols: 3, rows: 2 });
     });
 
     it('6명일 때 3x2 그리드', () => {
-      expect(getGridLayout(6)).toEqual({ cols: 3, rows: 2 });
+      expect(getGridLayout(6, false)).toEqual({ cols: 3, rows: 2 });
     });
   });
 
   describe('7명 이상일 때 4x2 그리드', () => {
     it('7명일 때 4x2 그리드', () => {
-      expect(getGridLayout(7)).toEqual({ cols: 4, rows: 2 });
+      expect(getGridLayout(7, false)).toEqual({ cols: 4, rows: 2 });
     });
 
     it('8명일 때 4x2 그리드', () => {
-      expect(getGridLayout(8)).toEqual({ cols: 4, rows: 2 });
+      expect(getGridLayout(8, false)).toEqual({ cols: 4, rows: 2 });
     });
   });
 });
