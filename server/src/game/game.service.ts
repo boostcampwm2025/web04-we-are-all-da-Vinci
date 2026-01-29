@@ -22,7 +22,6 @@ interface PhaseChangeHandler {
 
 @Injectable()
 export class GameService implements OnModuleInit {
-  private readonly NEXT_HOST_INDEX = 1;
   private phaseChangeHandler?: PhaseChangeHandler;
 
   constructor(
