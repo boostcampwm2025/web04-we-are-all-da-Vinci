@@ -34,7 +34,7 @@ export const GameEnd = () => {
       <main className="game-container">
         <GameHeader title={TITLES.END} showDecoration />
 
-        <div className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row lg:gap-6">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 md:flex-row md:gap-6">
           {/* 1. 좌측: POTG 카드 */}
           <section className="flex min-w-0 flex-[1.5] flex-col items-center justify-center">
             <PotgCard

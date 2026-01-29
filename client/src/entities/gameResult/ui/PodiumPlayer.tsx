@@ -74,7 +74,11 @@ const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
         >
           <UserAvatar
             name={player.profileId}
-            className={position === 'first' ? 'h-20 w-20' : 'h-16 w-16'}
+            className={
+              position === 'first'
+                ? 'h-16 w-16 xl:h-20 xl:w-20'
+                : 'h-12 w-12 xl:h-16 xl:w-16'
+            }
           />
         </div>
 
@@ -87,7 +91,7 @@ const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
         )}
 
         {position === 'first' && (
-          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 transform rounded-full bg-yellow-400 px-4 py-1 font-bold whitespace-nowrap text-gray-800 shadow-sm">
+          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 transform rounded-full bg-yellow-400 px-4 py-1 text-xs font-bold whitespace-nowrap text-gray-800 shadow-sm md:text-sm">
             오늘의 다빈치
           </div>
         )}
@@ -99,7 +103,9 @@ const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
         {player.nickname}
       </h3>
 
-      <p className={`${config.textColor} ${config.scoreSize} font-bold`}>
+      <p
+        className={`${config.textColor} ${config.scoreSize} text-sm font-bold xl:text-2xl`}
+      >
         {player.score.toLocaleString()} 점
       </p>
 
