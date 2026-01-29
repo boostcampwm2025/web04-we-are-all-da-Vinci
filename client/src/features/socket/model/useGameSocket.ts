@@ -1,27 +1,23 @@
 import type { GameEndResponse } from '@/entities/gameResult';
 import { useGameStore, type GameRoom } from '@/entities/gameRoom';
 import type { Player } from '@/entities/player/model';
-import type { RankingEntry } from '@/entities/ranking';
 import type {
   RoundReplayResponse,
   RoundStandingResponse,
 } from '@/entities/roundResult';
 import type { Stroke } from '@/entities/similarity';
-import type { WaitlistResponse } from '@/features/waitingRoomActions';
 import { useChatStore, type ChatMessage } from '@/features/chat';
+import type { WaitlistResponse } from '@/features/waitingRoomActions';
 import { disconnectSocket, getSocket } from '@/shared/api';
 import { CLIENT_EVENTS, SERVER_EVENTS } from '@/shared/config';
 import { useToastStore } from '@/shared/model';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-
-// 서버에서 오는 랭킹 데이터 타입
-interface ServerRankingEntry {
-  socketId: string;
-  nickname: string;
-  profileId: string;
-  similarity: number;
-}
+import {
+  buildRankings,
+  processRoomMetadata,
+  type ServerRankingEntry,
+} from '../lib/socketHandlers';
 
 export const useGameSocket = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -36,6 +32,7 @@ export const useGameSocket = () => {
   );
 
   // Zustand actions
+  const setMySocketId = useGameStore((state) => state.setMySocketId);
   const setConnected = useGameStore((state) => state.setConnected);
   const updateRoom = useGameStore((state) => state.updateRoom);
   const setTimer = useGameStore((state) => state.setTimer);
@@ -102,6 +99,7 @@ export const useGameSocket = () => {
 
     // 연결 이벤트
     socket.on('connect', () => {
+      setMySocketId(socket.id!);
       setConnected(true);
 
       // 방 입장
@@ -109,15 +107,16 @@ export const useGameSocket = () => {
     });
 
     socket.on('disconnect', () => {
+      setMySocketId(null);
       setConnected(false);
     });
 
     // 방 정보 업데이트
     socket.on(CLIENT_EVENTS.ROOM_METADATA, (data: GameRoom) => {
-      const currentPhase = useGameStore.getState().phase;
+      const { phase: currentPhase, mySocketId } = useGameStore.getState();
+      const result = processRoomMetadata(data, currentPhase, mySocketId!);
 
-      // GAME_END에서 WAITING으로 돌아올 때 게임 데이터 초기화
-      if (currentPhase === 'GAME_END' && data.phase === 'WAITING') {
+      if (result.shouldResetGameData) {
         useGameStore.setState({
           liveRankings: [],
           roundResults: [],
@@ -129,36 +128,20 @@ export const useGameSocket = () => {
         });
       }
 
-      const isJoined = data.players.some((p) => p.socketId === socket.id);
-      if (isJoined) {
-        // 클라이언트가 방에 참여되었다면: 대기상태 해제 후 방 상태 동기화
+      if (result.isJoined) {
         setIsInWaitlist(false);
         setIsPracticing(false);
-        updateRoom({
-          roomId: data.roomId,
-          players: data.players,
-          phase: data.phase,
-          currentRound: data.currentRound,
-          settings: data.settings,
-        });
-      } else {
-        // 아직 참여 못한 상태(대기 중)라면 phase는 유지
-        updateRoom({
-          roomId: data.roomId,
-          players: data.players,
-          phase: currentPhase,
-          currentRound: data.currentRound,
-          settings: data.settings,
-        });
       }
+
+      updateRoom(result.roomUpdate);
     });
 
     // 추방
     socket.on(
       CLIENT_EVENTS.ROOM_KICKED,
       ({ kickedPlayer }: { kickedPlayer: Omit<Player, 'isHost'> }) => {
-        const socketId = socket.id;
-        if (socketId === kickedPlayer.socketId) {
+        const mySocketId = useGameStore.getState().mySocketId;
+        if (mySocketId === kickedPlayer.socketId) {
           disconnectSocket();
           reset();
           navigate('/');
@@ -181,26 +164,7 @@ export const useGameSocket = () => {
       CLIENT_EVENTS.ROOM_LEADERBOARD,
       (data: { rankings: ServerRankingEntry[] }) => {
         const currentRankings = useGameStore.getState().liveRankings;
-
-        const newRankings: RankingEntry[] = data.rankings.map(
-          (entry, index) => {
-            const rank = index + 1;
-            const prevEntry = currentRankings.find(
-              (r) => r.socketId === entry.socketId,
-            );
-
-            return {
-              socketId: entry.socketId,
-              nickname: entry.nickname,
-              profileId: entry.profileId,
-              similarity: entry.similarity,
-              rank,
-              previousRank: prevEntry?.rank ?? null,
-            };
-          },
-        );
-
-        setLiveRankings(newRankings);
+        setLiveRankings(buildRankings(data.rankings, currentRankings));
       },
     );
 
@@ -306,6 +270,7 @@ export const useGameSocket = () => {
     nickname,
     profileId,
     navigate,
+    setMySocketId,
     setConnected,
     updateRoom,
     setTimer,

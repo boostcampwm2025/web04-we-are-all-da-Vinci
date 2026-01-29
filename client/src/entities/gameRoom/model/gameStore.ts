@@ -1,9 +1,8 @@
 import type { FinalResult, Highlight } from '@/entities/gameResult';
 import type { Player } from '@/entities/player/model';
 import type { RankingEntry } from '@/entities/ranking';
-import type { RoundResult, PlayerScore } from '@/entities/roundResult';
+import type { PlayerScore, RoundResult } from '@/entities/roundResult';
 import type { Stroke } from '@/entities/similarity';
-import { getSocket } from '@/shared/api';
 import type { Phase } from '@/shared/config';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
@@ -12,6 +11,7 @@ import type { GameRoom } from './types';
 export interface GameState extends GameRoom {
   // 소켓 연결 상태
   isConnected: boolean;
+  mySocketId: string | null;
 
   // 실시간 데이터
   timer: number;
@@ -36,6 +36,7 @@ export interface GameState extends GameRoom {
   gameProgress: { currentRound: number; totalRounds: number };
 
   // Actions
+  setMySocketId: (socketId: string | null) => void;
   setConnected: (isConnected: boolean) => void;
   updateRoom: (room: Partial<GameRoom>) => void;
   setTimer: (timer: number) => void;
@@ -62,6 +63,7 @@ export interface GameState extends GameRoom {
 
 export const initialState = {
   isConnected: false,
+  mySocketId: null,
   roomId: '',
   players: [],
   phase: 'WAITING' as Phase,
@@ -92,6 +94,8 @@ export const useGameStore = create<GameState>()(
   devtools(
     (set) => ({
       ...initialState,
+
+      setMySocketId: (mySocketId) => set({ mySocketId }),
 
       setConnected: (isConnected) => set({ isConnected }),
 
@@ -140,19 +144,10 @@ export const selectPhase = (state: GameState) => state.phase;
 export const selectLiveRankings = (state: GameState) => state.liveRankings;
 export const selectTimer = (state: GameState) => state.timer;
 
-// Helper: 현재 플레이어 찾기 (소켓 ID 기반)
+// Helper: 현재 플레이어 찾기 (스토어의 mySocketId 기반)
 export const useCurrentPlayer = (): Player | null => {
   const players = useGameStore(selectPlayers);
-  const isConnected = useGameStore((state) => state.isConnected);
-
-  if (!isConnected) return null;
-
-  const socket = getSocket();
-
-  const mySocketId =
-    socket && 'connected' in socket && socket.connected && socket.id
-      ? socket.id
-      : undefined;
+  const mySocketId = useGameStore((state) => state.mySocketId);
 
   if (!mySocketId) return null;
 
@@ -167,12 +162,7 @@ export const useIsHost = (): boolean => {
 
 // Helper: 특정 socketId가 현재 유저인지 확인
 export const useIsCurrentUser = (socketId: string): boolean => {
-  const isConnected = useGameStore((state) => state.isConnected);
-
-  if (!isConnected) return false;
-
-  const socket = getSocket();
-  const mySocketId = socket?.id;
+  const mySocketId = useGameStore((state) => state.mySocketId);
 
   return mySocketId === socketId;
 };
