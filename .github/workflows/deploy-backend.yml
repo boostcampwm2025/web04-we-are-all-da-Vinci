@@ -18,14 +18,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Pull latest changes
+      - name: Copy .env file
         run: |
-          cd ~/web04-we-are-all-da-Vinci
-          git pull origin ${{ github.ref_name }}
+          cd deploy 
+          cp ~/deploy/.env ./.env
+
+          if [ ! -f .env ]; then
+            echo ".env file not exists"
+            exit 1
+          fi 
+
+          echo ".env file copied."
 
       - name: Build and deploy with Docker Compose
         run: |
-          cd ~/deploy
+          cd deploy
           docker compose down
           docker compose up -d --build
 
@@ -43,5 +50,5 @@ jobs:
       - name: Show container logs
         if: always()
         run: |
-          cd ~/deploy
+          cd deploy
           docker compose logs --tail=50
