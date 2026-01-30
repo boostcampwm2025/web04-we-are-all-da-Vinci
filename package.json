@@ -7,13 +7,20 @@
     "dev:server": "pnpm -F server start:dev",
     "infra:up": "docker compose -f infra/local/compose.yaml up -d",
     "infra:down": "docker compose -f infra/local/compose.yaml down",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "perf:single": "DEBUG=socketio artillery run ./tests/artillery/single-room/load.test.yml --env-file=./tests/artillery/single-room/.env --output=./tests/artillery/single-room/output.json",
+    "perf:multi": "DEBUG=socketio artillery run ./tests/artillery/multi-room/load.test.yml --env-file=./tests/artillery/multi-room/.env --output=./tests/artillery/multi-room/output.json"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.20.0",
   "devDependencies": {
+    "@playwright/test": "^1.58.0",
+    "@types/node": "^25.1.0",
     "lefthook": "^2.0.13"
   }
 }

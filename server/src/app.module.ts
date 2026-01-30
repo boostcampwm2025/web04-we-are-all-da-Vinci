@@ -13,7 +13,7 @@ import { RoundModule } from './round/round.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.local', '.env'], // ✅ 우선순위: local → default
+      envFilePath: ['.env.test', '.env.local', '.env'], // ✅ 우선순위: test → local → default
     }),
     LoggerModule.forRootAsync({
       imports: [ConfigModule],
