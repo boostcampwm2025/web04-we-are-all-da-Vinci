@@ -5,11 +5,16 @@ import {
   GAP,
   getGridLayout,
   calculateCardSize,
+  MOBILE_PLAYERS_PER_PAGE,
 } from './gridLayout';
 
 describe('gridLayout 상수', () => {
   it('PLAYERS_PER_PAGE는 8이다', () => {
     expect(PLAYERS_PER_PAGE).toBe(8);
+  });
+
+  it('MOBILE_PLAYERS_PER_PAGE는 4이다', () => {
+    expect(MOBILE_PLAYERS_PER_PAGE).toBe(4);
   });
 
   it('CARD_ASPECT_RATIO는 0.8 (4/5)이다', () => {
@@ -63,6 +68,36 @@ describe('getGridLayout', () => {
 
     it('8명일 때 4x2 그리드', () => {
       expect(getGridLayout(8, false)).toEqual({ cols: 4, rows: 2 });
+    });
+  });
+
+  describe('isMobile이 true일 때', () => {
+    describe('2명 이하일 때 1행 그리드', () => {
+      it('0명일 때 최소 1열 보장 (1x1)', () => {
+        expect(getGridLayout(0, true)).toEqual({ cols: 1, rows: 1 });
+      });
+
+      it('1명일 때 1x1 그리드', () => {
+        expect(getGridLayout(1, true)).toEqual({ cols: 1, rows: 1 });
+      });
+
+      it('2명일 때 2x1 그리드', () => {
+        expect(getGridLayout(2, true)).toEqual({ cols: 2, rows: 1 });
+      });
+    });
+
+    describe('3명 이상일 때 2x2 그리드', () => {
+      it('3명일 때 2x2 그리드', () => {
+        expect(getGridLayout(3, true)).toEqual({ cols: 2, rows: 2 });
+      });
+
+      it('4명일 때 2x2 그리드', () => {
+        expect(getGridLayout(4, true)).toEqual({ cols: 2, rows: 2 });
+      });
+
+      it('8명일 때 2x2 그리드 (최대 4명 노출 기준)', () => {
+        expect(getGridLayout(8, true)).toEqual({ cols: 2, rows: 2 });
+      });
     });
   });
 });
