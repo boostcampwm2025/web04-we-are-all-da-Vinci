@@ -22,7 +22,8 @@ jobs:
       - name: Copy .env file
         run: |
           cd deploy 
-          cp ~/.env ./.env
+          cp ~/deploy/.env ./.env
+
           if [ ! -f .env ]; then
             echo ".env file not exists"
             exit 1
