@@ -7,7 +7,7 @@ services:
       dockerfile: ../deploy/Dockerfile
     container_name: daVinci-server
     ports:
-      - "3001:3000"
+      - "3000:3000"
     env_file: .env
     restart: unless-stopped
     networks:
