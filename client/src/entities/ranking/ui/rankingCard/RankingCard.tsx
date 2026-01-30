@@ -63,7 +63,7 @@ const RankingCard = ({
 
           {rankChange && <RankChangeIndicator change={rankChange} />}
 
-          <UserAvatar name={profileId} size={24} />
+          <UserAvatar name={profileId} className="h-8 w-8" />
 
           <span className="font-handwriting text-sm font-bold">
             {nickname}

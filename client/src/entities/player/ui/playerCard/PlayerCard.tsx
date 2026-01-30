@@ -23,15 +23,18 @@ const PlayerCard = ({
   return (
     <div
       key={id}
-      className={`relative flex flex-col items-center justify-center rounded-xl border-2 p-2 text-center transition-all sm:p-4 lg:p-6 ${
+      className={`relative flex flex-col items-center justify-center rounded-xl border-2 p-2 text-center transition-all xl:p-6 ${
         isCurrentUser
           ? 'border-interactive-light bg-interactive-subtle'
           : 'border-stroke-default bg-surface-subtle'
       }`}
     >
-      <UserAvatar name={profileId} size={60} />
+      <UserAvatar
+        name={profileId}
+        className="h-8 w-8 md:h-12 md:w-12 xl:h-16 xl:w-16"
+      />
 
-      <div className="font-handwriting mt-2 mb-1 w-full truncate px-1 text-sm font-bold sm:text-base lg:text-lg">
+      <div className="font-handwriting mt-1 mb-0 w-full truncate px-1 text-[10px] leading-tight font-bold sm:text-base lg:text-lg xl:mt-2 xl:mb-1">
         {nickname}
       </div>
       {isHost && (

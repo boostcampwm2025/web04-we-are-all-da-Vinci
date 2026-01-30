@@ -34,7 +34,7 @@ const ProfileEditor = ({ onNicknameChange }: UserProfileEditorProps) => {
     <div className="scribble-border scribble-border-box text-content-primary flex w-full max-w-sm flex-col items-center gap-4 bg-white/90 p-6">
       {/* 아바타 + 랜덤 버튼 */}
       <div className="relative">
-        <UserAvatar name={userId} size={80} />
+        <UserAvatar name={userId} className="h-20 w-20" />
         <button
           onClick={handleRandomizeAvatar}
           className="bg-surface-base text-content-secondary hover:bg-surface-muted hover:text-content-primary absolute -right-2 -bottom-2 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full shadow-md transition-all hover:scale-110"

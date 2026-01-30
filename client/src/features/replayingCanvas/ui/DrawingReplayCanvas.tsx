@@ -15,7 +15,7 @@ interface DrawingReplayCanvasProps {
 export const DrawingReplayCanvas = ({
   strokes,
   speed = 40,
-  loop = true,
+  loop = false,
   width = CANVAS_CONFIG.width,
   height = CANVAS_CONFIG.height,
   className = '',

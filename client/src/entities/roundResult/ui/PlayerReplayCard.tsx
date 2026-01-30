@@ -59,8 +59,8 @@ const PlayerReplayCard = ({
             >
               {rank}
             </span>
-            <UserAvatar name={profileId} size={24} />
-            <h3 className="font-handwriting truncate text-base font-bold">
+            <UserAvatar name={profileId} className="h-6 w-6" />
+            <h3 className="font-handwriting truncate text-sm font-bold md:text-base">
               {nickname}
               {isCurrentUser && ' (나)'}
             </h3>

@@ -57,13 +57,13 @@ export const Main = () => {
     <>
       <div className="page-center">
         <div className="w-l flex flex-col items-center justify-center text-center">
-          <h3 className="border-accent-warm bg-accent/30 text-accent-warm mb-2 inline-block -rotate-1 rounded-full border-2 border-dashed px-5 py-2 font-bold tracking-wide">
+          <h3 className="border-accent-warm bg-accent/30 text-accent-warm mb-2 inline-block -rotate-1 rounded-full border-2 border-dashed px-4 py-2 text-xs font-bold tracking-wide md:px-5 md:text-base">
             {TEXT.SUB_TITLE}
           </h3>
 
-          <Title title={TITLES.MAIN} fontSize={'text-9xl'} />
+          <Title title={TITLES.MAIN} fontSize={'text-7xl md:text-9xl'} />
           <DecorateTitle />
-          <h6 className="font-handwriting text-content-muted mt-4 w-120 text-2xl leading-relaxed font-medium whitespace-pre-line">
+          <h6 className="font-handwriting text-content-muted mt-4 w-full text-lg leading-relaxed font-medium whitespace-pre-line md:text-2xl">
             {TEXT.DESCRIPTION}
           </h6>
 
@@ -94,7 +94,7 @@ export const Main = () => {
 
         <div
           id="boostAD"
-          className="absolute bottom-10 z-40 flex h-25 w-280 justify-center px-10 text-center"
+          className="absolute bottom-10 z-40 flex h-10 w-full justify-center px-10 text-center md:h-25 md:w-280"
         >
           <div data-boostad-zone className="h-full w-full"></div>
         </div>

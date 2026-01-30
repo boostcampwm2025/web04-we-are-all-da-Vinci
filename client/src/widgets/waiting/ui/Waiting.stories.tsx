@@ -6,6 +6,7 @@ import { Waiting } from './Waiting';
 
 interface StoryArgs {
   playerCount: number;
+  isInWaitlist: boolean;
 }
 
 const meta: Meta<StoryArgs> = {
@@ -14,6 +15,7 @@ const meta: Meta<StoryArgs> = {
   parameters: { layout: 'fullscreen' },
   argTypes: {
     playerCount: { control: { type: 'range', min: 1, max: 30, step: 1 } },
+    isInWaitlist: { control: { type: 'boolean' } },
   },
   decorators: [
     (Story) => (
@@ -30,6 +32,7 @@ const meta: Meta<StoryArgs> = {
       players: createMockPlayers(args.playerCount),
       settings: MOCK_SETTINGS,
       roomId: 'ABC123',
+      isInWaitlist: args.isInWaitlist,
     });
     return <Waiting />;
   },
@@ -44,4 +47,8 @@ export const Default: Story = {
 
 export const ManyPlayers: Story = {
   args: { playerCount: 20 },
+};
+
+export const InWaitlist: Story = {
+  args: { playerCount: 4, isInWaitlist: true },
 };

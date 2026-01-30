@@ -166,6 +166,8 @@ export const DrawingCanvas = ({
     roomId,
     canvasRef,
     ctxRef,
+    isPractice,
+    onSimilarityChange,
   ]);
 
   // 스트로크 지속시간을 누적하는 핸들러
@@ -197,10 +199,13 @@ export const DrawingCanvas = ({
           width={CANVAS_CONFIG.width}
           height={CANVAS_CONFIG.height}
           className="h-full w-full"
-          style={{ cursor: 'url(/cursors/pencil.png), auto' }}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
+          style={{
+            cursor: 'url(/cursors/pencil.png), auto',
+            touchAction: 'none',
+          }}
+          onPointerDown={handleMouseDown}
+          onPointerMove={handleMouseMove}
+          onPointerUp={handleMouseUp}
           onMouseOut={handleMouseOut}
         />
       </div>

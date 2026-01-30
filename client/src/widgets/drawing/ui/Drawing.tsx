@@ -20,7 +20,7 @@ export const Drawing = () => {
             showLogo={false}
           />
 
-          <div className="flex min-h-0 flex-1 items-stretch justify-center gap-6">
+          <div className="flex min-h-0 flex-1 flex-col items-stretch justify-start gap-6 md:flex-row md:justify-center">
             <div className="canvas-wrapper">
               <DrawingCanvas />
             </div>

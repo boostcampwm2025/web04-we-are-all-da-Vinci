@@ -21,7 +21,7 @@ export const GameHeader = ({
       {/* 왼쪽 로고 */}
       <div className="flex flex-1 items-center justify-start pl-8">
         {showLogo && (
-          <div className="flex flex-col items-center">
+          <div className="hidden flex-col items-center xl:flex">
             <Title title={TITLES.MAIN} fontSize="text-5xl" />
           </div>
         )}
@@ -32,13 +32,13 @@ export const GameHeader = ({
         {round !== undefined && <RoundBadge round={round} />}
 
         <div className="mb-2">
-          <h1 className="font-handwriting text-5xl font-black md:text-6xl">
+          <h1 className="font-handwriting text-4xl font-black md:text-6xl">
             {title}
           </h1>
         </div>
 
         {description && (
-          <p className="font-handwriting text-content-secondary text-xl">
+          <p className="font-handwriting text-content-secondary hidden text-xl xl:inline">
             {description}
           </p>
         )}
