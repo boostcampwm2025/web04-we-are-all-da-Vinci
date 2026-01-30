@@ -50,7 +50,7 @@ const RoomSettingsModal = ({
     });
   };
 
-  const playerOptions = [2, 3, 4, 5, 6, 8, 10, 20, 30];
+  const playerOptions = [2, 3, 4, 5, 6, 8, 10, 20, 100];
   const roundOptions = [3, 5, 7, 10];
   const timeOptions = [15, 30, 45, 60];
 

@@ -1,17 +1,17 @@
-import type { FinalResult, Highlight } from '@/entities/gameResult/model';
+import type { FinalResult, Highlight } from '@/entities/gameResult';
 import type { Player } from '@/entities/player/model';
 import type { RankingEntry } from '@/entities/ranking';
-import type { RoundResult, PlayerScore } from '@/entities/roundResult/model';
+import type { PlayerScore, RoundResult } from '@/entities/roundResult';
 import type { Stroke } from '@/entities/similarity';
-import { getSocket } from '@/shared/api';
 import type { Phase } from '@/shared/config';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import type { GameRoom } from './types';
 
-interface GameState extends GameRoom {
+export interface GameState extends GameRoom {
   // 소켓 연결 상태
   isConnected: boolean;
+  mySocketId: string | null;
 
   // 실시간 데이터
   timer: number;
@@ -29,7 +29,14 @@ interface GameState extends GameRoom {
   alertMessage: string | null;
   pendingNavigation: string | null; // 모달 확인 후 이동할 경로
 
+  // 대기열 및 연습모드 상태
+  isInWaitlist: boolean;
+  isPracticing: boolean;
+  practicePrompt: Stroke[] | null;
+  gameProgress: { currentRound: number; totalRounds: number };
+
   // Actions
+  setMySocketId: (socketId: string | null) => void;
   setConnected: (isConnected: boolean) => void;
   updateRoom: (room: Partial<GameRoom>) => void;
   setTimer: (timer: number) => void;
@@ -41,11 +48,22 @@ interface GameState extends GameRoom {
   setHighlight: (highlight: Highlight) => void;
   setAlertMessage: (message: string | null) => void;
   setPendingNavigation: (path: string | null) => void;
+
+  // 대기열 전용 Actions
+  setIsInWaitlist: (isInWaitlist: boolean) => void;
+  setIsPracticing: (isPracticing: boolean) => void;
+  setPracticePrompt: (strokes: Stroke[] | null) => void;
+  setGameProgress: (progress: {
+    currentRound: number;
+    totalRounds: number;
+  }) => void;
+
   reset: () => void;
 }
 
-const initialState = {
+export const initialState = {
   isConnected: false,
+  mySocketId: null,
   roomId: '',
   players: [],
   phase: 'WAITING' as Phase,
@@ -65,12 +83,19 @@ const initialState = {
   highlight: null,
   alertMessage: null,
   pendingNavigation: null,
+
+  isInWaitlist: false,
+  isPracticing: false,
+  practicePrompt: null,
+  gameProgress: { currentRound: 0, totalRounds: 0 },
 };
 
 export const useGameStore = create<GameState>()(
   devtools(
     (set) => ({
       ...initialState,
+
+      setMySocketId: (mySocketId) => set({ mySocketId }),
 
       setConnected: (isConnected) => set({ isConnected }),
 
@@ -98,6 +123,14 @@ export const useGameStore = create<GameState>()(
 
       setPendingNavigation: (pendingNavigation) => set({ pendingNavigation }),
 
+      setIsInWaitlist: (isInWaitlist) => set({ isInWaitlist }),
+
+      setIsPracticing: (isPracticing) => set({ isPracticing }),
+
+      setPracticePrompt: (practicePrompt) => set({ practicePrompt }),
+
+      setGameProgress: (gameProgress) => set({ gameProgress }),
+
       reset: () => set(initialState),
     }),
     { name: 'Game Store' },
@@ -111,19 +144,10 @@ export const selectPhase = (state: GameState) => state.phase;
 export const selectLiveRankings = (state: GameState) => state.liveRankings;
 export const selectTimer = (state: GameState) => state.timer;
 
-// Helper: 현재 플레이어 찾기 (소켓 ID 기반)
+// Helper: 현재 플레이어 찾기 (스토어의 mySocketId 기반)
 export const useCurrentPlayer = (): Player | null => {
   const players = useGameStore(selectPlayers);
-  const isConnected = useGameStore((state) => state.isConnected);
-
-  if (!isConnected) return null;
-
-  const socket = getSocket();
-
-  const mySocketId =
-    socket && 'connected' in socket && socket.connected && socket.id
-      ? socket.id
-      : undefined;
+  const mySocketId = useGameStore((state) => state.mySocketId);
 
   if (!mySocketId) return null;
 
@@ -138,12 +162,7 @@ export const useIsHost = (): boolean => {
 
 // Helper: 특정 socketId가 현재 유저인지 확인
 export const useIsCurrentUser = (socketId: string): boolean => {
-  const isConnected = useGameStore((state) => state.isConnected);
-
-  if (!isConnected) return false;
-
-  const socket = getSocket();
-  const mySocketId = socket?.id;
+  const mySocketId = useGameStore((state) => state.mySocketId);
 
   return mySocketId === socketId;
 };

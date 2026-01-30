@@ -1,7 +1,9 @@
-import { useGameStore } from '@/entities/gameRoom/model';
-import type { PlayerScore } from '@/entities/roundResult/model/types';
+import { useGameStore } from '@/entities/gameRoom';
+import type { PlayerScore } from '@/entities/roundResult';
 import { useEffect, useMemo, useState } from 'react';
 import { useFlipAnimation } from './useFlipAnimation';
+import { SoundManager } from '@/shared/lib';
+import { SFX_LIST } from '@/shared/config';
 
 const SORT_DELAY = 1500; // 점수 증가 연출 이후 순위 정렬을 시작하기까지의 대기 시간(ms)
 
@@ -50,6 +52,9 @@ export const useRoundStanding = () => {
     const timer = setTimeout(() => {
       playFlip(setDisplayResults, standingResults);
       setIsSorted(true);
+
+      const manager = SoundManager.getInstance();
+      manager.playSound(SFX_LIST.ROUND_END);
     }, SORT_DELAY);
 
     return () => clearTimeout(timer);

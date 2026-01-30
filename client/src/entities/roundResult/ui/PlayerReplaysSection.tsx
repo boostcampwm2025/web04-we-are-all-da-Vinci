@@ -1,8 +1,12 @@
-import { useState } from 'react';
+import { useCurrentPlayer } from '@/entities/gameRoom';
 import type { Stroke } from '@/entities/similarity/model';
-import { PlayerReplayCard } from './PlayerReplayCard';
-import { useCurrentPlayer } from '@/entities/gameRoom/model';
 import type { Similarity } from '@/features/similarity';
+
+import { PLAYERS_PER_PAGE, getGridLayout } from '../lib/gridLayout';
+import { usePlayerPagination } from '../model/usePlayerPagination';
+import { useResponsiveCardSize } from '../model/useResponsiveCardSize';
+import PlayerReplayCard from './PlayerReplayCard';
+import PlayerReplayPagination from './PlayerReplayPagination';
 
 interface Player {
   nickname: string;
@@ -16,27 +20,29 @@ interface PlayerReplaysSectionProps {
   players: Player[];
 }
 
-const PLAYERS_PER_PAGE = 8;
-
-export const PlayerReplaysSection = ({
-  players = [],
-}: PlayerReplaysSectionProps) => {
-  const [currentPage, setCurrentPage] = useState(0);
-
+const PlayerReplaysSection = ({ players = [] }: PlayerReplaysSectionProps) => {
   const currentPlayer = useCurrentPlayer();
   const mySocketId = currentPlayer?.socketId;
 
-  // 페이지네이션 계산
-  const totalPages = Math.max(1, Math.ceil(players.length / PLAYERS_PER_PAGE));
-  const startIndex = currentPage * PLAYERS_PER_PAGE;
-  const currentPlayers = players.slice(
+  // 페이지네이션
+  const {
+    currentPage,
+    totalPages,
     startIndex,
-    startIndex + PLAYERS_PER_PAGE,
-  );
+    currentPlayers,
+    goToPrevPage,
+    goToNextPage,
+  } = usePlayerPagination(players);
 
-  const goToPrevPage = () => setCurrentPage((prev) => Math.max(0, prev - 1));
-  const goToNextPage = () =>
-    setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1));
+  // 8명 초과 시(페이지네이션 있을 때) 모든 페이지에서 8명 기준 레이아웃 유지
+  const layoutPlayerCount =
+    totalPages > 1 ? PLAYERS_PER_PAGE : currentPlayers.length;
+  const layout = getGridLayout(layoutPlayerCount);
+
+  const { containerRef, cardSize } = useResponsiveCardSize(
+    layout.cols,
+    layout.rows,
+  );
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -50,51 +56,43 @@ export const PlayerReplaysSection = ({
           </h2>
         </div>
 
-        {totalPages > 1 && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={goToPrevPage}
-              disabled={currentPage === 0}
-              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-indigo-400 bg-white text-indigo-600 transition-all hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <span className="material-symbols-outlined text-lg">
-                chevron_left
-              </span>
-            </button>
-            <span className="text-sm font-semibold text-gray-700">
-              {currentPage + 1} / {totalPages}
-            </span>
-            <button
-              onClick={goToNextPage}
-              disabled={currentPage === totalPages - 1}
-              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-indigo-400 bg-white text-indigo-600 transition-all hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <span className="material-symbols-outlined text-lg">
-                chevron_right
-              </span>
-            </button>
-          </div>
-        )}
+        <PlayerReplayPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPrevPage={goToPrevPage}
+          onNextPage={goToNextPage}
+        />
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div
+        ref={containerRef}
+        className="flex min-h-0 flex-1 flex-wrap items-center justify-center gap-2"
+      >
         {currentPlayers.map((player, index) => {
           const isCurrentUser = player.socketId === mySocketId;
           const rank = startIndex + index + 1;
 
           return (
-            <PlayerReplayCard
+            <div
               key={player.socketId}
-              rank={rank}
-              nickname={player.nickname}
-              profileId={player.profileId}
-              similarity={player.similarity}
-              strokes={player.strokes}
-              isCurrentUser={isCurrentUser}
-            />
+              style={{
+                width: cardSize.width > 0 ? cardSize.width : 'auto',
+                height: cardSize.height > 0 ? cardSize.height : 'auto',
+              }}
+            >
+              <PlayerReplayCard
+                rank={rank}
+                nickname={player.nickname}
+                profileId={player.profileId}
+                similarity={player.similarity}
+                strokes={player.strokes}
+                isCurrentUser={isCurrentUser}
+              />
+            </div>
           );
         })}
       </div>
     </div>
   );
 };
+export default PlayerReplaysSection;

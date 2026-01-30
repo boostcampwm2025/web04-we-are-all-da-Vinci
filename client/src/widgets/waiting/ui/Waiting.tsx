@@ -3,17 +3,25 @@ import {
   selectSettings,
   useGameStore,
   useIsHost,
-} from '@/entities/gameRoom/model';
+} from '@/entities/gameRoom';
 import { GameSettingsCard } from '@/entities/gameSettings';
+import { ChatBox, useChatActions, useChatStore } from '@/features/chat';
 import { PlayerListSection } from '@/features/playerList';
 import { RoomCodeCopy } from '@/features/roomCode';
 import { RoomSettingsModal, type RoomSettings } from '@/features/roomSettings';
 import { WaitingRoomActions } from '@/features/waitingRoomActions';
+import { WaitingRoomOverlay } from '@/features/waitingRoomActions/ui/WaitingRoomOverlay';
 import { getSocket } from '@/shared/api';
-import { MIXPANEL_EVENTS, SERVER_EVENTS, TITLES } from '@/shared/config';
+import {
+  MIXPANEL_EVENTS,
+  SERVER_EVENTS,
+  TITLES,
+  BGM_LIST,
+} from '@/shared/config';
 import { trackEvent } from '@/shared/lib/mixpanel';
-import { useToastStore } from '@/shared/model';
+import { useBGM, useToastStore } from '@/shared/model';
 import { GameHeader } from '@/shared/ui';
+import { Practice } from '@/features/practice';
 import { useState } from 'react';
 
 export const Waiting = () => {
@@ -24,8 +32,16 @@ export const Waiting = () => {
   const players = useGameStore(selectPlayers);
   const settings = useGameStore(selectSettings);
   const isHostUser = useIsHost();
+  const isInWaitlist = useGameStore((state) => state.isInWaitlist);
+  const isPracticing = useGameStore((state) => state.isPracticing);
 
   const { addToast } = useToastStore();
+
+  // 채팅
+  const messages = useChatStore((state) => state.messages);
+  const { sendMessage } = useChatActions(roomId);
+
+  useBGM(BGM_LIST.WAITING);
 
   const copyRoomId = async () => {
     try {
@@ -79,9 +95,9 @@ export const Waiting = () => {
           />
 
           <div className="flex min-h-0 flex-1 gap-7">
-            <div className="flex h-full flex-1 flex-col gap-4">
+            <section className="flex h-full flex-1 flex-col gap-4">
               <div className="flex h-full min-h-0 flex-col gap-4">
-                <div className="min-h-0 flex-1">
+                <div className="relative min-h-0 flex-1">
                   <PlayerListSection
                     players={players}
                     maxPlayer={settings.maxPlayer}
@@ -89,6 +105,7 @@ export const Waiting = () => {
                       <RoomCodeCopy roomId={roomId} onCopy={copyRoomId} />
                     }
                   />
+                  {isInWaitlist && <WaitingRoomOverlay />}
                 </div>
                 <div>
                   <WaitingRoomActions
@@ -98,20 +115,22 @@ export const Waiting = () => {
                   />
                 </div>
               </div>
-            </div>
+            </section>
 
-            <div className="flex h-full w-80 flex-col gap-4">
+            <section className="flex h-full w-80 flex-col gap-4">
               <GameSettingsCard
                 settings={settings}
                 onEdit={handleSettingsChange}
                 isHost={isHostUser}
               />
-              <div className="card flex flex-1 items-center justify-center">
-                <p className="font-handwriting text-content-disabled text-lg">
-                  💬 채팅 (예정)
-                </p>
+              <div className="flex min-h-0 flex-1 flex-col">
+                <ChatBox
+                  messages={messages}
+                  onSendMessage={sendMessage}
+                  className="h-full"
+                />
               </div>
-            </div>
+            </section>
           </div>
           {/* <div
             id="boostAD"
@@ -121,6 +140,8 @@ export const Waiting = () => {
           </div> */}
         </main>
       </div>
+
+      {isPracticing && <Practice />}
 
       <RoomSettingsModal
         isOpen={showSettingsModal}

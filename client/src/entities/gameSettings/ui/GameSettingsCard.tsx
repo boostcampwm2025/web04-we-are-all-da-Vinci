@@ -1,4 +1,4 @@
-import type { Settings } from '@/entities/gameRoom/model';
+import type { Settings } from '@/entities/gameRoom';
 import { SettingItem } from './SettingItem';
 
 interface GameSettingsCardProps {

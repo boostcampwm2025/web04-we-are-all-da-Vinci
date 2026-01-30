@@ -1,26 +1,23 @@
-import type { GameEndResponse } from '@/entities/gameResult/model';
-import type { GameRoom } from '@/entities/gameRoom/model';
-import { useGameStore } from '@/entities/gameRoom/model';
+import type { GameEndResponse } from '@/entities/gameResult';
+import { useGameStore, type GameRoom } from '@/entities/gameRoom';
 import type { Player } from '@/entities/player/model';
-import type { RankingEntry } from '@/entities/ranking';
 import type {
   RoundReplayResponse,
   RoundStandingResponse,
-} from '@/entities/roundResult/model';
+} from '@/entities/roundResult';
 import type { Stroke } from '@/entities/similarity';
+import { useChatStore, type ChatMessage } from '@/features/chat';
+import type { WaitlistResponse } from '@/features/waitingRoomActions';
 import { disconnectSocket, getSocket } from '@/shared/api';
 import { CLIENT_EVENTS, SERVER_EVENTS } from '@/shared/config';
 import { useToastStore } from '@/shared/model';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-
-// 서버에서 오는 랭킹 데이터 타입
-interface ServerRankingEntry {
-  socketId: string;
-  nickname: string;
-  profileId: string;
-  similarity: number;
-}
+import {
+  buildRankings,
+  processRoomMetadata,
+  type ServerRankingEntry,
+} from '../lib/socketHandlers';
 
 export const useGameSocket = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -35,6 +32,7 @@ export const useGameSocket = () => {
   );
 
   // Zustand actions
+  const setMySocketId = useGameStore((state) => state.setMySocketId);
   const setConnected = useGameStore((state) => state.setConnected);
   const updateRoom = useGameStore((state) => state.updateRoom);
   const setTimer = useGameStore((state) => state.setTimer);
@@ -44,12 +42,21 @@ export const useGameSocket = () => {
   const setFinalResults = useGameStore((state) => state.setFinalResults);
   const setHighlight = useGameStore((state) => state.setHighlight);
   const setPromptStrokes = useGameStore((state) => state.setPromptStrokes);
+  const setIsInWaitlist = useGameStore((state) => state.setIsInWaitlist);
+  const setIsPracticing = useGameStore((state) => state.setIsPracticing);
+  const setPracticePrompt = useGameStore((state) => state.setPracticePrompt);
+  const setGameProgress = useGameStore((state) => state.setGameProgress);
   const setAlertMessage = useGameStore((state) => state.setAlertMessage);
   const setPendingNavigation = useGameStore(
     (state) => state.setPendingNavigation,
   );
   const reset = useGameStore((state) => state.reset);
   const addToast = useToastStore((state) => state.addToast);
+
+  // Chat store 액션
+  const addChatMessage = useChatStore((state) => state.addMessage);
+  const setChatHistory = useChatStore((state) => state.setHistory);
+  const clearChat = useChatStore((state) => state.clear);
 
   // localStorage 변경 감지
   useEffect(() => {
@@ -92,6 +99,7 @@ export const useGameSocket = () => {
 
     // 연결 이벤트
     socket.on('connect', () => {
+      setMySocketId(socket.id!);
       setConnected(true);
 
       // 방 입장
@@ -99,15 +107,16 @@ export const useGameSocket = () => {
     });
 
     socket.on('disconnect', () => {
+      setMySocketId(null);
       setConnected(false);
     });
 
     // 방 정보 업데이트
     socket.on(CLIENT_EVENTS.ROOM_METADATA, (data: GameRoom) => {
-      const currentPhase = useGameStore.getState().phase;
+      const { phase: currentPhase, mySocketId } = useGameStore.getState();
+      const result = processRoomMetadata(data, currentPhase, mySocketId!);
 
-      // GAME_END에서 WAITING으로 돌아올 때 게임 데이터 초기화
-      if (currentPhase === 'GAME_END' && data.phase === 'WAITING') {
+      if (result.shouldResetGameData) {
         useGameStore.setState({
           liveRankings: [],
           roundResults: [],
@@ -119,21 +128,20 @@ export const useGameSocket = () => {
         });
       }
 
-      updateRoom({
-        roomId: data.roomId,
-        players: data.players,
-        phase: data.phase,
-        currentRound: data.currentRound,
-        settings: data.settings,
-      });
+      if (result.isJoined) {
+        setIsInWaitlist(false);
+        setIsPracticing(false);
+      }
+
+      updateRoom(result.roomUpdate);
     });
 
     // 추방
     socket.on(
       CLIENT_EVENTS.ROOM_KICKED,
       ({ kickedPlayer }: { kickedPlayer: Omit<Player, 'isHost'> }) => {
-        const socketId = socket.id;
-        if (socketId === kickedPlayer.socketId) {
+        const mySocketId = useGameStore.getState().mySocketId;
+        if (mySocketId === kickedPlayer.socketId) {
           disconnectSocket();
           reset();
           navigate('/');
@@ -156,26 +164,7 @@ export const useGameSocket = () => {
       CLIENT_EVENTS.ROOM_LEADERBOARD,
       (data: { rankings: ServerRankingEntry[] }) => {
         const currentRankings = useGameStore.getState().liveRankings;
-
-        const newRankings: RankingEntry[] = data.rankings.map(
-          (entry, index) => {
-            const rank = index + 1;
-            const prevEntry = currentRankings.find(
-              (r) => r.socketId === entry.socketId,
-            );
-
-            return {
-              socketId: entry.socketId,
-              nickname: entry.nickname,
-              profileId: entry.profileId,
-              similarity: entry.similarity,
-              rank,
-              previousRank: prevEntry?.rank ?? null,
-            };
-          },
-        );
-
-        setLiveRankings(newRankings);
+        setLiveRankings(buildRankings(data.rankings, currentRankings));
       },
     );
 
@@ -204,14 +193,23 @@ export const useGameSocket = () => {
       setHighlight(response.highlight);
     });
 
-    // 대기열 (DRAWING 중 입장 시)
+    // 대기열에 추가됨
     socket.on(
       CLIENT_EVENTS.USER_WAITLIST,
-      ({ roomId: waitRoomId }: { roomId: string }) => {
-        console.log(waitRoomId);
-        setAlertMessage(
-          '현재 게임이 진행 중입니다. 다음 라운드부터 참여할 수 있습니다.',
-        );
+      ({ currentRound, totalRounds }: WaitlistResponse) => {
+        setIsInWaitlist(true);
+        setGameProgress({ currentRound, totalRounds });
+        // setAlertMessage(
+        //   '현재 게임이 진행 중입니다. 다음 라운드부터 참여할 수 있습니다.',
+        // );
+      },
+    );
+
+    socket.on(
+      CLIENT_EVENTS.USER_PRACTICE_STARTED,
+      (promptStrokes: Stroke[]) => {
+        setPracticePrompt(promptStrokes);
+        setIsPracticing(true);
       },
     );
 
@@ -219,6 +217,29 @@ export const useGameSocket = () => {
     socket.on(CLIENT_EVENTS.ERROR, (error: { message: string }) => {
       setAlertMessage(error.message);
       setPendingNavigation('/');
+    });
+
+    // 채팅 이벤트
+    socket.on(CLIENT_EVENTS.CHAT_BROADCAST, (message: ChatMessage) => {
+      addChatMessage(message);
+    });
+
+    socket.on(
+      CLIENT_EVENTS.CHAT_HISTORY,
+      (payload: { roomId: string; messages: ChatMessage[] }) => {
+        setChatHistory(payload.messages);
+      },
+    );
+
+    socket.on(CLIENT_EVENTS.CHAT_ERROR, (error: { message: string }) => {
+      // 채팅 에러는 해당 유저의 채팅창에만 시스템 메시지로 표시
+      const errorMessage: ChatMessage = {
+        type: 'system',
+        message: error.message,
+        timestamp: Date.now(),
+        systemType: 'timer_warning', // 경고 스타일로 표시
+      };
+      addChatMessage(errorMessage);
     });
 
     // Cleanup
@@ -235,15 +256,21 @@ export const useGameSocket = () => {
       socket.off(CLIENT_EVENTS.USER_WAITLIST);
       socket.off(CLIENT_EVENTS.ERROR);
       socket.off(CLIENT_EVENTS.ROOM_KICKED);
+      socket.off(CLIENT_EVENTS.USER_PRACTICE_STARTED);
+      socket.off(CLIENT_EVENTS.CHAT_BROADCAST);
+      socket.off(CLIENT_EVENTS.CHAT_HISTORY);
+      socket.off(CLIENT_EVENTS.CHAT_ERROR);
 
       disconnectSocket();
       reset(); // 소켓 연결 해제 시 전체 상태 초기화
+      clearChat(); // 채팅 초기화
     };
   }, [
     roomId,
     nickname,
     profileId,
     navigate,
+    setMySocketId,
     setConnected,
     updateRoom,
     setTimer,
@@ -253,8 +280,15 @@ export const useGameSocket = () => {
     setStandingResults,
     setFinalResults,
     setHighlight,
+    setPracticePrompt,
+    setIsPracticing,
+    setAlertMessage,
+    setPendingNavigation,
     reset,
     addToast,
+    addChatMessage,
+    setChatHistory,
+    clearChat,
   ]);
 
   return getSocket();

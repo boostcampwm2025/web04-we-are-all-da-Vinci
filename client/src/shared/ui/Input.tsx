@@ -1,5 +1,7 @@
 type Variant = 'default' | 'scribble';
 
+import { cn } from '../lib/classNames';
+
 interface InputProps {
   value: string;
   onChange: (value: string) => void;
@@ -10,6 +12,7 @@ interface InputProps {
   showCount?: boolean;
   ariaLabel?: string;
   variant?: Variant;
+  className?: string;
 }
 
 const Input = ({
@@ -22,6 +25,7 @@ const Input = ({
   showCount = false,
   ariaLabel,
   variant = 'default',
+  className,
 }: InputProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -31,7 +35,12 @@ const Input = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && onEnter && value.trim()) {
+    if (
+      e.key === 'Enter' &&
+      !e.nativeEvent.isComposing &&
+      onEnter &&
+      value.trim()
+    ) {
       onEnter();
     }
   };
@@ -49,7 +58,7 @@ const Input = ({
   };
 
   return (
-    <div className={wrapperClasses[variant]}>
+    <div className={cn(wrapperClasses[variant], className)}>
       <input
         type="text"
         value={value}
@@ -59,7 +68,7 @@ const Input = ({
         maxLength={maxLength}
         autoFocus={autoFocus}
         aria-label={ariaLabel || placeholder}
-        className={inputClasses[variant]}
+        className={cn(inputClasses[variant], className)}
       />
       {showCount && maxLength && (
         <span className="text-content-secondary absolute top-1/2 right-3 -translate-y-1/2 text-xs">

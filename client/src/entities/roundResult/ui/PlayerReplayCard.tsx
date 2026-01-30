@@ -1,16 +1,10 @@
-import { useState } from 'react';
+import { PlayerSimilarityDetailTooltip } from '@/entities/similarity';
 import type { Stroke } from '@/entities/similarity/model';
 import { DrawingReplayCanvas } from '@/features/replayingCanvas';
 import type { Similarity } from '@/features/similarity';
-import { PlayerSimilarityDetailTooltip } from '@/entities/similarity';
 import { UserAvatar } from '@/shared/ui';
-
-const getRankColor = (rank: number) => {
-  if (rank === 1) return 'bg-yellow-400 text-yellow-900';
-  if (rank === 2) return 'bg-indigo-400 text-indigo-900';
-  if (rank === 3) return 'bg-red-400 text-red-900';
-  return 'bg-gray-300 text-gray-700';
-};
+import { useState } from 'react';
+import { getRankStyles } from '../lib/rankStyles';
 
 interface PlayerReplayCardProps {
   rank: number;
@@ -21,7 +15,7 @@ interface PlayerReplayCardProps {
   isCurrentUser?: boolean;
 }
 
-export const PlayerReplayCard = ({
+const PlayerReplayCard = ({
   rank,
   nickname,
   profileId,
@@ -39,9 +33,11 @@ export const PlayerReplayCard = ({
     setIsHovered(false);
   };
 
+  const rankStyles = getRankStyles(rank);
+
   return (
     <div
-      className="relative flex flex-col"
+      className="relative flex h-full w-full flex-col"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -52,37 +48,39 @@ export const PlayerReplayCard = ({
         </div>
       )}
 
-      <div className="flex flex-col rounded-xl border-2 border-gray-800 bg-white p-2 shadow-lg">
+      <div
+        className={`flex h-full w-full flex-col rounded-xl border-2 p-2 shadow-lg transition-colors ${rankStyles.border} ${rankStyles.bg}`}
+      >
         {/* Player Info Header */}
         <div className="mb-1 flex shrink-0 items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span
-              className={`flex h-6 min-w-[24px] shrink-0 items-center justify-center rounded-full px-1 text-xs font-bold ${getRankColor(rank)}`}
+              className={`flex h-6 min-w-[24px] shrink-0 items-center justify-center rounded-full px-1 text-xs font-bold ${rankStyles.badge}`}
             >
-              #{rank}
+              {rank}
             </span>
             <UserAvatar name={profileId} size={24} />
             <h3 className="font-handwriting truncate text-base font-bold">
               {nickname}
-              {isCurrentUser && ' (You)'}
+              {isCurrentUser && ' (나)'}
             </h3>
           </div>
         </div>
 
         {/* Canvas */}
-        <div className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg border-1 border-gray-300 bg-gray-50">
-          {strokes.length > 0 ? (
-            <div className="flex h-full w-full items-center justify-center">
+        <div className="relative min-h-0 flex-1 overflow-hidden rounded-lg bg-gray-50">
+          <div className="absolute inset-0 flex items-center justify-center">
+            {strokes.length > 0 ? (
               <DrawingReplayCanvas
                 strokes={strokes}
                 speed={0}
                 loop={true}
                 className="max-h-full max-w-full rounded-lg border-2 border-gray-300"
               />
-            </div>
-          ) : (
-            <span className="text-xs text-gray-400">그림 없음</span>
-          )}
+            ) : (
+              <span className="text-xs text-gray-400">그림 없음</span>
+            )}
+          </div>
         </div>
 
         {/* Similarity Score */}
@@ -91,7 +89,9 @@ export const PlayerReplayCard = ({
             <span className="font-handwriting text-sm font-semibold text-gray-700">
               유사도
             </span>
-            <span className="font-handwriting text-lg font-bold text-blue-600">
+            <span
+              className={`font-handwriting text-lg font-bold ${rankStyles.text || 'text-blue-600'}`}
+            >
               {similarity.similarity}%
             </span>
           </div>
@@ -106,3 +106,4 @@ export const PlayerReplayCard = ({
     </div>
   );
 };
+export default PlayerReplayCard;

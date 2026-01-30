@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 15s # 수집 주기
+
+scrape_configs:
+  - job_name: "node_exporter"
+    file_sd_configs:
+      - files:
+          - "./sd/target_node.json"
+    relabel_configs:
+      - source_labels: ["__address__"]
+        target_label: "instance"
+        replacement: "node_exporter"
+
+  - job_name: "nestjs"
+    file_sd_configs:
+      - files:
+          - "./sd/target_nestjs.json"
+    relabel_configs:
+      - source_labels: ["__address__"]
+        target_label: "instance"
+        replacement: "nest-app-1"

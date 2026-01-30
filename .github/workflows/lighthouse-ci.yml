@@ -39,7 +39,8 @@ jobs:
           temporaryPublicStorage: true
           configPath: ./client/lighthouserc.json
 
-      - name: Post Lighthouse Report to PR
+      - name: Generate Lighthouse Report
+        id: report
         uses: actions/github-script@v7
         if: always()
         with:
@@ -49,6 +50,7 @@ jobs:
 
             if (!results || !links) {
               console.log('No Lighthouse results found');
+              core.setOutput('body', '## 🚀 Lighthouse Report\n\nNo results found.');
               return;
             }
 
@@ -56,7 +58,7 @@ jobs:
               const url = Object.keys(links)[i];
               const reportUrl = links[url];
               const { performance, accessibility, 'best-practices': bestPractices, seo } = result.summary;
-              
+
               return `| Run ${i + 1} | ${Math.round(performance * 100)} | ${Math.round(accessibility * 100)} | ${Math.round(bestPractices * 100)} | ${Math.round(seo * 100)} | [Report](${reportUrl}) |`;
             }).join('\n');
 
@@ -68,9 +70,12 @@ jobs:
 
             > Score legend: 🟢 90-100 | 🟠 50-89 | 🔴 0-49`;
 
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: body
-            });
+            core.setOutput('body', body);
+
+      - name: Comment PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: always()
+        with:
+          header: lighthouse
+          skip_unchanged: true
+          message: ${{ steps.report.outputs.body }}
