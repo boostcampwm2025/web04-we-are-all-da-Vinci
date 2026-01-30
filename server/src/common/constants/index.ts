@@ -1,9 +1,10 @@
 export const REDIS_TTL = 3600;
-export const PROMPT_TIME = Number(process.env.PROMPT_TIME) || 5;
-export const DRAWING_END_DELAY = Number(process.env.DRAWING_END_DELAY) || 1800;
-export const ROUND_REPLAY_TIME = Number(process.env.ROUND_REPLAY_TIME) || 15;
-export const ROUND_STANDING_TIME = Number(process.env.ROUND_STANDING_TIME) || 10;
-export const GAME_END_TIME = Number(process.env.GAME_END_TIME) || 30;
+export const PROMPT_TIME = Number(process.env.PROMPT_TIME) || 5; // 그림 외우기 시간 (초)
+export const DRAWING_END_DELAY = Number(process.env.DRAWING_END_DELAY) || 1800; // 그림 그리기 종료 후 대기 시간 (ms)
+export const ROUND_REPLAY_TIME = Number(process.env.ROUND_REPLAY_TIME) || 15; // 라운드 결과(리플레이) 표시 시간 (초)
+export const ROUND_STANDING_TIME =
+  Number(process.env.ROUND_STANDING_TIME) || 10; // 라운드 점수 및 랭킹 표시 시간 (초)
+export const GAME_END_TIME = Number(process.env.GAME_END_TIME) || 30; // 게임 종료 화면 표시 시간 (초)
 
 // 채팅 관련 상수
 export const CHAT_MAX_LENGTH = 100; // 메시지 최대 글자 수
