@@ -74,7 +74,7 @@ export const DrawingToolbar = ({
       >
         <span className="material-symbols-outlined">delete</span>
         <span className="font-handwriting hidden text-sm font-bold md:block">
-          지우기
+          초기화
         </span>
       </button>
     </div>
