@@ -12,9 +12,14 @@ import { RoomSettingsModal, type RoomSettings } from '@/features/roomSettings';
 import { WaitingRoomActions } from '@/features/waitingRoomActions';
 import { WaitingRoomOverlay } from '@/features/waitingRoomActions/ui/WaitingRoomOverlay';
 import { getSocket } from '@/shared/api';
-import { MIXPANEL_EVENTS, SERVER_EVENTS, TITLES } from '@/shared/config';
+import {
+  MIXPANEL_EVENTS,
+  SERVER_EVENTS,
+  TITLES,
+  BGM_LIST,
+} from '@/shared/config';
 import { trackEvent } from '@/shared/lib/mixpanel';
-import { useToastStore } from '@/shared/model';
+import { useBGM, useToastStore } from '@/shared/model';
 import { GameHeader } from '@/shared/ui';
 import { Practice } from '@/features/practice';
 import { useState } from 'react';
@@ -35,6 +40,8 @@ export const Waiting = () => {
   // 채팅
   const messages = useChatStore((state) => state.messages);
   const { sendMessage } = useChatActions(roomId);
+
+  useBGM(BGM_LIST.WAITING);
 
   const copyRoomId = async () => {
     try {

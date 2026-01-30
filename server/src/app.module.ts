@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
-import { RedisModule } from './redis/redis.module';
+import { ChatModule } from './chat/chat.module';
 import { GameModule } from './game/game.module';
-import { PlayModule } from './play/play.module';
-import { RoundModule } from './round/round.module';
-import { PromptModule } from './prompt/prompt.module';
 import { MetricModule } from './metric/metric.module';
+import { PlayModule } from './play/play.module';
+import { PromptModule } from './prompt/prompt.module';
+import { RedisModule } from './redis/redis.module';
+import { RoundModule } from './round/round.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { MetricModule } from './metric/metric.module';
     PlayModule,
     RoundModule,
     PromptModule,
+    ChatModule,
     MetricModule,
   ],
 })

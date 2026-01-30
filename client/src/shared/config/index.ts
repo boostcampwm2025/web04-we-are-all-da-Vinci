@@ -5,3 +5,4 @@ export { CLIENT_EVENTS, SERVER_EVENTS } from './socketEvents';
 export { TITLES } from './titles';
 export { MIXPANEL_EVENTS } from './mixpanelEvents';
 export { VALIDATION } from './validation';
+export { SFX_LIST, SFX_PATH, BGM_LIST, BGM_PATH } from './sound';
