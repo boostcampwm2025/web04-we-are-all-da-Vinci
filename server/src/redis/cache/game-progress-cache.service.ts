@@ -136,4 +136,25 @@ export class GameProgressCacheService {
       }
     } while (cursor !== '0');
   }
+
+  async deletePlayer(roomId: string, socketId: string) {
+    const client = this.redisService.getClient();
+    const scanKey = RedisKeys.drawingPlayerScan(roomId, socketId);
+
+    let cursor = '0';
+
+    do {
+      const data = await client.scan(cursor, {
+        TYPE: 'string',
+        MATCH: scanKey,
+      });
+
+      cursor = data.cursor;
+      const keys = data.keys;
+
+      if (keys.length > 0) {
+        await client.unlink(keys);
+      }
+    } while (cursor !== '0');
+  }
 }
