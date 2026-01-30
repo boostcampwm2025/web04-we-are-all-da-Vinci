@@ -51,4 +51,5 @@ jobs:
       - name: Show container logs
         if: always()
         run: |
+          cd deploy
           docker compose logs --tail=50
