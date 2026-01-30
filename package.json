@@ -10,7 +10,9 @@
     "prepare": "lefthook install",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:headed": "playwright test --headed"
+    "test:e2e:headed": "playwright test --headed",
+    "perf:single": "DEBUG=socketio artillery run ./single-room/load.test.yml --env-file=./single-room/.env --output=./single-room/output.json",
+    "perf:multi": "DEBUG=socketio artillery run ./multi-room/load.test.yml --env-file=./multi-room/.env --output=./multi-room/output.json"
   },
   "keywords": [],
   "author": "",
