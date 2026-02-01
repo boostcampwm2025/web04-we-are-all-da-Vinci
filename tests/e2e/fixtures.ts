@@ -11,12 +11,14 @@ export interface GameContext {
 /**
  * 브라우저 컨텍스트에 프로필 데이터를 미리 설정
  * 페이지 로드 전에 호출해야 함
+ * 각 컨텍스트마다 고유한 profileId를 생성하여 중복 세션 방지
  */
-export async function setupProfileInContext(context: BrowserContext) {
-  await context.addInitScript(() => {
-    localStorage.setItem('nickname', 'TestUser');
-    localStorage.setItem('profileId', '1');
-  });
+export async function setupProfileInContext(context: BrowserContext, nickname = 'TestUser') {
+  const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  await context.addInitScript(({ nickname, uniqueId }) => {
+    localStorage.setItem('nickname', nickname);
+    localStorage.setItem('profileId', uniqueId);
+  }, { nickname, uniqueId });
 }
 
 /**
@@ -104,7 +106,7 @@ export async function createRoomWithPlayers(
 ): Promise<GameContext> {
   // 호스트 브라우저 컨텍스트
   const hostContext = await browser.newContext();
-  await setupProfileInContext(hostContext);
+  await setupProfileInContext(hostContext, 'Host');
   const hostPage = await hostContext.newPage();
 
   // 호스트: 방 생성
@@ -112,7 +114,7 @@ export async function createRoomWithPlayers(
 
   // 게스트 브라우저 컨텍스트
   const guestContext = await browser.newContext();
-  await setupProfileInContext(guestContext);
+  await setupProfileInContext(guestContext, 'Guest');
   const guestPage = await guestContext.newPage();
 
   // 게스트: 방 입장
