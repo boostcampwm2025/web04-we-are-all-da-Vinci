@@ -47,4 +47,9 @@ export class WaitlistCacheService {
     const key = RedisKeys.waitlist(roomId);
     return await client.lLen(key);
   }
+
+  async hasProfile(roomId: string, profileId: string): Promise<boolean> {
+    const waitlist = await this.getWaitlist(roomId);
+    return waitlist.some((player) => player.profileId === profileId);
+  }
 }

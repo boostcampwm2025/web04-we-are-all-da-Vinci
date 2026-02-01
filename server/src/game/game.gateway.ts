@@ -88,7 +88,19 @@ export class GameGateway
   }
 
   handleConnection(client: Socket) {
-    this.logger.info({ clientId: client.id }, 'New User Connected');
+    const profileId = (client.handshake.auth as Record<string, unknown>)
+      ?.profileId;
+    if (!profileId || typeof profileId !== 'string') {
+      this.logger.warn(
+        { clientId: client.id },
+        'Connection rejected: missing profileId',
+      );
+      client.disconnect();
+      return;
+    }
+    (client.data as Record<string, unknown>).profileId = profileId;
+
+    this.logger.info({ clientId: client.id, profileId }, 'New User Connected');
     this.metricService.incConnection();
   }
 
@@ -134,7 +146,9 @@ export class GameGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: UserJoinDto,
   ): Promise<string> {
-    const { roomId, profileId } = payload;
+    const { roomId } = payload;
+    const profileId = (client.data as Record<string, unknown>)
+      .profileId as string; // handleConnection에서 바인딩된 값 사용
     const nickname = escapeHtml(payload.nickname.trim());
     const room = await this.gameService.joinRoom(
       roomId,

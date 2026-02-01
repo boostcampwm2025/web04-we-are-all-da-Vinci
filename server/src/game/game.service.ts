@@ -150,6 +150,21 @@ export class GameService implements OnModuleInit {
       throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
     }
 
+    // 같은 profileId로 이미 접속 중인지 확인
+    const existingPlayer = room.players.find(
+      (p) => p.profileId === profileId && p.socketId !== socketId,
+    );
+    if (existingPlayer) {
+      throw new WebsocketException(ErrorCode.DUPLICATE_SESSION);
+    }
+    const waitlistHasDuplicate = await this.waitlistService.hasProfile(
+      roomId,
+      profileId,
+    );
+    if (waitlistHasDuplicate) {
+      throw new WebsocketException(ErrorCode.DUPLICATE_SESSION);
+    }
+
     const waitlistSize = await this.waitlistService.getWaitlistSize(roomId);
     if (room.players.length + waitlistSize >= room.settings.maxPlayer) {
       throw new WebsocketException(ErrorCode.ROOM_FULL);
