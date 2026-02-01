@@ -90,6 +90,10 @@ export class RoundService implements OnModuleInit {
     }
   }
 
+  async endGame(room: GameRoom) {
+    await this.moveGameEnd(room);
+  }
+
   private async movePrompt(room: GameRoom) {
     room.phase = GamePhase.PROMPT;
     room.currentRound += 1;
@@ -207,6 +211,10 @@ export class RoundService implements OnModuleInit {
     }
 
     // 게임 종료
+    await this.moveGameEnd(room);
+  }
+
+  private async moveGameEnd(room: GameRoom) {
     room.phase = GamePhase.GAME_END;
     await this.cacheService.saveRoom(room.roomId, room);
 
