@@ -11,6 +11,7 @@ import { GameRoom, Player } from '../common/types/game-room.types';
 import { GameRoomCacheService } from '../redis/cache/game-room-cache.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { GameService } from './game.service';
+import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
 
 describe('GameService', () => {
   let service: GameService;
@@ -74,6 +75,9 @@ describe('GameService', () => {
       setPromptIds: jest.fn(),
       resetPromptIds: jest.fn(),
     };
+    const mockProgressCacheService = {
+      deletePlayer: jest.fn(),
+    };
 
     const mockLogger = {
       info: jest.fn(),
@@ -110,6 +114,10 @@ describe('GameService', () => {
         {
           provide: PinoLogger,
           useValue: mockLogger,
+        },
+        {
+          provide: GameProgressCacheService,
+          useValue: mockProgressCacheService,
         },
       ],
     }).compile();
