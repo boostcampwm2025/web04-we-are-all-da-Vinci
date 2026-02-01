@@ -121,8 +121,7 @@ export const useGameStore = create<GameState>()(
 
         setAlertMessage: (alertMessage) => set({ alertMessage }),
 
-        setPendingNavigation: (pendingNavigation) =>
-          set({ pendingNavigation }),
+        setPendingNavigation: (pendingNavigation) => set({ pendingNavigation }),
 
         setIsInWaitlist: (isInWaitlist) => set({ isInWaitlist }),
 
