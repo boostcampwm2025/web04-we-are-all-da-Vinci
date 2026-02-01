@@ -25,7 +25,10 @@ export const useChatEvents = (enabled: boolean) => {
       addChatMessage(message);
     };
 
-    const handleHistory = (payload: { roomId: string; messages: ChatMessage[] }) => {
+    const handleHistory = (payload: {
+      roomId: string;
+      messages: ChatMessage[];
+    }) => {
       setChatHistory(payload.messages);
     };
 

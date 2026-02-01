@@ -24,7 +24,10 @@ export const useWaitlistEvents = (enabled: boolean) => {
 
     const socket = getSocket();
 
-    const handleWaitlist = ({ currentRound, totalRounds }: WaitlistResponse) => {
+    const handleWaitlist = ({
+      currentRound,
+      totalRounds,
+    }: WaitlistResponse) => {
       setIsInWaitlist(true);
       setGameProgress({ currentRound, totalRounds });
     };
@@ -41,5 +44,11 @@ export const useWaitlistEvents = (enabled: boolean) => {
       socket.off(CLIENT_EVENTS.USER_WAITLIST, handleWaitlist);
       socket.off(CLIENT_EVENTS.USER_PRACTICE_STARTED, handlePracticeStarted);
     };
-  }, [enabled, setIsInWaitlist, setIsPracticing, setPracticePrompt, setGameProgress]);
+  }, [
+    enabled,
+    setIsInWaitlist,
+    setIsPracticing,
+    setPracticePrompt,
+    setGameProgress,
+  ]);
 };
