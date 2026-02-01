@@ -18,7 +18,10 @@ class MockBroadcastChannel {
 
     // 같은 채널 이름을 가진 다른 인스턴스들에게 메시지 전달
     MockBroadcastChannel.instances
-      .filter((instance) => instance.name === this.name && instance !== this && !instance.closed)
+      .filter(
+        (instance) =>
+          instance.name === this.name && instance !== this && !instance.closed,
+      )
       .forEach((instance) => {
         const event = { data } as MessageEvent;
         instance.listeners.forEach((listener) => listener(event));
@@ -89,7 +92,8 @@ describe('tabLock', () => {
 
       // 모듈을 다시 로드하여 다른 "탭" 시뮬레이션
       vi.resetModules();
-      const { acquireTabLockAsync: acquireFromTab2 } = await import('./tabLock');
+      const { acquireTabLockAsync: acquireFromTab2 } =
+        await import('./tabLock');
 
       // 두 번째 탭이 잠금 시도
       const lock2Promise = acquireFromTab2('room-1');
@@ -144,7 +148,8 @@ describe('tabLock', () => {
 
       // 다른 탭 시뮬레이션
       vi.resetModules();
-      const { acquireTabLockAsync: acquireFromTab2 } = await import('./tabLock');
+      const { acquireTabLockAsync: acquireFromTab2 } =
+        await import('./tabLock');
 
       const lock2Promise = acquireFromTab2('room-1');
       await vi.advanceTimersByTimeAsync(100);

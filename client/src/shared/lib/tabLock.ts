@@ -127,7 +127,7 @@ export const acquireTabLockAsync = async (
 ): Promise<TabLockResult> => {
   // BroadcastChannel 미지원 환경
   if (!isBroadcastChannelSupported()) {
-    return { acquired: true, release: () => { } };
+    return { acquired: true, release: () => {} };
   }
 
   // 이미 잠금이 있으면 재사용
@@ -161,7 +161,7 @@ export const acquireTabLockAsync = async (
   if (denied) {
     channel.removeEventListener('message', messageHandler);
     channel.close();
-    return { acquired: false, release: () => { } };
+    return { acquired: false, release: () => {} };
   }
 
   registerAsLeader(roomId, tabId, channel);
