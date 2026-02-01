@@ -120,9 +120,14 @@ let redis; // 프로세스당 1개 클라이언트
 
 async function getRedis() {
   if (redis) return redis;
-  redis = createClient({ url: REDIS_URL });
-  redis.on("error", (err) => console.error("Redis error:", err));
-  await redis.connect();
+  try {
+    redis = createClient({ url: REDIS_URL });
+    await redis.connect();
+  } catch (err) {
+    console.error("레디스 에러", err);
+    process.exit(1);
+  }
+
   return redis;
 }
 
