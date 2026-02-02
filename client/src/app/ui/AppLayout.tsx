@@ -68,7 +68,7 @@ const AppLayout = () => {
           />
         ))}
       </div>
-      <div className="fixed bottom-4 left-4 z-50">
+      <div className="fixed top-4 left-4 z-50 md:top-auto md:bottom-4">
         <VolumeButton />
       </div>
 
