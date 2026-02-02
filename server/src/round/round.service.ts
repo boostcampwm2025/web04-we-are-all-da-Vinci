@@ -90,8 +90,8 @@ export class RoundService implements OnModuleInit {
   private async movePrompt(room: GameRoom) {
     const { events, timeLeft } = await this.phaseService.prompt(room);
 
-    events.forEach(({ event, payload }) => {
-      this.server.to(room.roomId).emit(event, payload);
+    events.forEach(({ name, payload }) => {
+      this.server.to(room.roomId).emit(name, payload);
     });
 
     await this.timerService.startTimer(room.roomId, timeLeft);
@@ -103,8 +103,8 @@ export class RoundService implements OnModuleInit {
   private async moveDrawing(room: GameRoom) {
     const { events, timeLeft } = await this.phaseService.drawing(room);
 
-    events.forEach(({ event, payload }) => {
-      this.server.to(room.roomId).emit(event, payload);
+    events.forEach(({ name, payload }) => {
+      this.server.to(room.roomId).emit(name, payload);
     });
 
     await this.timerService.startTimer(room.roomId, timeLeft);
@@ -116,8 +116,8 @@ export class RoundService implements OnModuleInit {
   private async moveRoundReplay(room: GameRoom) {
     const { events, timeLeft } = await this.phaseService.roundReplay(room);
 
-    events.forEach(({ event, payload }) => {
-      this.server.to(room.roomId).emit(event, payload);
+    events.forEach(({ name, payload }) => {
+      this.server.to(room.roomId).emit(name, payload);
     });
 
     await this.timerService.startTimer(room.roomId, timeLeft);
@@ -130,8 +130,8 @@ export class RoundService implements OnModuleInit {
   private async moveRoundStanding(room: GameRoom) {
     const { events, timeLeft } = await this.phaseService.roundStanding(room);
 
-    events.forEach(({ event, payload }) => {
-      this.server.to(room.roomId).emit(event, payload);
+    events.forEach(({ name, payload }) => {
+      this.server.to(room.roomId).emit(name, payload);
     });
 
     await this.timerService.startTimer(room.roomId, timeLeft);
@@ -150,8 +150,8 @@ export class RoundService implements OnModuleInit {
     // 게임 종료
     const { events, timeLeft } = await this.phaseService.gameEnd(room);
 
-    events.forEach(({ event, payload }) => {
-      this.server.to(room.roomId).emit(event, payload);
+    events.forEach(({ name, payload }) => {
+      this.server.to(room.roomId).emit(name, payload);
     });
 
     await this.timerService.startTimer(room.roomId, timeLeft);

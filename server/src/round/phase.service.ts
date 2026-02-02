@@ -16,7 +16,7 @@ import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.servi
 import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
 
 interface PhaseEvent {
-  event: string;
+  name: string;
   payload: unknown;
 }
 
@@ -70,7 +70,7 @@ export class PhaseService {
       timeLeft: PROMPT_TIME,
       events: [
         {
-          event: ClientEvents.ROOM_PROMPT,
+          name: ClientEvents.ROOM_PROMPT,
           payload: promptStrokes,
         },
       ],
@@ -97,7 +97,7 @@ export class PhaseService {
       timeLeft: ROUND_REPLAY_TIME,
       events: [
         {
-          event: ClientEvents.ROOM_ROUND_REPLAY,
+          name: ClientEvents.ROOM_ROUND_REPLAY,
           payload: result,
         },
       ],
@@ -114,7 +114,7 @@ export class PhaseService {
       timeLeft: ROUND_STANDING_TIME,
       events: [
         {
-          event: ClientEvents.ROOM_ROUND_STANDING,
+          name: ClientEvents.ROOM_ROUND_STANDING,
           payload: result,
         },
       ],
@@ -131,7 +131,7 @@ export class PhaseService {
       timeLeft: GAME_END_TIME,
       events: [
         {
-          event: ClientEvents.ROOM_GAME_END,
+          name: ClientEvents.ROOM_GAME_END,
           payload: finalResult,
         },
       ],
