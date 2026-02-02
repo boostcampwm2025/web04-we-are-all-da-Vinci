@@ -1,19 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BaseModal } from '@/shared/ui';
 import { trackEvent } from '@/shared/lib/mixpanel';
 import { MIXPANEL_EVENTS } from '@/shared/config';
+import type { Settings } from '@/entities/gameRoom';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onComplete?: (settings: RoomSettings) => void;
+  onComplete?: (settings: Settings) => void;
   currentPlayerCount?: number;
-}
-
-export interface RoomSettings {
-  maxPlayers: number;
-  totalRounds: number;
-  drawingTime: number;
+  settings?: Settings;
 }
 
 const RoomSettingsModal = ({
@@ -21,6 +17,7 @@ const RoomSettingsModal = ({
   onClose,
   onComplete,
   currentPlayerCount = 1,
+  settings,
 }: SettingsModalProps) => {
   const [selectedPlayers, setSelectedPlayers] = useState(4);
   const [selectedRounds, setSelectedRounds] = useState(5);
@@ -57,12 +54,20 @@ const RoomSettingsModal = ({
   const handleComplete = () => {
     if (onComplete) {
       onComplete({
-        maxPlayers: selectedPlayers,
+        maxPlayer: selectedPlayers,
         totalRounds: selectedRounds,
         drawingTime: selectedTime,
       });
     }
   };
+
+  useEffect(() => {
+    if (settings) {
+      setSelectedPlayers(settings.maxPlayer);
+      setSelectedRounds(settings.totalRounds);
+      setSelectedTime(settings.drawingTime);
+    }
+  }, [isOpen, settings]);
 
   return (
     <BaseModal

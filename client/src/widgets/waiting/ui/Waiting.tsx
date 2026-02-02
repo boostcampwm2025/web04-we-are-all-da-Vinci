@@ -3,12 +3,13 @@ import {
   selectSettings,
   useGameStore,
   useIsHost,
+  type Settings,
 } from '@/entities/gameRoom';
 import { GameSettingsCard } from '@/entities/gameSettings';
 import { ChatBox, useChatActions, useChatStore } from '@/features/chat';
 import { PlayerListSection } from '@/features/playerList';
 import { RoomCodeCopy } from '@/features/roomCode';
-import { RoomSettingsModal, type RoomSettings } from '@/features/roomSettings';
+import { RoomSettingsModal } from '@/features/roomSettings';
 import { WaitingRoomActions } from '@/features/waitingRoomActions';
 import { WaitingRoomOverlay } from '@/features/waitingRoomActions/ui/WaitingRoomOverlay';
 import { getSocket } from '@/shared/api';
@@ -58,11 +59,11 @@ export const Waiting = () => {
     setShowSettingsModal(true);
   };
 
-  const handleSettingsComplete = (settings: RoomSettings) => {
+  const handleSettingsComplete = (settings: Settings) => {
     const socket = getSocket();
     socket.emit(SERVER_EVENTS.ROOM_SETTINGS, {
       roomId,
-      maxPlayer: settings.maxPlayers,
+      maxPlayer: settings.maxPlayer,
       totalRounds: settings.totalRounds,
       drawingTime: settings.drawingTime,
     });
@@ -151,6 +152,7 @@ export const Waiting = () => {
         onClose={() => setShowSettingsModal(false)}
         onComplete={handleSettingsComplete}
         currentPlayerCount={players.length}
+        settings={settings}
       />
     </>
   );
