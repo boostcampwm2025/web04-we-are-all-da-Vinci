@@ -81,6 +81,18 @@ export class RoundService implements OnModuleInit {
         this.logger.error({ room }, '알 수 없는 phase입니다');
     }
   }
+  private async moveWaiting(room: GameRoom) {
+    if (room.phase !== GamePhase.GAME_END) {
+      return;
+    }
+
+    await this.phaseService.waiting(room);
+    await this.timerService.cancelTimer(room.roomId);
+
+    this.logger.info({ roomId: room.roomId }, 'Game Waiting Start');
+
+    await this.notifyPhaseChange(room.roomId);
+  }
 
   private async movePrompt(room: GameRoom) {
     const { events, timeLeft } = await this.phaseService.prompt(room);
@@ -122,6 +134,39 @@ export class RoundService implements OnModuleInit {
     await this.notifyPhaseChange(room.roomId);
   }
 
+  private async moveRoundStanding(room: GameRoom) {
+    const { events, timeLeft } = await this.phaseService.roundStanding(room);
+
+    events.forEach(({ event, payload }) => {
+      this.server.to(room.roomId).emit(event, payload);
+    });
+
+    await this.timerService.startTimer(room.roomId, timeLeft);
+
+    this.logger.info({ room }, 'Round Standing Phase Start');
+
+    await this.notifyPhaseChange(room.roomId);
+  }
+
+  private async moveNextRoundOrEnd(room: GameRoom) {
+    if (room.currentRound < room.settings.totalRounds) {
+      // 다음 라운드 시작
+      return await this.movePrompt(room);
+    }
+
+    // 게임 종료
+    const { events, timeLeft } = await this.phaseService.gameEnd(room);
+
+    events.forEach(({ event, payload }) => {
+      this.server.to(room.roomId).emit(event, payload);
+    });
+
+    await this.timerService.startTimer(room.roomId, timeLeft);
+
+    this.logger.info('Game End Start');
+    await this.notifyPhaseChange(room.roomId);
+  }
+
   async getRoundReplayData(roomId: string) {
     const room = await this.cacheService.getRoom(roomId);
     if (!room) return null;
@@ -151,20 +196,6 @@ export class RoundService implements OnModuleInit {
     };
   }
 
-  private async moveRoundStanding(room: GameRoom) {
-    const { events, timeLeft } = await this.phaseService.roundStanding(room);
-
-    events.forEach(({ event, payload }) => {
-      this.server.to(room.roomId).emit(event, payload);
-    });
-
-    await this.timerService.startTimer(room.roomId, timeLeft);
-
-    this.logger.info({ room }, 'Round Standing Phase Start');
-
-    await this.notifyPhaseChange(room.roomId);
-  }
-
   async getRoundStandingData(roomId: string) {
     const room = await this.cacheService.getRoom(roomId);
     if (!room) return null;
@@ -181,25 +212,6 @@ export class RoundService implements OnModuleInit {
     }));
 
     return { rankings };
-  }
-
-  private async moveNextRoundOrEnd(room: GameRoom) {
-    if (room.currentRound < room.settings.totalRounds) {
-      // 다음 라운드 시작
-      return await this.movePrompt(room);
-    }
-
-    // 게임 종료
-    const { events, timeLeft } = await this.phaseService.gameEnd(room);
-
-    events.forEach(({ event, payload }) => {
-      this.server.to(room.roomId).emit(event, payload);
-    });
-
-    await this.timerService.startTimer(room.roomId, timeLeft);
-
-    this.logger.info('Game End Start');
-    await this.notifyPhaseChange(room.roomId);
   }
 
   async getGameEndData(roomId: string) {
@@ -246,18 +258,5 @@ export class RoundService implements OnModuleInit {
         similarity: highlight.similarity,
       },
     };
-  }
-
-  private async moveWaiting(room: GameRoom) {
-    if (room.phase !== GamePhase.GAME_END) {
-      return;
-    }
-
-    await this.phaseService.waiting(room);
-    await this.timerService.cancelTimer(room.roomId);
-
-    this.logger.info({ roomId: room.roomId }, 'Game Waiting Start');
-
-    await this.notifyPhaseChange(room.roomId);
   }
 }
