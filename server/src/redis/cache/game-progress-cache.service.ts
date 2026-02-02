@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '../redis.service';
 import { RoundResultEntry, Similarity, Stroke } from 'src/common/types';
-import { REDIS_TTL } from 'src/common/constants';
-import { WebsocketException } from 'src/common/exceptions/websocket-exception';
+import { REDIS_TTL } from '../../common/constants';
+import { WebsocketException } from '../../common/exceptions/websocket-exception';
 
 interface PlayerRecord {
   strokes: Stroke[];
   similarity: Similarity;
 }
 
-type RoundResult = Omit<RoundResultEntry, 'nickname'>;
+type RoundResult = Omit<RoundResultEntry, 'nickname' | 'profileId'>;
 
 @Injectable()
 export class GameProgressCacheService {

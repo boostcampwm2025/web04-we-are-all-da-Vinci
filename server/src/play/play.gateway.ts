@@ -8,7 +8,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { UserScoreDto } from './dto/user-score.dto';
 import { UserDrawingDto } from './dto/user-drawing.dto';
-import { ClientEvents, ServerEvents } from 'src/common/constants';
+import { ClientEvents, ServerEvents } from '../common/constants';
 import { PinoLogger } from 'nestjs-pino';
 import { UseFilters, UseInterceptors } from '@nestjs/common';
 import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';

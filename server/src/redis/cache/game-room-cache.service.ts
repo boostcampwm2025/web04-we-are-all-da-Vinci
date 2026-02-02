@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '../redis.service';
-import { GameRoom, Player, Settings } from 'src/common/types';
-import { REDIS_TTL } from 'src/common/constants';
+import { GameRoom, Player, Settings, Phase } from 'src/common/types';
+import { REDIS_TTL } from '../../common/constants';
 
 @Injectable()
 export class GameRoomCacheService {
@@ -38,7 +38,7 @@ export class GameRoomCacheService {
     await client.sAdd(this.getActiveRoomsKey(), roomId);
   }
 
-  async getRoom(roomId: string) {
+  async getRoom(roomId: string): Promise<GameRoom | null> {
     const client = this.redisService.getClient();
     const key = this.getRoomKey(roomId);
     const data = await client.hGetAll(key);
@@ -52,7 +52,7 @@ export class GameRoomCacheService {
     return {
       roomId: data.roomId,
       players: players,
-      phase: data.phase,
+      phase: data.phase as Phase,
       currentRound: parseInt(data.currentRound),
       settings: JSON.parse(data.settings) as Settings,
     };

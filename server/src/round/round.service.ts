@@ -8,7 +8,7 @@ import {
   PROMPT_TIME,
   ROUND_REPLAY_TIME,
   ROUND_STANDING_TIME,
-} from 'src/common/constants';
+} from '../common/constants';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
 import { PinoLogger } from 'nestjs-pino';

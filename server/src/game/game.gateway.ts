@@ -11,7 +11,7 @@ import { Server, Socket } from 'socket.io';
 import { UserJoinDto } from './dto/user-join.dto';
 import { RoomSettingsDto } from './dto/room-settings.dto';
 import { RoomStartDto } from './dto/room-start.dto';
-import { ClientEvents, GamePhase, ServerEvents } from 'src/common/constants';
+import { ClientEvents, GamePhase, ServerEvents } from '../common/constants';
 import { PinoLogger } from 'nestjs-pino';
 import { GameService } from './game.service';
 import { GameRoom, Player } from 'src/common/types';

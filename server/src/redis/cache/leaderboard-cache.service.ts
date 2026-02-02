@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '../redis.service';
-import { REDIS_TTL } from 'src/common/constants';
+import { REDIS_TTL } from '../../common/constants';
 
 @Injectable()
 export class LeaderboardCacheService {

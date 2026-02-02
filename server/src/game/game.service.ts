@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { GameRoom, Player } from 'src/common/types';
-import { GamePhase } from 'src/common/constants';
+import { GamePhase } from '../common/constants';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';

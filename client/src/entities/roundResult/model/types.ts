@@ -1,13 +1,9 @@
-import type { Stroke } from '@/entities/similarity';
-import type { Similarity } from '@/features/similarity';
+import type { Stroke, Similarity, PlayerScore as SharedPlayerScore } from '@shared/types';
 
-export interface PlayerScore {
-  socketId: string;
-  nickname: string;
-  profileId: string;
-  score: number;
-}
+// Re-export base type
+export type PlayerScore = SharedPlayerScore;
 
+// Extended type with ranking for client display
 export interface RoundResult extends PlayerScore {
   ranking: number;
   similarity: Similarity;
