@@ -55,7 +55,7 @@ const PlayerCard = ({
       )}
 
       {status && (
-        <div className="font-handwriting lg:text-md text-content-tertiary text-xs sm:text-sm">
+        <div className="font-handwriting text-content-tertiary text-sm sm:text-base lg:text-lg">
           {status}
         </div>
       )}

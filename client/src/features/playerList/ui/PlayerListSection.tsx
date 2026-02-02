@@ -49,7 +49,7 @@ export const PlayerListSection = ({
       <div className="mb-5 flex shrink-0 items-center justify-between">
         <h2 className="font-handwriting flex items-center gap-2 text-lg font-bold md:text-2xl">
           인원
-          <span className="text-content-tertiary text-sm md:text-lg">
+          <span className="text-content-tertiary text-base md:text-xl">
             ({players.length}/{maxPlayer})
           </span>
         </h2>
