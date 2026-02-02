@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger } from 'nestjs-pino';
 import {
   ClientEvents,
   GAME_END_TIME,
@@ -35,10 +34,7 @@ export class PhaseService {
     private readonly progressCacheService: GameProgressCacheService,
     private readonly standingsCacheService: StandingsCacheService,
     private readonly leaderboardCacheService: LeaderboardCacheService,
-    private readonly logger: PinoLogger,
-  ) {
-    this.logger.setContext(PhaseService.name);
-  }
+  ) {}
 
   async waiting(room: GameRoom) {
     await this.promptService.resetPromptIds(
@@ -54,8 +50,6 @@ export class PhaseService {
     await this.progressCacheService.deleteAll(room.roomId);
     await this.standingsCacheService.deleteAll(room.roomId);
     await this.leaderboardCacheService.deleteAll(room.roomId);
-
-    this.logger.info({ roomId: room.roomId }, 'Game Waiting Start');
   }
 
   async prompt(room: GameRoom) {
@@ -72,8 +66,6 @@ export class PhaseService {
 
     await this.cacheService.saveRoom(room.roomId, room);
 
-    this.logger.info({ room }, 'Prompt Phase Start');
-
     return {
       timeLeft: PROMPT_TIME,
       events: [
@@ -89,8 +81,6 @@ export class PhaseService {
     room.phase = GamePhase.DRAWING;
     await this.cacheService.saveRoom(room.roomId, room);
 
-    this.logger.info({ room }, 'Drawing Phase Start');
-
     return {
       timeLeft: room.settings.drawingTime,
       events: [],
@@ -102,8 +92,6 @@ export class PhaseService {
     await this.cacheService.saveRoom(room.roomId, room);
 
     const result = await this.getRoundReplayData(room.roomId);
-
-    this.logger.info({ room }, 'Round Replay Phase Start');
 
     return {
       timeLeft: ROUND_REPLAY_TIME,
@@ -122,8 +110,6 @@ export class PhaseService {
 
     const result = await this.getRoundStandingData(room.roomId);
 
-    this.logger.info({ room }, 'Round Standing Phase Start');
-
     return {
       timeLeft: ROUND_STANDING_TIME,
       events: [
@@ -140,8 +126,6 @@ export class PhaseService {
     await this.cacheService.saveRoom(room.roomId, room);
 
     const finalResult = await this.getGameEndData(room.roomId);
-
-    this.logger.info('Game End Start');
 
     return {
       timeLeft: GAME_END_TIME,
