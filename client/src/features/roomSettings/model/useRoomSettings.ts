@@ -1,30 +1,32 @@
 import type { Settings } from '@/entities/gameRoom';
 import { MIXPANEL_EVENTS } from '@/shared/config';
 import { trackEvent } from '@/shared/lib/mixpanel';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 interface UseRoomSettingsProps {
-  isOpen: boolean;
   settings?: Settings;
   onComplete?: (settings: Settings) => void;
 }
 
 export const useRoomSettings = ({
-  isOpen,
   settings,
   onComplete,
 }: UseRoomSettingsProps) => {
+  const [prevSettings, setPrevSettings] = useState<Settings | undefined>(
+    settings,
+  );
   const [selectedPlayers, setSelectedPlayers] = useState(4);
   const [selectedRounds, setSelectedRounds] = useState(5);
   const [selectedTime, setSelectedTime] = useState(15);
 
-  useEffect(() => {
-    if (isOpen && settings) {
+  if (settings !== prevSettings) {
+    setPrevSettings(settings);
+    if (settings) {
       setSelectedPlayers(settings.maxPlayer);
       setSelectedRounds(settings.totalRounds);
       setSelectedTime(settings.drawingTime);
     }
-  }, [isOpen, settings]);
+  }
 
   const handlePlayersChange = (players: number) => {
     setSelectedPlayers(players);

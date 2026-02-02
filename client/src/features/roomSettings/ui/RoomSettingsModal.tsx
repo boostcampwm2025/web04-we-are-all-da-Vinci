@@ -28,7 +28,7 @@ const RoomSettingsModal = ({
     handleRoundsChange,
     handleTimeChange,
     handleComplete,
-  } = useRoomSettings({ isOpen, settings, onComplete });
+  } = useRoomSettings({ settings, onComplete });
 
   return (
     <BaseModal
