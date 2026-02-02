@@ -102,7 +102,7 @@ export const Waiting = () => {
                     players={players}
                     maxPlayer={settings.maxPlayer}
                     roomCode={
-                      <RoomCodeCopy roomId={roomId} onCopy={copyRoomId} />
+                      <RoomCodeCopy onCopy={copyRoomId} />
                     }
                   />
                   {isInWaitlist && <WaitingRoomOverlay />}
