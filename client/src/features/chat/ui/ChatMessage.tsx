@@ -36,7 +36,7 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
         <div className="shrink-0">
           <UserAvatar
             name={message.profileId || message.nickname || ''}
-            size={32}
+            className="h-8 w-8"
           />
         </div>
 
