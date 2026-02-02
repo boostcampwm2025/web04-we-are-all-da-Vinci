@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '../redis.service';
+import { RedisKeys } from '../redis-keys';
 import { GameRoom, Player, Settings, Phase } from 'src/common/types';
 import { REDIS_TTL } from '../../common/constants';
 
@@ -7,25 +8,9 @@ import { REDIS_TTL } from '../../common/constants';
 export class GameRoomCacheService {
   constructor(private readonly redisService: RedisService) {}
 
-  private getRoomKey(roomId: string) {
-    return `room:${roomId}:info`;
-  }
-
-  private getActiveRoomsKey() {
-    return `active:rooms`;
-  }
-
-  private getPlayerListKey(roomId: string) {
-    return `room:${roomId}:players`;
-  }
-
-  private getPromptKey(roomId: string) {
-    return `room:${roomId}:prompts`;
-  }
-
   async saveRoom(roomId: string, gameRoom: GameRoom) {
     const client = this.redisService.getClient();
-    const key = this.getRoomKey(roomId);
+    const key = RedisKeys.room(roomId);
 
     await client.hSet(key, {
       roomId,
@@ -35,12 +20,12 @@ export class GameRoomCacheService {
     });
 
     await client.expire(key, REDIS_TTL);
-    await client.sAdd(this.getActiveRoomsKey(), roomId);
+    await client.sAdd(RedisKeys.activeRooms(), roomId);
   }
 
   async getRoom(roomId: string): Promise<GameRoom | null> {
     const client = this.redisService.getClient();
-    const key = this.getRoomKey(roomId);
+    const key = RedisKeys.room(roomId);
     const data = await client.hGetAll(key);
 
     if (!data || Object.keys(data).length === 0) {
@@ -60,14 +45,34 @@ export class GameRoomCacheService {
 
   async deleteRoom(roomId: string) {
     const client = this.redisService.getClient();
-    await client.del(this.getPlayerListKey(roomId));
-    await client.sRem(this.getActiveRoomsKey(), roomId);
-    await client.del(this.getRoomKey(roomId));
+    await client.unlink(RedisKeys.room(roomId));
+    await client.unlink(RedisKeys.players(roomId));
+    await client.unlink(RedisKeys.prompts(roomId));
+    await client.unlink(RedisKeys.timer(roomId));
+    await client.unlink(RedisKeys.waitlist(roomId));
+    await client.unlink(RedisKeys.leaderboard(roomId));
+    await client.unlink(RedisKeys.standings(roomId));
+    await client.sRem(RedisKeys.activeRooms(), roomId);
+
+    let cursor = '0';
+    const scanKey = RedisKeys.drawingGameScan(roomId);
+    do {
+      const data = await client.scan(cursor, {
+        TYPE: 'string',
+        COUNT: 20,
+        MATCH: scanKey,
+      });
+
+      cursor = data.cursor;
+      if (data.keys.length > 0) {
+        await client.unlink(data.keys);
+      }
+    } while (cursor !== '0');
   }
 
   async addPlayer(roomId: string, player: Player) {
     const client = this.redisService.getClient();
-    const key = this.getPlayerListKey(roomId);
+    const key = RedisKeys.players(roomId);
 
     await client.rPush(key, JSON.stringify(player));
 
@@ -76,23 +81,69 @@ export class GameRoomCacheService {
 
   async setPlayer(roomId: string, index: number, player: Player) {
     const client = this.redisService.getClient();
-    const key = this.getPlayerListKey(roomId);
+    const key = RedisKeys.players(roomId);
 
     await client.lSet(key, index, JSON.stringify(player));
 
     await client.expire(key, REDIS_TTL);
   }
 
-  async deletePlayer(roomId: string, player: Player) {
+  async deletePlayer(roomId: string, socketId: string) {
     const client = this.redisService.getClient();
-    const key = this.getPlayerListKey(roomId);
+    const key = RedisKeys.players(roomId);
 
-    await client.lRem(key, 0, JSON.stringify(player));
+    const script = `local key = KEYS[1]
+    local socket_id = ARGV[1]
+
+    local players = redis.call("LRANGE", key, 0, -1)
+    local length = #players
+
+    if length == 0 then
+      return 0
+    end
+
+    local target_index = 0
+    local target_obj = nil
+    local target_raw = nil
+
+    for i, raw in ipairs(players) do
+      local obj = cjson.decode(raw)
+      if obj.socketId == socket_id then
+        target_index = i
+        target_obj = obj
+        target_raw = raw
+        break
+      end
+    end
+
+    if target_index == 0 then
+        return 0
+    end
+
+    if target_obj.isHost == true and length > 1 then
+        local host_index = 2
+        
+        local new_raw = players[host_index]
+        local new_obj = cjson.decode(new_raw)
+        
+        new_obj.isHost = true;
+        redis.call("LSET", key, 1, cjson.encode(new_obj)); 
+    end
+
+    redis.call("LREM", key, 1, target_raw)
+
+    return 1`;
+    const res = await client.eval(script, {
+      keys: [key],
+      arguments: [socketId],
+    });
+
+    return res === 1 ? true : false;
   }
 
   async getAllPlayers(roomId: string): Promise<Player[]> {
     const client = this.redisService.getClient();
-    const key = this.getPlayerListKey(roomId);
+    const key = RedisKeys.players(roomId);
 
     return (await client.lRange(key, 0, -1)).map(
       (value) => JSON.parse(value) as Player,
@@ -101,7 +152,7 @@ export class GameRoomCacheService {
 
   async addPromptIds(roomId: string, ...promptIds: number[]) {
     const client = this.redisService.getClient();
-    const key = this.getPromptKey(roomId);
+    const key = RedisKeys.prompts(roomId);
 
     const values = promptIds.map((id) => String(id));
 
@@ -111,7 +162,7 @@ export class GameRoomCacheService {
 
   async resetPromptIds(roomId: string, ...promptIds: number[]) {
     const client = this.redisService.getClient();
-    const key = this.getPromptKey(roomId);
+    const key = RedisKeys.prompts(roomId);
 
     const values = promptIds.map((id) => String(id));
 
@@ -126,7 +177,7 @@ export class GameRoomCacheService {
     }
 
     const client = this.redisService.getClient();
-    const key = this.getPromptKey(roomId);
+    const key = RedisKeys.prompts(roomId);
 
     const promptId = await client.lIndex(key, round - 1);
 
@@ -135,9 +186,9 @@ export class GameRoomCacheService {
 
   async popAndAddPlayerAtomically(roomId: string): Promise<Player | null> {
     const client = this.redisService.getClient();
-    const roomKey = this.getRoomKey(roomId);
-    const playerListKey = this.getPlayerListKey(roomId);
-    const waitlistKey = `waiting:${roomId}`;
+    const roomKey = RedisKeys.room(roomId);
+    const playerListKey = RedisKeys.players(roomId);
+    const waitlistKey = RedisKeys.waitlist(roomId);
 
     const luaScript = `
       local roomKey = KEYS[1]

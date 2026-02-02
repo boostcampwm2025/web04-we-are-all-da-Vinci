@@ -3,8 +3,9 @@ import { useGameStore, useIsHost } from '@/entities/gameRoom';
 import { TIMER } from '@/entities/timer/config';
 import { ChatBox, useChatActions, useChatStore } from '@/features/chat';
 import { getSocket } from '@/shared/api';
-import { SERVER_EVENTS, TITLES } from '@/shared/config';
+import { SERVER_EVENTS, TITLES, BGM_LIST } from '@/shared/config';
 import { GameHeader } from '@/shared/ui';
+import { useBGM } from '@/shared/model/useBGM';
 
 const BUTTON_ENABLE_AFTER = 10; // 10초 후 버튼 활성화
 
@@ -23,6 +24,8 @@ export const GameEnd = () => {
   const messages = useChatStore((state) => state.messages);
   const { sendMessage } = useChatActions(roomId);
 
+  useBGM(BGM_LIST.GAME_END);
+
   const handleRestart = () => {
     if (!isButtonEnabled) return;
     const socket = getSocket();
@@ -34,7 +37,7 @@ export const GameEnd = () => {
       <main className="game-container">
         <GameHeader title={TITLES.END} showDecoration />
 
-        <div className="flex min-h-0 flex-1 gap-6">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 md:flex-row md:gap-6">
           {/* 1. 좌측: POTG 카드 */}
           <section className="flex min-w-0 flex-[1.5] flex-col items-center justify-center">
             <PotgCard
@@ -45,7 +48,7 @@ export const GameEnd = () => {
           </section>
 
           {/* 2. 중앙: 순위 */}
-          <section className="flex min-w-0 flex-1 flex-col gap-4">
+          <section className="flex min-w-0 flex-1 flex-col gap-4 md:flex-row">
             <FinalRankingCard
               topThree={topThree}
               timer={timer}
@@ -56,11 +59,11 @@ export const GameEnd = () => {
           </section>
 
           {/* 3. 우측: 채팅 */}
-          <section className="flex w-72 shrink-0 flex-col">
+          <section className="flex w-full shrink-0 flex-col md:w-72">
             <ChatBox
               messages={messages}
               onSendMessage={sendMessage}
-              className="h-full"
+              className="h-72 md:h-full"
             />
           </section>
         </div>

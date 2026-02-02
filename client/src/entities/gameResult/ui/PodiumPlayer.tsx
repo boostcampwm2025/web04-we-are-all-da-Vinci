@@ -14,8 +14,8 @@ const PODIUM_CONFIG = {
     textColor: 'text-rank-gold-text',
     nameSize: 'text-2xl',
     scoreSize: 'text-2xl',
-    podiumHeight: 'h-28 sm:h-32',
-    podiumWidth: 'w-20 sm:w-28',
+    podiumHeight: 'h-42 xl:h-32',
+    podiumWidth: 'w-18 xl:w-28',
     podiumBg: 'bg-yellow-100',
     podiumBorder: 'border-yellow-200',
     badge: {
@@ -33,7 +33,7 @@ const PODIUM_CONFIG = {
     nameSize: 'text-lg',
     scoreSize: 'text-lg',
     podiumHeight: 'h-20 sm:h-24',
-    podiumWidth: 'w-16 sm:w-20',
+    podiumWidth: 'w-16 xl:w-20',
     podiumBg: 'bg-gray-100',
     podiumBorder: 'border-gray-200',
     badge: {
@@ -51,7 +51,7 @@ const PODIUM_CONFIG = {
     nameSize: 'text-lg',
     scoreSize: 'text-lg',
     podiumHeight: 'h-14 sm:h-16',
-    podiumWidth: 'w-16 sm:w-20',
+    podiumWidth: 'w-16 xl:w-20',
     podiumBg: 'bg-orange-100',
     podiumBorder: 'border-orange-200',
     badge: {
@@ -74,7 +74,11 @@ const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
         >
           <UserAvatar
             name={player.profileId}
-            size={position === 'first' ? 80 : 64}
+            className={
+              position === 'first'
+                ? 'h-14 w-14 xl:h-20 xl:w-20'
+                : 'h-10 w-10 xl:h-16 xl:w-16'
+            }
           />
         </div>
 
@@ -87,7 +91,7 @@ const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
         )}
 
         {position === 'first' && (
-          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 transform rounded-full bg-yellow-400 px-4 py-1 font-bold whitespace-nowrap text-gray-800 shadow-sm">
+          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 transform rounded-full bg-yellow-400 px-4 py-1 text-xs font-bold whitespace-nowrap text-gray-800 shadow-sm md:text-sm">
             오늘의 다빈치
           </div>
         )}
@@ -99,7 +103,9 @@ const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
         {player.nickname}
       </h3>
 
-      <p className={`${config.textColor} ${config.scoreSize} font-bold`}>
+      <p
+        className={`${config.textColor} ${config.scoreSize} text-sm font-bold xl:text-2xl`}
+      >
         {player.score.toLocaleString()} 점
       </p>
 

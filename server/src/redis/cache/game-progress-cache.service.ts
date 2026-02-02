@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '../redis.service';
+import { RedisKeys } from '../redis-keys';
 import { RoundResultEntry, Similarity, Stroke } from 'src/common/types';
 import { REDIS_TTL } from '../../common/constants';
 import { WebsocketException } from '../../common/exceptions/websocket-exception';
@@ -15,18 +16,6 @@ type RoundResult = Omit<RoundResultEntry, 'nickname' | 'profileId'>;
 export class GameProgressCacheService {
   constructor(private readonly redisService: RedisService) {}
 
-  private getKey(roomId: string, round: number, socketId: string) {
-    return `drawing:${roomId}:${round}:${socketId}`;
-  }
-
-  private getPlayerScanKey(roomId: string, round: number) {
-    return `drawing:${roomId}:${round}:*`;
-  }
-
-  private getGameScanKey(roomId: string) {
-    return `drawing:${roomId}:*`;
-  }
-
   async submitRoundResult(
     roomId: string,
     round: number,
@@ -35,7 +24,7 @@ export class GameProgressCacheService {
     similarity: Similarity,
   ) {
     const client = this.redisService.getClient();
-    const key = this.getKey(roomId, round, socketId);
+    const key = RedisKeys.drawing(roomId, round, socketId);
 
     const exists = await client.get(key);
 
@@ -48,7 +37,7 @@ export class GameProgressCacheService {
 
   async getRoundResults(roomId: string, round: number): Promise<RoundResult[]> {
     const client = this.redisService.getClient();
-    const scanKey = this.getPlayerScanKey(roomId, round);
+    const scanKey = RedisKeys.drawingRoundScan(roomId, round);
 
     let cursor = '0';
     const keys = [];
@@ -93,7 +82,7 @@ export class GameProgressCacheService {
   ) {
     const client = this.redisService.getClient();
     const keys = Array.from({ length: totalRounds }, (_, index) =>
-      this.getKey(roomId, index + 1, socketId),
+      RedisKeys.drawing(roomId, index + 1, socketId),
     );
 
     // 키가 없으면 빈 배열 반환
@@ -130,7 +119,7 @@ export class GameProgressCacheService {
 
   async deleteAll(roomId: string) {
     const client = this.redisService.getClient();
-    const scanKey = this.getGameScanKey(roomId);
+    const scanKey = RedisKeys.drawingGameScan(roomId);
 
     let cursor = '0';
     do {
@@ -139,6 +128,27 @@ export class GameProgressCacheService {
         COUNT: 20,
         MATCH: scanKey,
       });
+      cursor = data.cursor;
+      const keys = data.keys;
+
+      if (keys.length > 0) {
+        await client.unlink(keys);
+      }
+    } while (cursor !== '0');
+  }
+
+  async deletePlayer(roomId: string, socketId: string) {
+    const client = this.redisService.getClient();
+    const scanKey = RedisKeys.drawingPlayerScan(roomId, socketId);
+
+    let cursor = '0';
+
+    do {
+      const data = await client.scan(cursor, {
+        TYPE: 'string',
+        MATCH: scanKey,
+      });
+
       cursor = data.cursor;
       const keys = data.keys;
 

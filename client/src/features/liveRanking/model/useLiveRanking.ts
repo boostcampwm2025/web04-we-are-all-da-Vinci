@@ -1,6 +1,5 @@
 import { selectLiveRankings, useGameStore } from '@/entities/gameRoom';
 import { RANK_CHANGE, type RankChange } from '@/entities/ranking';
-import { getSocket } from '@/shared/api';
 
 function calculateRankChange(
   previousRank: number | null,
@@ -14,8 +13,7 @@ function calculateRankChange(
 
 export const useLiveRanking = () => {
   const rankings = useGameStore(selectLiveRankings);
-  const socket = getSocket();
-  const mySocketId = socket?.id;
+  const mySocketId = useGameStore((state) => state.mySocketId);
 
   const rankingsWithChange = rankings.map((entry) => ({
     ...entry,

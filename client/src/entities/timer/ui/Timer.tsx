@@ -1,6 +1,6 @@
-import { selectPhase, selectTimer, useGameStore } from '@/entities/gameRoom';
-import { SOUND_LIST } from '@/shared/config/sound';
 import { SoundManager } from '@/shared/lib';
+import { SFX_LIST } from '@/shared/config';
+import { selectPhase, selectTimer, useGameStore } from '@/entities/gameRoom';
 import { useEffect, useState } from 'react';
 import { TIMER } from '../config';
 
@@ -42,11 +42,11 @@ const Timer = () => {
       return;
     }
     const manager = SoundManager.getInstance();
-    manager.playSound(SOUND_LIST.TIMER);
+    manager.playSound(SFX_LIST.TIMER);
   }, [isUrgent, displayTime]);
 
   return (
-    <div className="absolute top-8 right-8 z-20">
+    <div className="absolute top-4 right-4 z-20 origin-top-right scale-70 md:top-8 md:right-8 md:scale-100">
       <div className="relative inline-block">
         <div
           className={`relative flex h-24 w-24 items-center justify-center rounded-full border-4 bg-white shadow-xl transition-all ${

@@ -12,9 +12,14 @@ import { RoomSettingsModal, type RoomSettings } from '@/features/roomSettings';
 import { WaitingRoomActions } from '@/features/waitingRoomActions';
 import { WaitingRoomOverlay } from '@/features/waitingRoomActions/ui/WaitingRoomOverlay';
 import { getSocket } from '@/shared/api';
-import { MIXPANEL_EVENTS, SERVER_EVENTS, TITLES } from '@/shared/config';
+import {
+  MIXPANEL_EVENTS,
+  SERVER_EVENTS,
+  TITLES,
+  BGM_LIST,
+} from '@/shared/config';
 import { trackEvent } from '@/shared/lib/mixpanel';
-import { useToastStore } from '@/shared/model';
+import { useBGM, useToastStore } from '@/shared/model';
 import { GameHeader } from '@/shared/ui';
 import { Practice } from '@/features/practice';
 import { useState } from 'react';
@@ -35,6 +40,8 @@ export const Waiting = () => {
   // 채팅
   const messages = useChatStore((state) => state.messages);
   const { sendMessage } = useChatActions(roomId);
+
+  useBGM(BGM_LIST.WAITING);
 
   const copyRoomId = async () => {
     try {
@@ -81,16 +88,16 @@ export const Waiting = () => {
   return (
     <>
       <div className="page-center">
-        <main className="game-container mx-25">
+        <main className="game-container md:mx-10 xl:mx-25">
           <GameHeader
             title={TITLES.ROOM}
             description="친구들이 모일 때까지 기다려주세요!"
           />
 
-          <div className="flex min-h-0 flex-1 gap-7">
-            <section className="flex h-full flex-1 flex-col gap-4">
-              <div className="flex h-full min-h-0 flex-col gap-4">
-                <div className="relative min-h-0 flex-1">
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto md:flex-row md:overflow-visible xl:gap-7">
+            <section className="flex flex-col gap-4 md:h-full md:flex-1">
+              <div className="flex min-h-0 flex-col gap-4 md:h-full">
+                <div className="relative min-h-0 md:flex-1">
                   <PlayerListSection
                     players={players}
                     maxPlayer={settings.maxPlayer}
@@ -103,6 +110,7 @@ export const Waiting = () => {
                 <div>
                   <WaitingRoomActions
                     onStartClick={handleStartGame}
+                    onSettingsClick={handleSettingsChange}
                     isHost={isHostUser}
                     canStart={!!roomId && players.length >= 2}
                   />
@@ -110,17 +118,19 @@ export const Waiting = () => {
               </div>
             </section>
 
-            <section className="flex h-full w-80 flex-col gap-4">
-              <GameSettingsCard
-                settings={settings}
-                onEdit={handleSettingsChange}
-                isHost={isHostUser}
-              />
+            <section className="flex w-full flex-col gap-4 md:w-50 xl:w-80">
+              <div className="hidden md:block">
+                <GameSettingsCard
+                  settings={settings}
+                  onEdit={handleSettingsChange}
+                  isHost={isHostUser}
+                />
+              </div>
               <div className="flex min-h-0 flex-1 flex-col">
                 <ChatBox
                   messages={messages}
                   onSendMessage={sendMessage}
-                  className="h-full"
+                  className="h-72 md:h-full"
                 />
               </div>
             </section>

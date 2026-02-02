@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { GameRoom, Player } from 'src/common/types';
+import { PinoLogger } from 'nestjs-pino';
+import { Server } from 'socket.io';
 import {
   ClientEvents,
   DRAWING_END_DELAY,
@@ -9,13 +10,13 @@ import {
   ROUND_REPLAY_TIME,
   ROUND_STANDING_TIME,
 } from '../common/constants';
+import { GameRoom } from 'src/common/types';
+import { createPlayerMapper } from 'src/common/utils/player.utils';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
-import { PinoLogger } from 'nestjs-pino';
-import { TimerService } from 'src/timer/timer.service';
-import { Server } from 'socket.io';
-import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
 import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
+import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
+import { TimerService } from 'src/timer/timer.service';
 import { PromptService } from 'src/prompt/prompt.service';
 
 @Injectable()
@@ -89,21 +90,6 @@ export class RoundService implements OnModuleInit {
     }
   }
 
-  private createPlayerMapper(
-    players: Player[],
-  ): Record<string, { nickname: string; profileId: string }> {
-    return players.reduce(
-      (prev, player) => ({
-        ...prev,
-        [player.socketId]: {
-          nickname: player.nickname,
-          profileId: player.profileId,
-        },
-      }),
-      {},
-    );
-  }
-
   private async movePrompt(room: GameRoom) {
     room.phase = GamePhase.PROMPT;
     room.currentRound += 1;
@@ -161,7 +147,7 @@ export class RoundService implements OnModuleInit {
       room.currentRound,
     );
 
-    const playerMapper = this.createPlayerMapper(room.players);
+    const playerMapper = createPlayerMapper(room.players);
 
     const rankings = roundResults
       .sort((a, b) => b.similarity.similarity - a.similarity.similarity)
@@ -203,7 +189,7 @@ export class RoundService implements OnModuleInit {
     const standings = await this.standingsCacheService.getStandings(
       room.roomId,
     );
-    const playerMapper = this.createPlayerMapper(room.players);
+    const playerMapper = createPlayerMapper(room.players);
 
     const rankings = standings.map((value) => ({
       ...value,
@@ -242,7 +228,7 @@ export class RoundService implements OnModuleInit {
       room.roomId,
     );
 
-    const playerMapper = this.createPlayerMapper(room.players);
+    const playerMapper = createPlayerMapper(room.players);
 
     const rankings = standings.map((value) => ({
       ...value,
