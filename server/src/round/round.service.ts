@@ -3,11 +3,7 @@ import { PinoLogger } from 'nestjs-pino';
 import { Server } from 'socket.io';
 import { DRAWING_END_DELAY, GamePhase } from 'src/common/constants';
 import { GameRoom } from 'src/common/types';
-import { createPlayerMapper } from 'src/common/utils/player.utils';
-import { PromptService } from 'src/prompt/prompt.service';
-import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
-import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
 import { TimerService } from 'src/timer/timer.service';
 import { PhaseService } from './phase.service';
 
@@ -18,10 +14,7 @@ export class RoundService implements OnModuleInit {
 
   constructor(
     private readonly cacheService: GameRoomCacheService,
-    private readonly progressCacheService: GameProgressCacheService,
-    private readonly standingsCacheService: StandingsCacheService,
     private readonly timerService: TimerService,
-    private readonly promptService: PromptService,
     private readonly phaseService: PhaseService,
     private readonly logger: PinoLogger,
   ) {
@@ -168,95 +161,14 @@ export class RoundService implements OnModuleInit {
   }
 
   async getRoundReplayData(roomId: string) {
-    const room = await this.cacheService.getRoom(roomId);
-    if (!room) return null;
-
-    const roundResults = await this.progressCacheService.getRoundResults(
-      room.roomId,
-      room.currentRound,
-    );
-
-    const playerMapper = createPlayerMapper(room.players);
-
-    const rankings = roundResults
-      .sort((a, b) => b.similarity.similarity - a.similarity.similarity)
-      .map((value) => ({
-        ...value,
-        nickname: playerMapper[value.socketId]?.nickname,
-        profileId: playerMapper[value.socketId]?.profileId,
-      }));
-
-    return {
-      rankings: rankings,
-      promptStrokes:
-        (await this.promptService.getPromptForRound(
-          room.roomId,
-          room.currentRound,
-        )) || [],
-    };
+    return await this.phaseService.getRoundReplayData(roomId);
   }
 
   async getRoundStandingData(roomId: string) {
-    const room = await this.cacheService.getRoom(roomId);
-    if (!room) return null;
-
-    const standings = await this.standingsCacheService.getStandings(
-      room.roomId,
-    );
-    const playerMapper = createPlayerMapper(room.players);
-
-    const rankings = standings.map((value) => ({
-      ...value,
-      nickname: playerMapper[value.socketId]?.nickname,
-      profileId: playerMapper[value.socketId]?.profileId,
-    }));
-
-    return { rankings };
+    return await this.phaseService.getRoundStandingData(roomId);
   }
 
   async getGameEndData(roomId: string) {
-    const room = await this.cacheService.getRoom(roomId);
-    if (!room) return null;
-
-    const standings = await this.standingsCacheService.getStandings(
-      room.roomId,
-    );
-
-    const playerMapper = createPlayerMapper(room.players);
-
-    const rankings = standings.map((value) => ({
-      ...value,
-      nickname: playerMapper[value.socketId]?.nickname,
-      profileId: playerMapper[value.socketId]?.profileId,
-    }));
-
-    const champion = rankings[0];
-
-    if (!champion) {
-      return null;
-    }
-
-    const highlight = await this.progressCacheService.getHighlight(
-      room.roomId,
-      champion.socketId,
-      room.settings.totalRounds,
-    );
-
-    if (!highlight) {
-      return null;
-    }
-
-    return {
-      finalRankings: rankings,
-      highlight: {
-        promptStrokes:
-          (await this.promptService.getPromptForRound(
-            room.roomId,
-            highlight.round,
-          )) || [],
-        playerStrokes: highlight.strokes,
-        similarity: highlight.similarity,
-      },
-    };
+    return await this.phaseService.getGameEndData(roomId);
   }
 }
