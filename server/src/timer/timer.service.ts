@@ -45,25 +45,26 @@ export class TimerService implements OnModuleInit, OnModuleDestroy {
   async tick() {
     const timers = await this.timerCacheService.getAllTimers();
     for (const timer of timers) {
-      const updatedTimeLeft = await this.timerCacheService.decrementTimer(
-        timer.roomId,
-      );
+      const { roomId } = timer;
 
-      if (updatedTimeLeft !== null && updatedTimeLeft >= 0) {
+      const timeLeft = await this.timerCacheService.decrementTimer(roomId);
+
+      if (timeLeft !== null && timeLeft >= 0) {
         // Gateway에 알림
         if (this.onTimerTickCallback) {
-          this.onTimerTickCallback(timer.roomId, updatedTimeLeft);
+          this.onTimerTickCallback(roomId, timeLeft);
         }
+      }
 
-        if (updatedTimeLeft === 0 && this.onTimerEndCallback) {
-          try {
-            await this.onTimerEndCallback(timer.roomId);
-          } catch (err) {
-            this.logger.error(
-              { roomId: timer.roomId, err },
-              'Timer end callback failed.',
-            );
-          }
+      if (timeLeft === 0 && this.onTimerEndCallback) {
+        try {
+          await this.onTimerEndCallback(roomId);
+          await this.cancelTimer(roomId);
+        } catch (err) {
+          this.logger.error(
+            { roomId: roomId, err },
+            'Timer end callback failed.',
+          );
         }
       }
     }
