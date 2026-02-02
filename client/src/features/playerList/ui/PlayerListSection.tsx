@@ -23,8 +23,7 @@ export const PlayerListSection = ({
   maxPlayer,
   roomCode,
 }: PlayerListSectionProps) => {
-  const TOTAL_SLOTS = 8;
-  const emptySlots = TOTAL_SLOTS - players.length;
+  const emptySlots = maxPlayer - players.length;
   const [kickModalConfig, setKickModalConfig] = useState<KickModalConfig>({
     isOpen: false,
   });
