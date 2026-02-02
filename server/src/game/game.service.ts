@@ -107,7 +107,6 @@ export class GameService implements OnModuleInit {
       updatedRoom.phase !== GamePhase.GAME_END
     ) {
       await this.roundService.endGame(updatedRoom);
-      return null;
     }
 
     return updatedRoom;
