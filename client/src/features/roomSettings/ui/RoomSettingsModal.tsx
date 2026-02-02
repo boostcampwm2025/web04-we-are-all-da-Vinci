@@ -1,8 +1,6 @@
-import { useEffect, useState } from 'react';
 import { BaseModal } from '@/shared/ui';
-import { trackEvent } from '@/shared/lib/mixpanel';
-import { MIXPANEL_EVENTS } from '@/shared/config';
 import type { Settings } from '@/entities/gameRoom';
+import { useRoomSettings } from '../model/useRoomSettings';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -19,55 +17,18 @@ const RoomSettingsModal = ({
   currentPlayerCount = 1,
   settings,
 }: SettingsModalProps) => {
-  const [selectedPlayers, setSelectedPlayers] = useState(4);
-  const [selectedRounds, setSelectedRounds] = useState(5);
-  const [selectedTime, setSelectedTime] = useState(15);
-
-  const handlePlayersChange = (players: number) => {
-    setSelectedPlayers(players);
-    trackEvent(MIXPANEL_EVENTS.CLICK_SETTINGROOM_PROPERTIES, {
-      설정: '플레이어 수',
-      값: players,
-    });
-  };
-
-  const handleRoundsChange = (rounds: number) => {
-    setSelectedRounds(rounds);
-    trackEvent(MIXPANEL_EVENTS.CLICK_SETTINGROOM_PROPERTIES, {
-      설정: '라운드 수',
-      값: rounds,
-    });
-  };
-
-  const handleTimeChange = (time: number) => {
-    setSelectedTime(time);
-    trackEvent(MIXPANEL_EVENTS.CLICK_SETTINGROOM_PROPERTIES, {
-      설정: '제한 시간',
-      값: time,
-    });
-  };
-
   const playerOptions = [2, 3, 4, 5, 6, 8, 10, 20, 100];
   const roundOptions = [3, 5, 7, 10];
   const timeOptions = [15, 30, 45, 60];
-
-  const handleComplete = () => {
-    if (onComplete) {
-      onComplete({
-        maxPlayer: selectedPlayers,
-        totalRounds: selectedRounds,
-        drawingTime: selectedTime,
-      });
-    }
-  };
-
-  useEffect(() => {
-    if (settings) {
-      setSelectedPlayers(settings.maxPlayer);
-      setSelectedRounds(settings.totalRounds);
-      setSelectedTime(settings.drawingTime);
-    }
-  }, [isOpen, settings]);
+  const {
+    selectedPlayers,
+    selectedRounds,
+    selectedTime,
+    handlePlayersChange,
+    handleRoundsChange,
+    handleTimeChange,
+    handleComplete,
+  } = useRoomSettings({ isOpen, settings, onComplete });
 
   return (
     <BaseModal
