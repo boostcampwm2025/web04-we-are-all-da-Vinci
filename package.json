@@ -5,6 +5,8 @@
   "scripts": {
     "dev:client": "pnpm -F client dev",
     "dev:server": "pnpm -F server start:dev",
+    "dev:shared": "pnpm -F @shared/types dev",
+    "build:shared": "pnpm -F @shared/types build",
     "infra:up": "docker compose -f infra/local/compose.yaml up -d",
     "infra:down": "docker compose -f infra/local/compose.yaml down",
     "prepare": "lefthook install"
