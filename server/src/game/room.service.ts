@@ -4,15 +4,11 @@ import { GamePhase } from 'src/common/constants';
 import { ErrorCode } from 'src/common/constants/error-code';
 import { InternalError } from 'src/common/exceptions/internal-error';
 import { GameRoom } from 'src/common/types';
-import { PromptService } from 'src/prompt/prompt.service';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 
 @Injectable()
 export class RoomService {
-  constructor(
-    private readonly gameRoomCache: GameRoomCacheService,
-    private readonly promptService: PromptService,
-  ) {}
+  constructor(private readonly gameRoomCache: GameRoomCacheService) {}
 
   async createRoom(
     maxPlayer: number,
@@ -32,7 +28,6 @@ export class RoomService {
         totalRounds: totalRounds,
       },
     };
-    await this.promptService.setPromptIds(roomId, totalRounds);
     await this.gameRoomCache.saveRoom(roomId, gameRoom);
 
     return roomId;
@@ -48,6 +43,10 @@ export class RoomService {
     await this.gameRoomCache.saveRoom(room.roomId, room);
 
     return room;
+  }
+
+  async deleteRoom(roomId: string) {
+    await this.gameRoomCache.deleteRoom(roomId);
   }
 
   async getRoom(roomId: string) {

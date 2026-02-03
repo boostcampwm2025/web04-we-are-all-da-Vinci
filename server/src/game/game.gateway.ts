@@ -19,12 +19,12 @@ import { MetricInterceptor } from 'src/common/interceptors/metric.interceptor';
 import { GameRoom, Player } from 'src/common/types';
 import { escapeHtml } from 'src/common/utils/sanitize';
 import { MetricService } from 'src/metric/metric.service';
-import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { RoomSettingsDto } from './dto/room-settings.dto';
 import { RoomStartDto } from './dto/room-start.dto';
 import { UserJoinDto } from './dto/user-join.dto';
 import { UserKickDto } from './dto/user-kick.dto';
 import { GameService } from './game.service';
+import { RoomService } from './room.service';
 
 @WebSocketGateway({
   cors: {
@@ -43,10 +43,10 @@ export class GameGateway
   constructor(
     private readonly logger: PinoLogger,
     private readonly gameService: GameService,
+    private readonly roomService: RoomService,
 
     private readonly chatService: ChatService,
     private readonly chatGateway: ChatGateway,
-    private readonly gameRoomCacheService: GameRoomCacheService,
 
     private readonly metricService: MetricService,
   ) {
@@ -106,7 +106,7 @@ export class GameGateway
 
       // 빈 방이면 삭제 + 채팅 정리
       if (room.players.length === 0) {
-        await this.gameRoomCacheService.deleteRoom(room.roomId);
+        await this.roomService.deleteRoom(room.roomId);
         await this.chatService.clearHistory(room.roomId);
         return;
       }
