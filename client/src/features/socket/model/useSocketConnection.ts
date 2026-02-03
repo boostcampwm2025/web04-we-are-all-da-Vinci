@@ -92,10 +92,11 @@ export const useSocketConnection = ({
 
     socket.on('connect', handleConnect);
 
-    socket.on('disconnect', () => {
+    const handleDisconnect = () => {
       setMySocketId(null);
       setConnected(false);
-    });
+    };
+    socket.on('disconnect', handleDisconnect);
 
     if (socket.connected) {
       handleConnect();
@@ -105,7 +106,7 @@ export const useSocketConnection = ({
 
     return () => {
       socket.off('connect', handleConnect);
-      socket.off('disconnect');
+      socket.off('disconnect', handleDisconnect);
       disconnectSocket();
 
       if (!isPageUnloadingRef.current) {
