@@ -25,9 +25,6 @@ import { RoomStartDto } from './dto/room-start.dto';
 import { UserJoinDto } from './dto/user-join.dto';
 import { UserKickDto } from './dto/user-kick.dto';
 import { GameService } from './game.service';
-import { InternalError } from 'src/common/exceptions/internal-error';
-import { WebsocketException } from 'src/common/exceptions/websocket-exception';
-import { ErrorCode } from 'src/common/constants/error-code';
 
 @WebSocketGateway({
   cors: {
@@ -207,19 +204,9 @@ export class GameGateway
     @MessageBody() payload: RoomStartDto,
   ): Promise<string> {
     const { roomId } = payload;
-    try {
-      await this.gameService.startGame(roomId, client.id);
-      this.logger.info({ clientId: client.id, ...payload }, 'Game Started');
-    } catch (err) {
-      this.logger.error(err);
-      if (err instanceof InternalError) {
-        throw new WebsocketException(err.message);
-      }
-      if (err instanceof WebsocketException) {
-        throw err;
-      }
-      throw new WebsocketException(ErrorCode.INTERNAL_ERROR);
-    }
+    await this.gameService.startGame(roomId, client.id);
+    this.logger.info({ clientId: client.id, ...payload }, 'Game Started');
+
     return 'ok';
   }
 
@@ -241,44 +228,37 @@ export class GameGateway
     @MessageBody() payload: UserKickDto,
   ): Promise<string> {
     const { roomId, targetPlayerId } = payload;
-    try {
-      const { room, kickedPlayer } = await this.gameService.kickUser(
-        roomId,
-        client.id,
-        targetPlayerId,
-      );
 
-      this.server
-        .to(targetPlayerId)
-        .emit(ClientEvents.ROOM_KICKED, { roomId, kickedPlayer });
-      this.broadcastMetadata(room);
+    const { room, kickedPlayer } = await this.gameService.kickUser(
+      roomId,
+      client.id,
+      targetPlayerId,
+    );
 
-      const targetPlayerSocket =
-        this.server.sockets.sockets.get(targetPlayerId);
-      if (targetPlayerSocket) {
-        await targetPlayerSocket.leave(roomId);
-      }
+    this.server
+      .to(targetPlayerId)
+      .emit(ClientEvents.ROOM_KICKED, { roomId, kickedPlayer });
+    this.broadcastMetadata(room);
 
-      // 강퇴 시스템 메시지
-      const kickMsg = await this.chatService.createKickMessage(
-        roomId,
-        kickedPlayer.nickname,
-      );
-      this.chatGateway.broadcastSystemMessage(roomId, kickMsg);
-
-      this.server
-        .to(roomId)
-        .emit(ClientEvents.ROOM_KICKED, { roomId, kickedPlayer });
-      this.broadcastMetadata(room);
-
-      this.logger.info({ clientId: client.id, ...payload }, 'User Kicked');
-    } catch (err) {
-      this.logger.error(err);
-      if (err instanceof InternalError) {
-        throw new WebsocketException(err.message);
-      }
-      throw err;
+    const targetPlayerSocket = this.server.sockets.sockets.get(targetPlayerId);
+    if (targetPlayerSocket) {
+      await targetPlayerSocket.leave(roomId);
     }
+
+    // 강퇴 시스템 메시지
+    const kickMsg = await this.chatService.createKickMessage(
+      roomId,
+      kickedPlayer.nickname,
+    );
+    this.chatGateway.broadcastSystemMessage(roomId, kickMsg);
+
+    this.server
+      .to(roomId)
+      .emit(ClientEvents.ROOM_KICKED, { roomId, kickedPlayer });
+    this.broadcastMetadata(room);
+
+    this.logger.info({ clientId: client.id, ...payload }, 'User Kicked');
+
     return 'ok';
   }
 
