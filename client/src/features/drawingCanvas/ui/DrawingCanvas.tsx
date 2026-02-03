@@ -4,7 +4,6 @@ import { selectPhase, useGameStore } from '@/entities/gameRoom';
 import { useColorSelection } from '@/features/drawingCanvas/model/useColorSelection';
 import { useMouseDrawing } from '@/features/drawingCanvas/model/useMouseDrawing';
 import { useStrokes } from '@/features/drawingCanvas/model/useStrokes';
-import { DrawingToolbar } from '@/features/drawingToolbar/ui/DrawingToolbar';
 import {
   calculateFinalSimilarityByPreprocessed,
   preprocessStrokes,
@@ -15,6 +14,7 @@ import { trackEvent } from '@/shared/lib/mixpanel';
 import { captureMessage } from '@/shared/lib/sentry';
 import { useCanvasSetup } from '@/shared/model/useCanvasSetup';
 import { useEffect, useMemo, useRef } from 'react';
+import { DrawingToolbar } from '@/features/drawingToolbar';
 
 interface DrawingCanvasProps {
   isPractice?: boolean;
