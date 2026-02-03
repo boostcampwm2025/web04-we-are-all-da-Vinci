@@ -50,7 +50,8 @@ export const 빈자리_호버: Story = {
   parameters: {
     docs: {
       description: {
-        story: '방장이 빈자리에 마우스를 올리면 주황색으로 하이라이트되며 "클릭하여 잠금" 표시',
+        story:
+          '방장이 빈자리에 마우스를 올리면 주황색으로 하이라이트되며 "클릭하여 잠금" 표시',
       },
     },
   },
@@ -84,7 +85,8 @@ export const 잠금_호버: Story = {
   parameters: {
     docs: {
       description: {
-        story: '방장이 잠금 슬롯에 마우스를 올리면 초록색으로 하이라이트되며 "클릭하여 해제" 표시',
+        story:
+          '방장이 잠금 슬롯에 마우스를 올리면 초록색으로 하이라이트되며 "클릭하여 해제" 표시',
       },
     },
   },
@@ -182,7 +184,9 @@ export const 인원초과_비활성화: Story = {
         </div>
       </div>
       <div>
-        <p className="mb-2 text-sm font-bold">10명/20명/100명 (상호작용 불가)</p>
+        <p className="mb-2 text-sm font-bold">
+          10명/20명/100명 (상호작용 불가)
+        </p>
         <div className="flex gap-2">
           <div className="h-40 w-32">
             <SlotCard

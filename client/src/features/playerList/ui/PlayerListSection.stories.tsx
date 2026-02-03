@@ -36,7 +36,7 @@ const meta: Meta<StoryArgs> = {
   decorators: [
     (Story) => (
       <MemoryRouter>
-        <div className="flex h-screen items-center justify-center bg-surface-default p-4">
+        <div className="bg-surface-default flex h-screen items-center justify-center p-4">
           <div className="h-[600px] w-full max-w-md">
             <Story />
           </div>
@@ -66,7 +66,7 @@ const meta: Meta<StoryArgs> = {
         maxPlayer={args.maxPlayer}
         roomCode={
           <button
-            className="rounded bg-interactive-default px-3 py-1 text-sm text-white"
+            className="bg-interactive-default rounded px-3 py-1 text-sm text-white"
             onClick={fn()}
           >
             복사
@@ -184,7 +184,8 @@ export const HundredPlayersEvent: Story = {
   parameters: {
     docs: {
       description: {
-        story: '이벤트성 대규모 방입니다. 스크롤로 모든 슬롯을 확인할 수 있습니다.',
+        story:
+          '이벤트성 대규모 방입니다. 스크롤로 모든 슬롯을 확인할 수 있습니다.',
       },
     },
   },
