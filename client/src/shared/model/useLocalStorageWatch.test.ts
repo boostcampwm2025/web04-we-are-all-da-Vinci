@@ -79,11 +79,13 @@ describe('useLocalStorageWatch', () => {
       localStorage.setItem('profileId', 'changed-from-other-tab');
 
       await act(async () => {
-        globalThis.dispatchEvent(new StorageEvent('storage', {
-          key: 'profileId',
-          newValue: 'changed-from-other-tab',
-          oldValue: 'original-id',
-        }));
+        globalThis.dispatchEvent(
+          new StorageEvent('storage', {
+            key: 'profileId',
+            newValue: 'changed-from-other-tab',
+            oldValue: 'original-id',
+          }),
+        );
       });
 
       expect(result.current).toBe('changed-from-other-tab');
@@ -112,10 +114,12 @@ describe('useLocalStorageWatch', () => {
 
       // 언마운트 후 storage 이벤트가 오류를 발생시키지 않아야 함
       await act(async () => {
-        globalThis.dispatchEvent(new StorageEvent('storage', {
-          key: 'profileId',
-          newValue: 'new-value',
-        }));
+        globalThis.dispatchEvent(
+          new StorageEvent('storage', {
+            key: 'profileId',
+            newValue: 'new-value',
+          }),
+        );
       });
     });
   });
@@ -176,7 +180,7 @@ describe('profileId 조작 감지 시나리오', () => {
 
     const { result, rerender } = renderHook(
       ({ key }) => useLocalStorageWatch(key),
-      { initialProps: { key: 'key1' } }
+      { initialProps: { key: 'key1' } },
     );
 
     expect(result.current).toBe('value1');
