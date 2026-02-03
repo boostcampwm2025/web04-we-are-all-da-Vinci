@@ -47,11 +47,16 @@ export const PlayerListSection = ({
 
   const handleUnlockSlot = (index: number) => {
     if (!isHost) return;
-    updateMaxPlayer(index + 1);
+    const newMaxPlayer = index + 1;
+    // 최소 2명은 필요
+    if (newMaxPlayer < 2) return;
+    updateMaxPlayer(newMaxPlayer);
   };
 
   const handleLockSlot = (index: number) => {
     if (!isHost || index < players.length) return;
+    // 최소 2명은 필요
+    if (index < 2) return;
     updateMaxPlayer(index);
   };
 
