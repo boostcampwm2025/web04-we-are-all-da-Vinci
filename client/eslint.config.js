@@ -19,9 +19,6 @@ export default defineConfig([
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
-      parserOptions: {
-        tsconfigRootDir: import.meta.dirname,
-      },
     },
   },
   ...storybook.configs['flat/recommended'],
