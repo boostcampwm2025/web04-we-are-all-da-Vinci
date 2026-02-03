@@ -26,7 +26,7 @@ const RankChangeIndicator = ({ change }: { change: RankChange }) => {
   }
 };
 
-const RankingCard = ({
+export const RankingCard = ({
   nickname,
   profileId,
   percent,
@@ -85,5 +85,3 @@ const RankingCard = ({
     </div>
   );
 };
-
-export default RankingCard;
