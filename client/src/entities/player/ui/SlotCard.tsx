@@ -27,7 +27,8 @@ const SLOT_CONFIG = {
     highlighted: {
       border: 'border-orange-400',
       bg: 'bg-orange-50',
-      pattern: 'before:bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(251,146,60,0.06)_10px,rgba(251,146,60,0.06)_20px)]',
+      pattern:
+        'before:bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(251,146,60,0.06)_10px,rgba(251,146,60,0.06)_20px)]',
       iconBg: 'bg-orange-300',
       icon: 'lock',
       iconColor: 'text-orange-700',
@@ -40,7 +41,8 @@ const SLOT_CONFIG = {
     default: {
       border: '',
       bg: 'bg-slate-100',
-      pattern: 'before:bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(100,116,139,0.04)_10px,rgba(100,116,139,0.04)_20px)]',
+      pattern:
+        'before:bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(100,116,139,0.04)_10px,rgba(100,116,139,0.04)_20px)]',
       iconBg: 'bg-slate-300',
       icon: 'lock',
       iconColor: 'text-slate-600',
@@ -71,7 +73,9 @@ export const SlotCard = ({
   onMouseLeave,
 }: SlotCardProps) => {
   const showHighlighted = isInteractive && isHighlighted;
-  const config = showHighlighted ? SLOT_CONFIG[variant].highlighted : SLOT_CONFIG[variant].default;
+  const config = showHighlighted
+    ? SLOT_CONFIG[variant].highlighted
+    : SLOT_CONFIG[variant].default;
 
   return (
     <div
@@ -80,7 +84,8 @@ export const SlotCard = ({
         config.border,
         config.bg,
         config.opacity,
-        config.pattern && 'before:pointer-events-none before:absolute before:inset-0',
+        config.pattern &&
+          'before:pointer-events-none before:absolute before:inset-0',
         config.pattern,
         isInteractive ? 'cursor-pointer' : 'cursor-not-allowed',
         variant === 'locked' && !isInteractive && 'opacity-70',

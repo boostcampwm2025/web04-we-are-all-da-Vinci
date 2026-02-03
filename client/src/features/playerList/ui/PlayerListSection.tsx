@@ -27,18 +27,15 @@ export const PlayerListSection = ({
   const settings = useGameStore((state) => state.settings);
   const isHost = useIsHost();
 
-  // 8명 이하일 때만 잠금 슬롯 표시
-  const hasLockedSlots = maxPlayer <= BASE_SLOTS;
+  // 표시할 총 슬롯 개수 (최소 8개, maxPlayer만큼)
+  const totalSlots = Math.max(BASE_SLOTS, maxPlayer);
 
-  // 8명 초과 시 추가로 표시할 빈자리 개수
-  const extraSlotsCount = hasLockedSlots
-    ? 0
-    : Math.max(0, maxPlayer - BASE_SLOTS - Math.max(0, players.length - BASE_SLOTS));
+  // 8명 이하일 때만 잠금/해제 기능 활성화
+  const canAdjustSlots = maxPlayer <= BASE_SLOTS;
 
   const { setHoveredIndex, isHighlighted } = useSlotHighlight({ maxPlayer });
   const { kickModalConfig, openKickModal, closeKickModal } = useKickModal();
 
-  // maxPlayer 값을 서버에 업데이트
   const updateMaxPlayer = (newMaxPlayer: number) => {
     socket.emit(SERVER_EVENTS.ROOM_SETTINGS, {
       roomId,
@@ -48,13 +45,11 @@ export const PlayerListSection = ({
     });
   };
 
-  // 잠금 슬롯 해제 (클릭한 슬롯까지 활성화)
   const handleUnlockSlot = (index: number) => {
     if (!isHost) return;
     updateMaxPlayer(index + 1);
   };
 
-  // 빈자리 잠금 (클릭한 슬롯부터 잠금)
   const handleLockSlot = (index: number) => {
     if (!isHost || index < players.length) return;
     updateMaxPlayer(index);
@@ -75,10 +70,10 @@ export const PlayerListSection = ({
       <div
         className={cn(
           'grid min-h-0 flex-1 content-start gap-2 overflow-y-auto grid-cols-4 md:gap-4',
-          hasLockedSlots ? 'auto-rows-fr' : 'auto-rows-min',
+          totalSlots <= BASE_SLOTS ? 'auto-rows-fr' : 'auto-rows-min',
         )}
       >
-        {Array.from({ length: BASE_SLOTS }, (_, i) => {
+        {Array.from({ length: totalSlots }, (_, i) => {
           const player = players[i];
 
           if (player) {
@@ -95,38 +90,32 @@ export const PlayerListSection = ({
             );
           }
 
-          if (hasLockedSlots && i >= maxPlayer) {
+          if (i >= maxPlayer) {
             return (
               <SlotCard
                 key={`locked-${i}`}
                 variant="locked"
-                isInteractive={isHost}
+                isInteractive={isHost && canAdjustSlots}
                 isHighlighted={isHighlighted(i)}
                 onClick={() => handleUnlockSlot(i)}
-                onMouseEnter={() => isHost && setHoveredIndex(i)}
+                onMouseEnter={() => isHost && canAdjustSlots && setHoveredIndex(i)}
                 onMouseLeave={() => setHoveredIndex(null)}
               />
             );
           }
 
-          const isLockable = isHost && hasLockedSlots;
           return (
             <SlotCard
               key={`empty-${i}`}
               variant="empty"
-              isInteractive={isLockable}
+              isInteractive={isHost && canAdjustSlots}
               isHighlighted={isHighlighted(i)}
               onClick={() => handleLockSlot(i)}
-              onMouseEnter={() => isLockable && setHoveredIndex(i)}
+              onMouseEnter={() => isHost && canAdjustSlots && setHoveredIndex(i)}
               onMouseLeave={() => setHoveredIndex(null)}
             />
           );
         })}
-
-        {extraSlotsCount > 0 &&
-          Array.from({ length: extraSlotsCount }).map((_, i) => (
-            <SlotCard key={`extra-${i}`} variant="empty" />
-          ))}
       </div>
 
       <OverlayModal
