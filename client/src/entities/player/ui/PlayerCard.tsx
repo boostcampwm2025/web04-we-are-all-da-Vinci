@@ -10,7 +10,7 @@ interface PlayerCardProps {
   onKickClick?: () => void;
 }
 
-const PlayerCard = ({
+export const PlayerCard = ({
   id,
   isHost,
   nickname,
@@ -62,5 +62,3 @@ const PlayerCard = ({
     </div>
   );
 };
-
-export default PlayerCard;

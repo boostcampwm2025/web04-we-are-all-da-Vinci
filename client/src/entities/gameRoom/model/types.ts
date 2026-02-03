@@ -1,5 +1,5 @@
+import type { Player } from '@/entities/player';
 import type { Phase } from '@/shared/config';
-import type { Player } from '@/entities/player/model';
 
 export interface Settings {
   drawingTime: number;

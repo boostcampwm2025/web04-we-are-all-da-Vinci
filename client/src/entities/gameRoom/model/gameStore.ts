@@ -1,5 +1,5 @@
+import type { Player } from '@/entities/player';
 import type { FinalResult, Highlight } from '@/entities/gameResult';
-import type { Player } from '@/entities/player/model';
 import type { RankingEntry } from '@/entities/ranking';
 import type { PlayerScore, RoundResult } from '@/entities/roundResult';
 import type { Stroke } from '@/entities/similarity';

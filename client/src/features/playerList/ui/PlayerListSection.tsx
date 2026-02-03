@@ -1,6 +1,5 @@
 import { useGameStore } from '@/entities/gameRoom';
-import { EmptySlot, PlayerCard } from '@/entities/player';
-import type { Player } from '@/entities/player/model';
+import { EmptySlot, PlayerCard, type Player } from '@/entities/player';
 import { getSocket } from '@/shared/api/socket';
 import { SERVER_EVENTS } from '@/shared/config';
 import { OverlayModal } from '@/shared/ui';

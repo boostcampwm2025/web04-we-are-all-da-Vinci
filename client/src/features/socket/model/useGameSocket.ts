@@ -1,6 +1,6 @@
 import type { GameEndResponse } from '@/entities/gameResult';
 import { useGameStore, type GameRoom } from '@/entities/gameRoom';
-import type { Player } from '@/entities/player/model';
+import type { Player } from '@/entities/player';
 import type {
   RoundReplayResponse,
   RoundStandingResponse,
