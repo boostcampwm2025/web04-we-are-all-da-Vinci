@@ -13,4 +13,14 @@ export const CHAT_RATE_LIMIT_SHORT = { messages: 8, seconds: 5 }; // 단기 Rate
 export const CHAT_RATE_LIMIT_LONG = { messages: 30, seconds: 30 }; // 장기 Rate Limit
 
 // Re-export from shared package
-export { ServerEvents, ClientEvents, GamePhase } from '@shared/types';
+export { ServerEvents, ClientEvents } from '@shared/types';
+
+// GamePhase를 로컬에 정의 (타입 해석 문제 방지)
+export const GamePhase = {
+  WAITING: 'WAITING',
+  PROMPT: 'PROMPT',
+  DRAWING: 'DRAWING',
+  ROUND_REPLAY: 'ROUND_REPLAY',
+  ROUND_STANDING: 'ROUND_STANDING',
+  GAME_END: 'GAME_END',
+} as const;
