@@ -67,6 +67,7 @@ export class TimerCacheService {
 
     // 타이머가 처음 등록된 케이스
     if (timeLeft === -1) {
+      await client.unlink(key);
       return null;
     }
 
