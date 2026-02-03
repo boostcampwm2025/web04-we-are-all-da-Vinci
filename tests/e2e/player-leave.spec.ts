@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { createRoomWithPlayers, createRoom, joinRoom, setupProfileInContext } from './fixtures';
+import { expect, test } from '@playwright/test';
+import { createRoom, createRoomWithPlayers, joinRoom, setupProfileInContext } from './fixtures';
 
 test.describe('플레이어 이탈', () => {
   test.setTimeout(120000);
@@ -22,11 +22,11 @@ test.describe('플레이어 이탈', () => {
         const roomId = await createRoom(hostPage);
         await joinRoom(guest1Page, roomId);
         await joinRoom(guest2Page, roomId);
-        await hostPage.waitForTimeout(1000);
+        await expect(hostPage.getByRole('button', { name: '시작' })).toBeEnabled({ timeout: 10000 });
       });
 
       await test.step('게임을 시작한다', async () => {
-        await hostPage.getByRole('button', { name: '게임 시작' }).click();
+        await hostPage.getByRole('button', { name: '시작' }).click();
       });
 
       await test.step('모든 플레이어에게 DRAWING 화면이 표시된다', async () => {
@@ -54,7 +54,7 @@ test.describe('플레이어 이탈', () => {
 
     try {
       await test.step('게임을 시작한다', async () => {
-        await ctx.hostPage.getByRole('button', { name: '게임 시작' }).click();
+        await ctx.hostPage.getByRole('button', { name: '시작' }).click();
       });
 
       await test.step('DRAWING 화면이 표시된다', async () => {
@@ -82,7 +82,7 @@ test.describe('플레이어 이탈', () => {
 
   //   try {
   //     await test.step('게임을 시작한다', async () => {
-  //       await ctx.hostPage.getByRole('button', { name: '게임 시작' }).click();
+  //       await ctx.hostPage.getByRole('button', { name: '시작' }).click();
   //     });
 
   //     await test.step('DRAWING 화면이 표시된다', async () => {
@@ -101,7 +101,7 @@ test.describe('플레이어 이탈', () => {
   //     await test.step('호스트에게 게임 종료 또는 대기실로 이동한다', async () => {
   //       // 1명만 남으면 게임이 종료되고 대기실로 돌아가거나 종료 메시지가 표시됨
   //       await expect(
-  //         ctx.hostPage.getByText(/최종 결과|최종 순위|게임 시작|대기/)
+  //         ctx.hostPage.getByText(/최종 결과|최종 순위|시작|대기/)
   //       ).toBeVisible({ timeout: 30000 });
   //     });
   //   } finally {
