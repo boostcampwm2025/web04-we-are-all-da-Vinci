@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CHAT_MAX_LENGTH } from '../constants/index.js';
 
 export const SystemMessageTypeSchema = z.enum([
   'join',
@@ -15,14 +16,14 @@ export const ChatMessageSchema = z.object({
   socketId: z.string().optional(),
   nickname: z.string().optional(),
   profileId: z.string().optional(),
-  message: z.string().max(100),
+  message: z.string().max(CHAT_MAX_LENGTH),
   timestamp: z.number(),
   systemType: SystemMessageTypeSchema.optional(),
 });
 
 export const ChatMessagePayloadSchema = z.object({
   roomId: z.string(),
-  message: z.string().min(1).max(100),
+  message: z.string().min(1).max(CHAT_MAX_LENGTH),
 });
 
 export const ChatHistoryPayloadSchema = z.object({

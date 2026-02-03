@@ -6,11 +6,15 @@ export const ROUND_STANDING_TIME =
   Number(process.env.ROUND_STANDING_TIME) || 10; // 라운드 점수 및 랭킹 표시 시간 (초)
 export const GAME_END_TIME = Number(process.env.GAME_END_TIME) || 30; // 게임 종료 화면 표시 시간 (초)
 
-// 채팅 관련 상수
-export const CHAT_MAX_LENGTH = 50; // 메시지 최대 글자 수
-export const CHAT_HISTORY_LIMIT = 50; // 이전 메시지 로드 개수
+// 채팅 관련 상수 (서버만 사용하는 것)
 export const CHAT_RATE_LIMIT_SHORT = { messages: 8, seconds: 5 }; // 단기 Rate Limit
 export const CHAT_RATE_LIMIT_LONG = { messages: 30, seconds: 30 }; // 장기 Rate Limit
 
 // Re-export from shared package
-export { ServerEvents, ClientEvents, GamePhase } from '@shared/types';
+export {
+  ServerEvents,
+  ClientEvents,
+  GamePhase,
+  CHAT_MAX_LENGTH,
+  CHAT_HISTORY_LIMIT,
+} from '@shared/types';
