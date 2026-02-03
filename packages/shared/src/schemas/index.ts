@@ -1,3 +1,6 @@
+// Re-export zod for consistent instance usage
+export { z } from 'zod';
+
 // Base schemas
 export {
   ColorSchema,
@@ -40,6 +43,8 @@ export {
   RoomGameEndSchema,
   RoomLeaderboardSchema,
   UserWaitlistSchema,
+  RoomKickedSchema,
+  ErrorResponseSchema,
 } from './round.schema.js';
 
 // Chat schemas

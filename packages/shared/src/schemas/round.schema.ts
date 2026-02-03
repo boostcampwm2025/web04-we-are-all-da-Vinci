@@ -42,6 +42,17 @@ export const RoomLeaderboardSchema = z.object({
 });
 
 export const UserWaitlistSchema = z.object({
-  position: z.number().int().min(1),
-  totalWaiting: z.number().int().min(1),
+  currentRound: z.number().int().min(0),
+  totalRounds: z.number().int().min(1),
+});
+
+export const RoomKickedSchema = z.object({
+  kickedPlayer: z.object({
+    socketId: z.string(),
+    nickname: z.string(),
+  }),
+});
+
+export const ErrorResponseSchema = z.object({
+  message: z.string(),
 });

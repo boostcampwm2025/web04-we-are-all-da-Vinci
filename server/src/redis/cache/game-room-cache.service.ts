@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '../redis.service';
 import { RedisKeys } from '../redis-keys';
-import { GameRoom, Player, Settings, Phase } from 'src/common/types';
+import { GameRoom, Player } from 'src/common/types';
 import { REDIS_TTL } from '../../common/constants';
+import { PlayerSchema, SettingsSchema, PhaseSchema } from '@shared/types';
 
 @Injectable()
 export class GameRoomCacheService {
@@ -37,9 +38,9 @@ export class GameRoomCacheService {
     return {
       roomId: data.roomId,
       players: players,
-      phase: data.phase as Phase,
+      phase: PhaseSchema.parse(data.phase),
       currentRound: parseInt(data.currentRound),
-      settings: JSON.parse(data.settings) as Settings,
+      settings: SettingsSchema.parse(JSON.parse(data.settings)),
     };
   }
 
@@ -145,8 +146,8 @@ export class GameRoomCacheService {
     const client = this.redisService.getClient();
     const key = RedisKeys.players(roomId);
 
-    return (await client.lRange(key, 0, -1)).map(
-      (value) => JSON.parse(value) as Player,
+    return (await client.lRange(key, 0, -1)).map((value) =>
+      PlayerSchema.parse(JSON.parse(value)),
     );
   }
 
@@ -222,6 +223,6 @@ export class GameRoomCacheService {
       arguments: [String(REDIS_TTL)],
     });
 
-    return result ? (JSON.parse(result as string) as Player) : null;
+    return result ? PlayerSchema.parse(JSON.parse(result as string)) : null;
   }
 }

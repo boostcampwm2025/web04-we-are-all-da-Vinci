@@ -4,11 +4,12 @@ import { RedisKeys } from '../redis-keys';
 import { RoundResultEntry, Similarity, Stroke } from 'src/common/types';
 import { REDIS_TTL } from '../../common/constants';
 import { WebsocketException } from '../../common/exceptions/websocket-exception';
+import { z, StrokeSchema, SimilaritySchema } from '@shared/types';
 
-interface PlayerRecord {
-  strokes: Stroke[];
-  similarity: Similarity;
-}
+const PlayerRecordSchema = z.object({
+  strokes: z.array(StrokeSchema),
+  similarity: SimilaritySchema,
+});
 
 type RoundResult = Omit<RoundResultEntry, 'nickname' | 'profileId'>;
 
@@ -71,7 +72,7 @@ export class GameProgressCacheService {
       )
       .map(({ socketId, value }) => ({
         socketId,
-        ...(JSON.parse(value) as PlayerRecord),
+        ...PlayerRecordSchema.parse(JSON.parse(value)),
       }));
   }
 
@@ -105,7 +106,7 @@ export class GameProgressCacheService {
       .map(({ socketId, value, round }) => ({
         socketId,
         round,
-        ...(JSON.parse(value) as PlayerRecord),
+        ...PlayerRecordSchema.parse(JSON.parse(value)),
       }));
   }
 
