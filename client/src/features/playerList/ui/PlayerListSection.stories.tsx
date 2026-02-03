@@ -11,9 +11,8 @@ interface StoryArgs {
   isHost: boolean;
 }
 
-const meta: Meta<StoryArgs> = {
+const meta = {
   title: 'features/playerList/PlayerListSection',
-  component: PlayerListSection,
   parameters: {
     layout: 'padded',
   },
@@ -74,10 +73,10 @@ const meta: Meta<StoryArgs> = {
       />
     );
   },
-};
+} satisfies Meta<StoryArgs>;
 
 export default meta;
-type Story = StoryObj<StoryArgs>;
+type Story = StoryObj<typeof meta>;
 
 // 기본 상태 - 4명 방, 2명 입장
 export const Default: Story = {
