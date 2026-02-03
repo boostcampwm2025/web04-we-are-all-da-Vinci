@@ -143,7 +143,7 @@ export class GameService implements OnModuleInit {
     nickname: string,
     profileId: string,
     socketId: string,
-  ): Promise<GameRoom | null> {
+  ): Promise<{ room: GameRoom | null; newlyJoinedPlayers: Player[] }> {
     const room = await this.cacheService.getRoom(roomId);
 
     if (!room) {
@@ -167,22 +167,9 @@ export class GameService implements OnModuleInit {
     const newlyJoinedPlayers =
       await this.getNewlyJoinedUserFromWaitlist(roomId);
 
-    // 유저가 이번에 join 가능한지 확인
-    const isJoined = newlyJoinedPlayers.some(
-      (player) => player.socketId === socketId,
-    );
+    const updatedRoom = await this.cacheService.getRoom(roomId);
 
-    if (newlyJoinedPlayers.length > 0 && this.phaseChangeHandler) {
-      await this.phaseChangeHandler(roomId, newlyJoinedPlayers); // gateway에 알림
-    }
-
-    // join 가능하면 room 정보 전달
-    if (isJoined) {
-      return await this.cacheService.getRoom(roomId);
-    }
-
-    // join 불가 상태일 때는 null 반환
-    return null;
+    return { room: updatedRoom, newlyJoinedPlayers };
   }
 
   // 대기열 관리: 대기열에서 참여할 플레이어 리스트 반환

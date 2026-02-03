@@ -136,39 +136,49 @@ export class GameGateway
   ): Promise<string> {
     const { roomId, profileId } = payload;
     const nickname = escapeHtml(payload.nickname.trim());
-    const room = await this.gameService.joinRoom(
+    const { room, newlyJoinedPlayers } = await this.gameService.joinRoom(
       roomId,
       nickname,
       profileId,
       client.id,
     );
 
+    if (!room) {
+      return 'ok';
+    }
+
     // 소켓 룸에는 항상 입장
     await client.join(roomId);
 
-    if (!room) {
-      this.logger.info(
-        { clientId: client.id, ...payload },
-        'Client Pushed Waiting queue',
-      );
+    // 유저가 이번에 join 가능한지 확인
+    const isJoined = newlyJoinedPlayers.some(
+      (player) => player.socketId === client.id,
+    );
 
-      const currentRoom = await this.gameService.getRoom(roomId);
-      if (!currentRoom) {
-        return 'ok';
-      }
-      client.emit(ClientEvents.ROOM_METADATA, currentRoom);
-      client.emit(ClientEvents.USER_WAITLIST, {
-        roomId,
-        currentRound: currentRoom.currentRound,
-        totalRounds: currentRoom.settings.totalRounds,
-        phase: currentRoom.phase,
-      });
-    } else {
+    if (newlyJoinedPlayers.length > 0 && this.handleWaitlist) {
+      await this.handleWaitlist(roomId, newlyJoinedPlayers); // gateway에 알림
+    }
+
+    if (isJoined) {
       this.logger.info(
         { clientId: client.id, ...payload },
         'Client Joined Game.',
       );
+      return 'ok';
     }
+
+    this.logger.info(
+      { clientId: client.id, ...payload },
+      'Client Pushed Waiting queue',
+    );
+
+    client.emit(ClientEvents.ROOM_METADATA, room);
+    client.emit(ClientEvents.USER_WAITLIST, {
+      roomId,
+      currentRound: room.currentRound,
+      totalRounds: room.settings.totalRounds,
+      phase: room.phase,
+    });
 
     return 'ok';
   }
