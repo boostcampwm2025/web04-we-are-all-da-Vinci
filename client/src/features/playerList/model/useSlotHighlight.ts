@@ -20,7 +20,9 @@ export const useSlotHighlight = ({ maxPlayer }: UseSlotHighlightProps) => {
     }
 
     // 잠금 슬롯 hover: maxPlayer부터 해당 슬롯까지 하이라이트 (해제 예정)
-    return hoveredIndex >= maxPlayer && index >= maxPlayer && index <= hoveredIndex;
+    return (
+      hoveredIndex >= maxPlayer && index >= maxPlayer && index <= hoveredIndex
+    );
   };
 
   return {

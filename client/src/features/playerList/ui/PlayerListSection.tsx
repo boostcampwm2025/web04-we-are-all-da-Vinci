@@ -69,7 +69,7 @@ export const PlayerListSection = ({
 
       <div
         className={cn(
-          'grid min-h-0 flex-1 content-start gap-2 overflow-y-auto grid-cols-4 md:gap-4',
+          'grid min-h-0 flex-1 grid-cols-4 content-start gap-2 overflow-y-auto md:gap-4',
           totalSlots <= BASE_SLOTS ? 'auto-rows-fr' : 'auto-rows-min',
         )}
       >
@@ -98,7 +98,9 @@ export const PlayerListSection = ({
                 isInteractive={isHost && canAdjustSlots}
                 isHighlighted={isHighlighted(i)}
                 onClick={() => handleUnlockSlot(i)}
-                onMouseEnter={() => isHost && canAdjustSlots && setHoveredIndex(i)}
+                onMouseEnter={() =>
+                  isHost && canAdjustSlots && setHoveredIndex(i)
+                }
                 onMouseLeave={() => setHoveredIndex(null)}
               />
             );
@@ -111,7 +113,9 @@ export const PlayerListSection = ({
               isInteractive={isHost && canAdjustSlots}
               isHighlighted={isHighlighted(i)}
               onClick={() => handleLockSlot(i)}
-              onMouseEnter={() => isHost && canAdjustSlots && setHoveredIndex(i)}
+              onMouseEnter={() =>
+                isHost && canAdjustSlots && setHoveredIndex(i)
+              }
               onMouseLeave={() => setHoveredIndex(null)}
             />
           );
