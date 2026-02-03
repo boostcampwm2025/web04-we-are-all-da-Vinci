@@ -59,12 +59,13 @@ export class TimerService implements OnModuleInit, OnModuleDestroy {
       if (timeLeft === 0 && this.onTimerEndCallback) {
         try {
           await this.onTimerEndCallback(roomId);
-          await this.cancelTimer(roomId);
         } catch (err) {
           this.logger.error(
             { roomId: roomId, err },
             'Timer end callback failed.',
           );
+        } finally {
+          await this.cancelTimer(roomId);
         }
       }
     }
