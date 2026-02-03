@@ -131,30 +131,27 @@ async function getRedis() {
   return redis;
 }
 
-const beforeAll = async (context, events, done) => {
+async function beforeAll(context, events) {
   try {
     const r = await getRedis();
     await r.del(KEY_ROOMS);
     await r.set(KEY_COUNTER, "0");
+  } catch (err) {
+    console.error("beforeAll 에러", err);
+    process.exit(1);
+  }
+}
 
-    return done();
-  } catch (e) {}
-};
-
-const afterPostRoom = async (
-  requestParams,
-  response,
-  context,
-  events,
-  next,
-) => {
+async function afterPostRoom(requestParams, response, context, events) {
   try {
     const r = await getRedis();
     const { roomId } = JSON.parse(response.body);
     await r.rPush(KEY_ROOMS, roomId);
-    return next();
-  } catch (e) {}
-};
+  } catch (err) {
+    console.error("afterPostRoom 에러", err);
+    process.exit(1);
+  }
+}
 
 async function getNextPlayerNumber() {
   const r = await getRedis();
