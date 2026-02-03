@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { GamePhase } from 'src/common/constants';
 import { ErrorCode } from 'src/common/constants/error-code';
+import { InternalError } from 'src/common/exceptions/internal-error';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import { Player } from 'src/common/types';
 import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
@@ -101,5 +102,29 @@ export class PlayerService {
     ]);
 
     return player;
+  }
+
+  async isHost(roomId: string, socketId: string) {
+    const players = await this.gameRoomCache.getAllPlayers(roomId);
+
+    const player = players.find((p) => p.socketId === socketId);
+
+    if (!player) {
+      throw new InternalError(ErrorCode.PLAYER_NOT_FOUND);
+    }
+    return player.isHost;
+  }
+
+  checkIsHost(players: Player[], socketId: string) {
+    const player = players.find((p) => p.socketId === socketId);
+
+    if (!player) {
+      throw new InternalError(ErrorCode.PLAYER_NOT_FOUND);
+    }
+    return player.isHost;
+  }
+
+  async getPlayers(roomId: string) {
+    return await this.gameRoomCache.getAllPlayers(roomId);
   }
 }

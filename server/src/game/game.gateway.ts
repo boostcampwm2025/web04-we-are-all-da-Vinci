@@ -25,6 +25,9 @@ import { RoomStartDto } from './dto/room-start.dto';
 import { UserJoinDto } from './dto/user-join.dto';
 import { UserKickDto } from './dto/user-kick.dto';
 import { GameService } from './game.service';
+import { InternalError } from 'src/common/exceptions/internal-error';
+import { WebsocketException } from 'src/common/exceptions/websocket-exception';
+import { ErrorCode } from 'src/common/constants/error-code';
 
 @WebSocketGateway({
   cors: {
@@ -97,18 +100,12 @@ export class GameGateway
     try {
       const { room, player } = await this.gameService.leaveRoom(client.id);
 
-      if (!room) {
-        return;
-      }
-
       // 퇴장 시스템 메시지
-      if (player) {
-        const leaveMsg = await this.chatService.createLeaveMessage(
-          room.roomId,
-          player.nickname,
-        );
-        this.chatGateway.broadcastSystemMessage(room.roomId, leaveMsg);
-      }
+      const leaveMsg = await this.chatService.createLeaveMessage(
+        room.roomId,
+        player.nickname,
+      );
+      this.chatGateway.broadcastSystemMessage(room.roomId, leaveMsg);
 
       // 빈 방이면 삭제 + 채팅 정리
       if (room.players.length === 0) {
@@ -210,9 +207,19 @@ export class GameGateway
     @MessageBody() payload: RoomStartDto,
   ): Promise<string> {
     const { roomId } = payload;
-    await this.gameService.startGame(roomId, client.id);
-
-    this.logger.info({ clientId: client.id, ...payload }, 'Game Started');
+    try {
+      await this.gameService.startGame(roomId, client.id);
+      this.logger.info({ clientId: client.id, ...payload }, 'Game Started');
+    } catch (err) {
+      this.logger.error(err);
+      if (err instanceof InternalError) {
+        throw new WebsocketException(err.message);
+      }
+      if (err instanceof WebsocketException) {
+        throw err;
+      }
+      throw new WebsocketException(ErrorCode.INTERNAL_ERROR);
+    }
     return 'ok';
   }
 
@@ -234,35 +241,44 @@ export class GameGateway
     @MessageBody() payload: UserKickDto,
   ): Promise<string> {
     const { roomId, targetPlayerId } = payload;
-    const { updatedRoom, kickedPlayer } = await this.gameService.kickUser(
-      roomId,
-      client.id,
-      targetPlayerId,
-    );
+    try {
+      const { room, kickedPlayer } = await this.gameService.kickUser(
+        roomId,
+        client.id,
+        targetPlayerId,
+      );
 
-    this.server
-      .to(targetPlayerId)
-      .emit(ClientEvents.ROOM_KICKED, { roomId, kickedPlayer });
-    this.broadcastMetadata(updatedRoom);
+      this.server
+        .to(targetPlayerId)
+        .emit(ClientEvents.ROOM_KICKED, { roomId, kickedPlayer });
+      this.broadcastMetadata(room);
 
-    const targetPlayerSocket = this.server.sockets.sockets.get(targetPlayerId);
-    if (targetPlayerSocket) {
-      await targetPlayerSocket.leave(roomId);
+      const targetPlayerSocket =
+        this.server.sockets.sockets.get(targetPlayerId);
+      if (targetPlayerSocket) {
+        await targetPlayerSocket.leave(roomId);
+      }
+
+      // 강퇴 시스템 메시지
+      const kickMsg = await this.chatService.createKickMessage(
+        roomId,
+        kickedPlayer.nickname,
+      );
+      this.chatGateway.broadcastSystemMessage(roomId, kickMsg);
+
+      this.server
+        .to(roomId)
+        .emit(ClientEvents.ROOM_KICKED, { roomId, kickedPlayer });
+      this.broadcastMetadata(room);
+
+      this.logger.info({ clientId: client.id, ...payload }, 'User Kicked');
+    } catch (err) {
+      this.logger.error(err);
+      if (err instanceof InternalError) {
+        throw new WebsocketException(err.message);
+      }
+      throw err;
     }
-
-    // 강퇴 시스템 메시지
-    const kickMsg = await this.chatService.createKickMessage(
-      roomId,
-      kickedPlayer.nickname,
-    );
-    this.chatGateway.broadcastSystemMessage(roomId, kickMsg);
-
-    this.server
-      .to(roomId)
-      .emit(ClientEvents.ROOM_KICKED, { roomId, kickedPlayer });
-    this.broadcastMetadata(updatedRoom);
-
-    this.logger.info({ clientId: client.id, ...payload }, 'User Kicked');
     return 'ok';
   }
 
@@ -277,19 +293,23 @@ export class GameGateway
   }
 
   private async syncCurrentPhaseData(client: Socket, room: GameRoom) {
-    const data = await this.gameService.getSyncData(room.roomId);
-    if (!data) return;
+    try {
+      const data = await this.gameService.getSyncData(room.roomId);
+      if (!data) return;
 
-    switch (room.phase) {
-      case GamePhase.ROUND_REPLAY:
-        client.emit(ClientEvents.ROOM_ROUND_REPLAY, data);
-        break;
-      case GamePhase.ROUND_STANDING:
-        client.emit(ClientEvents.ROOM_ROUND_STANDING, data);
-        break;
-      case GamePhase.GAME_END:
-        client.emit(ClientEvents.ROOM_GAME_END, data);
-        break;
+      switch (room.phase) {
+        case GamePhase.ROUND_REPLAY:
+          client.emit(ClientEvents.ROOM_ROUND_REPLAY, data);
+          break;
+        case GamePhase.ROUND_STANDING:
+          client.emit(ClientEvents.ROOM_ROUND_STANDING, data);
+          break;
+        case GamePhase.GAME_END:
+          client.emit(ClientEvents.ROOM_GAME_END, data);
+          break;
+      }
+    } catch (err) {
+      this.logger.error(err);
     }
   }
 }
