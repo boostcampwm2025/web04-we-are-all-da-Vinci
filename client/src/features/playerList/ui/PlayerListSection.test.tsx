@@ -39,7 +39,7 @@ describe('PlayerListSection', () => {
       const mockEmit = vi.fn();
       vi.spyOn(socket, 'getSocket').mockReturnValue({
         emit: mockEmit,
-      } as any);
+      } as ReturnType<typeof socket.getSocket>);
 
       useGameStore.setState({
         mySocketId: players[0].socketId,
@@ -75,7 +75,7 @@ describe('PlayerListSection', () => {
       const mockEmit = vi.fn();
       vi.spyOn(socket, 'getSocket').mockReturnValue({
         emit: mockEmit,
-      } as any);
+      } as ReturnType<typeof socket.getSocket>);
 
       useGameStore.setState({
         mySocketId: players[0].socketId,
