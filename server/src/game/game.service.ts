@@ -94,7 +94,7 @@ export class GameService implements OnModuleInit {
       );
     }
 
-    if (players.length < maxPlayer) {
+    if (players.length > maxPlayer) {
       maxPlayer = room.settings.maxPlayer;
     }
 
