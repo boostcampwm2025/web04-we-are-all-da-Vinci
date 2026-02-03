@@ -9,7 +9,7 @@ import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
 import { RoundService } from 'src/round/round.service';
 import { GameRoom, Player } from '../common/types';
 import { GameRoomCacheService } from '../redis/cache/game-room-cache.service';
-import { CreateRoomDto } from './dto/create-room.dto';
+import type { CreateRoomDto } from '@shared/types';
 import { GameService } from './game.service';
 import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
 

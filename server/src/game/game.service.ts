@@ -13,7 +13,7 @@ import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.servi
 import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
 import { RoundService } from 'src/round/round.service';
-import { CreateRoomDto } from './dto/create-room.dto';
+import type { CreateRoomDto } from '@shared/types';
 
 interface PhaseChangeHandler {
   (roomId: string, joinedPlayers: Player[]): Promise<void>;

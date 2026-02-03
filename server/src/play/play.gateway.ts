@@ -6,8 +6,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { UserScoreDto } from './dto/user-score.dto';
-import { UserDrawingDto } from './dto/user-drawing.dto';
+import { UserScoreSchema, UserDrawingSchema } from '@shared/types';
 import { ClientEvents, ServerEvents } from '../common/constants';
 import { PinoLogger } from 'nestjs-pino';
 import { UseFilters, UseInterceptors } from '@nestjs/common';
@@ -38,9 +37,9 @@ export class PlayGateway {
   @SubscribeMessage(ServerEvents.USER_SCORE)
   async updateScore(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: UserScoreDto,
+    @MessageBody() payload: unknown,
   ) {
-    const { roomId, similarity } = payload;
+    const { roomId, similarity } = UserScoreSchema.parse(payload);
 
     const rankings = await this.playService.updateScore(
       roomId,
@@ -59,13 +58,10 @@ export class PlayGateway {
   @SubscribeMessage(ServerEvents.USER_DRAWING)
   async submitDrawing(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: UserDrawingDto,
+    @MessageBody() payload: unknown,
   ) {
-    const { roomId, strokes, similarity } = payload;
-    this.logger.info(
-      { clientId: client.id, ...payload },
-      'User Submitted Drawing',
-    );
+    const { roomId, strokes, similarity } = UserDrawingSchema.parse(payload);
+    this.logger.info({ clientId: client.id, roomId }, 'User Submitted Drawing');
     await this.playService.submitDrawing(
       roomId,
       client.id,

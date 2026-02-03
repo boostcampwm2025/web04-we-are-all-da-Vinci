@@ -21,10 +21,12 @@ import { ChatService } from 'src/chat/chat.service';
 import { MetricService } from 'src/metric/metric.service';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
-import { RoomSettingsDto } from './dto/room-settings.dto';
-import { RoomStartDto } from './dto/room-start.dto';
-import { UserJoinDto } from './dto/user-join.dto';
-import { UserKickDto } from './dto/user-kick.dto';
+import {
+  UserJoinSchema,
+  RoomSettingsSchema,
+  RoomStartSchema,
+  UserKickSchema,
+} from '@shared/types';
 import { GameService } from './game.service';
 
 @WebSocketGateway({
@@ -132,10 +134,14 @@ export class GameGateway
   @SubscribeMessage(ServerEvents.USER_JOIN)
   async joinRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: UserJoinDto,
+    @MessageBody() payload: unknown,
   ): Promise<string> {
-    const { roomId, profileId } = payload;
-    const nickname = escapeHtml(payload.nickname.trim());
+    const {
+      roomId,
+      profileId,
+      nickname: rawNickname,
+    } = UserJoinSchema.parse(payload);
+    const nickname = escapeHtml(rawNickname.trim());
     const room = await this.gameService.joinRoom(
       roomId,
       nickname,
@@ -148,7 +154,7 @@ export class GameGateway
 
     if (!room) {
       this.logger.info(
-        { clientId: client.id, ...payload },
+        { clientId: client.id, roomId, nickname, profileId },
         'Client Pushed Waiting queue',
       );
 
@@ -165,7 +171,7 @@ export class GameGateway
       });
     } else {
       this.logger.info(
-        { clientId: client.id, ...payload },
+        { clientId: client.id, roomId, nickname, profileId },
         'Client Joined Game.',
       );
     }
@@ -176,9 +182,10 @@ export class GameGateway
   @SubscribeMessage(ServerEvents.ROOM_SETTINGS)
   async updateSettings(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: RoomSettingsDto,
+    @MessageBody() payload: unknown,
   ): Promise<string> {
-    const { roomId, maxPlayer, totalRounds, drawingTime } = payload;
+    const { roomId, maxPlayer, totalRounds, drawingTime } =
+      RoomSettingsSchema.parse(payload);
     const room = await this.gameService.updateGameSettings(
       roomId,
       client.id,
@@ -194,7 +201,7 @@ export class GameGateway
     this.broadcastMetadata(room);
 
     this.logger.info(
-      { clientId: client.id, ...payload },
+      { clientId: client.id, roomId, maxPlayer, totalRounds, drawingTime },
       'User Updated Room Settings',
     );
     return 'ok';
@@ -203,33 +210,33 @@ export class GameGateway
   @SubscribeMessage(ServerEvents.ROOM_START)
   async startGame(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: RoomStartDto,
+    @MessageBody() payload: unknown,
   ): Promise<string> {
-    const { roomId } = payload;
+    const { roomId } = RoomStartSchema.parse(payload);
     await this.gameService.startGame(roomId, client.id);
 
-    this.logger.info({ clientId: client.id, ...payload }, 'Game Started');
+    this.logger.info({ clientId: client.id, roomId }, 'Game Started');
     return 'ok';
   }
 
   @SubscribeMessage(ServerEvents.ROOM_RESTART)
   async restartGame(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: RoomStartDto,
+    @MessageBody() payload: unknown,
   ): Promise<string> {
-    const { roomId } = payload;
+    const { roomId } = RoomStartSchema.parse(payload);
     await this.gameService.restartGame(roomId, client.id);
 
-    this.logger.info({ clientId: client.id, ...payload }, 'Game Restarted');
+    this.logger.info({ clientId: client.id, roomId }, 'Game Restarted');
     return 'ok';
   }
 
   @SubscribeMessage(ServerEvents.USER_KICK)
   async kickUser(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: UserKickDto,
+    @MessageBody() payload: unknown,
   ): Promise<string> {
-    const { roomId, targetPlayerId } = payload;
+    const { roomId, targetPlayerId } = UserKickSchema.parse(payload);
     const { updatedRoom, kickedPlayer } = await this.gameService.kickUser(
       roomId,
       client.id,
@@ -258,7 +265,10 @@ export class GameGateway
       .emit(ClientEvents.ROOM_KICKED, { roomId, kickedPlayer });
     this.broadcastMetadata(updatedRoom);
 
-    this.logger.info({ clientId: client.id, ...payload }, 'User Kicked');
+    this.logger.info(
+      { clientId: client.id, roomId, targetPlayerId },
+      'User Kicked',
+    );
     return 'ok';
   }
 
