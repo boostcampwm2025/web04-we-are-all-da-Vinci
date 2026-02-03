@@ -31,7 +31,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const 빈자리_기본: Story = {
+export const EmptyDefault: Story = {
   name: '빈자리 - 기본 상태',
   args: {
     variant: 'empty',
@@ -40,7 +40,7 @@ export const 빈자리_기본: Story = {
   },
 };
 
-export const 빈자리_호버: Story = {
+export const EmptyHighlighted: Story = {
   name: '빈자리 - 호버 (주황색)',
   args: {
     variant: 'empty',
@@ -57,7 +57,7 @@ export const 빈자리_호버: Story = {
   },
 };
 
-export const 빈자리_클릭가능: Story = {
+export const EmptyInteractive: Story = {
   name: '빈자리 - 클릭 가능 (방장)',
   args: {
     variant: 'empty',
@@ -66,7 +66,7 @@ export const 빈자리_클릭가능: Story = {
   },
 };
 
-export const 잠금_기본: Story = {
+export const LockedDefault: Story = {
   name: '잠금 - 기본 상태',
   args: {
     variant: 'locked',
@@ -75,7 +75,7 @@ export const 잠금_기본: Story = {
   },
 };
 
-export const 잠금_호버: Story = {
+export const LockedHighlighted: Story = {
   name: '잠금 - 호버 (초록색)',
   args: {
     variant: 'locked',
@@ -92,7 +92,7 @@ export const 잠금_호버: Story = {
   },
 };
 
-export const 잠금_클릭가능: Story = {
+export const LockedInteractive: Story = {
   name: '잠금 - 클릭 가능 (방장)',
   args: {
     variant: 'locked',
@@ -101,7 +101,7 @@ export const 잠금_클릭가능: Story = {
   },
 };
 
-export const 시나리오_잠금해제: Story = {
+export const UnlockScenario: Story = {
   name: '시나리오: 잠금 해제',
   args: {
     variant: 'locked',
@@ -129,7 +129,7 @@ export const 시나리오_잠금해제: Story = {
   },
 };
 
-export const 시나리오_잠금설정: Story = {
+export const LockScenario: Story = {
   name: '시나리오: 잠금 설정',
   args: {
     variant: 'empty',
@@ -157,7 +157,7 @@ export const 시나리오_잠금설정: Story = {
   },
 };
 
-export const 인원초과_비활성화: Story = {
+export const DisabledSlots: Story = {
   name: '8명 초과 - 비활성화',
   args: {
     variant: 'empty',

@@ -1,5 +1,4 @@
 import { initialState, useGameStore } from '@/entities/gameRoom';
-import type { Player } from '@/entities/player/model';
 import { createMockPlayers } from '@/test/mocks/mockData';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
