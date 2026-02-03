@@ -1,3 +1,5 @@
+import { isE2ETestMode } from './e2eTestMode';
+
 const HEARTBEAT_INTERVAL = 3000; // heartbeat 전송 주기
 const DEFAULT_WAIT_MS = 100; // claim 전송 후 다른 탭의 deny/heartbeat 응답을 기다리는 시간
 
@@ -125,6 +127,11 @@ export const acquireTabLockAsync = async (
   roomId: string,
   waitMs = DEFAULT_WAIT_MS,
 ): Promise<TabLockResult> => {
+  // E2E 테스트 모드: tabLock 비활성화
+  if (isE2ETestMode()) {
+    return { acquired: true, release: () => {} };
+  }
+
   // BroadcastChannel 미지원 환경
   if (!isBroadcastChannelSupported()) {
     return { acquired: true, release: () => {} };
