@@ -53,17 +53,17 @@ export class PhaseService {
   }
 
   async prompt(room: GameRoom) {
-    room.phase = GamePhase.PROMPT;
-    room.currentRound += 1;
-
+    const nextRound = room.currentRound + 1;
     const promptStrokes = await this.promptService.getPromptForRound(
       room.roomId,
-      room.currentRound,
+      nextRound,
     );
     if (!promptStrokes) {
       throw new Error('제시 그림 불러오기에 실패했습니다.');
     }
 
+    room.phase = GamePhase.PROMPT;
+    room.currentRound += 1;
     await this.cacheService.saveRoom(room.roomId, room);
 
     return {
