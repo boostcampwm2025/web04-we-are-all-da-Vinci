@@ -18,7 +18,7 @@ const SIMILARITY_ITEMS: {
   { key: 'shapeSimilarity', label: '형태 유사도', color: 'bg-red-400' },
 ];
 
-export const PlayerSimilarityDetailTooltip = ({
+const PlayerSimilarityDetailTooltip = ({
   similarity,
 }: {
   similarity: Similarity;
@@ -48,3 +48,5 @@ export const PlayerSimilarityDetailTooltip = ({
     </div>
   );
 };
+
+export default PlayerSimilarityDetailTooltip;

@@ -1,7 +1,7 @@
-import { SimilarityProgressBar } from '@/entities/similarity/ui/progress-bar';
 import { UserAvatar } from '@/shared/ui';
 import { RANK_CHANGE, type RankChange } from '@/entities/ranking';
 import { RANK_STYLES } from '@/entities/ranking';
+import { SimilarityProgressBar } from '@/entities/similarity';
 
 interface RankingCardProps {
   nickname: string;

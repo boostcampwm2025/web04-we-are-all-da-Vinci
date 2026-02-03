@@ -1,4 +1,4 @@
-import { drawStrokesOnCanvas } from '@/entities/drawing/lib/drawStrokesOnCanvas';
+import { drawStrokesOnCanvas } from '@/entities/drawing';
 import type { Stroke } from '@/entities/similarity';
 import { selectPhase, useGameStore } from '@/entities/gameRoom';
 import { useColorSelection } from '@/features/drawingCanvas/model/useColorSelection';

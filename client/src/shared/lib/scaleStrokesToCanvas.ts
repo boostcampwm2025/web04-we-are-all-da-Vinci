@@ -1,5 +1,5 @@
 // TODO: AI 생성 코드 - 500x500 고정 크기 이미지에 대한 중복 스케일링 로직 최적화 및 연산 성능 검증 필요
-import type { Stroke } from '@/entities/similarity/model';
+import type { Stroke } from '@/entities/similarity';
 
 interface ScaleResult {
   scale: number;
