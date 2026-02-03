@@ -7,7 +7,7 @@ import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.servi
 import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
 import { RoundService } from 'src/round/round.service';
-import { GameRoom, Player } from '../common/types/game-room.types';
+import { GameRoom, Player } from '../common/types';
 import { GameRoomCacheService } from '../redis/cache/game-room-cache.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { GameService } from './game.service';

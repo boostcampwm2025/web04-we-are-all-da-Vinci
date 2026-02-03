@@ -19,9 +19,9 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "src/*": ["./dist/*"],
-      "@shared/types": ["../packages/shared/dist/index"],
-      "@shared/types/*": ["../packages/shared/dist/*"]
+      "src/*": ["./src/*"],
+      "@shared/types": ["../packages/shared/src/index.ts"],
+      "@shared/types/*": ["../packages/shared/src/*"]
     }
   },
   "include": ["src/**/*"],

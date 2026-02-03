@@ -1,4 +1,4 @@
-// Re-export from shared package for backward compatibility
+// Re-export from shared package
 export type {
   Phase,
   Player,
