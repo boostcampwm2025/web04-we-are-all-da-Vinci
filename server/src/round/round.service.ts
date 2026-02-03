@@ -45,7 +45,7 @@ export class RoundService implements OnModuleInit {
 
       if (room.phase === GamePhase.DRAWING) {
         setTimeout(() => {
-          this.nextPhase(room);
+          void this.nextPhase(room);
         }, DRAWING_END_DELAY);
         return;
       }
