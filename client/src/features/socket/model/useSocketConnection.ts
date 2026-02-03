@@ -127,4 +127,3 @@ export const useSocketConnection = ({
     clearChat,
   ]);
 };
-
