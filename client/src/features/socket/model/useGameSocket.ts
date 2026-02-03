@@ -27,21 +27,21 @@ export const useGameSocket = () => {
   const enabled =
     tabLockAcquired === true && !!nickname && !!profileId && !!roomId;
 
-  // 3. 소켓 연결
-  useSocketConnection({
-    roomId: roomId || '',
-    nickname: nickname || '',
-    profileId: profileId || '',
-    enabled,
-  });
-
-  // 4. 이벤트 훅들
+  // 3. 이벤트 훅들 (순서 중요: 연결 전에 리스너 등록)
   useRoomEvents(enabled);
   useGameDataEvents(enabled);
   useResultEvents(enabled);
   useWaitlistEvents(enabled);
   useChatEvents(enabled);
   useErrorEvents(enabled);
+
+  // 4. 소켓 연결
+  useSocketConnection({
+    roomId: roomId || '',
+    nickname: nickname || '',
+    profileId: profileId || '',
+    enabled,
+  });
 
   return getSocket();
 };
