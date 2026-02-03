@@ -8,7 +8,7 @@ import { TimerModule } from 'src/timer/timer.module';
 import { GameController } from './game.controller';
 import { GameGateway } from './game.gateway';
 import { GameService } from './game.service';
-import { WaitlistService } from './waitlist.service';
+import { PlayerService } from './player.service';
 
 @Module({
   imports: [
@@ -21,6 +21,6 @@ import { WaitlistService } from './waitlist.service';
   ],
 
   controllers: [GameController],
-  providers: [GameService, GameGateway, WaitlistService],
+  providers: [GameService, GameGateway, PlayerService],
 })
 export class GameModule {}

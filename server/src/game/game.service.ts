@@ -10,12 +10,9 @@ import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import { findPlayerOrThrow, requireHost } from 'src/common/utils/player.utils';
 import { PromptService } from 'src/prompt/prompt.service';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
-import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
-import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { RoundService } from 'src/round/round.service';
 import { CreateRoomDto } from './dto/create-room.dto';
-import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
-import { WaitlistService } from './waitlist.service';
+import { PlayerService } from './player.service';
 
 interface PhaseChangeHandler {
   (roomId: string, joinedPlayers: Player[]): Promise<void>;
@@ -27,18 +24,15 @@ export class GameService implements OnModuleInit {
 
   constructor(
     private readonly cacheService: GameRoomCacheService,
-    private readonly playerCacheService: PlayerCacheService,
-    private readonly leaderboardCacheService: LeaderboardCacheService,
-    private readonly progressCacheService: GameProgressCacheService,
     private readonly roundService: RoundService,
     private readonly promptService: PromptService,
-    private readonly waitlistService: WaitlistService,
+    private readonly playerService: PlayerService,
   ) {}
 
   onModuleInit() {
     this.roundService.setPhaseChangeHandler(async (roomId: string) => {
       const newlyJoinedPlayers =
-        await this.waitlistService.getNewlyJoinedUserFromWaitlist(roomId);
+        await this.playerService.getNewlyJoinedUserFromWaitlist(roomId);
       if (this.phaseChangeHandler) {
         await this.phaseChangeHandler(roomId, newlyJoinedPlayers);
       }
@@ -71,35 +65,18 @@ export class GameService implements OnModuleInit {
     return roomId;
   }
 
-  async leaveRoom(socketId: string): Promise<GameRoom | null> {
-    const roomId = await this.playerCacheService.getRoomId(socketId);
+  async leaveRoom(
+    socketId: string,
+  ): Promise<{ room: GameRoom | null; player: Player | null }> {
+    const roomId = await this.playerService.getJoinedRoomId(socketId);
     if (!roomId) {
-      return null;
+      throw new Error('roomId가 없습니다');
     }
+
+    const player = await this.playerService.leaveRoom(roomId, socketId);
 
     const room = await this.cacheService.getRoom(roomId);
-
-    if (!room) {
-      return null;
-    }
-    const players = await this.cacheService.getAllPlayers(roomId);
-
-    const target = players.find((player) => player.socketId === socketId);
-
-    if (!target) {
-      // 대기자일 수 있으니 대기열 제거 처리
-      await this.waitlistService.deleteWaitPlayer(roomId, socketId);
-      await this.playerCacheService.delete(socketId);
-      return null;
-    }
-
-    await this.cacheService.deletePlayer(roomId, socketId);
-    await this.playerCacheService.delete(socketId);
-    await this.leaderboardCacheService.delete(roomId, socketId);
-    await this.progressCacheService.deletePlayer(roomId, socketId);
-
-    const updatedRoom = await this.cacheService.getRoom(roomId);
-    return updatedRoom;
+    return { room, player };
   }
 
   async updateGameSettings(
@@ -150,7 +127,7 @@ export class GameService implements OnModuleInit {
       throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
     }
 
-    const isFull = await this.waitlistService.isRoomFull(
+    const isFull = await this.playerService.isRoomFull(
       roomId,
       room.settings.maxPlayer,
       room.players.length,
@@ -160,10 +137,8 @@ export class GameService implements OnModuleInit {
       throw new WebsocketException(ErrorCode.ROOM_FULL);
     }
 
-    await this.playerCacheService.set(socketId, roomId);
-
     // 무조건 대기열을 거쳐서 입장
-    const newlyJoinedPlayers = await this.waitlistService.requestJoinRoom(
+    const newlyJoinedPlayers = await this.playerService.requestJoinWaitList(
       roomId,
       socketId,
       nickname,

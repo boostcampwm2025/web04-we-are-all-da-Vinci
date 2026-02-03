@@ -20,7 +20,6 @@ import { GameRoom, Player } from 'src/common/types';
 import { escapeHtml } from 'src/common/utils/sanitize';
 import { MetricService } from 'src/metric/metric.service';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
-import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { RoomSettingsDto } from './dto/room-settings.dto';
 import { RoomStartDto } from './dto/room-start.dto';
 import { UserJoinDto } from './dto/user-join.dto';
@@ -47,7 +46,6 @@ export class GameGateway
 
     private readonly chatService: ChatService,
     private readonly chatGateway: ChatGateway,
-    private readonly playerCacheService: PlayerCacheService,
     private readonly gameRoomCacheService: GameRoomCacheService,
 
     private readonly metricService: MetricService,
@@ -96,37 +94,33 @@ export class GameGateway
     this.logger.info({ clientId: client.id }, 'User Disconnected');
     this.metricService.decConnection();
 
-    // 퇴장 전 플레이어 정보 조회
-    const roomId = await this.playerCacheService.getRoomId(client.id);
-    let leavingPlayer = null;
-    if (roomId) {
-      const players = await this.gameRoomCacheService.getAllPlayers(roomId);
-      leavingPlayer = players.find((p) => p.socketId === client.id);
+    try {
+      const { room, player } = await this.gameService.leaveRoom(client.id);
+
+      if (!room) {
+        return;
+      }
+
+      // 퇴장 시스템 메시지
+      if (player) {
+        const leaveMsg = await this.chatService.createLeaveMessage(
+          room.roomId,
+          player.nickname,
+        );
+        this.chatGateway.broadcastSystemMessage(room.roomId, leaveMsg);
+      }
+
+      // 빈 방이면 삭제 + 채팅 정리
+      if (room.players.length === 0) {
+        await this.gameRoomCacheService.deleteRoom(room.roomId);
+        await this.chatService.clearHistory(room.roomId);
+        return;
+      }
+
+      this.broadcastMetadata(room);
+    } catch (err) {
+      this.logger.error(err);
     }
-
-    const room = await this.gameService.leaveRoom(client.id);
-
-    if (!room) {
-      return;
-    }
-
-    // 퇴장 시스템 메시지
-    if (leavingPlayer) {
-      const leaveMsg = await this.chatService.createLeaveMessage(
-        room.roomId,
-        leavingPlayer.nickname,
-      );
-      this.chatGateway.broadcastSystemMessage(room.roomId, leaveMsg);
-    }
-
-    // 빈 방이면 삭제 + 채팅 정리
-    if (room.players.length === 0) {
-      await this.gameRoomCacheService.deleteRoom(room.roomId);
-      await this.chatService.clearHistory(room.roomId);
-      return;
-    }
-
-    this.broadcastMetadata(room);
   }
 
   @SubscribeMessage(ServerEvents.USER_JOIN)
