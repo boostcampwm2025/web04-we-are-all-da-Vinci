@@ -39,9 +39,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build shared package
-        run: pnpm -F @shared/types build
-
       - name: Security Audit
         working-directory: client
         id: client-audit
@@ -108,9 +105,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build shared package
-        run: pnpm -F @shared/types build
-
       - name: Security Audit
         working-directory: server
         id: server-audit
@@ -164,9 +158,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Build shared package
-        run: pnpm -F @shared/types build
 
       - name: Bundle Size Check
         uses: preactjs/compressed-size-action@v2

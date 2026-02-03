@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { GamePhase } from "../constants/index.js";
+import { GamePhase } from "../constants/index";
 
 export const PhaseSchema = z.enum([
   GamePhase.WAITING,

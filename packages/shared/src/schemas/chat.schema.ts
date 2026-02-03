@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CHAT_MAX_LENGTH } from '../constants/index.js';
+import { CHAT_MAX_LENGTH } from '../constants/index';
 
 export const SystemMessageTypeSchema = z.enum([
   'join',

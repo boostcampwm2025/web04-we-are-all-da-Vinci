@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SimilaritySchema, StrokeSchema } from './base.schema.js';
+import { SimilaritySchema, StrokeSchema } from './base.schema';
 
 export const UserScoreSchema = z.object({
   roomId: z.string(),

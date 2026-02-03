@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import * as schemas from '../schemas/index.js';
+import * as schemas from '../schemas/index';
 
 // ============ Base Types ============
 export type Color = z.infer<typeof schemas.ColorSchema>;

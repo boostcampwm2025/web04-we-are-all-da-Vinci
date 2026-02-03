@@ -6,7 +6,7 @@ export {
   ColorSchema,
   StrokeSchema,
   SimilaritySchema,
-} from './base.schema.js';
+} from './base.schema';
 
 // Entity schemas
 export {
@@ -14,7 +14,7 @@ export {
   PlayerSchema,
   SettingsSchema,
   GameRoomSchema,
-} from './entity.schema.js';
+} from './entity.schema';
 
 // Game schemas
 export {
@@ -24,14 +24,14 @@ export {
   RoomStartSchema,
   UserJoinSchema,
   UserKickSchema,
-} from './game.schema.js';
+} from './game.schema';
 
 // Play schemas
 export {
   UserScoreSchema,
   UserDrawingSchema,
   UserPracticeSchema,
-} from './play.schema.js';
+} from './play.schema';
 
 // Round schemas
 export {
@@ -45,7 +45,7 @@ export {
   UserWaitlistSchema,
   RoomKickedSchema,
   ErrorResponseSchema,
-} from './round.schema.js';
+} from './round.schema';
 
 // Chat schemas
 export {
@@ -54,7 +54,7 @@ export {
   ChatMessagePayloadSchema,
   ChatHistoryPayloadSchema,
   ChatErrorSchema,
-} from './chat.schema.js';
+} from './chat.schema';
 
 // Result schemas
 export {
@@ -65,4 +65,4 @@ export {
   RankingEntrySchema,
   PlayerScoreSchema,
   LeaderboardEntrySchema,
-} from './result.schema.js';
+} from './result.schema';

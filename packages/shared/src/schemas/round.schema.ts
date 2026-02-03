@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { StrokeSchema, SimilaritySchema } from './base.schema.js';
-import { RoundResultEntrySchema, GameResultEntrySchema, PlayerScoreSchema } from './result.schema.js';
+import { StrokeSchema, SimilaritySchema } from './base.schema';
+import { RoundResultEntrySchema, GameResultEntrySchema, PlayerScoreSchema } from './result.schema';
 
 export const RoomPromptSchema = z.object({
   promptStrokes: z.array(StrokeSchema),
