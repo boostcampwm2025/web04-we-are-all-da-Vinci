@@ -1,4 +1,8 @@
-import type { Stroke, Similarity, PlayerScore as SharedPlayerScore } from '@shared/types';
+import type {
+  Stroke,
+  Similarity,
+  PlayerScore as SharedPlayerScore,
+} from '@shared/types';
 
 // Re-export base type
 export type PlayerScore = SharedPlayerScore;

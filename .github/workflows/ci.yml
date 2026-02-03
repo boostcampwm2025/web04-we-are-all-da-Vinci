@@ -10,9 +10,6 @@ jobs:
   client:
     name: Client
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: client
 
     steps:
       - name: Checkout
@@ -35,14 +32,18 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-client-${{ hashFiles('client/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-client-
+            ${{ runner.os }}-pnpm-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build shared package
+        run: pnpm -F @shared/types build
+
       - name: Security Audit
+        working-directory: client
         id: client-audit
         run: |
           pnpm audit --audit-level=high 2>&1 | tee audit-output.txt || true
@@ -52,12 +53,15 @@ jobs:
         continue-on-error: true
 
       - name: Lint
+        working-directory: client
         run: pnpm run lint
 
       - name: Format Check
+        working-directory: client
         run: pnpm run format:check
 
       - name: Test with Coverage
+        working-directory: client
         run: pnpm run test:coverage
 
       - name: Coverage Report
@@ -69,14 +73,12 @@ jobs:
           json-final-path: ./coverage/coverage-final.json
 
       - name: Build
+        working-directory: client
         run: pnpm run build
 
   server:
     name: Server
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: server
 
     steps:
       - name: Checkout
@@ -99,14 +101,18 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-server-${{ hashFiles('server/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-server-
+            ${{ runner.os }}-pnpm-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build shared package
+        run: pnpm -F @shared/types build
+
       - name: Security Audit
+        working-directory: server
         id: server-audit
         run: |
           pnpm audit --audit-level=high 2>&1 | tee audit-output.txt || true
@@ -116,15 +122,19 @@ jobs:
         continue-on-error: true
 
       - name: Lint
+        working-directory: server
         run: pnpm run lint
 
       - name: Format Check
+        working-directory: server
         run: pnpm run format:check
 
       - name: Test
+        working-directory: server
         run: pnpm run test
 
       - name: Build
+        working-directory: server
         run: pnpm run build
 
       - name: Server Coverage Report
@@ -154,7 +164,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        working-directory: client
+
+      - name: Build shared package
+        run: pnpm -F @shared/types build
 
       - name: Bundle Size Check
         uses: preactjs/compressed-size-action@v2

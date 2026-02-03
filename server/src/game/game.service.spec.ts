@@ -418,7 +418,7 @@ describe('GameService', () => {
       cacheService.getRoom.mockResolvedValue(room);
       playerCacheService.getRoomId.mockResolvedValue('test-room');
       cacheService.getAllPlayers.mockResolvedValue([hostPlayer, guestPlayer]);
-      cacheService.deletePlayer.mockResolvedValue(undefined);
+      cacheService.deletePlayer.mockResolvedValue(true);
       playerCacheService.delete.mockResolvedValue('test-room');
       leaderboardCacheService.delete.mockResolvedValue(undefined);
 
