@@ -1,4 +1,5 @@
 import { useIsCurrentUser, useIsHost } from '@/entities/gameRoom';
+import { cn } from '@/shared/lib/classNames';
 import { UserAvatar } from '@/shared/ui';
 
 interface PlayerCardProps {
@@ -23,11 +24,12 @@ const PlayerCard = ({
   return (
     <div
       key={id}
-      className={`relative flex flex-col items-center justify-center rounded-xl border-2 p-2 text-center transition-all xl:p-6 ${
+      className={cn(
+        'relative flex flex-col items-center justify-center rounded-xl border-2 p-2 text-center transition-all xl:p-6',
         isCurrentUser
           ? 'border-interactive-light bg-interactive-subtle'
-          : 'border-stroke-default bg-surface-subtle'
-      }`}
+          : 'border-stroke-default bg-surface-subtle',
+      )}
     >
       <UserAvatar
         name={profileId}
@@ -55,7 +57,7 @@ const PlayerCard = ({
       )}
 
       {status && (
-        <div className="font-handwriting text-content-tertiary text-sm sm:text-base lg:text-lg">
+        <div className="font-handwriting text-content-tertiary text-base sm:text-lg lg:text-xl">
           {status}
         </div>
       )}
