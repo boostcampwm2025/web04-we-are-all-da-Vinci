@@ -14,10 +14,12 @@ import { ChatGateway } from 'src/chat/chat.gateway';
 import { ChatService } from 'src/chat/chat.service';
 import { getSocketCorsOrigin } from 'src/common/config/cors.util';
 import { ClientEvents, GamePhase, ServerEvents } from 'src/common/constants';
+import { ErrorCode } from 'src/common/constants/error-code';
 import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
 import { MetricInterceptor } from 'src/common/interceptors/metric.interceptor';
 import { GameRoom, Player } from 'src/common/types';
 import { escapeHtml } from 'src/common/utils/sanitize';
+import { isValidUUIDv4 } from 'src/common/utils/validate';
 import { MetricService } from 'src/metric/metric.service';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
@@ -90,11 +92,14 @@ export class GameGateway
   handleConnection(client: Socket) {
     const profileId = (client.handshake.auth as Record<string, unknown>)
       ?.profileId;
-    if (!profileId || typeof profileId !== 'string') {
+    if (!isValidUUIDv4(profileId)) {
       this.logger.warn(
         { clientId: client.id },
-        'Connection rejected: missing profileId',
+        'Connection rejected: invalid profileId',
       );
+      client.emit(ClientEvents.ERROR, {
+        message: ErrorCode.INVALID_PROFILE_ID,
+      });
       client.disconnect();
       return;
     }
