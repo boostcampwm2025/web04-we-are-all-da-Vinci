@@ -160,6 +160,7 @@ export class GameService implements OnModuleInit {
     const waitlistHasDuplicate = await this.waitlistService.hasProfile(
       roomId,
       profileId,
+      socketId,
     );
     if (waitlistHasDuplicate) {
       throw new WebsocketException(ErrorCode.DUPLICATE_SESSION);

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { REDIS_TTL } from 'src/common/constants';
 import { Player } from 'src/common/types';
 import { RedisKeys } from '../redis-keys';
 import { RedisService } from '../redis.service';
@@ -10,7 +11,9 @@ export class WaitlistCacheService {
   async addWaitPlayer(roomId: string, player: Player): Promise<number> {
     const client = this.redisService.getClient();
     const key = RedisKeys.waitlist(roomId);
-    return await client.rPush(key, JSON.stringify(player));
+    const result = await client.rPush(key, JSON.stringify(player));
+    await client.expire(key, REDIS_TTL);
+    return result;
   }
 
   // 대기열 첫번째 유저 pop
@@ -48,8 +51,15 @@ export class WaitlistCacheService {
     return await client.lLen(key);
   }
 
-  async hasProfile(roomId: string, profileId: string): Promise<boolean> {
+  async hasProfile(
+    roomId: string,
+    profileId: string,
+    excludeSocketId?: string,
+  ): Promise<boolean> {
     const waitlist = await this.getWaitlist(roomId);
-    return waitlist.some((player) => player.profileId === profileId);
+    return waitlist.some(
+      (player) =>
+        player.profileId === profileId && player.socketId !== excludeSocketId,
+    );
   }
 }
