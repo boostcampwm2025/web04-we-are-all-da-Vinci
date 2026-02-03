@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { GamePhase } from '../constants/index.js';
+import { z } from "zod";
+import { GamePhase } from "../constants/index.js";
 
 export const PhaseSchema = z.enum([
   GamePhase.WAITING,
@@ -20,7 +20,7 @@ export const PlayerSchema = z.object({
 export const SettingsSchema = z.object({
   drawingTime: z.number().int().min(10).max(120),
   totalRounds: z.number().int().min(1).max(10),
-  maxPlayer: z.number().int().min(2).max(8),
+  maxPlayer: z.number().int().min(2).max(100),
 });
 
 export const GameRoomSchema = z.object({
