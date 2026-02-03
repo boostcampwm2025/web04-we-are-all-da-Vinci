@@ -174,7 +174,7 @@ describe('profileId 조작 감지 시나리오', () => {
     expect(result.current).toBe('');
   });
 
-  it('키 변경 시 새로운 키를 감시한다', async () => {
+  it('키 변경 시 즉시 새로운 키의 값을 반영한다', () => {
     localStorage.setItem('key1', 'value1');
     localStorage.setItem('key2', 'value2');
 
@@ -187,11 +187,7 @@ describe('profileId 조작 감지 시나리오', () => {
 
     rerender({ key: 'key2' });
 
-    // 키 변경 후 interval이 새 값을 체크할 때까지 대기
-    await act(async () => {
-      vi.advanceTimersByTime(100);
-    });
-
+    // 키 변경 시 interval 대기 없이 즉시 새 값이 반영됨
     expect(result.current).toBe('value2');
   });
 });

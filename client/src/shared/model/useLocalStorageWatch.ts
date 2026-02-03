@@ -19,6 +19,9 @@ export const useLocalStorageWatch = (key: string): string | null => {
       setValue(storedValue);
     };
 
+    // key 변경 시 즉시 새 값 반영
+    checkLocalStorage();
+
     // storage 이벤트 리스너 (다른 탭에서 변경 시)
     globalThis.addEventListener('storage', checkLocalStorage);
 
