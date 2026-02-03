@@ -36,7 +36,7 @@ export const RoomLeaderboardSchema = z.object({
       socketId: z.string(),
       nickname: z.string(),
       profileId: z.string(),
-      similarity: z.number(),
+      similarity: z.number().min(0).max(100),
     }),
   ),
 });

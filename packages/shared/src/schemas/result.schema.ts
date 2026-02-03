@@ -16,21 +16,21 @@ export const GameResultEntrySchema = z.object({
   socketId: z.string(),
   nickname: z.string(),
   profileId: z.string(),
-  score: z.number(),
+  score: z.number().min(0),
 });
 
 export const FinalResultSchema = z.object({
   socketId: z.string(),
   nickname: z.string(),
   profileId: z.string(),
-  score: z.number(),
+  score: z.number().min(0),
 });
 
 export const RankingEntrySchema = z.object({
   socketId: z.string(),
   nickname: z.string(),
   profileId: z.string(),
-  similarity: z.number(),
+  similarity: z.number().min(0).max(100),
   rank: z.number().int().min(1),
   previousRank: z.number().int().min(1).nullable(),
 });
@@ -39,12 +39,12 @@ export const PlayerScoreSchema = z.object({
   socketId: z.string(),
   nickname: z.string(),
   profileId: z.string(),
-  score: z.number(),
+  score: z.number().min(0),
 });
 
 export const LeaderboardEntrySchema = z.object({
   socketId: z.string(),
   nickname: z.string(),
   profileId: z.string(),
-  similarity: z.number(),
+  similarity: z.number().min(0).max(100),
 });

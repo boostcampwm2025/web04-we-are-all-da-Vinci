@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Request DTOs
 export const CreateRoomSchema = z.object({
@@ -9,7 +9,7 @@ export const CreateRoomSchema = z.object({
 
 export const RoomSettingsSchema = z.object({
   roomId: z.string(),
-  maxPlayer: z.number().int().min(2).max(8),
+  maxPlayer: z.number().int().min(2).max(100),
   totalRounds: z.number().int().min(1).max(10),
   drawingTime: z.number().int().min(10).max(120),
 });
