@@ -10,7 +10,8 @@ const { mockCreateRoom, mockNavigate } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/features/roomSettings', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/roomSettings')>();
+  const actual =
+    await importOriginal<typeof import('@/features/roomSettings')>();
   return {
     ...actual,
     createRoom: mockCreateRoom,
