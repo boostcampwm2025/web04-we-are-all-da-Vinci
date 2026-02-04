@@ -32,7 +32,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': '/src',
-      '@shared/types': path.resolve(__dirname, '../packages/shared/src'),
+      '@shared/types': path.resolve(__dirname, '../packages/shared/dist'),
     },
   },
   build: {

@@ -83,7 +83,9 @@
     "testEnvironment": "node",
     "passWithNoTests": true,
     "moduleNameMapper": {
-      "^src/(.*)$": "<rootDir>/$1"
+      "^src/(.*)$": "<rootDir>/$1",
+      "^@shared/types$": "<rootDir>/../../packages/shared/dist/index.js",
+      "^@shared/types/(.*)$": "<rootDir>/../../packages/shared/dist/$1"
     }
   }
 }
