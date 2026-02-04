@@ -3,8 +3,8 @@ name: daVinci-deploy
 services:
   backend:
     build:
-      context: ../server
-      dockerfile: ../deploy/Dockerfile
+      context: ..
+      dockerfile: deploy/Dockerfile
     container_name: daVinci-server
     ports:
       - "3000:3000"
