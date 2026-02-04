@@ -35,7 +35,13 @@ export default defineConfig({
       '@shared/types': path.resolve(__dirname, '../packages/shared/dist'),
     },
   },
+  optimizeDeps: {
+    include: ['@shared/types'],
+  },
   build: {
+    commonjsOptions: {
+      include: [/shared/, /node_modules/],
+    },
     sourcemap: true,
     rollupOptions: {
       output: {
