@@ -7,14 +7,16 @@ import {
 import { GameSettingsCard } from '@/entities/gameSettings';
 import { ChatBox, useChatActions, useChatStore } from '@/features/chat';
 import { PlayerListSection } from '@/features/playerList';
+import { Practice } from '@/features/practice';
 import { RoomCodeCopy } from '@/features/roomCode';
 import { RoomSettingsModal } from '@/features/roomSettings';
-import { WaitingRoomActions } from '@/features/waitingRoomActions';
-import { WaitingRoomOverlay } from '@/features/waitingRoomActions/ui/WaitingRoomOverlay';
+import {
+  WaitingRoomActions,
+  WaitingRoomOverlay,
+} from '@/features/waitingRoomActions';
 import { TITLES, BGM_LIST } from '@/shared/config';
 import { useBGM } from '@/shared/model';
 import { GameHeader } from '@/shared/ui';
-import { Practice } from '@/features/practice';
 import { useWaitingActions } from '../model/useWaitingActions';
 
 export const Waiting = () => {
