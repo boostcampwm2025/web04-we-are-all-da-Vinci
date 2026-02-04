@@ -9,7 +9,7 @@ export const VolumeControlModal = ({ isOpen }: VolumeControlModalProps) => {
     <div className="relative">
       {isOpen && (
         <div
-          className="absolute bottom-full left-0 mb-2"
+          className="absolute top-full left-0 mb-2 md:top-auto md:bottom-full"
           onClick={(e) => e.stopPropagation()}
         >
           <VolumeController />

@@ -33,7 +33,7 @@ export const RoundStanding = () => {
             )}
           </div>
 
-          <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 overflow-y-auto p-3 pl-20">
+          <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 overflow-y-auto p-3 pl-10 md:pl-20">
             {displayResults.map((player, index) => (
               <div key={player.socketId} ref={setRowRef(player.socketId)}>
                 <StandingRow

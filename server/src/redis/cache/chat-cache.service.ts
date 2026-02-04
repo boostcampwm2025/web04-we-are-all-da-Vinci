@@ -3,6 +3,7 @@ import { CHAT_HISTORY_LIMIT, REDIS_TTL } from 'src/common/constants';
 import { ChatMessage } from 'src/common/types';
 import { RedisKeys } from '../redis-keys';
 import { RedisService } from '../redis.service';
+import { ChatMessageSchema } from '@shared/types';
 
 @Injectable()
 export class ChatCacheService {
@@ -28,7 +29,9 @@ export class ChatCacheService {
     const key = RedisKeys.chat(roomId);
 
     const messages = await client.lRange(key, 0, CHAT_HISTORY_LIMIT - 1);
-    return messages.map((msg) => JSON.parse(msg) as ChatMessage).reverse();
+    return messages
+      .map((msg) => ChatMessageSchema.parse(JSON.parse(msg)))
+      .reverse();
   }
 
   /**
