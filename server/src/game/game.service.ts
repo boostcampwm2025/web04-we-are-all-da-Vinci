@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import type { CreateRoomDto } from '@shared/types';
 import { GameRoom, Player } from 'src/common/types';
@@ -12,34 +12,14 @@ import { PlayerService } from './player.service';
 import { RoomService } from './room.service';
 import { InternalError } from 'src/common/exceptions/internal-error';
 
-interface PhaseChangeHandler {
-  (roomId: string, joinedPlayers: Player[]): Promise<void>;
-}
-
 @Injectable()
-export class GameService implements OnModuleInit {
-  private phaseChangeHandler?: PhaseChangeHandler;
-
+export class GameService {
   constructor(
     private readonly roundService: RoundService,
     private readonly promptService: PromptService,
     private readonly playerService: PlayerService,
     private readonly roomService: RoomService,
   ) {}
-
-  onModuleInit() {
-    this.roundService.setPhaseChangeHandler(async (roomId: string) => {
-      const newlyJoinedPlayers =
-        await this.playerService.getNewlyJoinedUserFromWaitlist(roomId);
-      if (this.phaseChangeHandler) {
-        await this.phaseChangeHandler(roomId, newlyJoinedPlayers);
-      }
-    });
-  }
-
-  setPhaseChangeHandler(handler: PhaseChangeHandler) {
-    this.phaseChangeHandler = handler;
-  }
 
   async createRoom(createRoomDto: CreateRoomDto) {
     const { drawingTime, maxPlayer, totalRounds } = createRoomDto;

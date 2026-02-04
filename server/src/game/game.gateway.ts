@@ -1,4 +1,4 @@
-import { OnModuleInit, UseFilters, UseInterceptors } from '@nestjs/common';
+import { UseFilters, UseInterceptors } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -33,7 +33,7 @@ import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import { OnEvent } from '@nestjs/event-emitter';
 
 interface PhaseChangedEvent {
-  room: GameRoom;
+  roomId: string;
   event: ClientEvent;
   data: unknown;
 }
@@ -46,9 +46,7 @@ interface PhaseChangedEvent {
 })
 @UseFilters(WebsocketExceptionFilter)
 @UseInterceptors(MetricInterceptor)
-export class GameGateway
-  implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
-{
+export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
 
@@ -65,19 +63,11 @@ export class GameGateway
     this.logger.setContext(GameGateway.name);
   }
 
-  onModuleInit() {
-    this.gameService.setPhaseChangeHandler(
-      async (roomId: string, joinedPlayers: Player[]) => {
-        await this.handleWaitlist(roomId, joinedPlayers);
-      },
-    );
-  }
-
   @OnEvent('phase_changed')
   private async handlePhaseChangedEvent(payload: PhaseChangedEvent) {
-    const { room, event, data } = payload;
-    const roomId = room.roomId;
+    const { roomId, event, data } = payload;
     const players = await this.gameService.getNewlyJoinedPlayers(roomId);
+    const room = await this.gameService.getRoom(roomId);
 
     const promises = players.map(async (player) => {
       const socket = this.server.sockets.sockets.get(player.socketId);
@@ -103,30 +93,6 @@ export class GameGateway
 
   private async handleUserJoined(room: GameRoom, joinedPlayers: Player[]) {
     const roomId = room.roomId;
-
-    for (const player of joinedPlayers) {
-      const socket = this.server.sockets.sockets.get(player.socketId);
-      if (socket) {
-        await socket.join(roomId);
-        await this.chatGateway.sendHistory(socket, roomId);
-        await this.syncCurrentPhaseData(socket, room);
-
-        // 입장 시스템 메시지
-        const joinMsg = await this.chatService.createJoinMessage(
-          roomId,
-          player.nickname,
-        );
-        this.chatGateway.broadcastSystemMessage(roomId, joinMsg);
-      }
-    }
-    this.broadcastMetadata(room);
-  }
-
-  private async handleWaitlist(roomId: string, joinedPlayers: Player[]) {
-    const room = await this.gameService.getRoom(roomId);
-    if (!room) {
-      return;
-    }
 
     for (const player of joinedPlayers) {
       const socket = this.server.sockets.sockets.get(player.socketId);
