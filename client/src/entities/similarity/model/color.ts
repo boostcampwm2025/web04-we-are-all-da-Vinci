@@ -1,1 +1,2 @@
-export type Color = [number, number, number]; // r, g, b
+// Re-export from shared package
+export type { Color } from '@shared/types';

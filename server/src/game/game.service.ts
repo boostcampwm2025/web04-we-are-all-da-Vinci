@@ -1,14 +1,13 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 
+import type { CreateRoomDto } from '@shared/types';
 import { GameRoom, Player } from 'src/common/types';
-
-import { GamePhase } from 'src/common/constants';
+import { GamePhase } from '../common/constants';
 import { ErrorCode } from 'src/common/constants/error-code';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 
 import { PromptService } from 'src/prompt/prompt.service';
 import { RoundService } from 'src/round/round.service';
-import { CreateRoomDto } from './dto/create-room.dto';
 import { PlayerService } from './player.service';
 import { RoomService } from './room.service';
 import { InternalError } from 'src/common/exceptions/internal-error';
@@ -117,7 +116,7 @@ export class GameService implements OnModuleInit {
     nickname: string,
     profileId: string,
     socketId: string,
-  ): Promise<{ room: GameRoom | null; newlyJoinedPlayers: Player[] }> {
+  ): Promise<{ room: GameRoom; newlyJoinedPlayers: Player[] }> {
     const room = await this.roomService.getRoom(roomId);
 
     const isFull = await this.playerService.isRoomFull(

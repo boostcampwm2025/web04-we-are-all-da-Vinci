@@ -1,13 +1,11 @@
 import type { GameEndResponse } from '@/entities/gameResult';
 import { useGameStore, type GameRoom } from '@/entities/gameRoom';
-import type { Player } from '@/entities/player/model';
 import type {
   RoundReplayResponse,
   RoundStandingResponse,
 } from '@/entities/roundResult';
 import type { Stroke } from '@/entities/similarity';
 import { useChatStore, type ChatMessage } from '@/features/chat';
-import type { WaitlistResponse } from '@/features/waitingRoomActions';
 import { disconnectSocket, getSocket } from '@/shared/api';
 import { CLIENT_EVENTS, SERVER_EVENTS } from '@/shared/config';
 import { useToastStore } from '@/shared/model';
@@ -18,6 +16,22 @@ import {
   processRoomMetadata,
   type ServerRankingEntry,
 } from '../lib/socketHandlers';
+import {
+  z,
+  GameRoomSchema,
+  RoomTimerSchema,
+  RoomLeaderboardSchema,
+  StrokeSchema,
+  RoomRoundReplaySchema,
+  RoomRoundStandingSchema,
+  RoomGameEndSchema,
+  UserWaitlistSchema,
+  RoomKickedSchema,
+  ErrorResponseSchema,
+  ChatMessageSchema,
+  ChatHistoryPayloadSchema,
+  ChatErrorSchema,
+} from '@shared/types';
 
 export const useGameSocket = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -112,7 +126,8 @@ export const useGameSocket = () => {
     });
 
     // 방 정보 업데이트
-    socket.on(CLIENT_EVENTS.ROOM_METADATA, (data: GameRoom) => {
+    socket.on(CLIENT_EVENTS.ROOM_METADATA, (rawData: unknown) => {
+      const data = GameRoomSchema.parse(rawData) as GameRoom;
       const { phase: currentPhase, mySocketId } = useGameStore.getState();
       const result = processRoomMetadata(data, currentPhase, mySocketId!);
 
@@ -137,101 +152,93 @@ export const useGameSocket = () => {
     });
 
     // 추방
-    socket.on(
-      CLIENT_EVENTS.ROOM_KICKED,
-      ({ kickedPlayer }: { kickedPlayer: Omit<Player, 'isHost'> }) => {
-        const mySocketId = useGameStore.getState().mySocketId;
-        if (mySocketId === kickedPlayer.socketId) {
-          disconnectSocket();
-          reset();
-          navigate('/');
-          addToast(`방에서 퇴장당했습니다.`, 'error');
-        } else {
-          addToast(`${kickedPlayer.nickname}님이 퇴장당했습니다.`, 'info');
-        }
-      },
-    );
+    socket.on(CLIENT_EVENTS.ROOM_KICKED, (rawData: unknown) => {
+      const { kickedPlayer } = RoomKickedSchema.parse(rawData);
+      const mySocketId = useGameStore.getState().mySocketId;
+      if (mySocketId === kickedPlayer.socketId) {
+        disconnectSocket();
+        reset();
+        navigate('/');
+        addToast(`방에서 퇴장당했습니다.`, 'error');
+      } else {
+        addToast(`${kickedPlayer.nickname}님이 퇴장당했습니다.`, 'info');
+      }
+    });
 
     // 실시간 데이터
-    socket.on(
-      CLIENT_EVENTS.ROOM_TIMER,
-      ({ timeLeft }: { timeLeft: number }) => {
-        setTimer(timeLeft);
-      },
-    );
+    socket.on(CLIENT_EVENTS.ROOM_TIMER, (rawData: unknown) => {
+      const { timeLeft } = RoomTimerSchema.parse(rawData);
+      setTimer(timeLeft);
+    });
 
-    socket.on(
-      CLIENT_EVENTS.ROOM_LEADERBOARD,
-      (data: { rankings: ServerRankingEntry[] }) => {
-        const currentRankings = useGameStore.getState().liveRankings;
-        setLiveRankings(buildRankings(data.rankings, currentRankings));
-      },
-    );
+    socket.on(CLIENT_EVENTS.ROOM_LEADERBOARD, (rawData: unknown) => {
+      const data = RoomLeaderboardSchema.parse(rawData);
+      const currentRankings = useGameStore.getState().liveRankings;
+      setLiveRankings(
+        buildRankings(data.rankings as ServerRankingEntry[], currentRankings),
+      );
+    });
 
-    socket.on(CLIENT_EVENTS.ROOM_PROMPT, (promptStrokes: Stroke[]) => {
+    socket.on(CLIENT_EVENTS.ROOM_PROMPT, (rawData: unknown) => {
+      const promptStrokes = z.array(StrokeSchema).parse(rawData) as Stroke[];
       setPromptStrokes(promptStrokes);
     });
 
     // 결과
-    socket.on(
-      CLIENT_EVENTS.ROOM_ROUND_REPLAY,
-      (response: RoundReplayResponse) => {
-        setRoundResults(response.rankings);
-        setPromptStrokes(response.promptStrokes);
-      },
-    );
+    socket.on(CLIENT_EVENTS.ROOM_ROUND_REPLAY, (rawData: unknown) => {
+      const response = RoomRoundReplaySchema.parse(
+        rawData,
+      ) as RoundReplayResponse;
+      setRoundResults(response.rankings);
+      setPromptStrokes(response.promptStrokes);
+    });
 
-    socket.on(
-      CLIENT_EVENTS.ROOM_ROUND_STANDING,
-      (response: RoundStandingResponse) => {
-        setStandingResults(response.rankings);
-      },
-    );
+    socket.on(CLIENT_EVENTS.ROOM_ROUND_STANDING, (rawData: unknown) => {
+      const response = RoomRoundStandingSchema.parse(
+        rawData,
+      ) as RoundStandingResponse;
+      setStandingResults(response.rankings);
+    });
 
-    socket.on(CLIENT_EVENTS.ROOM_GAME_END, (response: GameEndResponse) => {
+    socket.on(CLIENT_EVENTS.ROOM_GAME_END, (rawData: unknown) => {
+      const response = RoomGameEndSchema.parse(rawData) as GameEndResponse;
       setFinalResults(response.finalRankings);
       setHighlight(response.highlight);
     });
 
     // 대기열에 추가됨
-    socket.on(
-      CLIENT_EVENTS.USER_WAITLIST,
-      ({ currentRound, totalRounds }: WaitlistResponse) => {
-        setIsInWaitlist(true);
-        setGameProgress({ currentRound, totalRounds });
-        // setAlertMessage(
-        //   '현재 게임이 진행 중입니다. 다음 라운드부터 참여할 수 있습니다.',
-        // );
-      },
-    );
+    socket.on(CLIENT_EVENTS.USER_WAITLIST, (rawData: unknown) => {
+      const { currentRound, totalRounds } = UserWaitlistSchema.parse(rawData);
+      setIsInWaitlist(true);
+      setGameProgress({ currentRound, totalRounds });
+    });
 
-    socket.on(
-      CLIENT_EVENTS.USER_PRACTICE_STARTED,
-      (promptStrokes: Stroke[]) => {
-        setPracticePrompt(promptStrokes);
-        setIsPracticing(true);
-      },
-    );
+    socket.on(CLIENT_EVENTS.USER_PRACTICE_STARTED, (rawData: unknown) => {
+      const promptStrokes = z.array(StrokeSchema).parse(rawData) as Stroke[];
+      setPracticePrompt(promptStrokes);
+      setIsPracticing(true);
+    });
 
     // 에러: 모달 확인 후 메인 페이지로 이동
-    socket.on(CLIENT_EVENTS.ERROR, (error: { message: string }) => {
+    socket.on(CLIENT_EVENTS.ERROR, (rawData: unknown) => {
+      const error = ErrorResponseSchema.parse(rawData);
       setAlertMessage(error.message);
       setPendingNavigation('/');
     });
 
     // 채팅 이벤트
-    socket.on(CLIENT_EVENTS.CHAT_BROADCAST, (message: ChatMessage) => {
+    socket.on(CLIENT_EVENTS.CHAT_BROADCAST, (rawData: unknown) => {
+      const message = ChatMessageSchema.parse(rawData) as ChatMessage;
       addChatMessage(message);
     });
 
-    socket.on(
-      CLIENT_EVENTS.CHAT_HISTORY,
-      (payload: { roomId: string; messages: ChatMessage[] }) => {
-        setChatHistory(payload.messages);
-      },
-    );
+    socket.on(CLIENT_EVENTS.CHAT_HISTORY, (rawData: unknown) => {
+      const payload = ChatHistoryPayloadSchema.parse(rawData);
+      setChatHistory(payload.messages as ChatMessage[]);
+    });
 
-    socket.on(CLIENT_EVENTS.CHAT_ERROR, (error: { message: string }) => {
+    socket.on(CLIENT_EVENTS.CHAT_ERROR, (rawData: unknown) => {
+      const error = ChatErrorSchema.parse(rawData);
       // 채팅 에러는 해당 유저의 채팅창에만 시스템 메시지로 표시
       const errorMessage: ChatMessage = {
         type: 'system',

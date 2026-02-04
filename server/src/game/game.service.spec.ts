@@ -7,7 +7,7 @@ import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import { GameRoom, Player } from 'src/common/types';
 import { PromptService } from 'src/prompt/prompt.service';
 import { RoundService } from 'src/round/round.service';
-import { CreateRoomDto } from './dto/create-room.dto';
+import type { CreateRoomDto } from '@shared/types';
 import { GameService } from './game.service';
 import { PlayerService } from './player.service';
 import { RoomService } from './room.service';
