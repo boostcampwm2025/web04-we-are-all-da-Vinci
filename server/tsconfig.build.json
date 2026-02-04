@@ -3,6 +3,7 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
+    "tsBuildInfoFile": "dist/.tsbuildinfo",
     "paths": {
       "src/*": ["src/*"],
       "@shared/types": ["../packages/shared/dist/index.d.ts"],
