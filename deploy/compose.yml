@@ -12,6 +12,8 @@ services:
     restart: unless-stopped
     networks:
       - app-network
+    depends_on:
+      - redis
     healthcheck:
       test:
         [
@@ -24,6 +26,13 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  redis:
+    image: redis:7-alpine
+    container_name: daVinci-redis
+    restart: unless-stopped
+    networks:
+      - app-network
 
 networks:
   app-network:
