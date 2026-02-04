@@ -25,17 +25,16 @@ import {
   RoomSettingsSchema,
   RoomStartSchema,
   UserKickSchema,
-  ClientEvent,
 } from '@shared/types';
 import { GameService } from './game.service';
 import { RoomService } from './room.service';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import { OnEvent } from '@nestjs/event-emitter';
+import { PhaseEvent } from 'src/round/phase.service';
 
 interface PhaseChangedEvent {
   roomId: string;
-  event: ClientEvent;
-  data: unknown;
+  events: PhaseEvent[];
 }
 
 @WebSocketGateway({
@@ -65,7 +64,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @OnEvent('phase_changed')
   private async handlePhaseChangedEvent(payload: PhaseChangedEvent) {
-    const { roomId, event, data } = payload;
+    const { roomId, events } = payload;
     const players = await this.gameService.getNewlyJoinedPlayers(roomId);
     const room = await this.gameService.getRoom(roomId);
 
@@ -76,7 +75,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
       await socket.join(roomId);
       await this.chatGateway.sendHistory(socket, roomId);
-      socket.emit(event, data);
+      events.forEach(({ name, payload }) => socket.emit(name, payload));
 
       // 입장 시스템 메시지
       const joinMsg = await this.chatService.createJoinMessage(
