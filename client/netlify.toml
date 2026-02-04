@@ -1,6 +1,6 @@
 [build]
   base = "client"
-  command = "cd ../packages/shared && npx tsc && cd ../client && pnpm build"
+  command = "cd ../packages/shared && npx tsc && cd ../../client && pnpm build"
   publish = "dist"
 
 [[redirects]]
