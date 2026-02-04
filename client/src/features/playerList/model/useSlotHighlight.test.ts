@@ -40,15 +40,30 @@ describe('useSlotHighlight', () => {
       expect(result.current.isHighlighted(7)).toBe(false);
     });
 
-    it('첫 번째 빈자리 슬롯(index 0)을 호버하면 모든 빈자리가 하이라이트된다', () => {
+    it('index 0, 1은 최소 2명 제한으로 하이라이트되지 않는다', () => {
       const { result } = renderHook(() => useSlotHighlight({ maxPlayer: 5 }));
 
       act(() => {
         result.current.setHoveredIndex(0);
       });
 
-      expect(result.current.isHighlighted(0)).toBe(true);
-      expect(result.current.isHighlighted(1)).toBe(true);
+      // 최소 2명 제한: index 0, 1은 잠금 불가
+      expect(result.current.isHighlighted(0)).toBe(false);
+      expect(result.current.isHighlighted(1)).toBe(false);
+      expect(result.current.isHighlighted(2)).toBe(false);
+      expect(result.current.isHighlighted(3)).toBe(false);
+      expect(result.current.isHighlighted(4)).toBe(false);
+    });
+
+    it('index 2를 호버하면 2부터 maxPlayer-1까지 하이라이트된다', () => {
+      const { result } = renderHook(() => useSlotHighlight({ maxPlayer: 5 }));
+
+      act(() => {
+        result.current.setHoveredIndex(2);
+      });
+
+      expect(result.current.isHighlighted(0)).toBe(false);
+      expect(result.current.isHighlighted(1)).toBe(false);
       expect(result.current.isHighlighted(2)).toBe(true);
       expect(result.current.isHighlighted(3)).toBe(true);
       expect(result.current.isHighlighted(4)).toBe(true);
@@ -153,16 +168,17 @@ describe('useSlotHighlight', () => {
       expect(result.current.isHighlighted(7)).toBe(true);
     });
 
-    it('maxPlayer=1일 때 첫 슬롯만 빈자리이다', () => {
+    it('maxPlayer=1일 때 최소 2명 제한으로 빈자리 호버가 하이라이트되지 않는다', () => {
       const { result } = renderHook(() => useSlotHighlight({ maxPlayer: 1 }));
 
       act(() => {
         result.current.setHoveredIndex(0);
       });
 
-      expect(result.current.isHighlighted(0)).toBe(true);
-      expect(result.current.isHighlighted(1)).toBe(false);
+      // 최소 2명 제한: index 0은 잠금 불가
+      expect(result.current.isHighlighted(0)).toBe(false);
 
+      // 잠금 슬롯(index >= maxPlayer)은 해제 가능
       act(() => {
         result.current.setHoveredIndex(1);
       });
