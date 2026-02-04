@@ -115,11 +115,11 @@ export const PlayerListSection = ({
             <SlotCard
               key={`empty-${i}`}
               variant="empty"
-              isInteractive={isHost && canAdjustSlots}
+              isInteractive={isHost && canAdjustSlots && i >= 2}
               isHighlighted={isHighlighted(i)}
               onClick={() => handleLockSlot(i)}
               onMouseEnter={() =>
-                isHost && canAdjustSlots && setHoveredIndex(i)
+                isHost && canAdjustSlots && i >= 2 && setHoveredIndex(i)
               }
               onMouseLeave={() => setHoveredIndex(null)}
             />

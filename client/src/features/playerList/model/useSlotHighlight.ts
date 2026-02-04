@@ -15,8 +15,9 @@ export const useSlotHighlight = ({ maxPlayer }: UseSlotHighlightProps) => {
     if (hoveredIndex === null) return false;
 
     // 빈자리 hover: 해당 슬롯부터 끝까지 하이라이트 (잠금 예정)
+    // 최소 2명은 유지해야 하므로 index 0, 1은 하이라이트하지 않음
     if (index < maxPlayer) {
-      return hoveredIndex < maxPlayer && index >= hoveredIndex;
+      return hoveredIndex < maxPlayer && hoveredIndex >= 2 && index >= hoveredIndex;
     }
 
     // 잠금 슬롯 hover: maxPlayer부터 해당 슬롯까지 하이라이트 (해제 예정)
