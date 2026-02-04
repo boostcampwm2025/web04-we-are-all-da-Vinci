@@ -25,10 +25,18 @@ import {
   RoomSettingsSchema,
   RoomStartSchema,
   UserKickSchema,
+  ClientEvent,
 } from '@shared/types';
 import { GameService } from './game.service';
 import { RoomService } from './room.service';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
+import { OnEvent } from '@nestjs/event-emitter';
+
+interface PhaseChangedEvent {
+  room: GameRoom;
+  event: ClientEvent;
+  data: unknown;
+}
 
 @WebSocketGateway({
   cors: {
@@ -63,6 +71,55 @@ export class GameGateway
         await this.handleWaitlist(roomId, joinedPlayers);
       },
     );
+  }
+
+  @OnEvent('phase_changed')
+  private async handlePhaseChangedEvent(payload: PhaseChangedEvent) {
+    const { room, event, data } = payload;
+    const roomId = room.roomId;
+    const players = await this.gameService.getNewlyJoinedPlayers(roomId);
+
+    const promises = players.map(async (player) => {
+      const socket = this.server.sockets.sockets.get(player.socketId);
+      if (!socket) {
+        return;
+      }
+      await socket.join(roomId);
+      await this.chatGateway.sendHistory(socket, roomId);
+      socket.emit(event, data);
+
+      // 입장 시스템 메시지
+      const joinMsg = await this.chatService.createJoinMessage(
+        roomId,
+        player.nickname,
+      );
+      this.chatGateway.broadcastSystemMessage(roomId, joinMsg);
+    });
+
+    await Promise.all(promises);
+
+    this.broadcastMetadata(room);
+  }
+
+  private async handleUserJoined(room: GameRoom, joinedPlayers: Player[]) {
+    const roomId = room.roomId;
+
+    for (const player of joinedPlayers) {
+      const socket = this.server.sockets.sockets.get(player.socketId);
+      if (socket) {
+        await socket.join(roomId);
+        await this.chatGateway.sendHistory(socket, roomId);
+        await this.syncCurrentPhaseData(socket, room);
+
+        // 입장 시스템 메시지
+        const joinMsg = await this.chatService.createJoinMessage(
+          roomId,
+          player.nickname,
+        );
+        this.chatGateway.broadcastSystemMessage(roomId, joinMsg);
+      }
+    }
+    this.broadcastMetadata(room);
   }
 
   private async handleWaitlist(roomId: string, joinedPlayers: Player[]) {
@@ -148,8 +205,8 @@ export class GameGateway
       (player) => player.socketId === client.id,
     );
 
-    if (newlyJoinedPlayers.length > 0 && this.handleWaitlist) {
-      await this.handleWaitlist(roomId, newlyJoinedPlayers); // gateway에 알림
+    if (newlyJoinedPlayers.length > 0) {
+      await this.handleUserJoined(room, newlyJoinedPlayers); // gateway에 알림
     }
 
     if (isJoined) {

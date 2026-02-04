@@ -18,6 +18,8 @@ import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.servi
 import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
 import { TimerService } from 'src/timer/timer.service';
 import { PromptService } from 'src/prompt/prompt.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ClientEvent } from '@shared/types';
 
 @Injectable()
 export class RoundService implements OnModuleInit {
@@ -31,6 +33,7 @@ export class RoundService implements OnModuleInit {
     private readonly leaderboardCacheService: LeaderboardCacheService,
     private readonly timerService: TimerService,
     private readonly promptService: PromptService,
+    private readonly emitter: EventEmitter2,
     private readonly logger: PinoLogger,
   ) {
     this.logger.setContext(RoundService.name);
@@ -61,8 +64,13 @@ export class RoundService implements OnModuleInit {
     this.phaseChangeHandler = handler;
   }
 
-  private async notifyPhaseChange(roomId: string) {
-    if (this.phaseChangeHandler) await this.phaseChangeHandler(roomId);
+  private notifyPhaseChange(
+    room: GameRoom,
+    event: ClientEvent,
+    data?: unknown,
+  ) {
+    // if (this.phaseChangeHandler) await this.phaseChangeHandler(roomId);
+    this.emitter.emit('phase_changed', { room, event, data });
   }
 
   async nextPhase(room: GameRoom) {
@@ -113,7 +121,7 @@ export class RoundService implements OnModuleInit {
     await this.timerService.startTimer(room.roomId, PROMPT_TIME);
     this.logger.info({ room }, 'Prompt Phase Start');
 
-    await this.notifyPhaseChange(room.roomId);
+    this.notifyPhaseChange(room, ClientEvents.ROOM_METADATA, promptStrokes);
   }
 
   private async moveDrawing(room: GameRoom) {
@@ -124,7 +132,7 @@ export class RoundService implements OnModuleInit {
 
     this.logger.info({ room }, 'Drawing Phase Start');
 
-    await this.notifyPhaseChange(room.roomId);
+    this.notifyPhaseChange(room, ClientEvents.ROOM_METADATA, room);
   }
 
   private async moveRoundReplay(room: GameRoom) {
@@ -139,7 +147,7 @@ export class RoundService implements OnModuleInit {
 
     this.logger.info({ room }, 'Round Replay Phase Start');
 
-    await this.notifyPhaseChange(room.roomId);
+    this.notifyPhaseChange(room, ClientEvents.ROOM_ROUND_REPLAY, result);
   }
 
   async getRoundReplayData(roomId: string) {
@@ -183,7 +191,7 @@ export class RoundService implements OnModuleInit {
 
     this.logger.info({ room }, 'Round Standing Phase Start');
 
-    await this.notifyPhaseChange(room.roomId);
+    this.notifyPhaseChange(room, ClientEvents.ROOM_ROUND_STANDING, result);
   }
 
   async getRoundStandingData(roomId: string) {
@@ -225,7 +233,7 @@ export class RoundService implements OnModuleInit {
     await this.timerService.startTimer(room.roomId, GAME_END_TIME);
 
     this.logger.info('Game End Start');
-    await this.notifyPhaseChange(room.roomId);
+    this.notifyPhaseChange(room, ClientEvents.ROOM_GAME_END, finalResult);
   }
 
   async getGameEndData(roomId: string) {
@@ -296,6 +304,6 @@ export class RoundService implements OnModuleInit {
     await this.leaderboardCacheService.deleteAll(room.roomId);
 
     this.logger.info({ roomId: room.roomId }, 'Game Waiting Start');
-    await this.notifyPhaseChange(room.roomId);
+    this.notifyPhaseChange(room, ClientEvents.ROOM_METADATA, room);
   }
 }

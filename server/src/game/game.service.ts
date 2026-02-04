@@ -210,6 +210,10 @@ export class GameService implements OnModuleInit {
     return randomPrompt;
   }
 
+  async getNewlyJoinedPlayers(roomId: string) {
+    return await this.playerService.getNewlyJoinedUserFromWaitlist(roomId);
+  }
+
   async getSyncData(roomId: string) {
     const room = await this.roomService.getRoom(roomId);
 
