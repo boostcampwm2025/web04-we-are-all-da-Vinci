@@ -97,6 +97,16 @@ export class GameService implements OnModuleInit {
     await this.progressCacheService.deletePlayer(roomId, socketId);
 
     const updatedRoom = await this.cacheService.getRoom(roomId);
+
+    if (
+      updatedRoom &&
+      updatedRoom.players.length === 1 &&
+      updatedRoom.phase !== GamePhase.WAITING &&
+      updatedRoom.phase !== GamePhase.GAME_END
+    ) {
+      await this.roundService.endGame(updatedRoom);
+    }
+
     return updatedRoom;
   }
 
