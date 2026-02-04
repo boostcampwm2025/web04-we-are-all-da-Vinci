@@ -7,24 +7,27 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
 } from '@nestjs/websockets';
 import { PinoLogger } from 'nestjs-pino';
 import { Server, Socket } from 'socket.io';
-import { ChatGateway } from 'src/chat/chat.gateway';
-import { ChatService } from 'src/chat/chat.service';
+import { ClientEvents, GamePhase, ServerEvents } from '../common/constants';
 import { getSocketCorsOrigin } from 'src/common/config/cors.util';
-import { ClientEvents, GamePhase, ServerEvents } from 'src/common/constants';
 import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
 import { MetricInterceptor } from 'src/common/interceptors/metric.interceptor';
 import { GameRoom, Player } from 'src/common/types';
 import { escapeHtml } from 'src/common/utils/sanitize';
+import { ChatGateway } from 'src/chat/chat.gateway';
+import { ChatService } from 'src/chat/chat.service';
 import { MetricService } from 'src/metric/metric.service';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
-import { RoomSettingsDto } from './dto/room-settings.dto';
-import { RoomStartDto } from './dto/room-start.dto';
-import { UserJoinDto } from './dto/user-join.dto';
-import { UserKickDto } from './dto/user-kick.dto';
+import {
+  UserJoinSchema,
+  RoomSettingsSchema,
+  RoomStartSchema,
+  UserKickSchema,
+} from '@shared/types';
 import { GameService } from './game.service';
 
 @WebSocketGateway({
@@ -132,10 +135,14 @@ export class GameGateway
   @SubscribeMessage(ServerEvents.USER_JOIN)
   async joinRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: UserJoinDto,
+    @MessageBody() payload: unknown,
   ): Promise<string> {
-    const { roomId, profileId } = payload;
-    const nickname = escapeHtml(payload.nickname.trim());
+    const parsed = UserJoinSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new WsException(parsed.error.message);
+    }
+    const { roomId, profileId, nickname: rawNickname } = parsed.data;
+    const nickname = escapeHtml(rawNickname.trim());
     const room = await this.gameService.joinRoom(
       roomId,
       nickname,
@@ -148,7 +155,7 @@ export class GameGateway
 
     if (!room) {
       this.logger.info(
-        { clientId: client.id, ...payload },
+        { clientId: client.id, roomId, nickname, profileId },
         'Client Pushed Waiting queue',
       );
 
@@ -165,7 +172,7 @@ export class GameGateway
       });
     } else {
       this.logger.info(
-        { clientId: client.id, ...payload },
+        { clientId: client.id, roomId, nickname, profileId },
         'Client Joined Game.',
       );
     }
@@ -176,9 +183,13 @@ export class GameGateway
   @SubscribeMessage(ServerEvents.ROOM_SETTINGS)
   async updateSettings(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: RoomSettingsDto,
+    @MessageBody() payload: unknown,
   ): Promise<string> {
-    const { roomId, maxPlayer, totalRounds, drawingTime } = payload;
+    const parsed = RoomSettingsSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new WsException(parsed.error.message);
+    }
+    const { roomId, maxPlayer, totalRounds, drawingTime } = parsed.data;
     const room = await this.gameService.updateGameSettings(
       roomId,
       client.id,
@@ -194,7 +205,7 @@ export class GameGateway
     this.broadcastMetadata(room);
 
     this.logger.info(
-      { clientId: client.id, ...payload },
+      { clientId: client.id, roomId, maxPlayer, totalRounds, drawingTime },
       'User Updated Room Settings',
     );
     return 'ok';
@@ -203,33 +214,45 @@ export class GameGateway
   @SubscribeMessage(ServerEvents.ROOM_START)
   async startGame(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: RoomStartDto,
+    @MessageBody() payload: unknown,
   ): Promise<string> {
-    const { roomId } = payload;
+    const parsed = RoomStartSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new WsException(parsed.error.message);
+    }
+    const { roomId } = parsed.data;
     await this.gameService.startGame(roomId, client.id);
 
-    this.logger.info({ clientId: client.id, ...payload }, 'Game Started');
+    this.logger.info({ clientId: client.id, roomId }, 'Game Started');
     return 'ok';
   }
 
   @SubscribeMessage(ServerEvents.ROOM_RESTART)
   async restartGame(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: RoomStartDto,
+    @MessageBody() payload: unknown,
   ): Promise<string> {
-    const { roomId } = payload;
+    const parsed = RoomStartSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new WsException(parsed.error.message);
+    }
+    const { roomId } = parsed.data;
     await this.gameService.restartGame(roomId, client.id);
 
-    this.logger.info({ clientId: client.id, ...payload }, 'Game Restarted');
+    this.logger.info({ clientId: client.id, roomId }, 'Game Restarted');
     return 'ok';
   }
 
   @SubscribeMessage(ServerEvents.USER_KICK)
   async kickUser(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: UserKickDto,
+    @MessageBody() payload: unknown,
   ): Promise<string> {
-    const { roomId, targetPlayerId } = payload;
+    const parsed = UserKickSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new WsException(parsed.error.message);
+    }
+    const { roomId, targetPlayerId } = parsed.data;
     const { updatedRoom, kickedPlayer } = await this.gameService.kickUser(
       roomId,
       client.id,
@@ -258,7 +281,10 @@ export class GameGateway
       .emit(ClientEvents.ROOM_KICKED, { roomId, kickedPlayer });
     this.broadcastMetadata(updatedRoom);
 
-    this.logger.info({ clientId: client.id, ...payload }, 'User Kicked');
+    this.logger.info(
+      { clientId: client.id, roomId, targetPlayerId },
+      'User Kicked',
+    );
     return 'ok';
   }
 

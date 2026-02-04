@@ -20,6 +20,7 @@
   "dependencies": {
     "@sentry/react": "^10.32.1",
     "@sentry/vite-plugin": "^4.6.1",
+    "@shared/types": "workspace:*",
     "boring-avatars": "^1.11.2",
     "clsx": "^2.1.1",
     "mixpanel-browser": "^2.73.0",
@@ -28,6 +29,7 @@
     "react-router-dom": "^7.11.0",
     "socket.io-client": "^4.8.3",
     "tailwind-merge": "^3.4.0",
+    "zod": "^4.3.6",
     "zustand": "^5.0.9"
   },
   "devDependencies": {

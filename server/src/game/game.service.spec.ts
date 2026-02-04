@@ -7,9 +7,9 @@ import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.servi
 import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
 import { RoundService } from 'src/round/round.service';
-import { GameRoom, Player } from '../common/types/game-room.types';
+import { GameRoom, Player } from '../common/types';
 import { GameRoomCacheService } from '../redis/cache/game-room-cache.service';
-import { CreateRoomDto } from './dto/create-room.dto';
+import type { CreateRoomDto } from '@shared/types';
 import { GameService } from './game.service';
 import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
 
@@ -418,7 +418,7 @@ describe('GameService', () => {
       cacheService.getRoom.mockResolvedValue(room);
       playerCacheService.getRoomId.mockResolvedValue('test-room');
       cacheService.getAllPlayers.mockResolvedValue([hostPlayer, guestPlayer]);
-      cacheService.deletePlayer.mockResolvedValue(undefined);
+      cacheService.deletePlayer.mockResolvedValue(true);
       playerCacheService.delete.mockResolvedValue('test-room');
       leaderboardCacheService.delete.mockResolvedValue(undefined);
 

@@ -2,20 +2,18 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 
 import { GameRoom, Player } from 'src/common/types';
-
-import { GamePhase } from 'src/common/constants';
+import { GamePhase } from '../common/constants';
 import { ErrorCode } from 'src/common/constants/error-code';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
-
 import { findPlayerOrThrow, requireHost } from 'src/common/utils/player.utils';
 import { PromptService } from 'src/prompt/prompt.service';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
+import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
 import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
 import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
 import { RoundService } from 'src/round/round.service';
-import { CreateRoomDto } from './dto/create-room.dto';
-import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
+import type { CreateRoomDto } from '@shared/types';
 
 interface PhaseChangeHandler {
   (roomId: string, joinedPlayers: Player[]): Promise<void>;

@@ -1,3 +1,17 @@
-export * from './game-room.types';
-export * from './game-play.types';
-export * from './chat.types';
+// Re-export from shared package
+export type {
+  Phase,
+  Player,
+  Settings,
+  GameRoom,
+  Color,
+  Stroke,
+  Similarity,
+  PlayerResult,
+  RoundResultEntry,
+  GameResultEntry,
+  SystemMessageType,
+  ChatMessage,
+  ChatMessagePayload,
+  ChatHistoryPayload,
+} from '@shared/types';
