@@ -9,15 +9,15 @@ import {
   PROMPT_TIME,
   ROUND_REPLAY_TIME,
   ROUND_STANDING_TIME,
-} from 'src/common/constants';
+} from '../common/constants';
 import { GameRoom } from 'src/common/types';
 import { createPlayerMapper } from 'src/common/utils/player.utils';
-import { PromptService } from 'src/prompt/prompt.service';
-import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
+import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
 import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
 import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
 import { TimerService } from 'src/timer/timer.service';
+import { PromptService } from 'src/prompt/prompt.service';
 
 @Injectable()
 export class RoundService implements OnModuleInit {
@@ -45,7 +45,7 @@ export class RoundService implements OnModuleInit {
 
       if (room.phase === GamePhase.DRAWING) {
         setTimeout(() => {
-          this.nextPhase(room);
+          void this.nextPhase(room);
         }, DRAWING_END_DELAY);
         return;
       }
@@ -88,6 +88,10 @@ export class RoundService implements OnModuleInit {
       default:
         this.logger.error({ room }, '알 수 없는 phase입니다');
     }
+  }
+
+  async endGame(room: GameRoom) {
+    await this.moveGameEnd(room);
   }
 
   private async movePrompt(room: GameRoom) {
@@ -207,6 +211,10 @@ export class RoundService implements OnModuleInit {
     }
 
     // 게임 종료
+    await this.moveGameEnd(room);
+  }
+
+  private async moveGameEnd(room: GameRoom) {
     room.phase = GamePhase.GAME_END;
     await this.cacheService.saveRoom(room.roomId, room);
 

@@ -88,13 +88,16 @@
      LAYOUT - 페이지 레이아웃 패턴
      ───────────────────────────────────────────────────────────── */
   .page-center {
-    @apply flex h-[100dvh] w-full items-center justify-center px-14 py-10;
+    @apply flex h-[100dvh] w-full justify-center overflow-y-auto px-4 py-8;
+    @apply md:h-[100dvh] md:items-center md:px-14 md:py-10;
   }
 
   .game-container {
-    @apply relative mx-auto flex w-full flex-col;
-    aspect-ratio: 16 / 9;
-    max-width: 1420px;
+    @apply relative flex w-full flex-col;
+    @apply h-full md:h-auto;
+    @apply md:aspect-[3/4];
+    @apply xl:aspect-[16/9] xl:max-h-full;
+    max-width: 1920px;
     max-height: 100%;
   }
 
@@ -110,7 +113,7 @@
   }
 
   .card-settings {
-    @apply border-stroke-strong bg-surface-warm rounded-2xl border-2 p-5 shadow-lg;
+    @apply border-stroke-strong bg-surface-warm rounded-2xl border-2 p-3 shadow-lg lg:p-5;
   }
 
   /* ─────────────────────────────────────────────────────────────
@@ -118,9 +121,10 @@
      ───────────────────────────────────────────────────────────── */
   .canvas-wrapper {
     @apply flex aspect-square items-center justify-center;
-    height: 100%;
-    width: auto;
+    width: 100%;
+    height: auto;
     max-width: 100%;
+    @apply md:h-full md:w-auto;
   }
 
   .canvas-frame {

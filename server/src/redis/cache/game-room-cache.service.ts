@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { REDIS_TTL } from 'src/common/constants';
-import { GameRoom, Player, Settings } from 'src/common/types';
-import { RedisKeys } from '../redis-keys';
 import { RedisService } from '../redis.service';
+import { RedisKeys } from '../redis-keys';
+import { GameRoom, Player } from 'src/common/types';
+import { REDIS_TTL } from '../../common/constants';
+import { PlayerSchema, SettingsSchema, PhaseSchema } from '@shared/types';
 
 @Injectable()
 export class GameRoomCacheService {
@@ -23,7 +24,7 @@ export class GameRoomCacheService {
     await client.sAdd(RedisKeys.activeRooms(), roomId);
   }
 
-  async getRoom(roomId: string) {
+  async getRoom(roomId: string): Promise<GameRoom | null> {
     const client = this.redisService.getClient();
     const key = RedisKeys.room(roomId);
     const data = await client.hGetAll(key);
@@ -37,28 +38,37 @@ export class GameRoomCacheService {
     return {
       roomId: data.roomId,
       players: players,
-      phase: data.phase,
+      phase: PhaseSchema.parse(data.phase),
       currentRound: parseInt(data.currentRound),
-      settings: JSON.parse(data.settings) as Settings,
+      settings: SettingsSchema.parse(JSON.parse(data.settings)),
     };
   }
 
   async deleteRoom(roomId: string) {
     const client = this.redisService.getClient();
-    await client.del(RedisKeys.room(roomId));
-    await client.del(RedisKeys.players(roomId));
-    await client.del(RedisKeys.prompts(roomId));
-    await client.del(RedisKeys.timer(roomId));
-    await client.del(RedisKeys.waitlist(roomId));
-    await client.del(RedisKeys.leaderboard(roomId));
-    await client.del(RedisKeys.standings(roomId));
+    await client.unlink(RedisKeys.room(roomId));
+    await client.unlink(RedisKeys.players(roomId));
+    await client.unlink(RedisKeys.prompts(roomId));
+    await client.unlink(RedisKeys.timer(roomId));
+    await client.unlink(RedisKeys.waitlist(roomId));
+    await client.unlink(RedisKeys.leaderboard(roomId));
+    await client.unlink(RedisKeys.standings(roomId));
     await client.sRem(RedisKeys.activeRooms(), roomId);
 
-    // drawing:roomId:* 패턴 키 삭제
-    const drawingKeys = await client.keys(RedisKeys.drawingGameScan(roomId));
-    if (drawingKeys.length > 0) {
-      await client.del(drawingKeys);
-    }
+    let cursor = '0';
+    const scanKey = RedisKeys.drawingGameScan(roomId);
+    do {
+      const data = await client.scan(cursor, {
+        TYPE: 'string',
+        COUNT: 20,
+        MATCH: scanKey,
+      });
+
+      cursor = data.cursor;
+      if (data.keys.length > 0) {
+        await client.unlink(data.keys);
+      }
+    } while (cursor !== '0');
   }
 
   async addPlayer(roomId: string, player: Player) {
@@ -136,8 +146,8 @@ export class GameRoomCacheService {
     const client = this.redisService.getClient();
     const key = RedisKeys.players(roomId);
 
-    return (await client.lRange(key, 0, -1)).map(
-      (value) => JSON.parse(value) as Player,
+    return (await client.lRange(key, 0, -1)).map((value) =>
+      PlayerSchema.parse(JSON.parse(value)),
     );
   }
 
@@ -213,6 +223,6 @@ export class GameRoomCacheService {
       arguments: [String(REDIS_TTL)],
     });
 
-    return result ? (JSON.parse(result as string) as Player) : null;
+    return result ? PlayerSchema.parse(JSON.parse(result as string)) : null;
   }
 }

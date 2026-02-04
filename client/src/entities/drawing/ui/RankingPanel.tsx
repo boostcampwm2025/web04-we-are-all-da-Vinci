@@ -6,7 +6,7 @@ interface RankingPanelProps {
 
 export const RankingPanel = ({ children }: RankingPanelProps) => {
   return (
-    <div className="flex w-72 flex-col">
+    <div className="flex w-full flex-col md:w-72">
       <div className="flex h-full flex-col rounded-2xl border-2 border-gray-800 bg-white p-4 shadow-lg">
         <div className="mb-3 flex shrink-0 items-center justify-between">
           <h3 className="font-handwriting text-lg font-bold">실시간 랭킹</h3>

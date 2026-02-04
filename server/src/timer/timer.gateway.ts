@@ -2,7 +2,7 @@ import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import { TimerService } from './timer.service';
 import { PinoLogger } from 'nestjs-pino';
-import { ClientEvents } from 'src/common/constants';
+import { ClientEvents } from '../common/constants';
 import { OnModuleInit } from '@nestjs/common';
 import { getSocketCorsOrigin } from 'src/common/config/cors.util';
 
