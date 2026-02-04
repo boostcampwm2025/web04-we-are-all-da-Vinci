@@ -96,20 +96,20 @@ export const SlotCard = ({
     >
       <div
         className={cn(
-          'relative z-10 mx-auto mb-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-14 sm:w-14 lg:h-20 lg:w-20',
+          'relative z-10 mx-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full md:h-10 md:w-10 xl:h-14 xl:w-14',
           config.iconBg,
         )}
       >
         <span
           className={cn(
-            'material-symbols-outlined text-2xl transition-all sm:text-3xl lg:text-4xl',
+            'material-symbols-outlined text-base transition-all md:text-2xl xl:text-4xl',
             config.iconColor,
           )}
         >
           {config.icon}
         </span>
       </div>
-      <div className="font-handwriting relative z-10 text-base sm:text-lg lg:text-xl">
+      <div className="font-handwriting relative z-10 mt-1 text-base sm:text-lg lg:text-xl xl:mt-2">
         <span className={cn(showHighlighted && 'font-bold', config.labelColor)}>
           {config.label}
         </span>

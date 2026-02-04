@@ -33,10 +33,10 @@ export const PlayerCard = ({
     >
       <UserAvatar
         name={profileId}
-        className="h-8 w-8 md:h-12 md:w-12 xl:h-16 xl:w-16"
+        className="h-6 w-6 md:h-10 md:w-10 xl:h-14 xl:w-14"
       />
 
-      <div className="font-handwriting mt-1 mb-0 w-full truncate px-1 text-[10px] leading-tight font-bold sm:text-base lg:text-lg xl:mt-2 xl:mb-1">
+      <div className="font-handwriting mt-1 mb-0 w-full shrink-0 truncate px-1 text-[10px] leading-tight font-bold sm:text-base lg:text-lg xl:mt-2 xl:mb-1">
         {nickname}
       </div>
       {isHost && (
