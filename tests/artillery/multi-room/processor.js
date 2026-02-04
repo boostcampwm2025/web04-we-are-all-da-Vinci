@@ -1,5 +1,5 @@
 require("dotenv").config();
-
+const { createClient } = require("redis");
 /**
  * 상수 정의
  * .env 파일과 맞출 것!
@@ -107,55 +107,80 @@ const DRAWING_DATA = [
  * 테스트 함수
  */
 
-const fs = require("fs");
-const path = require("path");
-
-const ROOMS_FILE = path.join(__dirname, "rooms.json");
-const COUNTER_FILE = path.join(__dirname, "counter.json");
-
 const ROOM_COUNT = parseInt(process.env.ROOM_COUNT ?? "1", 10);
 const PLAYER_PER_ROOM = parseInt(process.env.PLAYER_PER_ROOM ?? "1", 10);
 
-const beforeAll = (context, events, done) => {
-  if (fs.existsSync(ROOMS_FILE)) {
-    fs.unlinkSync(ROOMS_FILE);
+const RUN_ID = process.env.RUN_ID ?? `run_${Date.now()}`;
+const REDIS_URL = process.env.REDIS_URL ?? "redis://127.0.0.1:6379";
+
+const KEY_COUNTER = `test:${RUN_ID}:counter`;
+const KEY_ROOMS = `test:${RUN_ID}:rooms`;
+
+let redis; // 프로세스당 1개 클라이언트
+
+async function getRedis() {
+  if (redis) return redis;
+  try {
+    redis = createClient({ url: REDIS_URL });
+    await redis.connect();
+  } catch (err) {
+    console.error("레디스 에러", err);
+    process.exit(1);
   }
-  if (fs.existsSync(COUNTER_FILE)) {
-    fs.unlinkSync(COUNTER_FILE);
-  }
 
-  fs.writeFileSync(COUNTER_FILE, JSON.stringify({ count: 0 }));
-  return done();
-};
-
-const afterPostRoom = (requestParams, response, context, events, next) => {
-  const { roomId } = JSON.parse(response.body);
-
-  let rooms = [];
-  if (fs.existsSync(ROOMS_FILE)) {
-    rooms = JSON.parse(fs.readFileSync(ROOMS_FILE));
-  }
-  rooms.push(roomId);
-  fs.writeFileSync(ROOMS_FILE, JSON.stringify(rooms));
-
-  return next();
-};
-
-function getNextPlayerNumber() {
-  const data = JSON.parse(fs.readFileSync(COUNTER_FILE, "utf-8"));
-  const playerNumber = data.count;
-  data.count += 1;
-  fs.writeFileSync(COUNTER_FILE, JSON.stringify(data));
-  return playerNumber;
+  return redis;
 }
 
-function initUser(userContext, events, done) {
-  const playerNumber = getNextPlayerNumber();
+async function beforeAll(context, events) {
+  try {
+    const r = await getRedis();
+    await r.del(KEY_ROOMS);
+    await r.set(KEY_COUNTER, "0");
+  } catch (err) {
+    console.error("beforeAll 에러", err);
+    process.exit(1);
+  }
+}
+
+async function afterPostRoom(requestParams, response, context, events) {
+  try {
+    const r = await getRedis();
+    const { roomId } = JSON.parse(response.body);
+    await r.rPush(KEY_ROOMS, roomId);
+  } catch (err) {
+    console.error("afterPostRoom 에러", err);
+    process.exit(1);
+  }
+}
+
+async function getNextPlayerNumber() {
+  const r = await getRedis();
+  const n = await r.incr(KEY_COUNTER);
+  return n - 1;
+}
+
+async function initUser(userContext, events, done) {
+  const r = await getRedis();
+  const playerNumber = await getNextPlayerNumber();
   const roomIndex = Math.floor(playerNumber / PLAYER_PER_ROOM) % ROOM_COUNT;
 
-  const rooms = JSON.parse(fs.readFileSync(ROOMS_FILE));
+  // rooms list가 준비될 때까지(예: room 생성이 아직 진행 중)
+  // -> LRANGE 또는 LINDEX 재시도
+  let roomId = await r.lIndex(KEY_ROOMS, roomIndex);
+  if (!roomId) {
+    // 재시도
+    for (let i = 0; i < 20 && !roomId; i++) {
+      await new Promise((res) => setTimeout(res, 100));
+      roomId = await r.lIndex(KEY_ROOMS, roomIndex);
+    }
+  }
+  if (!roomId) {
+    throw new Error(
+      `roomId not ready. roomIndex=${roomIndex}, RUN_ID=${RUN_ID}`,
+    );
+  }
 
-  userContext.vars.roomId = rooms[roomIndex];
+  userContext.vars.roomId = roomId;
   userContext.vars.playerNumber = playerNumber;
   userContext.vars.isFirstInRoom = playerNumber % PLAYER_PER_ROOM === 0;
   userContext.vars.nickname = `bot_${roomIndex}_${playerNumber}_${Date.now()}`;
@@ -200,8 +225,6 @@ function initUser(userContext, events, done) {
     userContext.vars.timeLeft = timeLeft;
   });
   console.log(userContext.vars.roomId);
-
-  return done();
 }
 
 function updateScore(userContext, events, done) {
