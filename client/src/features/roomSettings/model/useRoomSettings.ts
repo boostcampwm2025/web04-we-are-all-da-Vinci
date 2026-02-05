@@ -47,7 +47,7 @@ export const useRoomSettings = ({
   const handleTimeChange = (time: number) => {
     setSelectedTime(time);
     trackEvent(MIXPANEL_EVENTS.CLICK_SETTINGROOM_PROPERTIES, {
-      설정: '제한 시간',
+      설정: '그리는 시간',
       값: time,
     });
   };

@@ -2,7 +2,7 @@
 
 @font-face {
   font-family: 'GangwonEdu';
-  src: url('@/shared/assets/fonts/강원교육현옥샘.woff2') format('woff2');
+  src: url('/fonts/강원교육현옥샘.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -11,8 +11,10 @@
   /* ─────────────────────────────────────────────────────────────
      FONTS
      ───────────────────────────────────────────────────────────── */
-  --font-display: 'GangwonEdu', sans-serif;
-  --font-handwriting: 'GangwonEdu', cursive;
+  --font-display:
+    'GangwonEdu', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-handwriting:
+    'GangwonEdu', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
 
   /* ─────────────────────────────────────────────────────────────
      CONTENT COLORS (텍스트용) - text-content-*
