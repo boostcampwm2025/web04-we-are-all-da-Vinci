@@ -45,7 +45,7 @@ export const ProfileSettingsModal = ({
       showCancel={!isFirstVisit}
     >
       <div className="flex justify-center">
-        <ProfileEditor onNicknameChange={setNickname} />
+        <ProfileEditor onNicknameChange={setNickname} onEnter={handleSave} />
       </div>
     </BaseModal>
   );
