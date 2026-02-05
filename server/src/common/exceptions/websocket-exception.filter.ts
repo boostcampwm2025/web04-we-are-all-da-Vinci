@@ -7,7 +7,7 @@ import { WebsocketException } from './websocket-exception';
 import { ErrorCode } from '../constants/error-code';
 import { PinoLogger } from 'nestjs-pino';
 
-@Catch(WsException)
+@Catch(WsException, InternalError)
 export class WebsocketExceptionFilter extends BaseWsExceptionFilter {
   constructor(private readonly logger: PinoLogger) {
     super();
