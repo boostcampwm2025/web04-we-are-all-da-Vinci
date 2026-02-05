@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
 
-import type { CreateRoomDto } from '@shared/types';
 import { GameRoom, Player } from 'src/common/types';
 import { GamePhase } from '../common/constants';
 import { ErrorCode } from 'src/common/constants/error-code';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
+import { InternalError } from 'src/common/exceptions/internal-error';
+import type { CreateRoomDto } from '@shared/types';
 
 import { PromptService } from 'src/prompt/prompt.service';
 import { RoundService } from 'src/round/round.service';
 import { PlayerService } from './player.service';
 import { RoomService } from './room.service';
-import { InternalError } from 'src/common/exceptions/internal-error';
 
 @Injectable()
 export class GameService {

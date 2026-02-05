@@ -19,7 +19,7 @@ export const GameSettingsCard = ({
         {isHost && onEdit && (
           <button
             onClick={onEdit}
-            className="text-content-tertiary hover:text-content-primary absolute right-0 transition-colors"
+            className="text-content-tertiary hover:text-content-primary absolute right-0 cursor-pointer transition-colors"
           >
             <span className="material-symbols-outlined">settings</span>
           </button>

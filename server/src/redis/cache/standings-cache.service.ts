@@ -27,6 +27,13 @@ export class StandingsCacheService {
     }));
   }
 
+  async delete(roomId: string, socketId: string) {
+    const client = this.redisService.getClient();
+    const key = RedisKeys.standings(roomId);
+
+    await client.zRem(key, socketId);
+  }
+
   async deleteAll(roomId: string) {
     const client = this.redisService.getClient();
     const key = RedisKeys.standings(roomId);

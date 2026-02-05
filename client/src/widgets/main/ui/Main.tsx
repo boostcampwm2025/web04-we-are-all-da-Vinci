@@ -7,16 +7,13 @@ import {
   BaseModal,
 } from '@/shared/ui';
 import { ProfileSettingsModal } from '@/features/profileSettings';
-import {
-  RoomSettingsModal,
-  type RoomSettings,
-  createRoom,
-} from '@/features/roomSettings';
+import { RoomSettingsModal, createRoom } from '@/features/roomSettings';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { captureMessage } from '@/shared/lib/sentry';
 import { trackEvent } from '@/shared/lib/mixpanel';
 import { TEXT } from '@/widgets/main/config';
+import type { Settings } from '@/entities/gameRoom';
 
 export const Main = () => {
   const navigate = useNavigate();
@@ -31,10 +28,10 @@ export const Main = () => {
     setShowSettingsModal(true);
   };
 
-  const handleSettingsComplete = async (settings: RoomSettings) => {
+  const handleSettingsComplete = async (settings: Settings) => {
     try {
       const { roomId } = await createRoom({
-        maxPlayer: settings.maxPlayers,
+        maxPlayer: settings.maxPlayer,
         totalRounds: settings.totalRounds,
         drawingTime: settings.drawingTime,
       });

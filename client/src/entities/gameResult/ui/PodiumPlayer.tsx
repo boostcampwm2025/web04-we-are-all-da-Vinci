@@ -104,9 +104,9 @@ const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
       </h3>
 
       <p
-        className={`${config.textColor} ${config.scoreSize} text-sm font-bold xl:text-2xl`}
+        className={`${config.textColor} ${config.scoreSize} text-center text-sm font-bold ${position === 'first' ? 'xl:text-2xl' : 'xl:text-xl'}`}
       >
-        {player.score.toLocaleString()} 점
+        {player.score.toLocaleString()}점
       </p>
 
       <div

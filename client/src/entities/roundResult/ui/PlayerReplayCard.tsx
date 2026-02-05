@@ -3,7 +3,7 @@ import type { Stroke } from '@/entities/similarity/model';
 import { DrawingReplayCanvas } from '@/features/replayingCanvas';
 import type { Similarity } from '@/features/similarity';
 import { UserAvatar } from '@/shared/ui';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { getRankStyles } from '../lib/rankStyles';
 
 interface PlayerReplayCardProps {
@@ -15,6 +15,8 @@ interface PlayerReplayCardProps {
   isCurrentUser?: boolean;
 }
 
+type TooltipDirection = 'left' | 'right';
+
 const PlayerReplayCard = ({
   rank,
   nickname,
@@ -24,9 +26,34 @@ const PlayerReplayCard = ({
   isCurrentUser = false,
 }: PlayerReplayCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [tooltipDirection, setTooltipDirection] =
+    useState<TooltipDirection>('left');
+  const playerCardRef = useRef<HTMLDivElement>(null);
+
+  const TOOLTIP_WIDTH = 192;
+  const TOOLTIP_MARGIN = 8;
 
   const handleMouseEnter = () => {
     setIsHovered(true);
+    if (playerCardRef.current) {
+      const cardRect = playerCardRef.current.getBoundingClientRect();
+      const container = playerCardRef.current.closest('.card');
+
+      if (container) {
+        const containerRect = container.getBoundingClientRect();
+        const isRightSide =
+          cardRect.right + TOOLTIP_WIDTH + TOOLTIP_MARGIN <=
+          containerRect.right;
+        const isLeftSide =
+          cardRect.left - TOOLTIP_WIDTH - TOOLTIP_MARGIN >= containerRect.left;
+
+        if (!isRightSide && isLeftSide) {
+          setTooltipDirection('left');
+        } else {
+          setTooltipDirection('right');
+        }
+      }
+    }
   };
 
   const handleMouseLeave = () => {
@@ -37,13 +64,16 @@ const PlayerReplayCard = ({
 
   return (
     <div
+      ref={playerCardRef}
       className="relative flex h-full w-full flex-col"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       {/* Similarity Detail Tooltip */}
       {isHovered && (
-        <div className="absolute top-0 left-full z-20 ml-2 w-48">
+        <div
+          className={`absolute top-0 ${tooltipDirection === 'left' ? 'right-full mr-2' : 'left-full ml-2'} z-20 w-${TOOLTIP_WIDTH / 4}`}
+        >
           <PlayerSimilarityDetailTooltip similarity={similarity} />
         </div>
       )}

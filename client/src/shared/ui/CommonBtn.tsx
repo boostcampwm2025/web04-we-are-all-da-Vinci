@@ -99,7 +99,7 @@ const CommonBtn = ({
       className={cn(
         baseClasses,
         variantClasses[variant],
-        disabled && 'cursor-not-allowed opacity-50',
+        disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
         className,
       )}
     >

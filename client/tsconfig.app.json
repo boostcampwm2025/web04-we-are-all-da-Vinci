@@ -10,8 +10,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@shared/types": ["../packages/shared/src/index.ts"],
-      "@shared/types/*": ["../packages/shared/src/*"]
+      "@shared/types": ["../packages/shared/dist/index.d.ts"],
+      "@shared/types/*": ["../packages/shared/dist/*"]
     },
 
     /* Bundler mode */
@@ -30,5 +30,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/**/*.stories.tsx", "src/**/*.test.tsx", "src/**/*.test.ts"]
 }

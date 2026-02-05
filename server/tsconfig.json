@@ -11,16 +11,17 @@
     "allowSyntheticDefaultImports": true,
     "target": "ES2023",
     "sourceMap": true,
-    "outDir": "dist",
-    "baseUrl": "./",
+    "rootDir": "src",
+    "outDir": "dist/src",
+    "baseUrl": ".",
     "incremental": true,
     "skipLibCheck": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "src/*": ["./src/*"],
-      "@shared/types": ["../packages/shared/src/index.ts"],
-      "@shared/types/*": ["../packages/shared/src/*"]
+      "src/*": ["src/*"],
+      "@shared/types": ["../packages/shared/dist/index.d.ts"],
+      "@shared/types/*": ["../packages/shared/dist/*"]
     }
   },
   "include": ["src/**/*"],
