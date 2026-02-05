@@ -7,7 +7,7 @@ import {
   strokesToPoints,
 } from './convexHullGeometry';
 import { getRadialSignature } from './radialSignature';
-import type { PreprocessedStrokeData } from '@/features/similarity/model';
+import type { PreprocessedStrokeData } from '../model/preprocessedStrokeData';
 
 // 스트로크 데이터로 형태 유사도 계산
 export const calculateShapeSimilarity = (

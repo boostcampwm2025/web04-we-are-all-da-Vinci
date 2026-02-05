@@ -1,24 +1,7 @@
 import type { Similarity } from '@/features/similarity';
+import { SIMILARITY_ITEMS } from '../config/similarityItems';
 
-const SIMILARITY_ITEMS: {
-  key: keyof Similarity;
-  label: string;
-  color: string;
-}[] = [
-  {
-    key: 'strokeCountSimilarity',
-    label: '선 개수 유사도',
-    color: 'bg-yellow-400',
-  },
-  {
-    key: 'strokeMatchSimilarity',
-    label: '선 매칭 유사도',
-    color: 'bg-indigo-400',
-  },
-  { key: 'shapeSimilarity', label: '형태 유사도', color: 'bg-red-400' },
-];
-
-export const PlayerSimilarityDetailTooltip = ({
+const PlayerSimilarityDetailTooltip = ({
   similarity,
 }: {
   similarity: Similarity;
@@ -48,3 +31,5 @@ export const PlayerSimilarityDetailTooltip = ({
     </div>
   );
 };
+
+export default PlayerSimilarityDetailTooltip;

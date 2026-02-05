@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useGameStore } from '@/entities/gameRoom';
-import type { Player } from '@/entities/player/model';
+import type { Player } from '@shared/types';
 import { getSocket } from '@/shared/api/socket';
 import { SERVER_EVENTS, MIXPANEL_EVENTS } from '@/shared/config';
 import { trackEvent } from '@/shared/lib/mixpanel';

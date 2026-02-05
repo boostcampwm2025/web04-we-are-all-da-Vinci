@@ -1,5 +1,5 @@
 import { useCurrentPlayer } from '@/entities/gameRoom';
-import type { Stroke } from '@/entities/similarity/model';
+import type { Stroke } from '@/entities/similarity';
 import type { Similarity } from '@/features/similarity';
 import {
   MOBILE_BREAKPOINT,
