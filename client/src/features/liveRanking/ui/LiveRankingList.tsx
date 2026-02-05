@@ -25,7 +25,7 @@ export const LiveRankingList = () => {
     <>
       {rankings.map((entry) => (
         <RankingCard
-          key={entry.socketId}
+          key={entry.profileId}
           rank={entry.rank}
           nickname={entry.nickname}
           profileId={entry.profileId}

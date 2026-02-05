@@ -21,7 +21,7 @@ export const buildRankings = (
   serverData: ServerRankingEntry[],
   currentRankings: RankingEntry[],
 ): RankingEntry[] => {
-  const prevMap = new Map(currentRankings.map((r) => [r.socketId, r.rank]));
+  const prevMap = new Map(currentRankings.map((r) => [r.profileId, r.rank]));
 
   return serverData.map((entry, index) => ({
     socketId: entry.socketId,
@@ -29,7 +29,7 @@ export const buildRankings = (
     profileId: entry.profileId,
     similarity: entry.similarity,
     rank: index + 1,
-    previousRank: prevMap.get(entry.socketId) ?? null,
+    previousRank: prevMap.get(entry.profileId) ?? null,
   }));
 };
 
@@ -47,18 +47,18 @@ export interface RoomMetadataResult {
  *
  * @param data - 서버에서 받은 방 메타데이터
  * @param currentPhase - 클라이언트의 현재 페이즈
- * @param mySocketId - 현재 유저의 소켓 ID
+ * @param myProfileId - 현재 유저의 프로필 ID
  * @returns 스토어 업데이트에 필요한 판단 결과
  */
 export const processRoomMetadata = (
   data: GameRoom,
   currentPhase: Phase,
-  mySocketId: string,
+  myProfileId: string,
 ): RoomMetadataResult => {
   const shouldResetGameData =
     currentPhase === 'GAME_END' && data.phase === 'WAITING';
 
-  const isJoined = data.players.some((p) => p.socketId === mySocketId);
+  const isJoined = data.players.some((p) => p.profileId === myProfileId);
 
   const roomUpdate: Partial<GameRoom> = {
     roomId: data.roomId,

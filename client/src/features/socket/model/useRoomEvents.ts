@@ -29,8 +29,8 @@ export const useRoomEvents = (enabled: boolean) => {
     const socket = getSocket();
 
     const handleRoomMetadata = (data: GameRoom) => {
-      const { phase: currentPhase, mySocketId } = useGameStore.getState();
-      const result = processRoomMetadata(data, currentPhase, mySocketId!);
+      const { phase: currentPhase, myProfileId } = useGameStore.getState();
+      const result = processRoomMetadata(data, currentPhase, myProfileId!);
 
       if (result.shouldResetGameData) {
         useGameStore.setState({
@@ -57,8 +57,8 @@ export const useRoomEvents = (enabled: boolean) => {
     }: {
       kickedPlayer: Omit<Player, 'isHost'>;
     }) => {
-      const mySocketId = useGameStore.getState().mySocketId;
-      if (mySocketId === kickedPlayer.socketId) {
+      const myProfileId = useGameStore.getState().myProfileId;
+      if (myProfileId === kickedPlayer.profileId) {
         disconnectSocket();
         reset();
         navigate('/');
