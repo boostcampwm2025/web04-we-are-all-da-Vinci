@@ -1,8 +1,10 @@
 import { ProfileEditor } from '@/entities/profile';
 import {
   getNickname,
-  isFirstVisit as checkFirstVisit,
-  setNickname as saveNickname,
+  getProfileId,
+  isFirstVisit,
+  setNickname,
+  setProfileId,
 } from '@/shared/lib';
 import { registerUserProperties } from '@/shared/lib/mixpanel';
 import { useToastStore } from '@/shared/model';
@@ -19,9 +21,14 @@ export const ProfileSettingsModal = ({
   onClose,
 }: ProfileSettingsModalProps) => {
   const addToast = useToastStore((state) => state.addToast);
-  const [nickname, setNickname] = useState(() => getNickname());
+  const [nickname, updateNickname] = useState(() => getNickname());
+  const [userId, updateUserId] = useState(() => getProfileId());
 
-  const isFirstVisit = checkFirstVisit();
+  const handleClose = () => {
+    updateNickname(getNickname());
+    updateUserId(getProfileId());
+    onClose();
+  };
 
   const handleSave = () => {
     const trimmedNickname = nickname.trim();
@@ -30,7 +37,8 @@ export const ProfileSettingsModal = ({
       return;
     }
 
-    saveNickname(trimmedNickname);
+    setNickname(trimmedNickname);
+    setProfileId(userId);
     registerUserProperties({ nickname: trimmedNickname });
     onClose();
   };
@@ -38,14 +46,19 @@ export const ProfileSettingsModal = ({
   return (
     <BaseModal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title="프로필 설정"
       onConfirm={handleSave}
       confirmText="저장"
       showCancel={!isFirstVisit}
     >
       <div className="flex justify-center">
-        <ProfileEditor onNicknameChange={setNickname} onEnter={handleSave} />
+        <ProfileEditor
+          nickname={nickname}
+          userId={userId}
+          onNicknameChange={updateNickname}
+          onUserIdChange={updateUserId}
+        />
       </div>
     </BaseModal>
   );

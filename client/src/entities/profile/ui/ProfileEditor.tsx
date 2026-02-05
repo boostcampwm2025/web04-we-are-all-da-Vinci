@@ -1,28 +1,23 @@
 import { VALIDATION } from '@/shared/config';
-import { getNickname, getProfileId, regenerateProfileId } from '@/shared/lib';
+import { regenerateProfileId } from '@/shared/lib';
 import { Input, UserAvatar } from '@/shared/ui';
-import { useState } from 'react';
 
 interface UserProfileEditorProps {
+  nickname: string;
+  userId: string;
   onNicknameChange: (nickname: string) => void;
-  onEnter?: () => void;
+  onUserIdChange: (userId: string) => void;
 }
 
 const ProfileEditor = ({
+  nickname,
+  userId,
   onNicknameChange,
-  onEnter,
+  onUserIdChange,
 }: UserProfileEditorProps) => {
-  const [userId, setUserId] = useState(() => getProfileId());
-  const [nickname, setNickname] = useState(() => getNickname());
-
   const handleRandomizeAvatar = () => {
     const newUserId = regenerateProfileId();
-    setUserId(newUserId);
-  };
-
-  const handleNicknameChange = (value: string) => {
-    setNickname(value);
-    onNicknameChange(value);
+    onUserIdChange(newUserId);
   };
 
   return (
@@ -43,14 +38,13 @@ const ProfileEditor = ({
       <div className="flex h-12 w-full items-stretch">
         <Input
           value={nickname}
-          onChange={handleNicknameChange}
+          onChange={onNicknameChange}
           placeholder="닉네임을 입력하세요"
           maxLength={VALIDATION.NICKNAME_MAX_LENGTH}
           ariaLabel="닉네임 입력"
           autoFocus
           showCount
           variant="scribble"
-          onEnter={onEnter}
         />
       </div>
     </div>
