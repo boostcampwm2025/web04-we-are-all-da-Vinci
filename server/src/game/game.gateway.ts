@@ -31,6 +31,8 @@ import { MetricService } from 'src/metric/metric.service';
 
 import { OnEvent } from '@nestjs/event-emitter';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
+import { PromptService } from 'src/prompt/prompt.service';
+import { TimerCacheService } from 'src/redis/cache/timer-cache.service';
 import { PhaseEvent } from 'src/round/phase.service';
 import { GameService } from './game.service';
 import { RoomService } from './room.service';
@@ -61,6 +63,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly chatGateway: ChatGateway,
 
     private readonly metricService: MetricService,
+    private readonly promptService: PromptService,
+    private readonly timerCacheService: TimerCacheService,
   ) {
     this.logger.setContext(GameGateway.name);
   }
@@ -139,12 +143,23 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.metricService.decConnection();
 
     try {
-      const { room, player } = await this.gameService.leaveRoom(client.id);
+      const { room, leaveResult } = await this.gameService.leaveRoom(client.id);
+
+      // Grace Period 중이면 퇴장 메시지 브로드캐스트 하지 않음 (새로고침 가능성)
+      if (leaveResult.isGracePeriod) {
+        this.logger.info(
+          { clientId: client.id, roomId: room.roomId },
+          'Player in grace period, waiting for reconnect',
+        );
+        // 메타데이터만 브로드캐스트 (플레이어 목록 갱신)
+        this.broadcastMetadata(room);
+        return;
+      }
 
       // 퇴장 시스템 메시지
       const leaveMsg = await this.chatService.createLeaveMessage(
         room.roomId,
-        player.nickname,
+        leaveResult.player.nickname,
       );
       this.chatGateway.broadcastSystemMessage(room.roomId, leaveMsg);
 
@@ -174,15 +189,22 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const { roomId, profileId, nickname: rawNickname } = parsed.data;
     const nickname = escapeHtml(rawNickname.trim());
 
-    const { room, newlyJoinedPlayers } = await this.gameService.joinRoom(
-      roomId,
-      nickname,
-      profileId,
-      client.id,
-    );
+    const { room, newlyJoinedPlayers, isRecovery, recoveredPlayer } =
+      await this.gameService.joinRoom(roomId, nickname, profileId, client.id);
 
     // 소켓 룸에는 항상 입장
     await client.join(roomId);
+
+    // 세션 복구 성공 (새로고침 후 재연결)
+    if (isRecovery && recoveredPlayer) {
+      this.logger.info(
+        { clientId: client.id, roomId, nickname, profileId },
+        'Session recovered (refresh reconnect)',
+      );
+      await this.sendRecoveryData(client, room);
+      this.broadcastMetadata(room);
+      return 'ok';
+    }
 
     // 유저가 이번에 join 가능한지 확인
     const isJoined = newlyJoinedPlayers.some(
@@ -355,6 +377,63 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
     } catch (err) {
       this.logger.error(err);
+    }
+  }
+
+  /**
+   * 세션 복구 시 현재 Phase에 맞는 데이터 전송
+   * 새로고침 후 재연결 시 호출됨
+   */
+  private async sendRecoveryData(client: Socket, room: GameRoom) {
+    try {
+      const roomId = room.roomId;
+
+      // 1. 메타데이터 전송
+      client.emit(ClientEvents.ROOM_METADATA, room);
+
+      // 2. Phase별 데이터 전송
+      const syncData = await this.gameService.getSyncData(roomId);
+
+      switch (room.phase) {
+        case GamePhase.PROMPT:
+        case GamePhase.DRAWING: {
+          // 프롬프트 이미지 전송
+          const promptStrokes = await this.promptService.getPromptForRound(
+            roomId,
+            room.currentRound,
+          );
+          if (promptStrokes) {
+            client.emit(ClientEvents.ROOM_PROMPT, { strokes: promptStrokes });
+          }
+          break;
+        }
+        case GamePhase.ROUND_REPLAY:
+          if (syncData) {
+            client.emit(ClientEvents.ROOM_ROUND_REPLAY, syncData);
+          }
+          break;
+        case GamePhase.ROUND_STANDING:
+          if (syncData) {
+            client.emit(ClientEvents.ROOM_ROUND_STANDING, syncData);
+          }
+          break;
+        case GamePhase.GAME_END:
+          if (syncData) {
+            client.emit(ClientEvents.ROOM_GAME_END, syncData);
+          }
+          break;
+      }
+
+      // 3. 타이머 동기화
+      const timer = await this.timerCacheService.getTimer(roomId);
+      if (timer) {
+        client.emit(ClientEvents.ROOM_TIMER, { timeLeft: timer.timeLeft });
+      }
+
+      // 4. 채팅 히스토리 전송
+      await this.chatGateway.sendHistory(client, roomId);
+    } catch (err) {
+      this.logger.error(err, 'Failed to send recovery data');
     }
   }
 }

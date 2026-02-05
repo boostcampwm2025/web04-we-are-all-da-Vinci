@@ -51,11 +51,32 @@ class MockBroadcastChannel {
   }
 }
 
+// sessionStorage 모킹
+const createMockSessionStorage = () => {
+  const store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      Object.keys(store).forEach((key) => delete store[key]);
+    },
+  };
+};
+
 describe('tabLock', () => {
+  let mockSessionStorage: ReturnType<typeof createMockSessionStorage>;
+
   beforeEach(() => {
     vi.useFakeTimers();
     MockBroadcastChannel.reset();
+    mockSessionStorage = createMockSessionStorage();
     vi.stubGlobal('BroadcastChannel', MockBroadcastChannel);
+    vi.stubGlobal('sessionStorage', mockSessionStorage);
     vi.stubGlobal('crypto', {
       randomUUID: () => `uuid-${Math.random().toString(36).slice(2)}`,
     });
@@ -92,6 +113,10 @@ describe('tabLock', () => {
 
       // 모듈을 다시 로드하여 다른 "탭" 시뮬레이션
       vi.resetModules();
+      // 두 번째 탭은 새로운 sessionStorage를 가지므로 기존 tabId를 모름
+      mockSessionStorage = createMockSessionStorage();
+      vi.stubGlobal('sessionStorage', mockSessionStorage);
+
       const { acquireTabLockAsync: acquireFromTab2 } =
         await import('./tabLock');
 
@@ -148,6 +173,9 @@ describe('tabLock', () => {
 
       // 다른 탭 시뮬레이션
       vi.resetModules();
+      mockSessionStorage = createMockSessionStorage();
+      vi.stubGlobal('sessionStorage', mockSessionStorage);
+
       const { acquireTabLockAsync: acquireFromTab2 } =
         await import('./tabLock');
 

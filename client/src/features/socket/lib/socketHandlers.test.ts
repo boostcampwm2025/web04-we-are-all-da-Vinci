@@ -62,12 +62,12 @@ describe('buildRankings', () => {
 
   it('이전 순위를 올바르게 매핑한다', () => {
     const currentRankings = [
-      makeRankingEntry({ socketId: 'a', rank: 1 }),
-      makeRankingEntry({ socketId: 'b', rank: 2 }),
+      makeRankingEntry({ profileId: 'p-a', rank: 1 }),
+      makeRankingEntry({ profileId: 'p-b', rank: 2 }),
     ];
     const serverData = [
-      makeServerEntry({ socketId: 'b', similarity: 90 }),
-      makeServerEntry({ socketId: 'a', similarity: 70 }),
+      makeServerEntry({ profileId: 'p-b', similarity: 90 }),
+      makeServerEntry({ profileId: 'p-a', similarity: 70 }),
     ];
 
     const result = buildRankings(serverData, currentRankings);
@@ -148,7 +148,7 @@ describe('processRoomMetadata', () => {
       ],
     });
 
-    const result = processRoomMetadata(data, 'WAITING', 'socket-1');
+    const result = processRoomMetadata(data, 'WAITING', 'profile-1');
 
     expect(result.isJoined).toBe(true);
   });
@@ -183,7 +183,7 @@ describe('processRoomMetadata', () => {
       ],
     });
 
-    const result = processRoomMetadata(data, 'WAITING', 'socket-1');
+    const result = processRoomMetadata(data, 'WAITING', 'profile-1');
 
     expect(result.roomUpdate.phase).toBe('DRAWING');
   });

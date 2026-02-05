@@ -24,17 +24,21 @@ export const RedisKeys = {
   // Standings
   standings: (roomId: string) => `final:${roomId}`,
 
-  // Drawing Progress
-  drawing: (roomId: string, round: number, socketId: string) =>
-    `drawing:${roomId}:${round}:${socketId}`,
+  // Drawing Progress (profileId 기반)
+  drawing: (roomId: string, round: number, profileId: string) =>
+    `drawing:${roomId}:${round}:${profileId}`,
   drawingRoundScan: (roomId: string, round: number) =>
     `drawing:${roomId}:${round}:*`,
   drawingGameScan: (roomId: string) => `drawing:${roomId}:*`,
-  drawingPlayerScan: (roomId: string, socketId: string) =>
-    `drawing:${roomId}:*:${socketId}`,
+  drawingPlayerScan: (roomId: string, profileId: string) =>
+    `drawing:${roomId}:*:${profileId}`,
 
   // Chat
   chat: (roomId: string) => `chat:${roomId}`,
   chatRateLimit: (socketId: string, window: 'short' | 'long') =>
     `ratelimit:chat:${window}:${socketId}`,
+
+  // Grace Period (새로고침 시 일시적 유예)
+  gracePeriod: (roomId: string, profileId: string) =>
+    `gracePeriod:${roomId}:${profileId}`,
 } as const;
