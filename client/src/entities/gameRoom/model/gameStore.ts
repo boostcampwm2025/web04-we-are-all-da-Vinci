@@ -99,14 +99,14 @@ export const useGameStore = create<GameState>()(
 
         setConnected: (isConnected) => set({ isConnected }),
 
-      updateRoom: (room) => {
-        set((state) => {
-          if (room.phase) {
-            localStorage.setItem('last_game_phase', room.phase);
-          }
-          return { ...state, ...room };
-        });
-      },
+        updateRoom: (room) => {
+          set((state) => {
+            if (room.phase) {
+              localStorage.setItem('last_game_phase', room.phase);
+            }
+            return { ...state, ...room };
+          });
+        },
 
         setTimer: (timer) => set({ timer }),
 
