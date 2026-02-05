@@ -403,7 +403,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
             room.currentRound,
           );
           if (promptStrokes) {
-            client.emit(ClientEvents.ROOM_PROMPT, { strokes: promptStrokes });
+            client.emit(ClientEvents.ROOM_PROMPT, promptStrokes);
           }
           break;
         }
