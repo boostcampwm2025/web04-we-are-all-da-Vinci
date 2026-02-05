@@ -36,6 +36,11 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+        working-directory: .
+
+      - name: Build shared package
+        run: npx tsc
+        working-directory: ./packages/shared
 
       - name: Run Chromatic
         id: chromatic

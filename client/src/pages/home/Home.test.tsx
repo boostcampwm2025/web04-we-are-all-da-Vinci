@@ -1,22 +1,28 @@
-import * as createRoomAPI from '@/features/roomSettings';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Home from './Home';
 
-// Mock modules
-vi.mock('@/features/roomSettings', async () => {
-  const actual = await vi.importActual('@/features/roomSettings');
+// vi.hoisted ensures these are hoisted with vi.mock
+const { mockCreateRoom, mockNavigate } = vi.hoisted(() => ({
+  mockCreateRoom: vi.fn(),
+  mockNavigate: vi.fn(),
+}));
+
+vi.mock('@/features/roomSettings', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/features/roomSettings')>();
   return {
     ...actual,
-    createRoom: vi.fn(),
+    createRoom: mockCreateRoom,
   };
 });
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom');
+
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>();
   return {
     ...actual,
-    useNavigate: () => vi.fn(),
+    useNavigate: () => mockNavigate,
   };
 });
 
@@ -43,9 +49,7 @@ describe('랜딩페이지 - 방 생성', () => {
   });
 
   it('올바른 설정으로 방 생성 API를 호출한다', async () => {
-    const mockCreateRoom = vi
-      .spyOn(createRoomAPI, 'createRoom')
-      .mockResolvedValue({ roomId: 'test123' });
+    mockCreateRoom.mockResolvedValue({ roomId: 'test123' });
 
     localStorage.setItem('nickname', 'TestUser');
     renderWithRouter(<Home />);
@@ -77,9 +81,7 @@ describe('랜딩페이지 - 방 생성', () => {
       .mockImplementation(() => {});
     const alertSpy = vi.spyOn(globalThis, 'alert').mockImplementation(() => {});
 
-    vi.spyOn(createRoomAPI, 'createRoom').mockRejectedValue(
-      new Error('API Error'),
-    );
+    mockCreateRoom.mockRejectedValue(new Error('API Error'));
 
     localStorage.setItem('nickname', 'TestUser');
     renderWithRouter(<Home />);
@@ -115,9 +117,7 @@ describe('랜딩페이지 - 방 생성', () => {
   });
 
   it('방 생성 성공 후 설정 모달을 닫는다', async () => {
-    vi.spyOn(createRoomAPI, 'createRoom').mockResolvedValue({
-      roomId: 'abc123',
-    });
+    mockCreateRoom.mockResolvedValue({ roomId: 'abc123' });
 
     localStorage.setItem('nickname', 'TestUser');
     renderWithRouter(<Home />);
