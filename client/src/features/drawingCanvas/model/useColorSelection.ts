@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Color } from '@/entities/similarity/model';
+import type { Color } from '@/entities/similarity';
 import { COLOR_MAP } from '@/features/drawingCanvas/config/colors';
 
 // 색상 선택 상태와 핸들러를 관리하는 훅
