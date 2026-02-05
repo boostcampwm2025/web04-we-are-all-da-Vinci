@@ -185,6 +185,26 @@ export class GameService {
     return { room, kickedPlayer };
   }
 
+  async handleRoomStateAfterLeave(roomId: string) {
+    const players = await this.playerService.getPlayers(roomId);
+    const room = await this.roomService.getRoom(roomId);
+
+    if (players.length === 0) {
+      await this.roomService.deleteRoom(roomId);
+      return { isDeleted: true };
+    }
+
+    if (
+      players.length === 1 &&
+      room.phase !== GamePhase.WAITING &&
+      room.phase !== GamePhase.GAME_END
+    ) {
+      await this.roundService.endGame(room);
+    }
+
+    return { isDeleted: false };
+  }
+
   async startPractice() {
     const randomPrompt = await this.promptService.getRandomPrompt();
     return randomPrompt;
