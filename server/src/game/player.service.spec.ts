@@ -6,6 +6,7 @@ import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
 import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
+import { GracePeriodCacheService } from 'src/redis/cache/grace-period-cache.service';
 import { GamePhase } from 'src/common/constants';
 import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
 
@@ -18,6 +19,7 @@ describe('PlayerService', () => {
   let leaderboardCache: jest.Mocked<LeaderboardCacheService>;
   let progressCache: jest.Mocked<GameProgressCacheService>;
   let standingCache: jest.Mocked<StandingsCacheService>;
+  let gracePeriodCache: jest.Mocked<GracePeriodCacheService>;
 
   const mockPlayers = [
     {
@@ -73,6 +75,12 @@ describe('PlayerService', () => {
     const mockStandingCache = {
       delete: jest.fn(),
     };
+    const mockGracePeriodCache = {
+      set: jest.fn(),
+      get: jest.fn(),
+      exists: jest.fn(),
+      delete: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -101,6 +109,10 @@ describe('PlayerService', () => {
           provide: StandingsCacheService,
           useValue: mockStandingCache,
         },
+        {
+          provide: GracePeriodCacheService,
+          useValue: mockGracePeriodCache,
+        },
       ],
     }).compile();
 
@@ -111,6 +123,7 @@ describe('PlayerService', () => {
     leaderboardCache = module.get(LeaderboardCacheService);
     progressCache = module.get(GameProgressCacheService);
     standingCache = module.get(StandingsCacheService);
+    gracePeriodCache = module.get(GracePeriodCacheService);
   });
 
   afterEach(() => {
@@ -212,28 +225,66 @@ describe('PlayerService', () => {
   });
 
   describe('leaveRoom', () => {
-    it('플레이어가 퇴장하면, 플레이어 데이터를 삭제한다.', async () => {
+    it('WAITING 페이즈에서 플레이어가 퇴장하면, Grace Period를 설정하고 플레이어 데이터를 유지한다.', async () => {
       // given
       const player = mockPlayers[1];
       const room = mockBaseRoom;
       const roomId = room.roomId;
+      const phase = GamePhase.WAITING;
 
-      const { socketId } = player;
+      const { socketId, profileId } = player;
 
       gameRoomCache.getAllPlayers.mockResolvedValue(mockPlayers);
-
       playerCache.delete.mockResolvedValue(roomId);
-      gameRoomCache.deletePlayer.mockResolvedValue(true);
 
       // when
-      await service.leaveRoom(roomId, socketId);
+      const result = await service.leaveRoom(roomId, socketId, phase);
 
       // then
+      expect(result).not.toBeNull();
+      expect(result!.isGracePeriod).toBe(true);
+      expect(gracePeriodCache.set).toHaveBeenCalledWith(
+        roomId,
+        profileId,
+        socketId,
+      );
       expect(playerCache.delete).toHaveBeenCalledWith(socketId);
-      expect(gameRoomCache.deletePlayer).toHaveBeenCalledWith(roomId, socketId);
-      expect(leaderboardCache.delete).toHaveBeenCalledWith(roomId, socketId);
-      expect(progressCache.deletePlayer).toHaveBeenCalledWith(roomId, socketId);
-      expect(standingCache.delete).toHaveBeenCalledWith(roomId, socketId);
+      // 플레이어 데이터는 유지됨 (deletePlayer 호출 안함)
+      expect(gameRoomCache.deletePlayer).not.toHaveBeenCalled();
+      expect(leaderboardCache.delete).not.toHaveBeenCalled();
+      expect(progressCache.deletePlayer).not.toHaveBeenCalled();
+      expect(standingCache.delete).not.toHaveBeenCalled();
+    });
+
+    it('DRAWING 페이즈에서 플레이어가 퇴장하면, Grace Period를 설정하고 플레이어 데이터를 유지한다.', async () => {
+      // given
+      const player = mockPlayers[1];
+      const room = mockBaseRoom;
+      const roomId = room.roomId;
+      const phase = GamePhase.DRAWING;
+
+      const { socketId, profileId } = player;
+
+      gameRoomCache.getAllPlayers.mockResolvedValue(mockPlayers);
+      playerCache.delete.mockResolvedValue(roomId);
+
+      // when
+      const result = await service.leaveRoom(roomId, socketId, phase);
+
+      // then
+      expect(result).not.toBeNull();
+      expect(result!.isGracePeriod).toBe(true);
+      expect(gracePeriodCache.set).toHaveBeenCalledWith(
+        roomId,
+        profileId,
+        socketId,
+      );
+      expect(playerCache.delete).toHaveBeenCalledWith(socketId);
+      // 플레이어 데이터는 유지됨 (deletePlayer 호출 안함)
+      expect(gameRoomCache.deletePlayer).not.toHaveBeenCalled();
+      expect(leaderboardCache.delete).not.toHaveBeenCalled();
+      expect(progressCache.deletePlayer).not.toHaveBeenCalled();
+      expect(standingCache.delete).not.toHaveBeenCalled();
     });
 
     it('대기 중인 플레이어가 퇴장하면, 대기열에서만 삭제한다.', async () => {
@@ -246,6 +297,7 @@ describe('PlayerService', () => {
       };
       const room = mockBaseRoom;
       const roomId = room.roomId;
+      const phase = GamePhase.WAITING;
 
       const { socketId } = player;
 
@@ -253,9 +305,10 @@ describe('PlayerService', () => {
       playerCache.delete.mockResolvedValue(roomId);
 
       // when
-      await service.leaveRoom(roomId, socketId);
+      const result = await service.leaveRoom(roomId, socketId, phase);
 
       // then
+      expect(result).toBeNull();
       expect(playerCache.delete).toHaveBeenCalledWith(socketId);
       expect(waitlistCache.deleteWaitPlayer).toHaveBeenCalledWith(
         roomId,

@@ -89,12 +89,17 @@ export class GameRoomCacheService {
     await client.expire(key, REDIS_TTL);
   }
 
-  async deletePlayer(roomId: string, socketId: string) {
+  async deletePlayer(
+    roomId: string,
+    socketId: string,
+    gracePeriodKey?: string,
+  ) {
     const client = this.redisService.getClient();
     const key = RedisKeys.players(roomId);
 
     const script = `local key = KEYS[1]
     local socket_id = ARGV[1]
+    local grace_period_key = ARGV[2]
 
     local players = redis.call("LRANGE", key, 0, -1)
     local length = #players
@@ -121,14 +126,21 @@ export class GameRoomCacheService {
         return 0
     end
 
-    if target_obj.isHost == true and length > 1 then
+    -- Grace Period 확인: 활성 상태면 방장 재할당 건너뛰기
+    local in_grace_period = false
+    if grace_period_key ~= "" then
+      in_grace_period = redis.call("EXISTS", grace_period_key) == 1
+    end
+
+    -- 방장 재할당: Grace Period가 아닐 때만
+    if target_obj.isHost == true and length > 1 and not in_grace_period then
         local host_index = 2
-        
+
         local new_raw = players[host_index]
         local new_obj = cjson.decode(new_raw)
-        
+
         new_obj.isHost = true;
-        redis.call("LSET", key, 1, cjson.encode(new_obj)); 
+        redis.call("LSET", key, 1, cjson.encode(new_obj));
     end
 
     redis.call("LREM", key, 1, target_raw)
@@ -136,7 +148,7 @@ export class GameRoomCacheService {
     return 1`;
     const res = await client.eval(script, {
       keys: [key],
-      arguments: [socketId],
+      arguments: [socketId, gracePeriodKey ?? ''],
     });
 
     return res === 1 ? true : false;
@@ -183,6 +195,59 @@ export class GameRoomCacheService {
     const promptId = await client.lIndex(key, round - 1);
 
     return promptId !== null ? parseInt(promptId) : promptId;
+  }
+
+  /**
+   * profileId로 기존 플레이어를 찾아 socketId만 교체 (세션 복구용)
+   * isHost 및 기타 정보는 유지됨
+   */
+  async updatePlayerSocketByProfileId(
+    roomId: string,
+    profileId: string,
+    newSocketId: string,
+    newNickname: string,
+  ): Promise<boolean> {
+    const client = this.redisService.getClient();
+    const key = RedisKeys.players(roomId);
+
+    const luaScript = `
+      local key = KEYS[1]
+      local profile_id = ARGV[1]
+      local new_socket_id = ARGV[2]
+      local new_nickname = ARGV[3]
+
+      local players = redis.call("LRANGE", key, 0, -1)
+
+      for i, raw in ipairs(players) do
+        local obj = cjson.decode(raw)
+        if obj.profileId == profile_id then
+          obj.socketId = new_socket_id
+          obj.nickname = new_nickname
+          redis.call("LSET", key, i - 1, cjson.encode(obj))
+          return 1
+        end
+      end
+
+      return 0
+    `;
+
+    const result = await client.eval(luaScript, {
+      keys: [key],
+      arguments: [profileId, newSocketId, newNickname],
+    });
+
+    return result === 1;
+  }
+
+  /**
+   * profileId로 플레이어 검색
+   */
+  async findPlayerByProfileId(
+    roomId: string,
+    profileId: string,
+  ): Promise<Player | null> {
+    const players = await this.getAllPlayers(roomId);
+    return players.find((p) => p.profileId === profileId) || null;
   }
 
   async popAndAddPlayerAtomically(roomId: string): Promise<Player | null> {
