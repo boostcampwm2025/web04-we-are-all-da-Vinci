@@ -12,6 +12,7 @@ import { GameRoomCacheService } from '../redis/cache/game-room-cache.service';
 import type { CreateRoomDto } from '@shared/types';
 import { GameService } from './game.service';
 import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
+import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
 
 describe('GameService', () => {
   let service: GameService;
@@ -75,6 +76,9 @@ describe('GameService', () => {
       setPromptIds: jest.fn(),
       resetPromptIds: jest.fn(),
     };
+    const mockStandingsCacheService = {
+      delete: jest.fn(),
+    };
     const mockProgressCacheService = {
       deletePlayer: jest.fn(),
     };
@@ -114,6 +118,10 @@ describe('GameService', () => {
         {
           provide: PinoLogger,
           useValue: mockLogger,
+        },
+        {
+          provide: StandingsCacheService,
+          useValue: mockStandingsCacheService,
         },
         {
           provide: GameProgressCacheService,
