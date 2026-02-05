@@ -30,7 +30,9 @@ describe('useWaitingActions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getSocket).mockReturnValue({ emit: mockEmit } as never);
-    vi.mocked(useToastStore).mockReturnValue({ addToast: mockAddToast } as never);
+    vi.mocked(useToastStore).mockReturnValue({
+      addToast: mockAddToast,
+    } as never);
 
     Object.assign(navigator, {
       clipboard: {
