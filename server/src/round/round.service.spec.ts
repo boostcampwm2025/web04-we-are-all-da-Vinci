@@ -11,6 +11,7 @@ import {
   ROUND_REPLAY_TIME,
   ROUND_STANDING_TIME,
 } from 'src/common/constants';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 describe('RoundService', () => {
   let service: RoundService;
@@ -39,6 +40,10 @@ describe('RoundService', () => {
     setContext: jest.fn(),
   };
 
+  const mockEmitter = {
+    emit: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -46,6 +51,7 @@ describe('RoundService', () => {
         { provide: GameRoomCacheService, useValue: mockCacheService },
         { provide: PhaseService, useValue: mockPhaseService },
         { provide: TimerService, useValue: mockTimerService },
+        { provide: EventEmitter2, useValue: mockEmitter },
         { provide: PinoLogger, useValue: mockLogger },
       ],
     }).compile();
