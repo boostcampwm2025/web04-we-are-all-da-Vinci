@@ -39,8 +39,12 @@ export const useGameSocket = () => {
   const navigate = useNavigate();
 
   // 닉네임, profileId 상태 추적 - localStorage 변경 감지
-  const [nickname, setNickname] = useState<string | null>(() => getNickname() || null);
-  const [profileId, setProfileId] = useState<string | null>(() => getProfileId());
+  const [nickname, setNickname] = useState<string | null>(
+    () => getNickname() || null,
+  );
+  const [profileId, setProfileId] = useState<string | null>(() =>
+    getProfileId(),
+  );
 
   // Zustand actions
   const setMySocketId = useGameStore((state) => state.setMySocketId);
