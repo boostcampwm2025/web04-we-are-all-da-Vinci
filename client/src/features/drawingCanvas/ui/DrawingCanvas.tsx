@@ -10,6 +10,7 @@ import {
   preprocessStrokes,
 } from '@/features/similarity';
 import { getSocket } from '@/shared/api';
+import pencilCursor from '@/shared/assets/images/cursor/pencil.png';
 import { CANVAS_CONFIG, MIXPANEL_EVENTS, SERVER_EVENTS } from '@/shared/config';
 import { trackEvent } from '@/shared/lib/mixpanel';
 import { captureMessage } from '@/shared/lib/sentry';
@@ -200,7 +201,7 @@ export const DrawingCanvas = ({
           height={CANVAS_CONFIG.height}
           className="h-full w-full"
           style={{
-            cursor: 'url(/cursors/pencil.png), auto',
+            cursor: `url(${pencilCursor}), auto`,
             touchAction: 'none',
           }}
           onPointerDown={handleMouseDown}
