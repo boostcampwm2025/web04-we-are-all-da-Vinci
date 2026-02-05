@@ -225,4 +225,42 @@ export class PlayerService {
 
     return player ? { player, oldSocketId } : null;
   }
+
+  /**
+   * Grace Period 만료 후 플레이어 강제 삭제 (cleanup용)
+   * profileId로 플레이어를 찾아 모든 관련 데이터 삭제
+   */
+  async forceRemovePlayer(roomId: string, profileId: string): Promise<void> {
+    await Promise.all([
+      this.gameRoomCache.deletePlayerByProfileId(roomId, profileId),
+      this.leaderboardCache.delete(roomId, profileId),
+      this.progressCache.deletePlayer(roomId, profileId),
+      this.standingCache.delete(roomId, profileId),
+    ]);
+  }
+
+  /**
+   * kick 전용 플레이어 삭제 (Grace Period 무시)
+   * socketId로 플레이어를 찾아 즉시 완전 삭제
+   */
+  async forceKickPlayer(
+    roomId: string,
+    socketId: string,
+  ): Promise<Player | null> {
+    const players = await this.gameRoomCache.getAllPlayers(roomId);
+    const player = players.find((p) => p.socketId === socketId);
+
+    if (!player) {
+      return null;
+    }
+
+    // Grace Period 무시하고 즉시 완전 삭제
+    await Promise.all([
+      this.gameRoomCache.deletePlayer(roomId, socketId),
+      this.playerCache.delete(socketId),
+      this.gracePeriodCache.delete(roomId, player.profileId),
+    ]);
+
+    return player;
+  }
 }

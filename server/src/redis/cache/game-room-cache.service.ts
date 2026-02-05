@@ -250,6 +250,67 @@ export class GameRoomCacheService {
     return players.find((p) => p.profileId === profileId) || null;
   }
 
+  /**
+   * profileId로 플레이어를 찾아 삭제 (Grace Period cleanup용)
+   * 방장이면 다음 사람에게 위임
+   */
+  async deletePlayerByProfileId(
+    roomId: string,
+    profileId: string,
+  ): Promise<boolean> {
+    const client = this.redisService.getClient();
+    const key = RedisKeys.players(roomId);
+
+    const script = `
+      local key = KEYS[1]
+      local profile_id = ARGV[1]
+
+      local players = redis.call("LRANGE", key, 0, -1)
+      local length = #players
+
+      if length == 0 then
+        return 0
+      end
+
+      local target_index = 0
+      local target_obj = nil
+      local target_raw = nil
+
+      for i, raw in ipairs(players) do
+        local obj = cjson.decode(raw)
+        if obj.profileId == profile_id then
+          target_index = i
+          target_obj = obj
+          target_raw = raw
+          break
+        end
+      end
+
+      if target_index == 0 then
+        return 0
+      end
+
+      -- 방장이면 다음 사람에게 위임
+      if target_obj.isHost == true and length > 1 then
+        local next_index = (target_index == 1) and 2 or 1
+        local next_raw = players[next_index]
+        local next_obj = cjson.decode(next_raw)
+        next_obj.isHost = true
+        redis.call("LSET", key, next_index - 1, cjson.encode(next_obj))
+      end
+
+      redis.call("LREM", key, 1, target_raw)
+      return 1
+    `;
+
+    const result = await client.eval(script, {
+      keys: [key],
+      arguments: [profileId],
+    });
+
+    return result === 1;
+  }
+
   async popAndAddPlayerAtomically(roomId: string): Promise<Player | null> {
     const client = this.redisService.getClient();
     const roomKey = RedisKeys.room(roomId);

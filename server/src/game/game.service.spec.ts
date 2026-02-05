@@ -62,6 +62,7 @@ describe('GameService', () => {
       leaveRoom: jest.fn(),
       getNewlyJoinedUserFromWaitlist: jest.fn(),
       tryRecoverSession: jest.fn(),
+      forceKickPlayer: jest.fn(),
     };
 
     const mockRoundService = {
@@ -299,16 +300,15 @@ describe('GameService', () => {
       const hostSocketId = 'host';
       const targetSocketId = 'guest';
       const targetPlayer = createMockPlayer(targetSocketId);
-      const leaveResult = { player: targetPlayer, isGracePeriod: false };
+      const room = createMockRoom();
 
       roomService.isWaiting.mockResolvedValue(true);
       playerService.getPlayers.mockResolvedValue([]);
       playerService.checkIsHost.mockImplementation((_, id) => id === 'host'); // host check
 
-      // leaveRoom 내부 모킹
-      playerService.getJoinedRoomId.mockResolvedValue(roomId);
-      roomService.getRoom.mockResolvedValue(createMockRoom());
-      playerService.leaveRoom.mockResolvedValue(leaveResult);
+      // forceKickPlayer 모킹
+      playerService.forceKickPlayer.mockResolvedValue(targetPlayer);
+      roomService.getRoom.mockResolvedValue(room);
 
       const result = await service.kickUser(
         roomId,
@@ -317,6 +317,10 @@ describe('GameService', () => {
       );
 
       expect(result.kickedPlayer.socketId).toBe(targetSocketId);
+      expect(playerService.forceKickPlayer).toHaveBeenCalledWith(
+        roomId,
+        targetSocketId,
+      );
     });
 
     it('WAITING 상태가 아니면 에러를 던진다', async () => {
@@ -325,6 +329,21 @@ describe('GameService', () => {
       await expect(service.kickUser('room', 'host', 'guest')).rejects.toThrow(
         WebsocketException,
       );
+    });
+
+    it('플레이어를 찾을 수 없으면 에러를 던진다', async () => {
+      const roomId = 'test-room';
+      const hostSocketId = 'host';
+      const targetSocketId = 'nonExistent';
+
+      roomService.isWaiting.mockResolvedValue(true);
+      playerService.getPlayers.mockResolvedValue([]);
+      playerService.checkIsHost.mockImplementation((_, id) => id === 'host');
+      playerService.forceKickPlayer.mockResolvedValue(null);
+
+      await expect(
+        service.kickUser(roomId, hostSocketId, targetSocketId),
+      ).rejects.toThrow(WebsocketException);
     });
   });
 });

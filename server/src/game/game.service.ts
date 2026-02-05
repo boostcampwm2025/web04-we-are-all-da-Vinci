@@ -217,9 +217,19 @@ export class GameService {
       throw new WebsocketException(ErrorCode.HOST_CAN_NOT_KICKED);
     }
 
-    const { room, leaveResult } = await this.leaveRoom(targetSocketId);
+    // kick은 Grace Period 무시하고 즉시 완전 삭제
+    const kickedPlayer = await this.playerService.forceKickPlayer(
+      roomId,
+      targetSocketId,
+    );
 
-    return { room, kickedPlayer: leaveResult.player };
+    if (!kickedPlayer) {
+      throw new WebsocketException(ErrorCode.PLAYER_NOT_FOUND);
+    }
+
+    const room = await this.roomService.getRoom(roomId);
+
+    return { room, kickedPlayer };
   }
 
   async handleRoomStateAfterLeave(roomId: string) {
