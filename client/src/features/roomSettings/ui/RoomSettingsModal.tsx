@@ -96,7 +96,7 @@ const RoomSettingsModal = ({
         <div>
           <div className="mb-2 flex items-center justify-between">
             <label className="font-handwriting text-2xl font-bold">
-              제한 시간
+              그리는 시간
             </label>
             <span className="font-handwriting text-xl text-blue-600">Time</span>
           </div>
