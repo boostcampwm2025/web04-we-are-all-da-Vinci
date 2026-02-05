@@ -9,6 +9,7 @@ import { GameEnd } from '@/widgets/gameEnd';
 import type { Phase } from '@/shared/config';
 import { Waiting } from '@/widgets/waiting';
 import { useNavigate } from 'react-router-dom';
+import { GameLoadingSkeleton } from '@/widgets/game/ui/GameLoadingSkeleton';
 
 const GAME_PHASE_COMPONENT_MAP: Record<Phase, React.FC> = {
   WAITING: Waiting,
@@ -46,6 +47,28 @@ const Game = () => {
       navigate(pendingNavigation);
     }
   };
+
+  /* 
+    새로고침 시 스토어 데이터가 초기화되어 phase가 'WAITING'(기본값)으로 잡히는 문제를 방지합니다.
+    roomId가 없다는 것은 아직 소켓으로부터 방 정보를 받지 못했다는 뜻이므로,
+    그 동안은 로컬 스토리지 기반의 스켈레톤을 보여줍니다.
+  */
+  const roomId = useGameStore((state) => state.roomId);
+
+  if (!roomId) {
+    return (
+      <>
+        <GameLoadingSkeleton />
+        <OverlayModal
+          isOpen={!!alertMessage}
+          onClose={handleAlertClose}
+          title="알림"
+          message={alertMessage ?? ''}
+          onConfirm={handleAlertConfirm}
+        />
+      </>
+    );
+  }
 
   return (
     <>
