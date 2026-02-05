@@ -1,5 +1,5 @@
 # Netlify 기본 도메인 → 메인 도메인 리다이렉트
-https://we-are-all-davinci.netlify.app/*  https://www.wlldv.art/:splat  301!
+https://we-are-all-davinci.netlify.app/*  https://wlldv.art/:splat  301!
 
 # develop 도메인 → develop.wlldv.art로 리다이렉트
 https://develop--we-are-all-davinci.netlify.app/*  https://develop.wlldv.art/:splat  301!
