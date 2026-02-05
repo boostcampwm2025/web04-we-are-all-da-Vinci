@@ -11,8 +11,10 @@
   /* ─────────────────────────────────────────────────────────────
      FONTS
      ───────────────────────────────────────────────────────────── */
-  --font-display: 'GangwonEdu', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-  --font-handwriting: 'GangwonEdu', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-display:
+    'GangwonEdu', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-handwriting:
+    'GangwonEdu', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
 
   /* ─────────────────────────────────────────────────────────────
      CONTENT COLORS (텍스트용) - text-content-*
