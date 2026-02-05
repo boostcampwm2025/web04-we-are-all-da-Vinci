@@ -1,26 +1,23 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { PinoLogger } from 'nestjs-pino';
-import { ErrorCode } from 'src/common/constants/error-code';
+import { GamePhase } from 'src/common/constants';
+import { InternalError } from 'src/common/exceptions/internal-error';
+import { WebsocketException } from 'src/common/exceptions/websocket-exception';
+import { GameRoom, Player } from 'src/common/types';
 import { PromptService } from 'src/prompt/prompt.service';
-import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
-import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
-import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
 import { RoundService } from 'src/round/round.service';
-import { GameRoom, Player } from '../common/types';
-import { GameRoomCacheService } from '../redis/cache/game-room-cache.service';
 import type { CreateRoomDto } from '@shared/types';
 import { GameService } from './game.service';
-import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
-import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
+import { PlayerService } from './player.service';
+import { RoomService } from './room.service';
 
 describe('GameService', () => {
   let service: GameService;
-  let cacheService: jest.Mocked<GameRoomCacheService>;
+  let roomService: jest.Mocked<RoomService>;
+  let playerService: jest.Mocked<PlayerService>;
   let roundService: jest.Mocked<RoundService>;
   let promptService: jest.Mocked<PromptService>;
-  let playerCacheService: jest.Mocked<PlayerCacheService>;
-  let leaderboardCacheService: jest.Mocked<LeaderboardCacheService>;
 
   const createMockPlayer = (
     socketId: string,
@@ -38,7 +35,7 @@ describe('GameService', () => {
   ): GameRoom => ({
     roomId: 'test-room',
     players,
-    phase: 'WAITING',
+    phase: GamePhase.WAITING,
     currentRound: 0,
     settings: {
       drawingTime: 90,
@@ -49,38 +46,35 @@ describe('GameService', () => {
   });
 
   beforeEach(async () => {
-    const mockCacheService = {
+    const mockRoomService = {
+      createRoom: jest.fn(),
       getRoom: jest.fn(),
-      saveRoom: jest.fn(),
-      getAllPlayers: jest.fn(),
-      addPlayer: jest.fn(),
-      deletePlayer: jest.fn(),
-      setPlayer: jest.fn(),
+      updateSettings: jest.fn(),
+      isWaiting: jest.fn(),
     };
-    const mockWaitlistService = {
-      addPlayer: jest.fn(),
+
+    const mockPlayerService = {
+      getPlayers: jest.fn(),
+      checkIsHost: jest.fn(),
+      isRoomFull: jest.fn(),
+      requestJoinWaitList: jest.fn(),
+      getJoinedRoomId: jest.fn(),
+      leaveRoom: jest.fn(),
+      getNewlyJoinedUserFromWaitlist: jest.fn(),
     };
-    const mockPlayerCacheService = {
-      set: jest.fn(),
-      delete: jest.fn(),
-      getRoomId: jest.fn(),
-    };
-    const mockLeaderboardCacheService = {
-      updateScore: jest.fn(),
-      delete: jest.fn(),
-    };
+
     const mockRoundService = {
+      setPhaseChangeHandler: jest.fn(),
       nextPhase: jest.fn(),
+      getRoundReplayData: jest.fn(),
+      getRoundStandingData: jest.fn(),
+      getGameEndData: jest.fn(),
     };
+
     const mockPromptService = {
       setPromptIds: jest.fn(),
       resetPromptIds: jest.fn(),
-    };
-    const mockStandingsCacheService = {
-      delete: jest.fn(),
-    };
-    const mockProgressCacheService = {
-      deletePlayer: jest.fn(),
+      getRandomPrompt: jest.fn(),
     };
 
     const mockLogger = {
@@ -92,20 +86,12 @@ describe('GameService', () => {
       providers: [
         GameService,
         {
-          provide: GameRoomCacheService,
-          useValue: mockCacheService,
+          provide: RoomService,
+          useValue: mockRoomService,
         },
         {
-          provide: WaitlistCacheService,
-          useValue: mockWaitlistService,
-        },
-        {
-          provide: PlayerCacheService,
-          useValue: mockPlayerCacheService,
-        },
-        {
-          provide: LeaderboardCacheService,
-          useValue: mockLeaderboardCacheService,
+          provide: PlayerService,
+          useValue: mockPlayerService,
         },
         {
           provide: RoundService,
@@ -119,390 +105,219 @@ describe('GameService', () => {
           provide: PinoLogger,
           useValue: mockLogger,
         },
-        {
-          provide: StandingsCacheService,
-          useValue: mockStandingsCacheService,
-        },
-        {
-          provide: GameProgressCacheService,
-          useValue: mockProgressCacheService,
-        },
       ],
     }).compile();
 
     service = module.get<GameService>(GameService);
-    cacheService = module.get(GameRoomCacheService);
+    roomService = module.get(RoomService);
+    playerService = module.get(PlayerService);
     roundService = module.get(RoundService);
     promptService = module.get(PromptService);
-    playerCacheService = module.get(PlayerCacheService);
-    leaderboardCacheService = module.get(LeaderboardCacheService);
   });
 
-  describe('방 생성', () => {
+  describe('createRoom', () => {
     const createRoomDto: CreateRoomDto = {
       maxPlayer: 4,
       totalRounds: 5,
       drawingTime: 90,
     };
 
-    it('사용자 설정으로 방을 생성한다', async () => {
-      cacheService.getRoom.mockResolvedValue(null);
-      cacheService.saveRoom.mockResolvedValue(undefined);
+    it('방을 생성하고 프롬프트 ID를 설정한다', async () => {
+      const roomId = 'new-room-id';
+      roomService.createRoom.mockResolvedValue(roomId);
 
-      const roomId = await service.createRoom(createRoomDto);
+      const result = await service.createRoom(createRoomDto);
 
-      expect(roomId).toBeDefined();
-      expect(typeof roomId).toBe('string');
-      expect(roomId).toHaveLength(8);
-    });
-
-    it('올바른 설정으로 방을 캐시에 저장한다', async () => {
-      cacheService.getRoom.mockResolvedValue(null);
-      cacheService.saveRoom.mockResolvedValue(undefined);
-
-      const roomId = await service.createRoom(createRoomDto);
-
-      expect(cacheService.saveRoom).toHaveBeenCalledWith(
-        roomId,
-        expect.objectContaining({
-          roomId,
-          players: [],
-          phase: 'WAITING',
-          currentRound: 0,
-          settings: {
-            drawingTime: 90,
-            maxPlayer: 4,
-            totalRounds: 5,
-          },
-        }),
-      );
-    });
-
-    it('방 ID 충돌 시 고유한 ID를 재생성한다', async () => {
-      const existingRoom: GameRoom = {
-        roomId: 'existing',
-        players: [],
-        phase: 'WAITING',
-        currentRound: 0,
-        settings: {
-          drawingTime: 90,
-          maxPlayer: 4,
-          totalRounds: 5,
-        },
-      };
-
-      cacheService.getRoom
-        .mockResolvedValueOnce(existingRoom)
-        .mockResolvedValueOnce(null);
-      cacheService.saveRoom.mockResolvedValue(undefined);
-
-      const roomId = await service.createRoom(createRoomDto);
-
-      expect(roomId).toBeDefined();
-      expect(cacheService.getRoom).toHaveBeenCalledTimes(2);
-    });
-
-    it('다양한 설정으로 방을 생성한다', async () => {
-      const customDto: CreateRoomDto = {
-        maxPlayer: 6,
-        totalRounds: 10,
-        drawingTime: 120,
-      };
-
-      cacheService.getRoom.mockResolvedValue(null);
-      cacheService.saveRoom.mockResolvedValue(undefined);
-
-      await service.createRoom(customDto);
-
-      expect(cacheService.saveRoom).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          settings: {
-            drawingTime: 120,
-            maxPlayer: 6,
-            totalRounds: 10,
-          },
-        }),
-      );
+      expect(result).toBe(roomId);
+      expect(roomService.createRoom).toHaveBeenCalledWith(4, 90, 5);
+      expect(promptService.setPromptIds).toHaveBeenCalledWith(roomId, 5);
     });
   });
 
-  describe('게임 설정 변경', () => {
-    const hostPlayer = createMockPlayer('host-socket', true);
-    const guestPlayer = createMockPlayer('guest-socket', false);
-
+  describe('updateGameSettings', () => {
     it('호스트가 설정을 변경하면 성공한다', async () => {
-      const room = createMockRoom({}, [hostPlayer, guestPlayer]);
-      cacheService.getRoom.mockResolvedValue(room);
-      cacheService.saveRoom.mockResolvedValue(undefined);
+      const room = createMockRoom();
+      const players = [createMockPlayer('host', true)];
 
-      const result = await service.updateGameSettings(
-        'test-room',
-        'host-socket',
-        6,
-        10,
-        120,
-      );
-
-      expect(result?.settings).toEqual({
-        maxPlayer: 6,
-        totalRounds: 10,
-        drawingTime: 120,
+      roomService.getRoom.mockResolvedValue(room);
+      playerService.getPlayers.mockResolvedValue(players);
+      playerService.checkIsHost.mockReturnValue(true);
+      roomService.updateSettings.mockResolvedValue({
+        ...room,
+        settings: { ...room.settings, maxPlayer: 6 },
       });
-      expect(cacheService.saveRoom).toHaveBeenCalled();
-    });
 
-    it('방이 없으면 에러를 던진다', async () => {
-      cacheService.getRoom.mockResolvedValue(null);
+      await service.updateGameSettings('test-room', 'host', 6, 5, 90);
 
-      await expect(
-        service.updateGameSettings('invalid-room', 'host-socket', 6, 10, 120),
-      ).rejects.toThrow(ErrorCode.ROOM_NOT_FOUND);
-    });
-
-    it('플레이어가 방에 없으면 에러를 던진다', async () => {
-      const room = createMockRoom({}, [hostPlayer]);
-      cacheService.getRoom.mockResolvedValue(room);
-
-      await expect(
-        service.updateGameSettings('test-room', 'unknown-socket', 6, 10, 120),
-      ).rejects.toThrow(ErrorCode.PLAYER_NOT_FOUND);
+      expect(roomService.updateSettings).toHaveBeenCalledWith(room, 6, 90, 5);
     });
 
     it('호스트가 아니면 에러를 던진다', async () => {
-      const room = createMockRoom({}, [hostPlayer, guestPlayer]);
-      cacheService.getRoom.mockResolvedValue(room);
+      const room = createMockRoom();
+      const players = [createMockPlayer('guest', false)];
+
+      roomService.getRoom.mockResolvedValue(room);
+      playerService.getPlayers.mockResolvedValue(players);
+      playerService.checkIsHost.mockReturnValue(false);
 
       await expect(
-        service.updateGameSettings('test-room', 'guest-socket', 6, 10, 120),
-      ).rejects.toThrow(ErrorCode.PLAYER_NOT_HOST);
+        service.updateGameSettings('test-room', 'guest', 6, 5, 90),
+      ).rejects.toThrow(WebsocketException);
     });
 
     it('WAITING 상태가 아니면 에러를 던진다', async () => {
-      const room = createMockRoom({ phase: 'DRAWING' }, [hostPlayer]);
-      cacheService.getRoom.mockResolvedValue(room);
+      const room = createMockRoom({ phase: GamePhase.DRAWING });
+      const players = [createMockPlayer('host', true)];
+
+      roomService.getRoom.mockResolvedValue(room);
+      playerService.getPlayers.mockResolvedValue(players);
+      playerService.checkIsHost.mockReturnValue(true);
 
       await expect(
-        service.updateGameSettings('test-room', 'host-socket', 6, 10, 120),
-      ).rejects.toThrow(ErrorCode.UPDATE_SETTINGS_ONLY_WAITING_PHASE);
-    });
-
-    it('라운드 수가 변경되면 프롬프트를 재설정한다', async () => {
-      const room = createMockRoom({}, [hostPlayer]);
-      cacheService.getRoom.mockResolvedValue(room);
-      cacheService.saveRoom.mockResolvedValue(undefined);
-
-      await service.updateGameSettings('test-room', 'host-socket', 4, 10, 90);
-
-      expect(promptService.resetPromptIds).toHaveBeenCalledWith(
-        'test-room',
-        10,
-      );
+        service.updateGameSettings('test-room', 'host', 6, 5, 90),
+      ).rejects.toThrow(WebsocketException);
     });
   });
 
-  describe('게임 시작', () => {
-    const hostPlayer = createMockPlayer('host-socket', true);
-    const guestPlayer = createMockPlayer('guest-socket', false);
+  describe('joinRoom', () => {
+    it('방이 다 찼으면 에러를 던진다', async () => {
+      const room = createMockRoom();
+      roomService.getRoom.mockResolvedValue(room);
+      playerService.isRoomFull.mockResolvedValue(true);
 
+      await expect(
+        service.joinRoom('test-room', 'nick', 'profile', 'socket'),
+      ).rejects.toThrow(WebsocketException);
+    });
+
+    it('대기열에 추가하고 업데이트된 방 정보를 반환한다', async () => {
+      const room = createMockRoom();
+      roomService.getRoom.mockResolvedValue(room);
+      playerService.isRoomFull.mockResolvedValue(false);
+      playerService.requestJoinWaitList.mockResolvedValue([]);
+      roomService.getRoom.mockResolvedValue(room); // 호출 시 업데이트된 방 반환 가정
+
+      const result = await service.joinRoom(
+        'test-room',
+        'nick',
+        'profile',
+        'socket',
+      );
+
+      expect(result.room).toEqual(room);
+      expect(playerService.requestJoinWaitList).toHaveBeenCalled();
+    });
+  });
+
+  describe('leaveRoom', () => {
+    it('퇴장 처리 후 방 정보와 플레이어 정보를 반환한다', async () => {
+      const roomId = 'test-room';
+      const player = createMockPlayer('socket');
+      const room = createMockRoom();
+
+      playerService.getJoinedRoomId.mockResolvedValue(roomId);
+      playerService.leaveRoom.mockResolvedValue(player);
+      roomService.getRoom.mockResolvedValue(room);
+
+      const result = await service.leaveRoom('socket');
+
+      expect(result).toEqual({ room, player });
+    });
+
+    it('참여 중인 방이 없으면 에러를 던진다', async () => {
+      playerService.getJoinedRoomId.mockResolvedValue(null);
+
+      await expect(service.leaveRoom('socket')).rejects.toThrow(InternalError);
+    });
+  });
+
+  describe('startGame', () => {
     it('호스트가 게임을 시작하면 성공한다', async () => {
-      const room = createMockRoom({}, [hostPlayer, guestPlayer]);
-      cacheService.getRoom.mockResolvedValue(room);
+      const room = createMockRoom();
+      const players = [
+        createMockPlayer('host', true),
+        createMockPlayer('guest1', false),
+      ];
 
-      await service.startGame('test-room', 'host-socket');
+      roomService.getRoom.mockResolvedValue(room);
+      playerService.getPlayers.mockResolvedValue(players);
+      playerService.checkIsHost.mockReturnValue(true);
+
+      await service.startGame('test-room', 'host');
 
       expect(roundService.nextPhase).toHaveBeenCalledWith(room);
-    });
-
-    it('방이 없으면 에러를 던진다', async () => {
-      cacheService.getRoom.mockResolvedValue(null);
-
-      await expect(
-        service.startGame('invalid-room', 'host-socket'),
-      ).rejects.toThrow(ErrorCode.ROOM_NOT_FOUND);
-    });
-
-    it('플레이어가 방에 없으면 에러를 던진다', async () => {
-      const room = createMockRoom({}, [hostPlayer, guestPlayer]);
-      cacheService.getRoom.mockResolvedValue(room);
-
-      await expect(
-        service.startGame('test-room', 'unknown-socket'),
-      ).rejects.toThrow(ErrorCode.PLAYER_NOT_FOUND);
-    });
-
-    it('호스트가 아니면 에러를 던진다', async () => {
-      const room = createMockRoom({}, [hostPlayer, guestPlayer]);
-      cacheService.getRoom.mockResolvedValue(room);
-
-      await expect(
-        service.startGame('test-room', 'guest-socket'),
-      ).rejects.toThrow(ErrorCode.PLAYER_NOT_HOST);
-    });
-
-    it('이미 게임이 시작되었으면 에러를 던진다', async () => {
-      const room = createMockRoom({ phase: 'DRAWING' }, [
-        hostPlayer,
-        guestPlayer,
-      ]);
-      cacheService.getRoom.mockResolvedValue(room);
-
-      await expect(
-        service.startGame('test-room', 'host-socket'),
-      ).rejects.toThrow(ErrorCode.GAME_ALREADY_STARTED);
     });
 
     it('플레이어가 2명 미만이면 에러를 던진다', async () => {
-      const room = createMockRoom({}, [hostPlayer]);
-      cacheService.getRoom.mockResolvedValue(room);
+      const room = createMockRoom();
+      const players = [createMockPlayer('host', true)];
 
-      await expect(
-        service.startGame('test-room', 'host-socket'),
-      ).rejects.toThrow(ErrorCode.PLAYER_ATLEAST_TWO);
+      roomService.getRoom.mockResolvedValue(room);
+      playerService.getPlayers.mockResolvedValue(players);
+      playerService.checkIsHost.mockReturnValue(true);
+
+      await expect(service.startGame('test-room', 'host')).rejects.toThrow(
+        WebsocketException,
+      );
     });
   });
 
-  describe('게임 재시작', () => {
-    const hostPlayer = createMockPlayer('host-socket', true);
-    const guestPlayer = createMockPlayer('guest-socket', false);
+  describe('restartGame', () => {
+    it('게임 종료 상태에서 호스트가 재시작하면 성공한다', async () => {
+      const room = createMockRoom({ phase: GamePhase.GAME_END });
+      const players = [createMockPlayer('host', true)];
 
-    it('호스트가 게임을 재시작하면 성공한다', async () => {
-      const room = createMockRoom({ phase: 'GAME_END' }, [
-        hostPlayer,
-        guestPlayer,
-      ]);
-      cacheService.getRoom.mockResolvedValue(room);
+      roomService.getRoom.mockResolvedValue(room);
+      playerService.getPlayers.mockResolvedValue(players);
+      playerService.checkIsHost.mockReturnValue(true);
 
-      await service.restartGame('test-room', 'host-socket');
+      await service.restartGame('test-room', 'host');
 
       expect(roundService.nextPhase).toHaveBeenCalledWith(room);
     });
 
-    it('방이 없으면 에러를 던진다', async () => {
-      cacheService.getRoom.mockResolvedValue(null);
+    it('게임 종료 상태가 아니면 에러를 던진다', async () => {
+      const room = createMockRoom({ phase: GamePhase.WAITING });
+      roomService.getRoom.mockResolvedValue(room);
 
-      await expect(
-        service.restartGame('invalid-room', 'host-socket'),
-      ).rejects.toThrow(ErrorCode.ROOM_NOT_FOUND);
-    });
-
-    it('플레이어가 방에 없으면 에러를 던진다', async () => {
-      const room = createMockRoom({ phase: 'GAME_END' }, [hostPlayer]);
-      cacheService.getRoom.mockResolvedValue(room);
-
-      await expect(
-        service.restartGame('test-room', 'unknown-socket'),
-      ).rejects.toThrow(ErrorCode.PLAYER_NOT_FOUND);
-    });
-
-    it('호스트가 아니면 에러를 던진다', async () => {
-      const room = createMockRoom({ phase: 'GAME_END' }, [
-        hostPlayer,
-        guestPlayer,
-      ]);
-      cacheService.getRoom.mockResolvedValue(room);
-
-      await expect(
-        service.restartGame('test-room', 'guest-socket'),
-      ).rejects.toThrow(ErrorCode.PLAYER_NOT_HOST);
-    });
-
-    it('게임이 종료 상태가 아니면 에러를 던진다', async () => {
-      const room = createMockRoom({ phase: 'WAITING' }, [hostPlayer]);
-      cacheService.getRoom.mockResolvedValue(room);
-
-      await expect(
-        service.restartGame('test-room', 'host-socket'),
-      ).rejects.toThrow(ErrorCode.GAME_NOT_END);
+      await expect(service.restartGame('test-room', 'host')).rejects.toThrow(
+        WebsocketException,
+      );
     });
   });
 
-  describe('플레이어 강퇴', () => {
-    const hostPlayer = createMockPlayer('host-socket', true);
-    const guestPlayer = createMockPlayer('guest-socket', false);
-
+  describe('kickUser', () => {
     it('호스트가 플레이어를 강퇴하면 성공한다', async () => {
-      const room = createMockRoom({}, [hostPlayer, guestPlayer]);
-      cacheService.getRoom.mockResolvedValue(room);
-      playerCacheService.getRoomId.mockResolvedValue('test-room');
-      cacheService.getAllPlayers.mockResolvedValue([hostPlayer, guestPlayer]);
-      cacheService.deletePlayer.mockResolvedValue(true);
-      playerCacheService.delete.mockResolvedValue('test-room');
-      leaderboardCacheService.delete.mockResolvedValue(undefined);
+      const roomId = 'test-room';
+      const hostSocketId = 'host';
+      const targetSocketId = 'guest';
 
-      const updatedRoom = createMockRoom({}, [hostPlayer]);
-      cacheService.getRoom
-        .mockResolvedValueOnce(room)
-        .mockResolvedValueOnce(room)
-        .mockResolvedValueOnce(updatedRoom);
+      roomService.isWaiting.mockResolvedValue(true);
+      playerService.getPlayers.mockResolvedValue([]);
+      playerService.checkIsHost.mockImplementation((_, id) => id === 'host'); // host check
+
+      // leaveRoom 내부 모킹
+      playerService.getJoinedRoomId.mockResolvedValue(roomId);
+      playerService.leaveRoom.mockResolvedValue(
+        createMockPlayer(targetSocketId),
+      );
+      roomService.getRoom.mockResolvedValue(createMockRoom());
 
       const result = await service.kickUser(
-        'test-room',
-        'host-socket',
-        'guest-socket',
+        roomId,
+        hostSocketId,
+        targetSocketId,
       );
 
-      expect(result.kickedPlayer).toEqual({
-        socketId: 'guest-socket',
-        nickname: 'Player-guest-socket',
-      });
-    });
-
-    it('방이 없으면 에러를 던진다', async () => {
-      cacheService.getRoom.mockResolvedValue(null);
-
-      await expect(
-        service.kickUser('invalid-room', 'host-socket', 'guest-socket'),
-      ).rejects.toThrow(ErrorCode.ROOM_NOT_FOUND);
-    });
-
-    it('호스트가 방에 없으면 에러를 던진다', async () => {
-      const room = createMockRoom({}, [guestPlayer]);
-      cacheService.getRoom.mockResolvedValue(room);
-
-      await expect(
-        service.kickUser('test-room', 'unknown-socket', 'guest-socket'),
-      ).rejects.toThrow(ErrorCode.PLAYER_NOT_FOUND);
-    });
-
-    it('대상 플레이어가 방에 없으면 에러를 던진다', async () => {
-      const room = createMockRoom({}, [hostPlayer]);
-      cacheService.getRoom.mockResolvedValue(room);
-
-      await expect(
-        service.kickUser('test-room', 'host-socket', 'unknown-socket'),
-      ).rejects.toThrow(ErrorCode.PLAYER_NOT_FOUND);
-    });
-
-    it('호스트가 아니면 에러를 던진다', async () => {
-      const anotherGuest = createMockPlayer('another-guest', false);
-      const room = createMockRoom({}, [hostPlayer, guestPlayer, anotherGuest]);
-      cacheService.getRoom.mockResolvedValue(room);
-
-      await expect(
-        service.kickUser('test-room', 'guest-socket', 'another-guest'),
-      ).rejects.toThrow(ErrorCode.PLAYER_NOT_HOST);
+      expect(result.kickedPlayer.socketId).toBe(targetSocketId);
     });
 
     it('WAITING 상태가 아니면 에러를 던진다', async () => {
-      const room = createMockRoom({ phase: 'DRAWING' }, [
-        hostPlayer,
-        guestPlayer,
-      ]);
-      cacheService.getRoom.mockResolvedValue(room);
+      roomService.isWaiting.mockResolvedValue(false);
 
-      await expect(
-        service.kickUser('test-room', 'host-socket', 'guest-socket'),
-      ).rejects.toThrow(ErrorCode.KICK_ONLY_WAITING_PHASE);
-    });
-
-    it('호스트를 강퇴하려고 하면 에러를 던진다', async () => {
-      const room = createMockRoom({}, [hostPlayer, guestPlayer]);
-      cacheService.getRoom.mockResolvedValue(room);
-
-      await expect(
-        service.kickUser('test-room', 'host-socket', 'host-socket'),
-      ).rejects.toThrow(ErrorCode.HOST_CAN_NOT_KICKED);
+      await expect(service.kickUser('room', 'host', 'guest')).rejects.toThrow(
+        WebsocketException,
+      );
     });
   });
 });

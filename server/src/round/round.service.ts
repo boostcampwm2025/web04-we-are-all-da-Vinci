@@ -1,20 +1,21 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { Server } from 'socket.io';
-import { DRAWING_END_DELAY, GamePhase } from 'src/common/constants';
+import { DRAWING_END_DELAY, GamePhase } from '../common/constants';
 import { GameRoom } from 'src/common/types';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { TimerService } from 'src/timer/timer.service';
-import { PhaseService } from './phase.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { PhaseEvent, PhaseService } from './phase.service';
 
 @Injectable()
 export class RoundService implements OnModuleInit {
   server!: Server;
-  private phaseChangeHandler?: (roomId: string) => Promise<void>;
 
   constructor(
     private readonly cacheService: GameRoomCacheService,
     private readonly timerService: TimerService,
+    private readonly emitter: EventEmitter2,
     private readonly phaseService: PhaseService,
     private readonly logger: PinoLogger,
   ) {
@@ -42,12 +43,8 @@ export class RoundService implements OnModuleInit {
     this.server = server;
   }
 
-  setPhaseChangeHandler(handler: (roomId: string) => Promise<void>) {
-    this.phaseChangeHandler = handler;
-  }
-
-  private async notifyPhaseChange(roomId: string) {
-    if (this.phaseChangeHandler) await this.phaseChangeHandler(roomId);
+  private notifyPhaseChange(roomId: string, events: PhaseEvent[]) {
+    this.emitter.emit('phase_changed', { roomId, events });
   }
 
   async nextPhase(room: GameRoom) {
@@ -89,7 +86,7 @@ export class RoundService implements OnModuleInit {
 
     this.logger.info({ roomId: room.roomId }, 'Game Waiting Start');
 
-    await this.notifyPhaseChange(room.roomId);
+    this.notifyPhaseChange(room.roomId, []);
   }
 
   private async movePrompt(room: GameRoom) {
@@ -102,7 +99,7 @@ export class RoundService implements OnModuleInit {
     await this.timerService.startTimer(room.roomId, timeLeft);
     this.logger.info({ room }, 'Prompt Phase Start');
 
-    await this.notifyPhaseChange(room.roomId);
+    this.notifyPhaseChange(room.roomId, events);
   }
 
   private async moveDrawing(room: GameRoom) {
@@ -115,7 +112,7 @@ export class RoundService implements OnModuleInit {
     await this.timerService.startTimer(room.roomId, timeLeft);
     this.logger.info({ room }, 'Drawing Phase Start');
 
-    await this.notifyPhaseChange(room.roomId);
+    this.notifyPhaseChange(room.roomId, events);
   }
 
   private async moveRoundReplay(room: GameRoom) {
@@ -129,7 +126,7 @@ export class RoundService implements OnModuleInit {
 
     this.logger.info({ room }, 'Round Replay Phase Start');
 
-    await this.notifyPhaseChange(room.roomId);
+    this.notifyPhaseChange(room.roomId, events);
   }
 
   private async moveRoundStanding(room: GameRoom) {
@@ -143,7 +140,7 @@ export class RoundService implements OnModuleInit {
 
     this.logger.info({ room }, 'Round Standing Phase Start');
 
-    await this.notifyPhaseChange(room.roomId);
+    this.notifyPhaseChange(room.roomId, events);
   }
 
   private async moveNextRoundOrEnd(room: GameRoom) {
@@ -158,6 +155,7 @@ export class RoundService implements OnModuleInit {
 
   private async moveGameEnd(room: GameRoom) {
     const { events, timeLeft } = await this.phaseService.gameEnd(room);
+
     events.forEach(({ name, payload }) => {
       this.server.to(room.roomId).emit(name, payload);
     });
@@ -165,7 +163,7 @@ export class RoundService implements OnModuleInit {
     await this.timerService.startTimer(room.roomId, timeLeft);
 
     this.logger.info('Game End Start');
-    await this.notifyPhaseChange(room.roomId);
+    this.notifyPhaseChange(room.roomId, events);
   }
 
   async getRoundReplayData(roomId: string) {
