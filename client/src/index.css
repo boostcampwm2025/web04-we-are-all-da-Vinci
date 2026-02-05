@@ -1,10 +1,18 @@
+@font-face {
+  font-family: 'GangwonEdu';
+  src: url('@/shared/assets/fonts/강원교육현옥샘.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @import 'tailwindcss';
 @theme {
   /* ─────────────────────────────────────────────────────────────
      FONTS
      ───────────────────────────────────────────────────────────── */
-  --font-display: 'Be Vietnam Pro', sans-serif;
-  --font-handwriting: 'Nanum Pen Script', cursive;
+  --font-display: 'GangwonEdu', sans-serif;
+  --font-handwriting: 'GangwonEdu', cursive;
 
   /* ─────────────────────────────────────────────────────────────
      CONTENT COLORS (텍스트용) - text-content-*
