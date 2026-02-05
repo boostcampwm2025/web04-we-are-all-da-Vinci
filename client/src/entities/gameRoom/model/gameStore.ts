@@ -4,13 +4,14 @@ import type { PlayerScore, RoundResult } from '@/entities/roundResult';
 import type { Stroke } from '@/entities/similarity';
 import type { Phase } from '@/shared/config';
 import { create } from 'zustand';
-import { createJSONStorage, devtools, persist } from 'zustand/middleware';
+import { devtools } from 'zustand/middleware';
 import type { GameRoom } from './types';
 
 export interface GameState extends GameRoom {
   // 소켓 연결 상태
   isConnected: boolean;
   mySocketId: string | null;
+  myProfileId: string | null;
 
   // 실시간 데이터
   timer: number;
@@ -36,6 +37,7 @@ export interface GameState extends GameRoom {
 
   // Actions
   setMySocketId: (socketId: string | null) => void;
+  setMyProfileId: (profileId: string | null) => void;
   setConnected: (isConnected: boolean) => void;
   updateRoom: (room: Partial<GameRoom>) => void;
   setTimer: (timer: number) => void;
@@ -63,6 +65,7 @@ export interface GameState extends GameRoom {
 export const initialState = {
   isConnected: false,
   mySocketId: null,
+  myProfileId: null,
   roomId: '',
   players: [],
   phase: 'WAITING' as Phase,
@@ -91,14 +94,14 @@ export const initialState = {
 
 export const useGameStore = create<GameState>()(
   devtools(
-    persist(
-      (set) => ({
-        ...initialState,
+    (set) => ({
+      ...initialState,
 
-        setMySocketId: (mySocketId) => set({ mySocketId }),
+      setMySocketId: (mySocketId) => set({ mySocketId }),
 
-        setConnected: (isConnected) => set({ isConnected }),
+      setMyProfileId: (myProfileId) => set({ myProfileId }),
 
+<<<<<<< feat/#246-lobby-loading-ux
         updateRoom: (room) => {
           set((state) => {
             if (room.phase) {
@@ -107,52 +110,44 @@ export const useGameStore = create<GameState>()(
             return { ...state, ...room };
           });
         },
+=======
+      setConnected: (isConnected) => set({ isConnected }),
+>>>>>>> develop
 
-        setTimer: (timer) => set({ timer }),
+      updateRoom: (room) => set((state) => ({ ...state, ...room })),
 
-        setLiveRankings: (liveRankings) => set({ liveRankings }),
+      setTimer: (timer) => set({ timer }),
 
-        setPromptStrokes: (promptStrokes) => set({ promptStrokes }),
+      setLiveRankings: (liveRankings) => set({ liveRankings }),
 
-        setRoundResults: (roundResults) => set({ roundResults }),
+      setPromptStrokes: (promptStrokes) => set({ promptStrokes }),
 
-        setStandingResults: (standingResults) =>
-          set((state) => ({
-            previousStandingResults: state.standingResults,
-            standingResults,
-          })),
+      setRoundResults: (roundResults) => set({ roundResults }),
 
-        setFinalResults: (finalResults) => set({ finalResults }),
+      setStandingResults: (standingResults) =>
+        set((state) => ({
+          previousStandingResults: state.standingResults,
+          standingResults,
+        })),
 
-        setHighlight: (highlight) => set({ highlight }),
+      setFinalResults: (finalResults) => set({ finalResults }),
 
-        setAlertMessage: (alertMessage) => set({ alertMessage }),
+      setHighlight: (highlight) => set({ highlight }),
 
-        setPendingNavigation: (pendingNavigation) => set({ pendingNavigation }),
+      setAlertMessage: (alertMessage) => set({ alertMessage }),
 
-        setIsInWaitlist: (isInWaitlist) => set({ isInWaitlist }),
+      setPendingNavigation: (pendingNavigation) => set({ pendingNavigation }),
 
-        setIsPracticing: (isPracticing) => set({ isPracticing }),
+      setIsInWaitlist: (isInWaitlist) => set({ isInWaitlist }),
 
-        setPracticePrompt: (practicePrompt) => set({ practicePrompt }),
+      setIsPracticing: (isPracticing) => set({ isPracticing }),
 
-        setGameProgress: (gameProgress) => set({ gameProgress }),
+      setPracticePrompt: (practicePrompt) => set({ practicePrompt }),
 
-        reset: () => set(initialState),
-      }),
-      {
-        name: 'game-store',
-        storage: createJSONStorage(() => sessionStorage),
-        partialize: (state) => ({
-          roomId: state.roomId,
-          phase: state.phase,
-          players: state.players,
-          currentRound: state.currentRound,
-          settings: state.settings,
-          isInWaitlist: state.isInWaitlist,
-        }),
-      },
-    ),
+      setGameProgress: (gameProgress) => set({ gameProgress }),
+
+      reset: () => set(initialState),
+    }),
     { name: 'Game Store' },
   ),
 );

@@ -1,10 +1,10 @@
 import { useGameStore, useIsHost } from '@/entities/gameRoom';
 import { PlayerCard, SlotCard } from '@/entities/player';
-import type { Player } from '@shared/types';
 import { getSocket } from '@/shared/api/socket';
 import { SERVER_EVENTS } from '@/shared/config';
 import { cn } from '@/shared/lib/classNames';
 import { OverlayModal } from '@/shared/ui';
+import type { Player } from '@shared/types';
 import type { ReactNode } from 'react';
 import { useKickModal } from '../model/useKickModal';
 import { useSlotHighlight } from '../model/useSlotHighlight';
@@ -84,8 +84,8 @@ export const PlayerListSection = ({
           if (player) {
             return (
               <PlayerCard
-                key={player.socketId}
-                id={player.socketId}
+                key={player.profileId}
+                id={player.profileId}
                 nickname={player.nickname}
                 profileId={player.profileId}
                 isHost={player.isHost ?? false}

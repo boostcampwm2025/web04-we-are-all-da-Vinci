@@ -13,12 +13,12 @@ function calculateRankChange(
 
 export const useLiveRanking = () => {
   const rankings = useGameStore(selectLiveRankings);
-  const mySocketId = useGameStore((state) => state.mySocketId);
+  const myProfileId = useGameStore((state) => state.myProfileId);
 
   const rankingsWithChange = rankings.map((entry) => ({
     ...entry,
     rankChange: calculateRankChange(entry.previousRank, entry.rank),
-    isCurrentUser: entry.socketId === mySocketId,
+    isCurrentUser: entry.profileId === myProfileId,
   }));
 
   return { rankings: rankingsWithChange };

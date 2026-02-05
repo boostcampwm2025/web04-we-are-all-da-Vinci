@@ -17,7 +17,7 @@ export const StandingRow = ({
   finalRank,
   isSorted,
 }: StandingRowProps) => {
-  const isCurrentUser = useIsCurrentUser(player.socketId);
+  const isCurrentUser = useIsCurrentUser(player.profileId);
   const style =
     RANK_STYLES[finalRank as keyof typeof RANK_STYLES] ?? RANK_STYLES.default;
   const animatedScore = useCountUp(previousScore, player.score, 1200, 300);

@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { RedisService } from '../redis.service';
-import { RedisKeys } from '../redis-keys';
+import { SimilaritySchema, StrokeSchema, z } from '@shared/types';
 import { RoundResultEntry, Similarity, Stroke } from 'src/common/types';
 import { REDIS_TTL } from '../../common/constants';
 import { WebsocketException } from '../../common/exceptions/websocket-exception';
-import { z, StrokeSchema, SimilaritySchema } from '@shared/types';
+import { RedisKeys } from '../redis-keys';
+import { RedisService } from '../redis.service';
 
 const PlayerRecordSchema = z.object({
   strokes: z.array(StrokeSchema),
   similarity: SimilaritySchema,
 });
 
-type RoundResult = Omit<RoundResultEntry, 'nickname' | 'profileId'>;
+type RoundResult = Omit<RoundResultEntry, 'nickname' | 'socketId'>;
 
 @Injectable()
 export class GameProgressCacheService {
@@ -20,12 +20,12 @@ export class GameProgressCacheService {
   async submitRoundResult(
     roomId: string,
     round: number,
-    socketId: string,
+    profileId: string,
     strokes: Stroke[],
     similarity: Similarity,
   ) {
     const client = this.redisService.getClient();
-    const key = RedisKeys.drawing(roomId, round, socketId);
+    const key = RedisKeys.drawing(roomId, round, profileId);
 
     const exists = await client.get(key);
 
@@ -41,7 +41,7 @@ export class GameProgressCacheService {
     const scanKey = RedisKeys.drawingRoundScan(roomId, round);
 
     let cursor = '0';
-    const keys = [];
+    const keys: string[] = [];
     do {
       const data = await client.scan(cursor, {
         TYPE: 'string',
@@ -60,30 +60,30 @@ export class GameProgressCacheService {
     const result = await client.mGet(keys);
 
     const prefix = `drawing:${roomId}:${round}:`;
-    const socketIds = keys.map((key) => key.slice(prefix.length));
+    const profileIds = keys.map((key) => key.slice(prefix.length));
 
     return result
       .map((value, index) => ({
-        socketId: socketIds[index],
+        profileId: profileIds[index],
         value: value,
       }))
-      .filter((item): item is { socketId: string; value: string } =>
+      .filter((item): item is { profileId: string; value: string } =>
         Boolean(item.value),
       )
-      .map(({ socketId, value }) => ({
-        socketId,
+      .map(({ profileId, value }) => ({
+        profileId,
         ...PlayerRecordSchema.parse(JSON.parse(value)),
       }));
   }
 
   async getPlayerResults(
     roomId: string,
-    socketId: string,
+    profileId: string,
     totalRounds: number,
   ) {
     const client = this.redisService.getClient();
     const keys = Array.from({ length: totalRounds }, (_, index) =>
-      RedisKeys.drawing(roomId, index + 1, socketId),
+      RedisKeys.drawing(roomId, index + 1, profileId),
     );
 
     // 키가 없으면 빈 배열 반환
@@ -95,23 +95,23 @@ export class GameProgressCacheService {
 
     return result
       .map((value, index) => ({
-        socketId: socketId,
+        profileId: profileId,
         value: value,
         round: index + 1,
       }))
       .filter(
-        (item): item is { socketId: string; value: string; round: number } =>
+        (item): item is { profileId: string; value: string; round: number } =>
           Boolean(item.value),
       )
-      .map(({ socketId, value, round }) => ({
-        socketId,
+      .map(({ profileId, value, round }) => ({
+        profileId,
         round,
         ...PlayerRecordSchema.parse(JSON.parse(value)),
       }));
   }
 
-  async getHighlight(roomId: string, socketId: string, totalRounds: number) {
-    const results = await this.getPlayerResults(roomId, socketId, totalRounds);
+  async getHighlight(roomId: string, profileId: string, totalRounds: number) {
+    const results = await this.getPlayerResults(roomId, profileId, totalRounds);
     const highlight = results.sort(
       (a, b) => b.similarity.similarity - a.similarity.similarity,
     )[0];
@@ -138,9 +138,9 @@ export class GameProgressCacheService {
     } while (cursor !== '0');
   }
 
-  async deletePlayer(roomId: string, socketId: string) {
+  async deletePlayer(roomId: string, profileId: string) {
     const client = this.redisService.getClient();
-    const scanKey = RedisKeys.drawingPlayerScan(roomId, socketId);
+    const scanKey = RedisKeys.drawingPlayerScan(roomId, profileId);
 
     let cursor = '0';
 
@@ -157,5 +157,19 @@ export class GameProgressCacheService {
         await client.unlink(keys);
       }
     } while (cursor !== '0');
+  }
+
+  /**
+   * 특정 라운드의 특정 플레이어 결과 삭제 (세션 복구 시 재제출 가능하게)
+   */
+  async deleteRoundResult(
+    roomId: string,
+    round: number,
+    profileId: string,
+  ): Promise<void> {
+    const client = this.redisService.getClient();
+    const key = RedisKeys.drawing(roomId, round, profileId);
+
+    await client.unlink(key);
   }
 }

@@ -35,10 +35,10 @@ export const RoundStanding = () => {
 
           <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 overflow-y-auto p-3 pl-10 md:pl-20">
             {displayResults.map((player, index) => (
-              <div key={player.socketId} ref={setRowRef(player.socketId)}>
+              <div key={player.profileId} ref={setRowRef(player.profileId)}>
                 <StandingRow
                   player={player}
-                  previousScore={previousScoreMap.get(player.socketId) ?? 0}
+                  previousScore={previousScoreMap.get(player.profileId) ?? 0}
                   finalRank={index + 1}
                   isSorted={isSorted}
                 />

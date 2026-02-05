@@ -153,9 +153,10 @@ export class PhaseService {
       .sort((a, b) => b.similarity.similarity - a.similarity.similarity)
       .map((value) => ({
         ...value,
-        nickname: playerMapper[value.socketId]?.nickname,
-        profileId: playerMapper[value.socketId]?.profileId,
-      }));
+        nickname: playerMapper[value.profileId]?.nickname,
+        socketId: playerMapper[value.profileId]?.socketId,
+      }))
+      .filter((user) => user.nickname); // 유령 유저 필터링
 
     return {
       rankings: rankings,
@@ -176,11 +177,13 @@ export class PhaseService {
     );
     const playerMapper = createPlayerMapper(room.players);
 
-    const rankings = standings.map((value) => ({
-      ...value,
-      nickname: playerMapper[value.socketId]?.nickname,
-      profileId: playerMapper[value.socketId]?.profileId,
-    }));
+    const rankings = standings
+      .map((value) => ({
+        ...value,
+        nickname: playerMapper[value.profileId]?.nickname,
+        socketId: playerMapper[value.profileId]?.socketId,
+      }))
+      .filter((user) => user.nickname); // 유령 유저 필터링
 
     return { rankings };
   }
@@ -195,11 +198,13 @@ export class PhaseService {
 
     const playerMapper = createPlayerMapper(room.players);
 
-    const rankings = standings.map((value) => ({
-      ...value,
-      nickname: playerMapper[value.socketId]?.nickname,
-      profileId: playerMapper[value.socketId]?.profileId,
-    }));
+    const rankings = standings
+      .map((value) => ({
+        ...value,
+        nickname: playerMapper[value.profileId]?.nickname,
+        socketId: playerMapper[value.profileId]?.socketId,
+      }))
+      .filter((user) => user.nickname); // 유령 유저 필터링
 
     const champion = rankings[0];
 
@@ -209,7 +214,7 @@ export class PhaseService {
 
     const highlight = await this.progressCacheService.getHighlight(
       room.roomId,
-      champion.socketId,
+      champion.profileId,
       room.settings.totalRounds,
     );
 

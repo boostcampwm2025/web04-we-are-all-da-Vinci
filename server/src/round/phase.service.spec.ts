@@ -56,7 +56,7 @@ describe('PhaseService', () => {
 
   const mockRoundResults = [
     {
-      socketId: 'test1',
+      profileId: 'test1',
       strokes: mockPromptStrokes,
       similarity: {
         similarity: 40,
@@ -66,7 +66,7 @@ describe('PhaseService', () => {
       },
     },
     {
-      socketId: 'test2',
+      profileId: 'test2',
       strokes: mockPromptStrokes,
       similarity: {
         similarity: 70,
@@ -79,17 +79,18 @@ describe('PhaseService', () => {
 
   const mockStandings = [
     {
-      socketId: 'test1',
+      profileId: 'test1',
       score: 100,
     },
     {
-      socketId: 'test2',
+      profileId: 'test2',
       score: 200,
     },
   ];
 
   const mockHighlight = {
-    socketId: 'test1',
+    profileId: 'test1',
+    round: 1,
     strokes: mockPromptStrokes,
     similarity: {
       similarity: 40,

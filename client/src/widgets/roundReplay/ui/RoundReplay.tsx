@@ -19,7 +19,7 @@ const RoundReplay = () => {
   const mySimilarity = useMemo(() => {
     if (!currentPlayer) return null;
     const myResult = roundResults.find(
-      (result) => result.socketId === currentPlayer.socketId,
+      (result) => result.profileId === currentPlayer.profileId,
     );
     return myResult?.similarity ?? null;
   }, [roundResults, currentPlayer]);

@@ -9,7 +9,7 @@ interface ChatMessageProps {
 
 const ChatMessage = ({ message }: ChatMessageProps) => {
   const currentPlayer = useCurrentPlayer();
-  const isMe = currentPlayer?.socketId === message.socketId;
+  const isMe = currentPlayer?.profileId === message.profileId;
   const isSystem = message.type === 'system';
 
   if (isSystem) {
