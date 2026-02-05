@@ -17,7 +17,7 @@ const ChatInput = ({ onSendMessage, disabled }: ChatInputProps) => {
   };
 
   return (
-    <div className="border-stroke-default bg-surface-default border-t p-2">
+    <div className="border-stroke-default bg-surface-default border-t p-1">
       <Input
         value={message}
         onChange={setMessage}
@@ -25,7 +25,7 @@ const ChatInput = ({ onSendMessage, disabled }: ChatInputProps) => {
         maxLength={CHAT_MAX_LENGTH}
         placeholder="메시지 입력..."
         variant="default"
-        className="text-sm"
+        className="text-lg"
       />
     </div>
   );

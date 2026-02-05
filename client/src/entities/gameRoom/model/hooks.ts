@@ -1,4 +1,4 @@
-import type { Player } from '@/entities/player/model';
+import type { Player } from '@shared/types';
 import type { PlayerScore } from '@/entities/roundResult';
 import { useGameStore } from './gameStore';
 import { selectPlayers } from './selectors';

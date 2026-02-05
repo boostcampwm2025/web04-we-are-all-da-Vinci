@@ -1,9 +1,9 @@
 import { useGameStore } from '@/entities/gameRoom';
-import { regenerateProfileId } from '@/entities/profile';
 import { useChatStore } from '@/features/chat';
 import { disconnectSocket, getSocket } from '@/shared/api';
 import { SERVER_EVENTS } from '@/shared/config';
 import { isE2ETestMode } from '@/shared/lib/e2eTestMode';
+import { regenerateProfileId } from '@/shared/lib/profile';
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 

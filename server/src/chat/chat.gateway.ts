@@ -14,7 +14,7 @@ import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import type { ChatMessage } from 'src/common/types';
 import { ZodError } from 'zod';
 import { ChatService } from './chat.service';
-import { ChatMessageSchema } from './dto/chat-message.dto';
+import { ServerChatMessageSchema } from './dto/chat-message.dto';
 
 @WebSocketGateway({
   cors: {
@@ -40,7 +40,7 @@ export class ChatGateway {
   ): Promise<void> {
     try {
       // Zod validation
-      const { roomId, message } = ChatMessageSchema.parse(payload);
+      const { roomId, message } = ServerChatMessageSchema.parse(payload);
 
       const chatMessage = await this.chatService.sendMessage(
         roomId,

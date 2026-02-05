@@ -1,3 +1,4 @@
+
 import type { FinalResult, Highlight } from '@/entities/gameResult';
 import type { RankingEntry } from '@/entities/ranking';
 import type { PlayerScore, RoundResult } from '@/entities/roundResult';

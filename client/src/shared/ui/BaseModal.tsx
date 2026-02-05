@@ -1,4 +1,5 @@
 import { TITLES } from '@/shared/config';
+import { useModalKeyboard } from '@/shared/model';
 import { CommonBtn, DecorateTitle, PageBackground, Title } from '@/shared/ui';
 
 interface BaseModalProps {
@@ -10,6 +11,7 @@ interface BaseModalProps {
   onConfirm: () => void;
   confirmText?: string;
   confirmDisabled?: boolean;
+  showCancel?: boolean;
   variant?: 'default' | 'scribble';
   buttonVariant?: 'default' | 'scribble';
 }
@@ -23,9 +25,12 @@ const BaseModal = ({
   onConfirm,
   confirmText = '확인',
   confirmDisabled = false,
+  showCancel = false,
   variant = 'scribble',
   buttonVariant = 'scribble',
 }: BaseModalProps) => {
+  useModalKeyboard({ isOpen, onConfirm, onClose, confirmDisabled, showCancel });
+
   if (!isOpen) return null;
 
   const containerClasses =
@@ -39,10 +44,7 @@ const BaseModal = ({
   const btnVariant = buttonVariant === 'scribble' ? 'scribble' : 'radius';
 
   return (
-    <div
-      onClick={onClose}
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white"
-    >
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white">
       <PageBackground />
 
       {/* 상단 로고 영역 */}
@@ -57,13 +59,21 @@ const BaseModal = ({
 
       {/* 모달 콘텐츠 */}
       <div
-        onClick={(e) => e.stopPropagation()}
         className={`relative z-10 w-full max-w-md rounded-2xl border-2 border-gray-400 bg-white p-8 shadow-xl ${containerClasses}`}
       >
         <h2 className={titleClasses}>{title}</h2>
         {message && <p className={messageClasses}>{message}</p>}
         {children}
-        <div className="mt-6">
+        <div className={`mt-6 flex ${showCancel ? 'gap-3' : ''}`}>
+          {showCancel && (
+            <CommonBtn
+              variant={btnVariant}
+              icon={buttonVariant === 'scribble' ? 'close' : undefined}
+              text="닫기"
+              onClick={onClose}
+              color="gray"
+            />
+          )}
           <CommonBtn
             variant={btnVariant}
             icon={buttonVariant === 'scribble' ? 'check_circle' : undefined}

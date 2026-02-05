@@ -1,4 +1,4 @@
-import type { Stroke } from '@/entities/similarity/model';
+import type { Stroke } from '@/entities/similarity';
 import { CANVAS_CONFIG } from '@/shared/config';
 import { useDrawingReplay } from '../model/useDrawingReplay';
 import { useCanvasSetup } from '@/shared/model';

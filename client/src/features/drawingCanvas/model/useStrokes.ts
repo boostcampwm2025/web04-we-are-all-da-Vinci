@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Stroke } from '@/entities/similarity/model';
+import type { Stroke } from '@/entities/similarity';
 import { captureEvent } from '@/shared/lib/sentry';
 
 // strokes 배열을 관리하는 훅

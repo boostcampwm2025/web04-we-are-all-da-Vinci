@@ -7,16 +7,13 @@ import {
   BaseModal,
 } from '@/shared/ui';
 import { ProfileSettingsModal } from '@/features/profileSettings';
-import {
-  RoomSettingsModal,
-  type RoomSettings,
-  createRoom,
-} from '@/features/roomSettings';
+import { RoomSettingsModal, createRoom } from '@/features/roomSettings';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { captureMessage } from '@/shared/lib/sentry';
 import { trackEvent } from '@/shared/lib/mixpanel';
 import { TEXT } from '@/widgets/main/config';
+import type { Settings } from '@/entities/gameRoom';
 
 export const Main = () => {
   const navigate = useNavigate();
@@ -31,10 +28,10 @@ export const Main = () => {
     setShowSettingsModal(true);
   };
 
-  const handleSettingsComplete = async (settings: RoomSettings) => {
+  const handleSettingsComplete = async (settings: Settings) => {
     try {
       const { roomId } = await createRoom({
-        maxPlayer: settings.maxPlayers,
+        maxPlayer: settings.maxPlayer,
         totalRounds: settings.totalRounds,
         drawingTime: settings.drawingTime,
       });
@@ -57,7 +54,7 @@ export const Main = () => {
     <>
       <div className="page-center">
         <div className="w-l flex flex-col items-center justify-center text-center">
-          <h3 className="border-accent-warm bg-accent/30 text-accent-warm mb-2 inline-block -rotate-1 rounded-full border-2 border-dashed px-4 py-2 text-xs font-bold tracking-wide md:px-5 md:text-base">
+          <h3 className="border-accent-warm bg-accent/30 text-accent-warm mb-2 inline-block -rotate-1 rounded-full border-2 border-dashed px-4 py-2 text-sm font-bold tracking-wide md:px-5 md:text-xl">
             {TEXT.SUB_TITLE}
           </h3>
 

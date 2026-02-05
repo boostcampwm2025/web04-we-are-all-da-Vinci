@@ -1,8 +1,8 @@
 import { useGameStore, type GameRoom } from '@/entities/gameRoom';
-import type { Player } from '@/entities/player/model';
 import { disconnectSocket, getSocket } from '@/shared/api';
 import { CLIENT_EVENTS } from '@/shared/config';
 import { useToastStore } from '@/shared/model';
+import type { Player } from '@shared/types';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { processRoomMetadata } from '../lib/socketHandlers';

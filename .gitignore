@@ -8,6 +8,7 @@ node_modules
 # Build outputs
 dist
 build
+.vite
 
 # Test coverage
 coverage
@@ -31,7 +32,6 @@ pnpm-debug.log*
 .claude*
 CLAUDE.md
 claude*
-
 # test
 coverage/
 

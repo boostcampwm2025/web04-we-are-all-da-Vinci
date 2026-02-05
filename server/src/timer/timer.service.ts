@@ -45,33 +45,39 @@ export class TimerService implements OnModuleInit, OnModuleDestroy {
   async tick() {
     const timers = await this.timerCacheService.getAllTimers();
     for (const timer of timers) {
-      const updatedTimeLeft = await this.timerCacheService.decrementTimer(
-        timer.roomId,
-      );
+      const { roomId } = timer;
 
-      if (updatedTimeLeft !== null && updatedTimeLeft >= 0) {
+      const timeLeft = await this.timerCacheService.decrementTimer(roomId);
+
+      if (timeLeft !== null && timeLeft >= 0) {
         // Gateway에 알림
         if (this.onTimerTickCallback) {
-          this.onTimerTickCallback(timer.roomId, updatedTimeLeft);
+          this.onTimerTickCallback(roomId, timeLeft);
         }
+      }
 
-        if (updatedTimeLeft === 0 && this.onTimerEndCallback) {
-          try {
-            await this.onTimerEndCallback(timer.roomId);
-          } catch (err) {
-            this.logger.error(
-              { roomId: timer.roomId, err },
-              'Timer end callback failed.',
-            );
-          }
+      if (timeLeft === 0 && this.onTimerEndCallback) {
+        try {
+          await this.onTimerEndCallback(roomId);
+        } catch (err) {
+          this.logger.error(
+            { roomId: roomId, err },
+            'Timer end callback failed. Remove Timer',
+          );
+          await this.cancelTimer(roomId);
         }
       }
     }
   }
 
   async startTimer(roomId: string, timeLeft: number) {
-    this.logger.info({ roomId, timeLeft }, 'Start Timer');
     await this.timerCacheService.addTimer(roomId, timeLeft);
+
+    // 초기 타이머 값 즉시 브로드캐스트 (1초 대기 없이)
+    if (this.onTimerTickCallback) {
+      this.onTimerTickCallback(roomId, timeLeft);
+    }
+    this.logger.info({ roomId, timeLeft }, 'Start Timer');
   }
 
   async cancelTimer(roomId: string) {

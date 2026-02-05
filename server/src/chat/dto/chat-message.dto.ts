@@ -1,16 +1,14 @@
-import { CHAT_MAX_LENGTH } from 'src/common/constants';
+import { CHAT_MAX_LENGTH } from '@shared/types';
 import { escapeHtml } from 'src/common/utils/sanitize';
 import { z } from 'zod';
 
-export const ChatMessageSchema = z.object({
-  roomId: z.string().min(1, '방 ID가 필요합니다.'),
+export const ServerChatMessageSchema = z.object({
+  roomId: z.string(),
   message: z
     .string()
-    .min(1, '메시지를 입력해주세요.')
-    .max(CHAT_MAX_LENGTH, `메시지는 ${CHAT_MAX_LENGTH}자 이내로 입력해주세요.`)
-    .transform((val) => val.trim())
-    .refine((val) => val.length > 0, '메시지를 입력해주세요.')
-    .transform((val) => escapeHtml(val)),
+    .min(1)
+    .max(CHAT_MAX_LENGTH)
+    .transform((val) => escapeHtml(val.trim())),
 });
 
-export type ChatMessageDto = z.infer<typeof ChatMessageSchema>;
+export type ChatMessageDto = z.infer<typeof ServerChatMessageSchema>;

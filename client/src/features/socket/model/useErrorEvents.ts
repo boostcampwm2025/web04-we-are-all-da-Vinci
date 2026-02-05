@@ -1,7 +1,7 @@
 import { useGameStore } from '@/entities/gameRoom';
-import { regenerateProfileId } from '@/entities/profile';
 import { getSocket } from '@/shared/api';
 import { CLIENT_EVENTS } from '@/shared/config';
+import { regenerateProfileId } from '@/shared/lib/profile';
 import { useEffect } from 'react';
 
 /** INVALID_PROFILE_ID 에러 메시지 (서버 ErrorCode와 동일) */

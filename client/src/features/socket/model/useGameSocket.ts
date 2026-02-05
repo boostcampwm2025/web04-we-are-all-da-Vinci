@@ -10,12 +10,8 @@ import { useSocketConnection } from './useSocketConnection';
 import { useTabLock } from './useTabLock';
 import { useWaitlistEvents } from './useWaitlistEvents';
 
-/**
- * 게임 소켓 연결 및 이벤트 관리 (조합 훅)
- */
 export const useGameSocket = () => {
   const { roomId } = useParams<{ roomId: string }>();
-
   // 1. 탭 잠금
   const { acquired: tabLockAcquired } = useTabLock(roomId);
 

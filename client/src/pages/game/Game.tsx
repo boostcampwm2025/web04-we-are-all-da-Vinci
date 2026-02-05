@@ -2,21 +2,22 @@ import { selectPhase, useGameStore } from '@/entities/gameRoom';
 import { useGameSocket } from '@/features/socket';
 import { OverlayModal } from '@/shared/ui';
 import { Drawing } from '@/widgets/drawing';
-import { GameEnd } from '@/widgets/gameEnd';
 import { Prompt } from '@/widgets/prompt';
 import { RoundReplay } from '@/widgets/roundReplay';
 import { RoundStanding } from '@/widgets/roundStanding';
+import { GameEnd } from '@/widgets/gameEnd';
+import type { Phase } from '@/shared/config';
 import { Waiting } from '@/widgets/waiting';
 import { useNavigate } from 'react-router-dom';
 
-const GAME_PHASE_COMPONENT_MAP = {
+const GAME_PHASE_COMPONENT_MAP: Record<Phase, React.FC> = {
   WAITING: Waiting,
   DRAWING: Drawing,
   PROMPT: Prompt,
   ROUND_REPLAY: RoundReplay,
   ROUND_STANDING: RoundStanding,
   GAME_END: GameEnd,
-} as const;
+};
 
 const Game = () => {
   const navigate = useNavigate();

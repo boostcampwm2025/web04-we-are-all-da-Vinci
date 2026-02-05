@@ -4,3 +4,5 @@ export { useCanvasSetup } from './useCanvasSetup';
 export { useLocalStorageWatch } from './useLocalStorageWatch';
 export { useMediaQuery } from './useMediaQuery';
 export { useToastStore } from './useToastStore';
+export { useModalKeyboard } from './useModalKeyboard';
+export { useCountUp } from './useCountUp';

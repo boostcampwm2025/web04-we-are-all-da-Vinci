@@ -1,28 +1,19 @@
 interface RoomCodeCopyProps {
-  roomId: string;
   onCopy: () => void;
 }
 
-export const RoomCodeCopy = ({ roomId, onCopy }: RoomCodeCopyProps) => {
+export const RoomCodeCopy = ({ onCopy }: RoomCodeCopyProps) => {
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-2 py-1 md:px-4 md:py-2">
-      <span className="material-symbols-outlined text-base text-blue-600">
-        tag
+    <button
+      onClick={onCopy}
+      className="flex cursor-pointer items-center gap-2 rounded-lg border border-blue-300 bg-blue-50 px-2 py-1 transition-all hover:bg-blue-100 active:scale-95 md:px-4 md:py-2"
+    >
+      <span className="material-symbols-outlined text-lg text-blue-600">
+        content_copy
       </span>
-      <span className="hidden text-base font-bold text-gray-700 xl:inline">
-        친구들을 초대하세요!:
+      <span className="text-base font-bold text-gray-700 md:text-lg">
+        친구 초대 링크 복사하기
       </span>
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-bold text-gray-700 md:text-base">
-          {roomId}
-        </span>
-        <button
-          onClick={onCopy}
-          className="material-symbols-outlined cursor-pointer text-lg text-blue-600 hover:text-blue-800"
-        >
-          content_copy
-        </button>
-      </div>
-    </div>
+    </button>
   );
 };

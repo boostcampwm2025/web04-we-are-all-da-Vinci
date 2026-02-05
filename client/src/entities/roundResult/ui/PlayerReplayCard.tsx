@@ -1,9 +1,9 @@
 import { PlayerSimilarityDetailTooltip } from '@/entities/similarity';
-import type { Stroke } from '@/entities/similarity/model';
+import type { Stroke } from '@/entities/similarity';
 import { DrawingReplayCanvas } from '@/features/replayingCanvas';
 import type { Similarity } from '@/features/similarity';
 import { UserAvatar } from '@/shared/ui';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { getRankStyles } from '../lib/rankStyles';
 
 interface PlayerReplayCardProps {
@@ -15,6 +15,8 @@ interface PlayerReplayCardProps {
   isCurrentUser?: boolean;
 }
 
+type TooltipDirection = 'left' | 'right';
+
 const PlayerReplayCard = ({
   rank,
   nickname,
@@ -24,9 +26,34 @@ const PlayerReplayCard = ({
   isCurrentUser = false,
 }: PlayerReplayCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [tooltipDirection, setTooltipDirection] =
+    useState<TooltipDirection>('left');
+  const playerCardRef = useRef<HTMLDivElement>(null);
+
+  const TOOLTIP_WIDTH = 192;
+  const TOOLTIP_MARGIN = 8;
 
   const handleMouseEnter = () => {
     setIsHovered(true);
+    if (playerCardRef.current) {
+      const cardRect = playerCardRef.current.getBoundingClientRect();
+      const container = playerCardRef.current.closest('.card');
+
+      if (container) {
+        const containerRect = container.getBoundingClientRect();
+        const isRightSide =
+          cardRect.right + TOOLTIP_WIDTH + TOOLTIP_MARGIN <=
+          containerRect.right;
+        const isLeftSide =
+          cardRect.left - TOOLTIP_WIDTH - TOOLTIP_MARGIN >= containerRect.left;
+
+        if (!isRightSide && isLeftSide) {
+          setTooltipDirection('left');
+        } else {
+          setTooltipDirection('right');
+        }
+      }
+    }
   };
 
   const handleMouseLeave = () => {
@@ -37,13 +64,16 @@ const PlayerReplayCard = ({
 
   return (
     <div
+      ref={playerCardRef}
       className="relative flex h-full w-full flex-col"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       {/* Similarity Detail Tooltip */}
       {isHovered && (
-        <div className="absolute top-0 left-full z-20 ml-2 w-48">
+        <div
+          className={`absolute top-0 ${tooltipDirection === 'left' ? 'right-full mr-2' : 'left-full ml-2'} z-20 w-${TOOLTIP_WIDTH / 4}`}
+        >
           <PlayerSimilarityDetailTooltip similarity={similarity} />
         </div>
       )}
@@ -55,12 +85,12 @@ const PlayerReplayCard = ({
         <div className="mb-1 flex shrink-0 items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span
-              className={`flex h-6 min-w-[24px] shrink-0 items-center justify-center rounded-full px-1 text-xs font-bold ${rankStyles.badge}`}
+              className={`flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full px-1.5 text-sm font-bold ${rankStyles.badge}`}
             >
               {rank}
             </span>
             <UserAvatar name={profileId} className="h-6 w-6" />
-            <h3 className="font-handwriting truncate text-sm font-bold md:text-base">
+            <h3 className="font-handwriting max-w-20 truncate text-base font-bold md:max-w-30 md:text-lg">
               {nickname}
               {isCurrentUser && ' (나)'}
             </h3>
@@ -86,11 +116,11 @@ const PlayerReplayCard = ({
         {/* Similarity Score */}
         <div className="mt-1 shrink-0">
           <div className="mb-0.5 flex items-center justify-between">
-            <span className="font-handwriting text-sm font-semibold text-gray-700">
+            <span className="font-handwriting text-base font-semibold text-gray-700">
               유사도
             </span>
             <span
-              className={`font-handwriting text-lg font-bold ${rankStyles.text || 'text-blue-600'}`}
+              className={`font-handwriting text-2xl font-bold ${rankStyles.text || 'text-blue-600'}`}
             >
               {similarity.similarity}%
             </span>

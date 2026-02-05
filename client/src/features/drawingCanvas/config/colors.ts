@@ -1,4 +1,4 @@
-import type { Color } from '@/entities/similarity/model';
+import type { Color } from '@/entities/similarity';
 
 // 임시 색상 맵
 export const COLOR_MAP: Record<string, Color> = {

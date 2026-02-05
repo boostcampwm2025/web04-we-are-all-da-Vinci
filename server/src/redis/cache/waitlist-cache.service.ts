@@ -3,6 +3,7 @@ import { REDIS_TTL } from 'src/common/constants';
 import { Player } from 'src/common/types';
 import { RedisKeys } from '../redis-keys';
 import { RedisService } from '../redis.service';
+import { PlayerSchema } from '@shared/types';
 
 @Injectable()
 export class WaitlistCacheService {
@@ -22,7 +23,7 @@ export class WaitlistCacheService {
     const key = RedisKeys.waitlist(roomId);
     const rawPlayer = await client.lPop(key);
     if (!rawPlayer) return null;
-    return JSON.parse(rawPlayer) as Player;
+    return PlayerSchema.parse(JSON.parse(rawPlayer));
   }
 
   // 대기열에서 특정유저 제거
@@ -42,7 +43,7 @@ export class WaitlistCacheService {
     const client = this.redisService.getClient();
     const key = RedisKeys.waitlist(roomId);
     const waitlist = await client.lRange(key, 0, -1);
-    return waitlist.map((player) => JSON.parse(player) as Player);
+    return waitlist.map((player) => PlayerSchema.parse(JSON.parse(player)));
   }
 
   async getWaitlistSize(roomId: string) {
