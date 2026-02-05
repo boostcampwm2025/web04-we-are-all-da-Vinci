@@ -21,7 +21,7 @@ const FinalRankingCard = ({
     <div className="card relative flex h-full w-full flex-col items-center justify-center overflow-hidden p-6">
       <FireworkCanvas className="z-50" />
       <div className="relative z-10 mb-4 text-center">
-        <h2 className="text-title text-3xl text-gray-800">최종 순위</h2>
+        <h2 className="text-title text-4xl text-gray-800">최종 순위</h2>
       </div>
 
       <div className="relative z-10 flex min-h-0 w-full flex-1 flex-col items-center justify-center gap-8">
@@ -48,7 +48,7 @@ const FinalRankingCard = ({
             />
           )}
 
-          <p className="text-content-disabled text-sm">
+          <p className="text-content-disabled text-lg">
             {timer}초 후 대기실로 이동
           </p>
         </div>

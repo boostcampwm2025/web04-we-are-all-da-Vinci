@@ -12,7 +12,7 @@ const MySimilarityDetail = ({ similarity }: MySimilarityDetailProps) => {
         <span className="material-symbols-outlined text-base text-blue-500">
           analytics
         </span>
-        <h2 className="font-handwriting text-lg font-bold text-gray-800 md:text-xl">
+        <h2 className="font-handwriting text-xl font-bold text-gray-800 md:text-2xl">
           내 유사도 분석
         </h2>
       </div>
@@ -20,10 +20,10 @@ const MySimilarityDetail = ({ similarity }: MySimilarityDetailProps) => {
       <div className="flex flex-col gap-1 rounded-xl border-2 border-blue-300 bg-white p-1 shadow-lg md:border-4 md:p-3 md:shadow-xl">
         {/* 전체 유사도 */}
         <div className="flex items-center justify-between border-b border-gray-100 pb-1 md:mb-1 md:border-gray-200">
-          <span className="font-handwriting text-xs font-semibold text-gray-700 md:text-sm">
+          <span className="font-handwriting text-sm font-semibold text-gray-700 md:text-base">
             전체 유사도
           </span>
-          <span className="font-handwriting text-xl font-bold text-blue-500 md:text-2xl">
+          <span className="font-handwriting text-2xl font-bold text-blue-500 md:text-3xl">
             {similarity.similarity}%
           </span>
         </div>

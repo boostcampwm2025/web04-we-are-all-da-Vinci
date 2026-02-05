@@ -3,6 +3,7 @@ import { selectPhase, useGameStore } from '@/entities/gameRoom';
 import { useColorSelection } from '@/features/drawingCanvas/model/useColorSelection';
 import { useMouseDrawing } from '@/features/drawingCanvas/model/useMouseDrawing';
 import { useStrokes } from '@/features/drawingCanvas/model/useStrokes';
+import pencilCursor from '@/shared/assets/images/cursor/pencil.png';
 import { useDrawingTimeTracking } from '@/features/drawingCanvas/model/useDrawingTimeTracking';
 import { useDrawingSubmission } from '@/features/drawingCanvas/model/useDrawingSubmission';
 import { DrawingToolbar } from '@/features/drawingToolbar';
@@ -79,7 +80,7 @@ export const DrawingCanvas = ({
           height={CANVAS_CONFIG.height}
           className="h-full w-full"
           style={{
-            cursor: 'url(/cursors/pencil.png), auto',
+            cursor: `url(${pencilCursor}), auto`,
             touchAction: 'none',
           }}
           onPointerDown={handleMouseDown}

@@ -11,7 +11,7 @@ export const RoomCodeCopy = ({ onCopy }: RoomCodeCopyProps) => {
       <span className="material-symbols-outlined text-lg text-blue-600">
         content_copy
       </span>
-      <span className="text-sm font-bold text-gray-700 md:text-base">
+      <span className="text-base font-bold text-gray-700 md:text-lg">
         친구 초대 링크 복사하기
       </span>
     </button>

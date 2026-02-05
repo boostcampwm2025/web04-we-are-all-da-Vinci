@@ -85,12 +85,12 @@ const PlayerReplayCard = ({
         <div className="mb-1 flex shrink-0 items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span
-              className={`flex h-6 min-w-[24px] shrink-0 items-center justify-center rounded-full px-1 text-xs font-bold ${rankStyles.badge}`}
+              className={`flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full px-1.5 text-sm font-bold ${rankStyles.badge}`}
             >
               {rank}
             </span>
             <UserAvatar name={profileId} className="h-6 w-6" />
-            <h3 className="font-handwriting truncate text-sm font-bold md:text-base">
+            <h3 className="font-handwriting max-w-20 truncate text-base font-bold md:max-w-30 md:text-lg">
               {nickname}
               {isCurrentUser && ' (나)'}
             </h3>
@@ -116,11 +116,11 @@ const PlayerReplayCard = ({
         {/* Similarity Score */}
         <div className="mt-1 shrink-0">
           <div className="mb-0.5 flex items-center justify-between">
-            <span className="font-handwriting text-sm font-semibold text-gray-700">
+            <span className="font-handwriting text-base font-semibold text-gray-700">
               유사도
             </span>
             <span
-              className={`font-handwriting text-lg font-bold ${rankStyles.text || 'text-blue-600'}`}
+              className={`font-handwriting text-2xl font-bold ${rankStyles.text || 'text-blue-600'}`}
             >
               {similarity.similarity}%
             </span>

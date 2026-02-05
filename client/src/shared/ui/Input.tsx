@@ -52,7 +52,7 @@ const Input = ({
 
   const inputClasses = {
     default:
-      'font-handwriting border-stroke-default focus:border-interactive-default w-full rounded-full border-2 px-4 py-3 text-lg focus:outline-none',
+      'font-handwriting border-stroke-default focus:border-interactive-default w-full rounded-full border-2 px-3 py-1 text-lg focus:outline-none',
     scribble:
       'font-handwriting text-content-primary placeholder:text-content-disabled h-full w-full rounded-full bg-transparent px-4 pr-12 text-lg focus:outline-none',
   };
