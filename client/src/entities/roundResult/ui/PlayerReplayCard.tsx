@@ -1,5 +1,5 @@
 import { PlayerSimilarityDetailTooltip } from '@/entities/similarity';
-import type { Stroke } from '@/entities/similarity/model';
+import type { Stroke } from '@/entities/similarity';
 import { DrawingReplayCanvas } from '@/features/replayingCanvas';
 import type { Similarity } from '@/features/similarity';
 import { UserAvatar } from '@/shared/ui';

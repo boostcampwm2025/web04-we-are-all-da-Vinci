@@ -62,9 +62,8 @@ export class TimerService implements OnModuleInit, OnModuleDestroy {
         } catch (err) {
           this.logger.error(
             { roomId: roomId, err },
-            'Timer end callback failed.',
+            'Timer end callback failed. Remove Timer',
           );
-        } finally {
           await this.cancelTimer(roomId);
         }
       }
@@ -72,8 +71,13 @@ export class TimerService implements OnModuleInit, OnModuleDestroy {
   }
 
   async startTimer(roomId: string, timeLeft: number) {
-    this.logger.info({ roomId, timeLeft }, 'Start Timer');
     await this.timerCacheService.addTimer(roomId, timeLeft);
+
+    // 초기 타이머 값 즉시 브로드캐스트 (1초 대기 없이)
+    if (this.onTimerTickCallback) {
+      this.onTimerTickCallback(roomId, timeLeft);
+    }
+    this.logger.info({ roomId, timeLeft }, 'Start Timer');
   }
 
   async cancelTimer(roomId: string) {

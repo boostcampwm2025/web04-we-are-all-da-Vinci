@@ -1,4 +1,4 @@
-import type { Point, Stroke } from '@/entities/similarity/model';
+import type { Point, Stroke } from '@/entities/similarity';
 // -----convex hull 계산 관련 유틸-----
 
 export const strokesToPoints = (strokes: Stroke[]): Point[] => {

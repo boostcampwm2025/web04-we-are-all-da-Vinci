@@ -1,4 +1,4 @@
-import type { Stroke } from '@/entities/similarity/model';
+import type { Stroke } from '@/entities/similarity';
 import { drawStrokesOnCanvas } from '../lib/drawStrokesOnCanvas';
 import { CANVAS_CONFIG } from '@/shared/config';
 import { useEffect } from 'react';

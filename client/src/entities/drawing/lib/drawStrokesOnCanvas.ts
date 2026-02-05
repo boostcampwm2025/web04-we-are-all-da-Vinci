@@ -1,8 +1,5 @@
-import type { Stroke } from '@/entities/similarity/model';
-import {
-  calculateStrokeScale,
-  transformPoint,
-} from '@/shared/lib/scaleStrokesToCanvas';
+import type { Stroke } from '@/entities/similarity';
+import { calculateStrokeScale, transformPoint } from '@/shared/lib';
 import type { RefObject } from 'react';
 
 export const drawStrokesOnCanvas = (
