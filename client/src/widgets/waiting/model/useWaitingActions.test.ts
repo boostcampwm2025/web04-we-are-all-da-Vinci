@@ -1,10 +1,10 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useWaitingActions } from './useWaitingActions';
+import { useToastStore } from '@/shared/model';
 import { getSocket } from '@/shared/api';
 import { SERVER_EVENTS } from '@/shared/config';
 import { trackEvent } from '@/shared/lib/mixpanel';
-import { useToastStore } from '@/shared/model';
 
 vi.mock('@/shared/api', () => ({
   getSocket: vi.fn(),
@@ -125,7 +125,7 @@ describe('useWaitingActions', () => {
       const { result } = renderHook(() => useWaitingActions(defaultProps));
 
       const newSettings = {
-        maxPlayers: 6,
+        maxPlayer: 6,
         totalRounds: 5,
         drawingTime: 30,
       };
@@ -152,7 +152,7 @@ describe('useWaitingActions', () => {
 
       act(() => {
         result.current.handleSettingsComplete({
-          maxPlayers: 4,
+          maxPlayer: 4,
           totalRounds: 3,
           drawingTime: 15,
         });
