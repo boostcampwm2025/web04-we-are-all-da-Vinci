@@ -1,5 +1,5 @@
 import { selectPhase, useGameStore } from '@/entities/gameRoom';
-import { useGameSocket } from '@/features/socket';
+import { useGameSocket, useBeforeUnload } from '@/features/socket';
 import { OverlayModal } from '@/shared/ui';
 import { Drawing } from '@/widgets/drawing';
 import { Prompt } from '@/widgets/prompt';
@@ -23,6 +23,7 @@ const GAME_PHASE_COMPONENT_MAP: Record<Phase, React.FC> = {
 const Game = () => {
   const navigate = useNavigate();
   useGameSocket();
+  useBeforeUnload();
   const phase = useGameStore(selectPhase);
   const alertMessage = useGameStore((state) => state.alertMessage);
   const setAlertMessage = useGameStore((state) => state.setAlertMessage);
