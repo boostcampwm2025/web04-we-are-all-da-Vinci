@@ -28,33 +28,53 @@ const MySimilarityDetail = ({ similarity }: MySimilarityDetailProps) => {
           </span>
         </div>
 
-        {/* 상세 유사도: 모바일에서는 3컬럼 그리드, 데스크탑은 리스트 */}
-        <div className="grid grid-cols-3 gap-2 md:flex md:flex-col md:gap-2">
-          {SIMILARITY_ITEMS.map(({ key, label, shortLabel, color }) => (
+        {/* 상세 유사도: 모바일에서는 3컬럼 그리드 */}
+        <div className="grid grid-cols-3 gap-2 md:hidden">
+          {SIMILARITY_ITEMS.map(({ key, shortLabel, color }) => (
             <div
               key={key}
-              className="flex flex-col items-center border-r border-gray-100 last:border-0 md:block md:items-start md:border-0"
+              className="flex flex-col items-center border-r border-gray-100 last:border-0"
             >
-              <div className="mb-0.5 flex flex-col items-center justify-between md:flex-row md:items-start">
-                <span className="font-handwriting text-[10px] font-semibold text-gray-500 md:text-sm md:text-gray-700">
-                  <span className="md:hidden">{shortLabel}</span>
-                  <span className="hidden md:inline">{label}</span>
+              <div className="mb-0.5 flex flex-col items-center">
+                <span className="font-handwriting text-[10px] font-semibold text-gray-500">
+                  {shortLabel}
                 </span>
                 <span
-                  className={`font-handwriting text-sm font-bold md:text-lg ${color.replace('bg-', 'text-')}`}
+                  className={`font-handwriting text-sm font-bold ${color.replace('bg-', 'text-')}`}
                 >
                   {similarity[key]}%
                 </span>
               </div>
-              {/* 프로그레스 바 (데스크탑에서만 유지 가능하게 구조는 둠, 현재는 hidden) */}
-              <div className="hidden h-1.5 w-full rounded-full bg-gray-200 md:block">
-                <div
-                  className={`h-1.5 rounded-full ${color}`}
-                  style={{ width: `${similarity[key]}%` }}
-                />
-              </div>
             </div>
           ))}
+        </div>
+
+        {/* 데스크탑: 스택형 프로그레스 바 */}
+        <div className="hidden flex-col gap-2 md:flex">
+          <div className="flex h-4 w-full overflow-hidden rounded-full bg-gray-200">
+            {SIMILARITY_ITEMS.map(({ key, color }) => (
+              <div
+                key={key}
+                className={`h-full ${color}`}
+                style={{ width: `${similarity[key]}%` }}
+              />
+            ))}
+          </div>
+          <div className="flex justify-between">
+            {SIMILARITY_ITEMS.map(({ key, shortLabel, color }) => (
+              <div key={key} className="flex items-center gap-1">
+                <div className={`h-3 w-3 rounded-sm ${color}`} />
+                <span className="font-handwriting text-xs text-gray-600">
+                  {shortLabel}
+                </span>
+                <span
+                  className={`font-handwriting text-sm font-bold ${color.replace('bg-', 'text-')}`}
+                >
+                  {similarity[key]}%
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
