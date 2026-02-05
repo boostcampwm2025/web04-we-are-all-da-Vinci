@@ -35,6 +35,7 @@ export const useSocketConnection = ({
 }: UseSocketConnectionOptions): void => {
   const navigate = useNavigate();
   const setMySocketId = useGameStore((state) => state.setMySocketId);
+  const setMyProfileId = useGameStore((state) => state.setMyProfileId);
   const setConnected = useGameStore((state) => state.setConnected);
   const setAlertMessage = useGameStore((state) => state.setAlertMessage);
   const setPendingNavigation = useGameStore(
@@ -53,8 +54,19 @@ export const useSocketConnection = ({
     const handleBeforeUnload = () => {
       isPageUnloadingRef.current = true;
     };
+
+    // 모바일 Safari는 beforeunload를 지원하지 않으므로 pagehide도 사용
+    const handlePageHide = () => {
+      isPageUnloadingRef.current = true;
+    };
+
     window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handlePageHide);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handlePageHide);
+    };
   }, []);
 
   useEffect(() => {
@@ -86,6 +98,7 @@ export const useSocketConnection = ({
 
     const handleConnect = () => {
       setMySocketId(socket.id!);
+      setMyProfileId(profileId);
       setConnected(true);
       socket.emit(SERVER_EVENTS.USER_JOIN, { roomId, nickname, profileId });
     };
@@ -121,6 +134,7 @@ export const useSocketConnection = ({
     enabled,
     navigate,
     setMySocketId,
+    setMyProfileId,
     setConnected,
     setAlertMessage,
     setPendingNavigation,
