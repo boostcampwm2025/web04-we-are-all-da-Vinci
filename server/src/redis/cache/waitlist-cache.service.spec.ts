@@ -22,7 +22,7 @@ describe('WaitlistCacheService', () => {
 
   const createPlayer = (profileId: string): Player => ({
     socketId: `socket-${profileId}`,
-    nickname: `nickname-${profileId}`,
+    nickname: `user`,
     profileId,
     isHost: false,
   });
