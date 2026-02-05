@@ -8,6 +8,7 @@ import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.se
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
 import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
+import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
 import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
 
 @Injectable()
@@ -17,6 +18,7 @@ export class PlayerService {
     private readonly gameRoomCache: GameRoomCacheService,
     private readonly playerCache: PlayerCacheService,
     private readonly leaderboardCache: LeaderboardCacheService,
+    private readonly standingCache: StandingsCacheService,
     private readonly progressCache: GameProgressCacheService,
   ) {}
 
@@ -99,6 +101,7 @@ export class PlayerService {
       this.playerCache.delete(socketId),
       this.leaderboardCache.delete(roomId, socketId),
       this.progressCache.deletePlayer(roomId, socketId),
+      this.standingCache.delete(roomId, socketId),
     ]);
 
     return player;

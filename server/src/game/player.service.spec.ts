@@ -7,6 +7,7 @@ import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
 import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
 import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
 import { GamePhase } from 'src/common/constants';
+import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
 
 describe('PlayerService', () => {
   let service: PlayerService;
@@ -16,6 +17,7 @@ describe('PlayerService', () => {
   let playerCache: jest.Mocked<PlayerCacheService>;
   let leaderboardCache: jest.Mocked<LeaderboardCacheService>;
   let progressCache: jest.Mocked<GameProgressCacheService>;
+  let standingCache: jest.Mocked<StandingsCacheService>;
 
   const mockPlayers = [
     {
@@ -68,6 +70,9 @@ describe('PlayerService', () => {
     const mockProgressCache = {
       deletePlayer: jest.fn(),
     };
+    const mockStandingCache = {
+      delete: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -92,6 +97,10 @@ describe('PlayerService', () => {
           provide: GameProgressCacheService,
           useValue: mockProgressCache,
         },
+        {
+          provide: StandingsCacheService,
+          useValue: mockStandingCache,
+        },
       ],
     }).compile();
 
@@ -101,6 +110,7 @@ describe('PlayerService', () => {
     playerCache = module.get(PlayerCacheService);
     leaderboardCache = module.get(LeaderboardCacheService);
     progressCache = module.get(GameProgressCacheService);
+    standingCache = module.get(StandingsCacheService);
   });
 
   afterEach(() => {
@@ -223,6 +233,7 @@ describe('PlayerService', () => {
       expect(gameRoomCache.deletePlayer).toHaveBeenCalledWith(roomId, socketId);
       expect(leaderboardCache.delete).toHaveBeenCalledWith(roomId, socketId);
       expect(progressCache.deletePlayer).toHaveBeenCalledWith(roomId, socketId);
+      expect(standingCache.delete).toHaveBeenCalledWith(roomId, socketId);
     });
 
     it('대기 중인 플레이어가 퇴장하면, 대기열에서만 삭제한다.', async () => {
