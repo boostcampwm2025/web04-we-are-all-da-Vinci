@@ -52,11 +52,11 @@ describe('useDrawingSubmission', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (getSocket as any).mockReturnValue({ emit: mockEmit });
-    (preprocessStrokes as any).mockImplementation(
+    vi.mocked(getSocket).mockReturnValue({ emit: mockEmit } as never);
+    vi.mocked(preprocessStrokes).mockImplementation(
       (strokes: Stroke[]) => strokes,
     );
-    (calculateFinalSimilarityByPreprocessed as any).mockReturnValue(
+    vi.mocked(calculateFinalSimilarityByPreprocessed).mockReturnValue(
       MOCK_SIMILARITY,
     );
   });

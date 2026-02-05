@@ -1,4 +1,4 @@
-import type { RoomSettings } from '@/features/roomSettings';
+import type { Settings } from '@shared/types';
 import { getSocket } from '@/shared/api';
 import { MIXPANEL_EVENTS, SERVER_EVENTS } from '@/shared/config';
 import { trackEvent } from '@/shared/lib/mixpanel';
@@ -29,11 +29,11 @@ export const useWaitingActions = ({ roomId, isHostUser }: UseWaitingProps) => {
     setShowSettingsModal(true);
   };
 
-  const handleSettingsComplete = (settings: RoomSettings) => {
+  const handleSettingsComplete = (settings: Settings) => {
     const socket = getSocket();
     socket.emit(SERVER_EVENTS.ROOM_SETTINGS, {
       roomId,
-      maxPlayer: settings.maxPlayers,
+      maxPlayer: settings.maxPlayer,
       totalRounds: settings.totalRounds,
       drawingTime: settings.drawingTime,
     });

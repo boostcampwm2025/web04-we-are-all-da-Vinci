@@ -29,8 +29,8 @@ describe('useWaitingActions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (getSocket as any).mockReturnValue({ emit: mockEmit });
-    (useToastStore as any).mockReturnValue({ addToast: mockAddToast });
+    vi.mocked(getSocket).mockReturnValue({ emit: mockEmit } as never);
+    vi.mocked(useToastStore).mockReturnValue({ addToast: mockAddToast } as never);
 
     Object.assign(navigator, {
       clipboard: {
@@ -98,7 +98,7 @@ describe('useWaitingActions', () => {
       const consoleErrorSpy = vi
         .spyOn(console, 'error')
         .mockImplementation(() => {});
-      (navigator.clipboard.writeText as any).mockRejectedValue(
+      vi.mocked(navigator.clipboard.writeText).mockRejectedValue(
         new Error('Clipboard error'),
       );
 

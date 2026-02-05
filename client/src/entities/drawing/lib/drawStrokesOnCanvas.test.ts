@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { drawStrokesOnCanvas } from './drawStrokesOnCanvas';
 import { calculateStrokeScale, transformPoint } from '@/shared/lib';
-import type { Stroke } from '@/entities/similarity';
+import type { Stroke } from '@shared/types';
 import { MOCK_STROKES } from '@/test/mocks/mockStrokes';
 
 vi.mock('@/shared/lib', () => ({
@@ -49,13 +49,13 @@ describe('drawStrokesOnCanvas', () => {
     canvasRef = { current: mockCanvas as unknown as HTMLCanvasElement };
     ctxRef = { current: mockCtx as unknown as CanvasRenderingContext2D };
 
-    (calculateStrokeScale as any).mockReturnValue({
+    vi.mocked(calculateStrokeScale).mockReturnValue({
       scale: 1,
       offsetX: 0,
       offsetY: 0,
     });
 
-    (transformPoint as any).mockImplementation(
+    vi.mocked(transformPoint).mockImplementation(
       (
         x: number,
         y: number,

@@ -1,4 +1,4 @@
-import type { Player } from '@/entities/player';
+import type { Player } from '@shared/types';
 import type { FinalResult, Highlight } from '@/entities/gameResult';
 import type { RankingEntry } from '@/entities/ranking';
 import type { PlayerScore, RoundResult } from '@/entities/roundResult';
