@@ -1,4 +1,4 @@
-import type { Stroke } from '@/entities/similarity/model';
+import type { Stroke } from '@/entities/similarity';
 import { comparePairwiseStrokeSimilarity } from './comparePairwiseStrokeSimilarity';
 import { calculateColorSimilarity } from './calculateColorSimilarity';
 

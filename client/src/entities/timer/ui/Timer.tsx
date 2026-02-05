@@ -2,7 +2,7 @@ import { SoundManager } from '@/shared/lib';
 import { SFX_LIST } from '@/shared/config';
 import { selectPhase, selectTimer, useGameStore } from '@/entities/gameRoom';
 import { useEffect, useState } from 'react';
-import { TIMER } from '../config';
+import { TIMER } from '../config/timer';
 
 const Timer = () => {
   const timer = useGameStore(selectTimer);

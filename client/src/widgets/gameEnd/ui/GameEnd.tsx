@@ -1,6 +1,6 @@
 import { FinalRankingCard, PotgCard } from '@/entities/gameResult';
 import { useGameStore, useIsHost } from '@/entities/gameRoom';
-import { TIMER } from '@/entities/timer/config';
+import { TIMER } from '@/entities/timer';
 import { ChatBox, useChatActions, useChatStore } from '@/features/chat';
 import { getSocket } from '@/shared/api';
 import { SERVER_EVENTS, TITLES, BGM_LIST } from '@/shared/config';
