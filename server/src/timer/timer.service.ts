@@ -74,6 +74,11 @@ export class TimerService implements OnModuleInit, OnModuleDestroy {
   async startTimer(roomId: string, timeLeft: number) {
     this.logger.info({ roomId, timeLeft }, 'Start Timer');
     await this.timerCacheService.addTimer(roomId, timeLeft);
+
+    // 초기 타이머 값 즉시 브로드캐스트 (1초 대기 없이)
+    if (this.onTimerTickCallback) {
+      this.onTimerTickCallback(roomId, timeLeft);
+    }
   }
 
   async cancelTimer(roomId: string) {

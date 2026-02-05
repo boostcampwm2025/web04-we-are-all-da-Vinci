@@ -1,5 +1,5 @@
 import { StaticCanvas } from '@/entities/drawing';
-import type { Stroke } from '@/entities/similarity/model';
+import type { Stroke } from '@/entities/similarity';
 
 interface PromptSectionProps {
   promptStrokes: Stroke[];

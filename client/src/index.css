@@ -105,7 +105,7 @@
     @apply h-full md:h-auto;
     @apply md:aspect-[3/4];
     @apply xl:aspect-[16/9] xl:max-h-full;
-    max-width: 1920px;
+    max-width: 1420px;
     max-height: 100%;
   }
 

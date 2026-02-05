@@ -1,6 +1,6 @@
 import { useGameStore, useIsHost } from '@/entities/gameRoom';
 import { PlayerCard, SlotCard } from '@/entities/player';
-import type { Player } from '@/entities/player/model';
+import type { Player } from '@shared/types';
 import { getSocket } from '@/shared/api/socket';
 import { SERVER_EVENTS } from '@/shared/config';
 import { cn } from '@/shared/lib/classNames';

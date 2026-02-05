@@ -1,4 +1,4 @@
-import type { Stroke } from '@/entities/similarity/model';
+import type { Stroke } from '@/entities/similarity';
 import { useEffect, type RefObject } from 'react';
 import { animateDrawing } from '../lib/animateDrawing';
 

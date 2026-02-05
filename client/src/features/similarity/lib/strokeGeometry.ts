@@ -1,4 +1,4 @@
-import type { Point, Stroke } from '@/entities/similarity/model';
+import type { Point, Stroke } from '@/entities/similarity';
 import { getPathLength } from './math';
 
 // 스트로크 길이
