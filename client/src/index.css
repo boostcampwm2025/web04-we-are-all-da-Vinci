@@ -1,6 +1,6 @@
-`@import` 'tailwindcss';
+@import 'tailwindcss';
 
-`@font-face` {
+@font-face {
   font-family: 'GangwonEdu';
   src: url('@/shared/assets/fonts/강원교육현옥샘.woff2') format('woff2');
   font-weight: normal;
