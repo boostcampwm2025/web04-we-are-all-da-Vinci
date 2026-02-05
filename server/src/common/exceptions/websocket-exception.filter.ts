@@ -2,16 +2,49 @@ import { ArgumentsHost, Catch } from '@nestjs/common';
 import { BaseWsExceptionFilter, WsException } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
 import { ClientEvents } from '../constants';
+import { InternalError } from './internal-error';
+import { WebsocketException } from './websocket-exception';
+import { ErrorCode } from '../constants/error-code';
+import { PinoLogger } from 'nestjs-pino';
 
-@Catch(WsException)
+@Catch(WsException, InternalError)
 export class WebsocketExceptionFilter extends BaseWsExceptionFilter {
-  catch(exception: WsException, host: ArgumentsHost): void {
+  constructor(private readonly logger: PinoLogger) {
+    super();
+    this.logger.setContext(WebsocketExceptionFilter.name);
+  }
+
+  catch(exception: unknown, host: ArgumentsHost): void {
     const client = host.switchToWs().getClient<Socket>();
 
-    const error = exception.getError();
+    if (exception instanceof InternalError) {
+      this.logger.error(
+        { clientId: client.id, exception },
+        'Websocket Exception',
+      );
+      const errorResponse = {
+        message: exception.message,
+      };
+      client.emit(ClientEvents.ERROR, errorResponse);
+      return;
+    }
 
-    const body = error instanceof Object ? { ...error } : { message: error };
+    if (exception instanceof WebsocketException) {
+      this.logger.error(
+        { clientId: client.id, exception },
+        'Websocket Exception',
+      );
+      const errorResponse = {
+        message: exception.message,
+      };
+      client.emit(ClientEvents.ERROR, errorResponse);
+      return;
+    }
 
-    client.emit(ClientEvents.ERROR, body);
+    if (exception instanceof WsException) {
+      super.catch(new WebsocketException(exception), host);
+    }
+
+    super.catch(new WebsocketException(ErrorCode.INTERNAL_ERROR), host);
   }
 }

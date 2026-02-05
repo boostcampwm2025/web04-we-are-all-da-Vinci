@@ -30,4 +30,6 @@ export const ErrorCode = {
     '메시지를 너무 빠르게 보내고 있습니다. 잠시 후 다시 시도해주세요.',
   CHAT_PLAYER_NOT_IN_ROOM: '채팅을 보낼 수 없습니다. 방에 참여해주세요.',
   CHAT_INVALID_MESSAGE: '올바르지 않은 메시지입니다.',
+
+  INTERNAL_ERROR: '알 수 없는 오류가 발생했습니다.',
 } as const;
