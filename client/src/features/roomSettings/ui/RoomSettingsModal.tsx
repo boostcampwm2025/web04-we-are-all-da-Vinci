@@ -37,6 +37,7 @@ const RoomSettingsModal = ({
       title="방 설정"
       onConfirm={handleComplete}
       confirmText="완료"
+      showCancel
     >
       <div className="space-y-3">
         <div>

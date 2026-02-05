@@ -8,6 +8,7 @@ import type { Stroke } from '@/entities/similarity';
 import { useChatStore, type ChatMessage } from '@/features/chat';
 import { disconnectSocket, getSocket } from '@/shared/api';
 import { CLIENT_EVENTS, SERVER_EVENTS } from '@/shared/config';
+import { getNickname, getProfileId } from '@/shared/lib';
 import { useToastStore } from '@/shared/model';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -38,11 +39,11 @@ export const useGameSocket = () => {
   const navigate = useNavigate();
 
   // 닉네임, profileId 상태 추적 - localStorage 변경 감지
-  const [nickname, setNickname] = useState<string | null>(() =>
-    localStorage.getItem('nickname'),
+  const [nickname, setNickname] = useState<string | null>(
+    () => getNickname() || null,
   );
   const [profileId, setProfileId] = useState<string | null>(() =>
-    localStorage.getItem('profileId'),
+    getProfileId(),
   );
 
   // Zustand actions
@@ -75,8 +76,8 @@ export const useGameSocket = () => {
   // localStorage 변경 감지
   useEffect(() => {
     const checkLocalStorage = () => {
-      const storedNickname = localStorage.getItem('nickname');
-      const storedProfileId = localStorage.getItem('profileId');
+      const storedNickname = getNickname() || null;
+      const storedProfileId = getProfileId();
       setNickname(storedNickname);
       setProfileId(storedProfileId);
     };

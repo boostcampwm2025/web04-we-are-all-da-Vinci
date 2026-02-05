@@ -1,7 +1,7 @@
 import type { FinalResult } from '@/entities/gameResult';
 import { useIsCurrentUser } from '@/entities/gameRoom';
 import { RANK_STYLES } from '@/entities/ranking';
-import { useCountUp } from '@/shared/lib';
+import { useCountUp } from '@/shared/model';
 import { UserAvatar } from '@/shared/ui';
 
 interface StandingRowProps {
