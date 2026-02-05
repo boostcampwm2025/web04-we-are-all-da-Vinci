@@ -27,11 +27,11 @@ test.describe("플레이어 이탈", () => {
         const roomId = await createRoom(hostPage);
         await joinRoom(guest1Page, roomId);
         await joinRoom(guest2Page, roomId);
-        await hostPage.waitForTimeout(1000);
+        await expect(hostPage.getByRole('button', { name: '시작' })).toBeEnabled({ timeout: 10000 });
       });
 
-      await test.step("게임을 시작한다", async () => {
-        await hostPage.getByRole("button", { name: "게임 시작" }).click();
+      await test.step('게임을 시작한다', async () => {
+        await hostPage.getByRole('button', { name: '시작' }).click();
       });
 
       await test.step("모든 플레이어에게 DRAWING 화면이 표시된다", async () => {
@@ -68,8 +68,8 @@ test.describe("플레이어 이탈", () => {
     const ctx = await createRoomWithPlayers(browser);
 
     try {
-      await test.step("게임을 시작한다", async () => {
-        await ctx.hostPage.getByRole("button", { name: "게임 시작" }).click();
+      await test.step('게임을 시작한다', async () => {
+        await ctx.hostPage.getByRole('button', { name: '시작' }).click();
       });
 
       await test.step("DRAWING 화면이 표시된다", async () => {

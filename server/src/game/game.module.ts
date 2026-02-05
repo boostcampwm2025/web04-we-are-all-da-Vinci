@@ -8,6 +8,8 @@ import { TimerModule } from 'src/timer/timer.module';
 import { GameController } from './game.controller';
 import { GameGateway } from './game.gateway';
 import { GameService } from './game.service';
+import { PlayerService } from './player.service';
+import { RoomService } from './room.service';
 
 @Module({
   imports: [
@@ -20,6 +22,6 @@ import { GameService } from './game.service';
   ],
 
   controllers: [GameController],
-  providers: [GameService, GameGateway],
+  providers: [GameService, GameGateway, PlayerService, RoomService],
 })
 export class GameModule {}

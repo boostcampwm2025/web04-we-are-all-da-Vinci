@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { LoggerModule } from 'nestjs-pino';
 import { ChatModule } from './chat/chat.module';
 import { GameModule } from './game/game.module';
@@ -37,6 +38,7 @@ import { RoundModule } from './round/round.module';
         };
       },
     }),
+    EventEmitterModule.forRoot({ delimiter: '_' }),
     RedisModule,
     GameModule,
     PlayModule,
