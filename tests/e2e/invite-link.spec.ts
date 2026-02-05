@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { createRoom, setupProfileInContext } from './fixtures';
 
 test.describe('초대 링크', () => {
@@ -27,7 +27,7 @@ test.describe('초대 링크', () => {
         });
 
         await test.step('게스트가 대기실에 입장한다', async () => {
-          await expect(guestPage.getByText('게임 시작')).toBeVisible({ timeout: 10000 });
+          await expect(guestPage.getByText('시작')).toBeVisible({ timeout: 10000 });
         });
 
         await test.step('호스트 화면에 게스트가 표시된다', async () => {

@@ -10,26 +10,30 @@ import {
 } from '@nestjs/websockets';
 import { PinoLogger } from 'nestjs-pino';
 import { Server, Socket } from 'socket.io';
-import { ClientEvents, GamePhase, ServerEvents } from '../common/constants';
+
+import {
+  RoomSettingsSchema,
+  RoomStartSchema,
+  UserJoinSchema,
+  UserKickSchema,
+} from '@shared/types';
+import { ChatGateway } from 'src/chat/chat.gateway';
+import { ChatService } from 'src/chat/chat.service';
 import { getSocketCorsOrigin } from 'src/common/config/cors.util';
+import { ClientEvents, GamePhase, ServerEvents } from 'src/common/constants';
+import { ErrorCode } from 'src/common/constants/error-code';
 import { WebsocketExceptionFilter } from 'src/common/exceptions/websocket-exception.filter';
 import { MetricInterceptor } from 'src/common/interceptors/metric.interceptor';
 import { GameRoom, Player } from 'src/common/types';
 import { escapeHtml } from 'src/common/utils/sanitize';
-import { ChatGateway } from 'src/chat/chat.gateway';
-import { ChatService } from 'src/chat/chat.service';
+import { isValidUUIDv4 } from 'src/common/utils/validate';
 import { MetricService } from 'src/metric/metric.service';
-import {
-  UserJoinSchema,
-  RoomSettingsSchema,
-  RoomStartSchema,
-  UserKickSchema,
-} from '@shared/types';
+
+import { OnEvent } from '@nestjs/event-emitter';
+import { WebsocketException } from 'src/common/exceptions/websocket-exception';
+import { PhaseEvent } from 'src/round/phase.service';
 import { GameService } from './game.service';
 import { RoomService } from './room.service';
-import { WebsocketException } from 'src/common/exceptions/websocket-exception';
-import { OnEvent } from '@nestjs/event-emitter';
-import { PhaseEvent } from 'src/round/phase.service';
 
 interface PhaseChangedEvent {
   roomId: string;
@@ -111,7 +115,22 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleConnection(client: Socket) {
-    this.logger.info({ clientId: client.id }, 'New User Connected');
+    const profileId = (client.handshake.auth as Record<string, unknown>)
+      ?.profileId;
+    if (!isValidUUIDv4(profileId)) {
+      this.logger.warn(
+        { clientId: client.id },
+        'Connection rejected: invalid profileId',
+      );
+      client.emit(ClientEvents.ERROR, {
+        message: ErrorCode.INVALID_PROFILE_ID,
+      });
+      client.disconnect();
+      return;
+    }
+    (client.data as Record<string, unknown>).profileId = profileId;
+
+    this.logger.info({ clientId: client.id, profileId }, 'New User Connected');
     this.metricService.incConnection();
   }
 
