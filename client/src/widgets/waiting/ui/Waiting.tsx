@@ -59,9 +59,7 @@ export const Waiting = () => {
                   <PlayerListSection
                     players={players}
                     maxPlayer={settings.maxPlayer}
-                    roomCode={
-                      <RoomCodeCopy roomId={roomId} onCopy={copyRoomId} />
-                    }
+                    roomCode={<RoomCodeCopy onCopy={copyRoomId} />}
                   />
                   {isInWaitlist && <WaitingRoomOverlay />}
                 </div>
@@ -109,6 +107,7 @@ export const Waiting = () => {
         onClose={() => setShowSettingsModal(false)}
         onComplete={handleSettingsComplete}
         currentPlayerCount={players.length}
+        settings={settings}
       />
     </>
   );

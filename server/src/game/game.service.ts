@@ -2,20 +2,19 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 
 import { GameRoom, Player } from 'src/common/types';
-
-import { GamePhase } from 'src/common/constants';
+import { GamePhase } from '../common/constants';
 import { ErrorCode } from 'src/common/constants/error-code';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
-
 import { findPlayerOrThrow, requireHost } from 'src/common/utils/player.utils';
 import { PromptService } from 'src/prompt/prompt.service';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
+import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
 import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
 import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
+import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
 import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
 import { RoundService } from 'src/round/round.service';
-import { CreateRoomDto } from './dto/create-room.dto';
-import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
+import type { CreateRoomDto } from '@shared/types';
 
 interface PhaseChangeHandler {
   (roomId: string, joinedPlayers: Player[]): Promise<void>;
@@ -30,6 +29,7 @@ export class GameService implements OnModuleInit {
     private readonly waitlistService: WaitlistCacheService,
     private readonly playerCacheService: PlayerCacheService,
     private readonly leaderboardCacheService: LeaderboardCacheService,
+    private readonly standingsCacheService: StandingsCacheService,
     private readonly progressCacheService: GameProgressCacheService,
     private readonly roundService: RoundService,
     private readonly promptService: PromptService,
@@ -96,9 +96,20 @@ export class GameService implements OnModuleInit {
     await this.cacheService.deletePlayer(roomId, socketId);
     await this.playerCacheService.delete(socketId);
     await this.leaderboardCacheService.delete(roomId, socketId);
+    await this.standingsCacheService.delete(roomId, socketId);
     await this.progressCacheService.deletePlayer(roomId, socketId);
 
     const updatedRoom = await this.cacheService.getRoom(roomId);
+
+    if (
+      updatedRoom &&
+      updatedRoom.players.length === 1 &&
+      updatedRoom.phase !== GamePhase.WAITING &&
+      updatedRoom.phase !== GamePhase.GAME_END
+    ) {
+      await this.roundService.endGame(updatedRoom);
+    }
+
     return updatedRoom;
   }
 

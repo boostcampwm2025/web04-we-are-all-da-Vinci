@@ -6,6 +6,9 @@ import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import { PinoLogger } from 'nestjs-pino';
 import { ErrorCode } from 'src/common/constants/error-code';
+import { z, StrokeSchema } from '@shared/types';
+
+const PromptStrokesSchema = z.array(z.array(StrokeSchema));
 
 @Injectable()
 export class PromptService {
@@ -79,8 +82,7 @@ export class PromptService {
   private async loadPromptStrokes(): Promise<Stroke[][]> {
     const promptPath = path.join(process.cwd(), 'data', 'promptStrokes.json');
     const data = await readFile(promptPath, 'utf-8');
-    const promptStrokesData = JSON.parse(data) as Stroke[][];
-    return promptStrokesData;
+    return PromptStrokesSchema.parse(JSON.parse(data));
   }
 
   async getRandomPrompt(): Promise<Stroke[]> {

@@ -1,8 +1,12 @@
+import { fileURLToPath } from 'url';
+import path from 'path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { sentryVitePlugin } from '@sentry/vite-plugin';
 import { visualizer } from 'rollup-plugin-visualizer';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [
@@ -28,9 +32,16 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': '/src',
+      '@shared/types': path.resolve(__dirname, '../packages/shared/dist'),
     },
   },
+  optimizeDeps: {
+    include: ['@shared/types'],
+  },
   build: {
+    commonjsOptions: {
+      include: [/shared/, /node_modules/],
+    },
     sourcemap: true,
     rollupOptions: {
       output: {

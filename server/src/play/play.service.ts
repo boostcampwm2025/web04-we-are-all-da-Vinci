@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
-import { GamePhase } from 'src/common/constants';
+import { GamePhase } from '../common/constants';
 import { ErrorCode } from 'src/common/constants/error-code';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import { Similarity, Stroke } from 'src/common/types';

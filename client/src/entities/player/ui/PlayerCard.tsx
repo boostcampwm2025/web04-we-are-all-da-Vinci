@@ -1,4 +1,5 @@
 import { useIsCurrentUser, useIsHost } from '@/entities/gameRoom';
+import { cn } from '@/shared/lib/classNames';
 import { UserAvatar } from '@/shared/ui';
 
 interface PlayerCardProps {
@@ -23,18 +24,19 @@ export const PlayerCard = ({
   return (
     <div
       key={id}
-      className={`relative flex flex-col items-center justify-center rounded-xl border-2 p-2 text-center transition-all xl:p-6 ${
+      className={cn(
+        'relative flex flex-col items-center justify-center rounded-xl border-2 p-2 text-center transition-all xl:p-6',
         isCurrentUser
           ? 'border-interactive-light bg-interactive-subtle'
-          : 'border-stroke-default bg-surface-subtle'
-      }`}
+          : 'border-stroke-default bg-surface-subtle',
+      )}
     >
       <UserAvatar
         name={profileId}
-        className="h-8 w-8 md:h-12 md:w-12 xl:h-16 xl:w-16"
+        className="h-6 w-6 md:h-10 md:w-10 xl:h-14 xl:w-14"
       />
 
-      <div className="font-handwriting mt-1 mb-0 w-full truncate px-1 text-[10px] leading-tight font-bold sm:text-base lg:text-lg xl:mt-2 xl:mb-1">
+      <div className="font-handwriting mt-1 mb-0 w-full shrink-0 truncate px-1 text-[10px] leading-tight font-bold sm:text-base lg:text-lg xl:mt-2 xl:mb-1">
         {nickname}
       </div>
       {isHost && (
@@ -55,7 +57,7 @@ export const PlayerCard = ({
       )}
 
       {status && (
-        <div className="font-handwriting lg:text-md text-content-tertiary text-xs sm:text-sm">
+        <div className="font-handwriting text-content-tertiary text-base sm:text-lg lg:text-xl">
           {status}
         </div>
       )}
