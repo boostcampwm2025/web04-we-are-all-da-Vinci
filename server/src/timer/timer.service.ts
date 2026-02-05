@@ -48,7 +48,6 @@ export class TimerService implements OnModuleInit, OnModuleDestroy {
       const { roomId } = timer;
 
       const timeLeft = await this.timerCacheService.decrementTimer(roomId);
-      this.logger.info({ timeLeft, roomId }, 'Timer decrement');
 
       if (timeLeft !== null && timeLeft >= 0) {
         // Gateway에 알림
