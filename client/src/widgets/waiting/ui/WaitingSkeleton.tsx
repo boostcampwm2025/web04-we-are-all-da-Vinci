@@ -3,13 +3,7 @@
  * 실제 Waiting 컴포넌트의 레이아웃 구조와 정확히 일치하도록 설계
  */
 
-import { Title } from '@/shared/ui';
-
-const Skeleton = ({ className = '' }: { className?: string }) => (
-  <div
-    className={`animate-pulse rounded-lg bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 ${className}`}
-  />
-);
+import { Skeleton, Title } from '@/shared/ui';
 
 /** 플레이어 카드 스켈레톤 - 실제 PlayerCard 스타일: border-2, p-2 xl:p-6 */
 const PlayerCardSkeleton = () => (

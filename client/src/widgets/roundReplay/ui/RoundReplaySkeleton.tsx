@@ -1,8 +1,4 @@
-const Skeleton = ({ className = '' }: { className?: string }) => (
-  <div
-    className={`animate-pulse rounded-lg bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 ${className}`}
-  />
-);
+import { Skeleton } from '@/shared/ui';
 
 export const RoundReplaySkeleton = () => {
   return (
