@@ -9,8 +9,15 @@ import type { CreateRoomDto } from '@shared/types';
 
 import { PromptService } from 'src/prompt/prompt.service';
 import { RoundService } from 'src/round/round.service';
-import { PlayerService } from './player.service';
+import { PlayerService, LeaveRoomResult } from './player.service';
 import { RoomService } from './room.service';
+
+export interface JoinRoomResult {
+  room: GameRoom;
+  newlyJoinedPlayers: Player[];
+  isRecovery: boolean;
+  recoveredPlayer?: Player;
+}
 
 @Injectable()
 export class GameService {
@@ -37,20 +44,26 @@ export class GameService {
 
   async leaveRoom(
     socketId: string,
-  ): Promise<{ room: GameRoom; player: Player }> {
+  ): Promise<{ room: GameRoom; leaveResult: LeaveRoomResult }> {
     const roomId = await this.playerService.getJoinedRoomId(socketId);
     if (!roomId) {
       throw new InternalError('roomId가 없습니다');
     }
 
-    const player = await this.playerService.leaveRoom(roomId, socketId);
-    if (!player) {
+    const room = await this.roomService.getRoom(roomId);
+
+    const leaveResult = await this.playerService.leaveRoom(
+      roomId,
+      socketId,
+      room.phase,
+    );
+    if (!leaveResult) {
       throw new InternalError(ErrorCode.PLAYER_NOT_FOUND);
     }
 
-    const room = await this.roomService.getRoom(roomId);
+    const updatedRoom = await this.roomService.getRoom(roomId);
 
-    return { room, player };
+    return { room: updatedRoom, leaveResult };
   }
 
   async updateGameSettings(
@@ -96,9 +109,29 @@ export class GameService {
     nickname: string,
     profileId: string,
     socketId: string,
-  ): Promise<{ room: GameRoom; newlyJoinedPlayers: Player[] }> {
+  ): Promise<JoinRoomResult> {
     const room = await this.roomService.getRoom(roomId);
 
+    // 1. 세션 복구 시도 (Grace Period 내 새로고침)
+    const recoveryResult = await this.playerService.tryRecoverSession(
+      roomId,
+      profileId,
+      socketId,
+      nickname,
+      room.phase,
+    );
+
+    if (recoveryResult) {
+      const updatedRoom = await this.roomService.getRoom(roomId);
+      return {
+        room: updatedRoom,
+        newlyJoinedPlayers: [],
+        isRecovery: true,
+        recoveredPlayer: recoveryResult.player,
+      };
+    }
+
+    // 2. 신규 입장 처리
     const isFull = await this.playerService.isRoomFull(
       roomId,
       room.settings.maxPlayer,
@@ -119,7 +152,11 @@ export class GameService {
 
     const updatedRoom = await this.roomService.getRoom(roomId);
 
-    return { room: updatedRoom, newlyJoinedPlayers };
+    return {
+      room: updatedRoom,
+      newlyJoinedPlayers,
+      isRecovery: false,
+    };
   }
 
   async startGame(roomId: string, socketId: string) {
@@ -180,9 +217,9 @@ export class GameService {
       throw new WebsocketException(ErrorCode.HOST_CAN_NOT_KICKED);
     }
 
-    const { room, player: kickedPlayer } = await this.leaveRoom(targetSocketId);
+    const { room, leaveResult } = await this.leaveRoom(targetSocketId);
 
-    return { room, kickedPlayer };
+    return { room, kickedPlayer: leaveResult.player };
   }
 
   async startPractice() {

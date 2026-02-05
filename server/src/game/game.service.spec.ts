@@ -61,6 +61,7 @@ describe('GameService', () => {
       getJoinedRoomId: jest.fn(),
       leaveRoom: jest.fn(),
       getNewlyJoinedUserFromWaitlist: jest.fn(),
+      tryRecoverSession: jest.fn(),
     };
 
     const mockRoundService = {
@@ -183,6 +184,7 @@ describe('GameService', () => {
     it('방이 다 찼으면 에러를 던진다', async () => {
       const room = createMockRoom();
       roomService.getRoom.mockResolvedValue(room);
+      playerService.tryRecoverSession.mockResolvedValue(null); // 세션 복구 실패
       playerService.isRoomFull.mockResolvedValue(true);
 
       await expect(
@@ -194,6 +196,7 @@ describe('GameService', () => {
       const room = createMockRoom();
       roomService.getRoom.mockResolvedValue(room);
       playerService.isRoomFull.mockResolvedValue(false);
+      playerService.tryRecoverSession.mockResolvedValue(null); // 세션 복구 실패
       playerService.requestJoinWaitList.mockResolvedValue([]);
       roomService.getRoom.mockResolvedValue(room); // 호출 시 업데이트된 방 반환 가정
 
@@ -205,23 +208,27 @@ describe('GameService', () => {
       );
 
       expect(result.room).toEqual(room);
+      expect(result.isRecovery).toBe(false);
       expect(playerService.requestJoinWaitList).toHaveBeenCalled();
     });
   });
 
   describe('leaveRoom', () => {
-    it('퇴장 처리 후 방 정보와 플레이어 정보를 반환한다', async () => {
+    it('퇴장 처리 후 방 정보와 퇴장 결과를 반환한다', async () => {
       const roomId = 'test-room';
       const player = createMockPlayer('socket');
       const room = createMockRoom();
+      const leaveResult = { player, isGracePeriod: false };
 
       playerService.getJoinedRoomId.mockResolvedValue(roomId);
-      playerService.leaveRoom.mockResolvedValue(player);
       roomService.getRoom.mockResolvedValue(room);
+      playerService.leaveRoom.mockResolvedValue(leaveResult);
 
       const result = await service.leaveRoom('socket');
 
-      expect(result).toEqual({ room, player });
+      expect(result.room).toEqual(room);
+      expect(result.leaveResult.player).toEqual(player);
+      expect(result.leaveResult.isGracePeriod).toBe(false);
     });
 
     it('참여 중인 방이 없으면 에러를 던진다', async () => {
@@ -291,6 +298,8 @@ describe('GameService', () => {
       const roomId = 'test-room';
       const hostSocketId = 'host';
       const targetSocketId = 'guest';
+      const targetPlayer = createMockPlayer(targetSocketId);
+      const leaveResult = { player: targetPlayer, isGracePeriod: false };
 
       roomService.isWaiting.mockResolvedValue(true);
       playerService.getPlayers.mockResolvedValue([]);
@@ -298,10 +307,8 @@ describe('GameService', () => {
 
       // leaveRoom 내부 모킹
       playerService.getJoinedRoomId.mockResolvedValue(roomId);
-      playerService.leaveRoom.mockResolvedValue(
-        createMockPlayer(targetSocketId),
-      );
       roomService.getRoom.mockResolvedValue(createMockRoom());
+      playerService.leaveRoom.mockResolvedValue(leaveResult);
 
       const result = await service.kickUser(
         roomId,

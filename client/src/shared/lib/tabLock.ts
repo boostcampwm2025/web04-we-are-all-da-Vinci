@@ -3,6 +3,9 @@ import { isE2ETestMode } from './e2eTestMode';
 const HEARTBEAT_INTERVAL = 3000; // heartbeat 전송 주기
 const DEFAULT_WAIT_MS = 100; // claim 전송 후 다른 탭의 deny/heartbeat 응답을 기다리는 시간
 
+// sessionStorage 키 (새로고침 감지용)
+const getSessionStorageKey = (roomId: string) => `tabLock:${roomId}`;
+
 interface TabLockResult {
   acquired: boolean;
   release: () => void;
@@ -29,6 +32,21 @@ const delay = (ms: number): Promise<void> =>
 /** BroadcastChannel 지원 여부 확인 */
 const isBroadcastChannelSupported = (): boolean =>
   typeof BroadcastChannel !== 'undefined';
+
+/**
+ * sessionStorage에서 tabId 가져오거나 새로 생성
+ * 새로고침 시 기존 tabId를 재사용하여 잠금 충돌 방지
+ */
+const getOrCreateTabId = (roomId: string): string => {
+  const key = getSessionStorageKey(roomId);
+  const existingTabId = sessionStorage.getItem(key);
+  if (existingTabId) {
+    return existingTabId;
+  }
+  const newTabId = crypto.randomUUID();
+  sessionStorage.setItem(key, newTabId);
+  return newTabId;
+};
 
 // ─────────────────────────────────────────────────────────────
 // 메시지 핸들러
@@ -108,6 +126,7 @@ const releaseTabLock = (roomId: string): void => {
     clearInterval(lock.heartbeatTimer);
   }
   lock.channel.postMessage({ type: 'release', tabId: lock.tabId });
+  sessionStorage.removeItem(getSessionStorageKey(roomId));
   lock.channel.close();
   activeLocks.delete(roomId);
 };
@@ -146,7 +165,7 @@ export const acquireTabLockAsync = async (
 
   // 새 채널 생성 및 claim
   const channel = new BroadcastChannel(`game-lock:${roomId}`);
-  const tabId = crypto.randomUUID();
+  const tabId = getOrCreateTabId(roomId); // 새로고침 시 기존 tabId 재사용
   let denied = false;
 
   const messageHandler = createBroadcastMessageHandler(
