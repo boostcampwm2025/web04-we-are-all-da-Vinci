@@ -55,7 +55,7 @@ const RankingCard = ({
         <div className="flex items-center gap-2">
           {rank && (
             <div
-              className={`flex min-w-6 items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-bold text-white ${rankStyle.badge} `}
+              className={`flex min-w-7 items-center justify-center rounded-full px-2 py-0.5 text-sm font-bold text-white ${rankStyle.badge} `}
             >
               {rank}
             </div>
@@ -65,15 +65,15 @@ const RankingCard = ({
 
           <UserAvatar name={profileId} className="h-8 w-8" />
 
-          <span className="font-handwriting text-sm font-bold">
+          <span className="font-handwriting text-base font-bold">
             {nickname}
             {isCurrentUser && (
-              <span className="ml-1 text-xs text-blue-500">(나)</span>
+              <span className="ml-1 text-sm text-blue-500">(나)</span>
             )}
           </span>
         </div>
 
-        <span className={`text-lg font-bold ${rankStyle.color}`}>
+        <span className={`text-xl font-bold ${rankStyle.color}`}>
           {percent}%
         </span>
       </div>

@@ -54,7 +54,7 @@ export const Main = () => {
     <>
       <div className="page-center">
         <div className="w-l flex flex-col items-center justify-center text-center">
-          <h3 className="border-accent-warm bg-accent/30 text-accent-warm mb-2 inline-block -rotate-1 rounded-full border-2 border-dashed px-4 py-2 text-xs font-bold tracking-wide md:px-5 md:text-base">
+          <h3 className="border-accent-warm bg-accent/30 text-accent-warm mb-2 inline-block -rotate-1 rounded-full border-2 border-dashed px-4 py-2 text-sm font-bold tracking-wide md:px-5 md:text-xl">
             {TEXT.SUB_TITLE}
           </h3>
 

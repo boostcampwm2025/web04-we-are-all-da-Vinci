@@ -12,8 +12,8 @@ const PODIUM_CONFIG = {
     size: '',
     borderColor: 'border-rank-gold',
     textColor: 'text-rank-gold-text',
-    nameSize: 'text-2xl',
-    scoreSize: 'text-2xl',
+    nameSize: 'text-3xl',
+    scoreSize: 'text-3xl',
     podiumHeight: 'h-42 xl:h-32',
     podiumWidth: 'w-18 xl:w-28',
     podiumBg: 'bg-yellow-100',
@@ -30,8 +30,8 @@ const PODIUM_CONFIG = {
     size: '',
     borderColor: 'border-rank-silver',
     textColor: 'text-rank-silver-text',
-    nameSize: 'text-lg',
-    scoreSize: 'text-lg',
+    nameSize: 'text-xl',
+    scoreSize: 'text-xl',
     podiumHeight: 'h-20 sm:h-24',
     podiumWidth: 'w-16 xl:w-20',
     podiumBg: 'bg-gray-100',
@@ -48,8 +48,8 @@ const PODIUM_CONFIG = {
     size: '',
     borderColor: 'border-rank-bronze',
     textColor: 'text-rank-bronze-text',
-    nameSize: 'text-lg',
-    scoreSize: 'text-lg',
+    nameSize: 'text-xl',
+    scoreSize: 'text-xl',
     podiumHeight: 'h-14 sm:h-16',
     podiumWidth: 'w-16 xl:w-20',
     podiumBg: 'bg-orange-100',
@@ -84,7 +84,7 @@ const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
 
         {config.badge && (
           <div
-            className={`absolute -top-2 -right-2 ${config.badge.bg} rounded-full px-2 py-1 text-xs font-bold text-white`}
+            className={`absolute -top-2 -right-2 ${config.badge.bg} rounded-full px-2 py-1 text-sm font-bold text-white`}
           >
             {config.badge.text}
           </div>
@@ -104,7 +104,7 @@ const PodiumPlayer = ({ player, position }: PodiumPlayerProps) => {
       </h3>
 
       <p
-        className={`${config.textColor} ${config.scoreSize} text-center text-sm font-bold ${position === 'first' ? 'xl:text-2xl' : 'xl:text-xl'}`}
+        className={`${config.textColor} ${config.scoreSize} text-center text-base font-bold ${position === 'first' ? 'xl:text-3xl' : 'xl:text-2xl'}`}
       >
         {player.score.toLocaleString()}점
       </p>
