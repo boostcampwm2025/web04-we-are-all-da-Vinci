@@ -50,7 +50,7 @@ export const ProfileSettingsModal = ({
       title="프로필 설정"
       onConfirm={handleSave}
       confirmText="저장"
-      showCancel={!isFirstVisit}
+      showCancel={!isFirstVisit()}
     >
       <div className="flex justify-center">
         <ProfileEditor

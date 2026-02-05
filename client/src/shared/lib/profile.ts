@@ -36,6 +36,10 @@ export const regenerateProfileId = (): string => {
   return newProfileId;
 };
 
+export const setProfileId = (profileId: string): void => {
+  localStorage.setItem(STORAGE_KEYS.PROFILE_ID, profileId);
+};
+
 // 첫 방문 여부
 export const isFirstVisit = (): boolean => {
   return !hasNickname();

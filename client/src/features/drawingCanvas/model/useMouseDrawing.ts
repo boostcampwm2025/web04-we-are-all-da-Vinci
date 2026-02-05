@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import type { RefObject } from 'react';
-import type { Stroke, Color } from '@/entities/similarity/model';
+import type { Stroke, Color } from '@/entities/similarity';
 
 interface UseMouseDrawingOptions {
   canvasRef: RefObject<HTMLCanvasElement | null>;
