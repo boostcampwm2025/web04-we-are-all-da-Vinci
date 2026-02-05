@@ -60,16 +60,18 @@ export class TimerCacheService {
   }
 
   async decrementTimer(roomId: string) {
-    const timer = await this.getTimer(roomId);
-    if (!timer) return null;
-    const updatedTimeLeft = timer.timeLeft - 1;
-    if (updatedTimeLeft <= 0) {
-      await this.deleteTimer(roomId);
-      return 0;
+    const client = this.redisService.getClient();
+    const key = RedisKeys.timer(roomId);
+
+    const timeLeft = await client.hIncrBy(key, 'timeLeft', -1);
+
+    // 타이머가 처음 등록된 케이스
+    if (timeLeft === -1) {
+      await client.unlink(key);
+      return null;
     }
 
-    await this.addTimer(roomId, updatedTimeLeft);
-    return updatedTimeLeft;
+    return timeLeft;
   }
 
   async deleteTimer(roomId: string) {

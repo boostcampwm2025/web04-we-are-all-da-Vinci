@@ -7,7 +7,7 @@ interface MySimilarityDetailProps {
 
 const MySimilarityDetail = ({ similarity }: MySimilarityDetailProps) => {
   return (
-    <div className="flex shrink-0 flex-col">
+    <div className="flex min-h-30 flex-1 flex-col overflow-auto md:min-h-45">
       <div className="mb-2 flex shrink-0 items-center gap-1.5 md:flex">
         <span className="material-symbols-outlined text-base text-blue-500">
           analytics
