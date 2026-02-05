@@ -100,21 +100,16 @@ export const useGameStore = create<GameState>()(
       setMySocketId: (mySocketId) => set({ mySocketId }),
 
       setMyProfileId: (myProfileId) => set({ myProfileId }),
+      updateRoom: (room) => {
+        set((state) => {
+          if (room.phase) {
+            localStorage.setItem('last_game_phase', room.phase);
+          }
+          return { ...state, ...room };
+        });
+      },
 
-<<<<<<< feat/#246-lobby-loading-ux
-        updateRoom: (room) => {
-          set((state) => {
-            if (room.phase) {
-              localStorage.setItem('last_game_phase', room.phase);
-            }
-            return { ...state, ...room };
-          });
-        },
-=======
       setConnected: (isConnected) => set({ isConnected }),
->>>>>>> develop
-
-      updateRoom: (room) => set((state) => ({ ...state, ...room })),
 
       setTimer: (timer) => set({ timer }),
 
