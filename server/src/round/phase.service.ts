@@ -15,7 +15,7 @@ import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
 import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
 import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
 
-interface PhaseEvent {
+export interface PhaseEvent {
   name: string;
   payload: unknown;
 }

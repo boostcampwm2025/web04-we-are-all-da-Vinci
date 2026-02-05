@@ -1,303 +1,43 @@
-import type { GameEndResponse } from '@/entities/gameResult';
-import { useGameStore, type GameRoom } from '@/entities/gameRoom';
-import type {
-  RoundReplayResponse,
-  RoundStandingResponse,
-} from '@/entities/roundResult';
-import type { Stroke } from '@/entities/similarity';
-import { useChatStore, type ChatMessage } from '@/features/chat';
-import { disconnectSocket, getSocket } from '@/shared/api';
-import { CLIENT_EVENTS, SERVER_EVENTS } from '@/shared/config';
-import { getNickname, getProfileId } from '@/shared/lib';
-import { useToastStore } from '@/shared/model';
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import {
-  buildRankings,
-  processRoomMetadata,
-  type ServerRankingEntry,
-} from '../lib/socketHandlers';
-import {
-  z,
-  GameRoomSchema,
-  RoomTimerSchema,
-  RoomLeaderboardSchema,
-  StrokeSchema,
-  RoomRoundReplaySchema,
-  RoomRoundStandingSchema,
-  RoomGameEndSchema,
-  UserWaitlistSchema,
-  RoomKickedSchema,
-  ErrorResponseSchema,
-  ChatMessageSchema,
-  ChatHistoryPayloadSchema,
-  ChatErrorSchema,
-} from '@shared/types';
+import { getSocket } from '@/shared/api';
+import { useLocalStorageWatch } from '@/shared/model';
+import { useParams } from 'react-router-dom';
+import { useChatEvents } from './useChatEvents';
+import { useErrorEvents } from './useErrorEvents';
+import { useGameDataEvents } from './useGameDataEvents';
+import { useResultEvents } from './useResultEvents';
+import { useRoomEvents } from './useRoomEvents';
+import { useSocketConnection } from './useSocketConnection';
+import { useTabLock } from './useTabLock';
+import { useWaitlistEvents } from './useWaitlistEvents';
 
 export const useGameSocket = () => {
   const { roomId } = useParams<{ roomId: string }>();
-  const navigate = useNavigate();
+  // 1. 탭 잠금
+  const { acquired: tabLockAcquired } = useTabLock(roomId);
 
-  // 닉네임, profileId 상태 추적 - localStorage 변경 감지
-  const [nickname, setNickname] = useState<string | null>(
-    () => getNickname() || null,
-  );
-  const [profileId, setProfileId] = useState<string | null>(() =>
-    getProfileId(),
-  );
+  // 2. 프로필 감시
+  const nickname = useLocalStorageWatch('nickname');
+  const profileId = useLocalStorageWatch('profileId');
 
-  // Zustand actions
-  const setMySocketId = useGameStore((state) => state.setMySocketId);
-  const setConnected = useGameStore((state) => state.setConnected);
-  const updateRoom = useGameStore((state) => state.updateRoom);
-  const setTimer = useGameStore((state) => state.setTimer);
-  const setLiveRankings = useGameStore((state) => state.setLiveRankings);
-  const setRoundResults = useGameStore((state) => state.setRoundResults);
-  const setStandingResults = useGameStore((state) => state.setStandingResults);
-  const setFinalResults = useGameStore((state) => state.setFinalResults);
-  const setHighlight = useGameStore((state) => state.setHighlight);
-  const setPromptStrokes = useGameStore((state) => state.setPromptStrokes);
-  const setIsInWaitlist = useGameStore((state) => state.setIsInWaitlist);
-  const setIsPracticing = useGameStore((state) => state.setIsPracticing);
-  const setPracticePrompt = useGameStore((state) => state.setPracticePrompt);
-  const setGameProgress = useGameStore((state) => state.setGameProgress);
-  const setAlertMessage = useGameStore((state) => state.setAlertMessage);
-  const setPendingNavigation = useGameStore(
-    (state) => state.setPendingNavigation,
-  );
-  const reset = useGameStore((state) => state.reset);
-  const addToast = useToastStore((state) => state.addToast);
+  // 연결 조건
+  const enabled =
+    tabLockAcquired === true && !!nickname && !!profileId && !!roomId;
 
-  // Chat store 액션
-  const addChatMessage = useChatStore((state) => state.addMessage);
-  const setChatHistory = useChatStore((state) => state.setHistory);
-  const clearChat = useChatStore((state) => state.clear);
+  // 3. 이벤트 훅들 (순서 중요: 연결 전에 리스너 등록)
+  useRoomEvents(enabled);
+  useGameDataEvents(enabled);
+  useResultEvents(enabled);
+  useWaitlistEvents(enabled);
+  useChatEvents(enabled);
+  useErrorEvents(enabled);
 
-  // localStorage 변경 감지
-  useEffect(() => {
-    const checkLocalStorage = () => {
-      const storedNickname = getNickname() || null;
-      const storedProfileId = getProfileId();
-      setNickname(storedNickname);
-      setProfileId(storedProfileId);
-    };
-
-    // storage 이벤트 리스너 (다른 탭에서 변경 시)
-    globalThis.addEventListener('storage', checkLocalStorage);
-
-    // 같은 탭에서 변경 감지를 위한 interval
-    const interval = setInterval(checkLocalStorage, 100);
-
-    return () => {
-      globalThis.removeEventListener('storage', checkLocalStorage);
-      clearInterval(interval);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!roomId) {
-      console.error('roomId가 없습니다');
-      navigate('/');
-      return;
-    }
-
-    // 닉네임 또는 profileId가 없으면 소켓 연결하지 않음
-    if (!nickname || !profileId) {
-      console.log('닉네임 또는 profileId가 없어서 소켓 연결 대기 중...');
-      return;
-    }
-
-    const socket = getSocket();
-
-    // 연결
-    socket.connect();
-
-    // 연결 이벤트
-    socket.on('connect', () => {
-      setMySocketId(socket.id!);
-      setConnected(true);
-
-      // 방 입장
-      socket.emit(SERVER_EVENTS.USER_JOIN, { roomId, nickname, profileId });
-    });
-
-    socket.on('disconnect', () => {
-      setMySocketId(null);
-      setConnected(false);
-    });
-
-    // 방 정보 업데이트
-    socket.on(CLIENT_EVENTS.ROOM_METADATA, (rawData: unknown) => {
-      const data = GameRoomSchema.parse(rawData) as GameRoom;
-      const { phase: currentPhase, mySocketId } = useGameStore.getState();
-      const result = processRoomMetadata(data, currentPhase, mySocketId!);
-
-      if (result.shouldResetGameData) {
-        useGameStore.setState({
-          liveRankings: [],
-          roundResults: [],
-          previousStandingResults: [],
-          standingResults: [],
-          finalResults: [],
-          highlight: null,
-          promptStrokes: [],
-        });
-      }
-
-      if (result.isJoined) {
-        setIsInWaitlist(false);
-        setIsPracticing(false);
-      }
-
-      updateRoom(result.roomUpdate);
-    });
-
-    // 추방
-    socket.on(CLIENT_EVENTS.ROOM_KICKED, (rawData: unknown) => {
-      const { kickedPlayer } = RoomKickedSchema.parse(rawData);
-      const mySocketId = useGameStore.getState().mySocketId;
-      if (mySocketId === kickedPlayer.socketId) {
-        disconnectSocket();
-        reset();
-        navigate('/');
-        addToast(`방에서 퇴장당했습니다.`, 'error');
-      } else {
-        addToast(`${kickedPlayer.nickname}님이 퇴장당했습니다.`, 'info');
-      }
-    });
-
-    // 실시간 데이터
-    socket.on(CLIENT_EVENTS.ROOM_TIMER, (rawData: unknown) => {
-      const { timeLeft } = RoomTimerSchema.parse(rawData);
-      setTimer(timeLeft);
-    });
-
-    socket.on(CLIENT_EVENTS.ROOM_LEADERBOARD, (rawData: unknown) => {
-      const data = RoomLeaderboardSchema.parse(rawData);
-      const currentRankings = useGameStore.getState().liveRankings;
-      setLiveRankings(
-        buildRankings(data.rankings as ServerRankingEntry[], currentRankings),
-      );
-    });
-
-    socket.on(CLIENT_EVENTS.ROOM_PROMPT, (rawData: unknown) => {
-      const promptStrokes = z.array(StrokeSchema).parse(rawData) as Stroke[];
-      setPromptStrokes(promptStrokes);
-    });
-
-    // 결과
-    socket.on(CLIENT_EVENTS.ROOM_ROUND_REPLAY, (rawData: unknown) => {
-      const response = RoomRoundReplaySchema.parse(
-        rawData,
-      ) as RoundReplayResponse;
-      setRoundResults(response.rankings);
-      setPromptStrokes(response.promptStrokes);
-    });
-
-    socket.on(CLIENT_EVENTS.ROOM_ROUND_STANDING, (rawData: unknown) => {
-      const response = RoomRoundStandingSchema.parse(
-        rawData,
-      ) as RoundStandingResponse;
-      setStandingResults(response.rankings);
-    });
-
-    socket.on(CLIENT_EVENTS.ROOM_GAME_END, (rawData: unknown) => {
-      const response = RoomGameEndSchema.parse(rawData) as GameEndResponse;
-      setFinalResults(response.finalRankings);
-      setHighlight(response.highlight);
-    });
-
-    // 대기열에 추가됨
-    socket.on(CLIENT_EVENTS.USER_WAITLIST, (rawData: unknown) => {
-      const { currentRound, totalRounds } = UserWaitlistSchema.parse(rawData);
-      setIsInWaitlist(true);
-      setGameProgress({ currentRound, totalRounds });
-    });
-
-    socket.on(CLIENT_EVENTS.USER_PRACTICE_STARTED, (rawData: unknown) => {
-      const promptStrokes = z.array(StrokeSchema).parse(rawData) as Stroke[];
-      setPracticePrompt(promptStrokes);
-      setIsPracticing(true);
-    });
-
-    // 에러: 모달 확인 후 메인 페이지로 이동
-    socket.on(CLIENT_EVENTS.ERROR, (rawData: unknown) => {
-      const error = ErrorResponseSchema.parse(rawData);
-      setAlertMessage(error.message);
-      setPendingNavigation('/');
-    });
-
-    // 채팅 이벤트
-    socket.on(CLIENT_EVENTS.CHAT_BROADCAST, (rawData: unknown) => {
-      const message = ChatMessageSchema.parse(rawData) as ChatMessage;
-      addChatMessage(message);
-    });
-
-    socket.on(CLIENT_EVENTS.CHAT_HISTORY, (rawData: unknown) => {
-      const payload = ChatHistoryPayloadSchema.parse(rawData);
-      setChatHistory(payload.messages as ChatMessage[]);
-    });
-
-    socket.on(CLIENT_EVENTS.CHAT_ERROR, (rawData: unknown) => {
-      const error = ChatErrorSchema.parse(rawData);
-      // 채팅 에러는 해당 유저의 채팅창에만 시스템 메시지로 표시
-      const errorMessage: ChatMessage = {
-        type: 'system',
-        message: error.message,
-        timestamp: Date.now(),
-        systemType: 'timer_warning', // 경고 스타일로 표시
-      };
-      addChatMessage(errorMessage);
-    });
-
-    // Cleanup
-    return () => {
-      socket.off('connect');
-      socket.off('disconnect');
-      socket.off(CLIENT_EVENTS.ROOM_METADATA);
-      socket.off(CLIENT_EVENTS.ROOM_TIMER);
-      socket.off(CLIENT_EVENTS.ROOM_LEADERBOARD);
-      socket.off(CLIENT_EVENTS.ROOM_PROMPT);
-      socket.off(CLIENT_EVENTS.ROOM_ROUND_REPLAY);
-      socket.off(CLIENT_EVENTS.ROOM_ROUND_STANDING);
-      socket.off(CLIENT_EVENTS.ROOM_GAME_END);
-      socket.off(CLIENT_EVENTS.USER_WAITLIST);
-      socket.off(CLIENT_EVENTS.ERROR);
-      socket.off(CLIENT_EVENTS.ROOM_KICKED);
-      socket.off(CLIENT_EVENTS.USER_PRACTICE_STARTED);
-      socket.off(CLIENT_EVENTS.CHAT_BROADCAST);
-      socket.off(CLIENT_EVENTS.CHAT_HISTORY);
-      socket.off(CLIENT_EVENTS.CHAT_ERROR);
-
-      disconnectSocket();
-      reset(); // 소켓 연결 해제 시 전체 상태 초기화
-      clearChat(); // 채팅 초기화
-    };
-  }, [
-    roomId,
-    nickname,
-    profileId,
-    navigate,
-    setMySocketId,
-    setConnected,
-    updateRoom,
-    setTimer,
-    setLiveRankings,
-    setPromptStrokes,
-    setRoundResults,
-    setStandingResults,
-    setFinalResults,
-    setHighlight,
-    setPracticePrompt,
-    setIsPracticing,
-    setAlertMessage,
-    setPendingNavigation,
-    reset,
-    addToast,
-    addChatMessage,
-    setChatHistory,
-    clearChat,
-  ]);
+  // 4. 소켓 연결
+  useSocketConnection({
+    roomId: roomId || '',
+    nickname: nickname || '',
+    profileId: profileId || '',
+    enabled,
+  });
 
   return getSocket();
 };

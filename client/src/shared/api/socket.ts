@@ -43,6 +43,8 @@ export const getSocket = (): Socket => {
     });
     setupSocketErrorHandlers(socket);
   }
+  // connect() 시점의 최신 profileId를 사용하도록 매번 갱신
+  socket.auth = { profileId: localStorage.getItem('profileId') };
   return socket;
 };
 

@@ -1,7 +1,7 @@
-import type { ChatMessage as ChatMessageType } from '../model/types';
-import { useCurrentPlayer } from '@/entities/gameRoom/model/gameStore';
+import { useCurrentPlayer } from '@/entities/gameRoom';
 import { cn } from '@/shared/lib/classNames';
 import { UserAvatar } from '@/shared/ui';
+import type { ChatMessage as ChatMessageType } from '../model/types';
 
 interface ChatMessageProps {
   message: ChatMessageType;

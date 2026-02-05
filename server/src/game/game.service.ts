@@ -1,116 +1,56 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { Injectable } from '@nestjs/common';
 
 import { GameRoom, Player } from 'src/common/types';
 import { GamePhase } from '../common/constants';
 import { ErrorCode } from 'src/common/constants/error-code';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
-import { findPlayerOrThrow, requireHost } from 'src/common/utils/player.utils';
-import { PromptService } from 'src/prompt/prompt.service';
-import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
-import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
-import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
-import { PlayerCacheService } from 'src/redis/cache/player-cache.service';
-import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
-import { WaitlistCacheService } from 'src/redis/cache/waitlist-cache.service';
-import { RoundService } from 'src/round/round.service';
+import { InternalError } from 'src/common/exceptions/internal-error';
 import type { CreateRoomDto } from '@shared/types';
 
-interface PhaseChangeHandler {
-  (roomId: string, joinedPlayers: Player[]): Promise<void>;
-}
+import { PromptService } from 'src/prompt/prompt.service';
+import { RoundService } from 'src/round/round.service';
+import { PlayerService } from './player.service';
+import { RoomService } from './room.service';
 
 @Injectable()
-export class GameService implements OnModuleInit {
-  private phaseChangeHandler?: PhaseChangeHandler;
-
+export class GameService {
   constructor(
-    private readonly cacheService: GameRoomCacheService,
-    private readonly waitlistService: WaitlistCacheService,
-    private readonly playerCacheService: PlayerCacheService,
-    private readonly leaderboardCacheService: LeaderboardCacheService,
-    private readonly standingsCacheService: StandingsCacheService,
-    private readonly progressCacheService: GameProgressCacheService,
     private readonly roundService: RoundService,
     private readonly promptService: PromptService,
+    private readonly playerService: PlayerService,
+    private readonly roomService: RoomService,
   ) {}
 
-  onModuleInit() {
-    this.roundService.setPhaseChangeHandler(async (roomId: string) => {
-      const newlyJoinedPlayers =
-        await this.getNewlyJoinedUserFromWaitlist(roomId);
-      if (this.phaseChangeHandler) {
-        await this.phaseChangeHandler(roomId, newlyJoinedPlayers);
-      }
-    });
-  }
-
-  setPhaseChangeHandler(handler: PhaseChangeHandler) {
-    this.phaseChangeHandler = handler;
-  }
-
   async createRoom(createRoomDto: CreateRoomDto) {
-    const roomId = await this.generateRoomId();
-
     const { drawingTime, maxPlayer, totalRounds } = createRoomDto;
 
-    const gameRoom: GameRoom = {
-      roomId,
-      players: [],
-      phase: GamePhase.WAITING,
-      currentRound: 0,
-      settings: {
-        drawingTime: drawingTime,
-        maxPlayer: maxPlayer,
-        totalRounds: totalRounds,
-      },
-    };
+    const roomId = await this.roomService.createRoom(
+      maxPlayer,
+      drawingTime,
+      totalRounds,
+    );
+
     await this.promptService.setPromptIds(roomId, totalRounds);
-    await this.cacheService.saveRoom(roomId, gameRoom);
 
     return roomId;
   }
 
-  async leaveRoom(socketId: string): Promise<GameRoom | null> {
-    const roomId = await this.playerCacheService.getRoomId(socketId);
+  async leaveRoom(
+    socketId: string,
+  ): Promise<{ room: GameRoom; player: Player }> {
+    const roomId = await this.playerService.getJoinedRoomId(socketId);
     if (!roomId) {
-      return null;
+      throw new InternalError('roomId가 없습니다');
     }
 
-    const room = await this.cacheService.getRoom(roomId);
-
-    if (!room) {
-      return null;
-    }
-    const players = await this.cacheService.getAllPlayers(roomId);
-
-    const target = players.find((player) => player.socketId === socketId);
-
-    if (!target) {
-      // 대기자일 수 있으니 대기열 제거 처리
-      await this.waitlistService.deleteWaitPlayer(roomId, socketId);
-      await this.playerCacheService.delete(socketId);
-      return null;
+    const player = await this.playerService.leaveRoom(roomId, socketId);
+    if (!player) {
+      throw new InternalError(ErrorCode.PLAYER_NOT_FOUND);
     }
 
-    await this.cacheService.deletePlayer(roomId, socketId);
-    await this.playerCacheService.delete(socketId);
-    await this.leaderboardCacheService.delete(roomId, socketId);
-    await this.standingsCacheService.delete(roomId, socketId);
-    await this.progressCacheService.deletePlayer(roomId, socketId);
+    const room = await this.roomService.getRoom(roomId);
 
-    const updatedRoom = await this.cacheService.getRoom(roomId);
-
-    if (
-      updatedRoom &&
-      updatedRoom.players.length === 1 &&
-      updatedRoom.phase !== GamePhase.WAITING &&
-      updatedRoom.phase !== GamePhase.GAME_END
-    ) {
-      await this.roundService.endGame(updatedRoom);
-    }
-
-    return updatedRoom;
+    return { room, player };
   }
 
   async updateGameSettings(
@@ -120,14 +60,12 @@ export class GameService implements OnModuleInit {
     totalRounds: number,
     drawingTime: number,
   ) {
-    const room = await this.cacheService.getRoom(roomId);
+    const room = await this.roomService.getRoom(roomId);
+    const players = await this.playerService.getPlayers(roomId);
 
-    if (!room) {
-      throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
+    if (!this.playerService.checkIsHost(players, socketId)) {
+      throw new WebsocketException(ErrorCode.PLAYER_NOT_HOST);
     }
-
-    const player = findPlayerOrThrow(room.players, socketId);
-    requireHost(player);
 
     if (room.phase !== GamePhase.WAITING) {
       throw new WebsocketException(
@@ -135,18 +73,22 @@ export class GameService implements OnModuleInit {
       );
     }
 
-    if (maxPlayer < room.players.length) {
-      return;
+    if (players.length > maxPlayer) {
+      maxPlayer = room.settings.maxPlayer;
     }
 
     if (totalRounds !== room.settings.totalRounds) {
-      await this.promptService.resetPromptIds(roomId, totalRounds);
+      await this.promptService.resetPromptIds(room.roomId, totalRounds);
     }
 
-    Object.assign(room.settings, { maxPlayer, totalRounds, drawingTime });
-    await this.cacheService.saveRoom(roomId, room);
+    const updatedRoom = await this.roomService.updateSettings(
+      room,
+      maxPlayer,
+      drawingTime,
+      totalRounds,
+    );
 
-    return room;
+    return updatedRoom;
   }
 
   async joinRoom(
@@ -154,148 +96,93 @@ export class GameService implements OnModuleInit {
     nickname: string,
     profileId: string,
     socketId: string,
-  ): Promise<GameRoom | null> {
-    const room = await this.cacheService.getRoom(roomId);
+  ): Promise<{ room: GameRoom; newlyJoinedPlayers: Player[] }> {
+    const room = await this.roomService.getRoom(roomId);
 
-    if (!room) {
-      throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
-    }
+    const isFull = await this.playerService.isRoomFull(
+      roomId,
+      room.settings.maxPlayer,
+      room.players.length,
+    );
 
-    const waitlistSize = await this.waitlistService.getWaitlistSize(roomId);
-    if (room.players.length + waitlistSize >= room.settings.maxPlayer) {
+    if (isFull) {
       throw new WebsocketException(ErrorCode.ROOM_FULL);
     }
 
     // 무조건 대기열을 거쳐서 입장
-    await this.waitlistService.addWaitPlayer(roomId, {
+    const newlyJoinedPlayers = await this.playerService.requestJoinWaitList(
+      roomId,
+      socketId,
       nickname,
       profileId,
-      socketId,
-      isHost: false,
-    });
-    await this.playerCacheService.set(socketId, roomId);
-
-    const newlyJoinedPlayers =
-      await this.getNewlyJoinedUserFromWaitlist(roomId);
-
-    // 유저가 이번에 join 가능한지 확인
-    const isJoined = newlyJoinedPlayers.some(
-      (player) => player.socketId === socketId,
     );
 
-    if (newlyJoinedPlayers.length > 0 && this.phaseChangeHandler) {
-      await this.phaseChangeHandler(roomId, newlyJoinedPlayers); // gateway에 알림
-    }
+    const updatedRoom = await this.roomService.getRoom(roomId);
 
-    // join 가능하면 room 정보 전달
-    if (isJoined) {
-      return await this.cacheService.getRoom(roomId);
-    }
-
-    // join 불가 상태일 때는 null 반환
-    return null;
-  }
-
-  // 대기열 관리: 대기열에서 참여할 플레이어 리스트 반환
-  async getNewlyJoinedUserFromWaitlist(roomId: string): Promise<Player[]> {
-    const room = await this.cacheService.getRoom(roomId);
-    if (!room) {
-      throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
-    }
-
-    // prompt, drawing 단계에서는 대기 유지
-    if (room.phase === GamePhase.PROMPT || room.phase === GamePhase.DRAWING) {
-      return [];
-    }
-
-    const newlyJoinedPlayers: Player[] = [];
-
-    // 이외 phase에서는 참여
-    while (true) {
-      const newPlayer =
-        await this.cacheService.popAndAddPlayerAtomically(roomId);
-      if (!newPlayer) break;
-
-      await this.playerCacheService.set(newPlayer.socketId, roomId);
-      await this.leaderboardCacheService.updateScore(
-        roomId,
-        newPlayer.socketId,
-        0,
-      );
-
-      newlyJoinedPlayers.push(newPlayer);
-    }
-
-    return newlyJoinedPlayers;
+    return { room: updatedRoom, newlyJoinedPlayers };
   }
 
   async startGame(roomId: string, socketId: string) {
-    const room = await this.cacheService.getRoom(roomId);
-    if (!room) {
-      throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
-    }
+    const room = await this.roomService.getRoom(roomId);
 
     if (room.phase !== GamePhase.WAITING) {
       throw new WebsocketException(ErrorCode.GAME_ALREADY_STARTED);
     }
 
-    const player = findPlayerOrThrow(room.players, socketId);
-    requireHost(player);
+    const players = await this.playerService.getPlayers(roomId);
 
-    if (room.players.length < 2) {
+    if (!this.playerService.checkIsHost(players, socketId)) {
+      throw new WebsocketException(ErrorCode.PLAYER_NOT_HOST);
+    }
+
+    if (players.length < 2) {
       throw new WebsocketException(ErrorCode.PLAYER_ATLEAST_TWO);
     }
+
     await this.roundService.nextPhase(room);
   }
 
-  async getRoom(roomId: string): Promise<GameRoom | null> {
-    return await this.cacheService.getRoom(roomId);
+  async getRoom(roomId: string): Promise<GameRoom> {
+    return await this.roomService.getRoom(roomId);
   }
 
   async restartGame(roomId: string, socketId: string) {
-    const room = await this.cacheService.getRoom(roomId);
-    if (!room) {
-      throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
-    }
+    const room = await this.roomService.getRoom(roomId);
 
     if (room.phase !== GamePhase.GAME_END) {
       throw new WebsocketException(ErrorCode.GAME_NOT_END);
     }
 
-    const player = findPlayerOrThrow(room.players, socketId);
-    requireHost(player);
+    const players = await this.playerService.getPlayers(roomId);
+
+    const isHost = this.playerService.checkIsHost(players, socketId);
+
+    if (!isHost) {
+      throw new WebsocketException(ErrorCode.PLAYER_NOT_HOST);
+    }
 
     await this.roundService.nextPhase(room);
   }
 
   async kickUser(roomId: string, hostSocketId: string, targetSocketId: string) {
-    const room = await this.cacheService.getRoom(roomId);
-    if (!room) {
-      throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
-    }
-
-    if (room.phase !== GamePhase.WAITING) {
+    const isWaiting = await this.roomService.isWaiting(roomId);
+    if (!isWaiting) {
       throw new WebsocketException(ErrorCode.KICK_ONLY_WAITING_PHASE);
     }
 
-    const hostPlayer = findPlayerOrThrow(room.players, hostSocketId);
-    const targetPlayer = findPlayerOrThrow(room.players, targetSocketId);
-    requireHost(hostPlayer);
+    const players = await this.playerService.getPlayers(roomId);
 
-    if (targetPlayer.isHost) {
+    if (!this.playerService.checkIsHost(players, hostSocketId)) {
+      throw new WebsocketException(ErrorCode.PLAYER_NOT_HOST);
+    }
+
+    if (this.playerService.checkIsHost(players, targetSocketId)) {
       throw new WebsocketException(ErrorCode.HOST_CAN_NOT_KICKED);
     }
 
-    const kickedPlayer = {
-      socketId: targetPlayer.socketId,
-      nickname: targetPlayer.nickname,
-    };
+    const { room, player: kickedPlayer } = await this.leaveRoom(targetSocketId);
 
-    const updatedRoom = await this.leaveRoom(targetSocketId);
-    if (!updatedRoom) {
-      throw new WebsocketException(ErrorCode.ROOM_NOT_FOUND);
-    }
-    return { updatedRoom, kickedPlayer };
+    return { room, kickedPlayer };
   }
 
   async startPractice() {
@@ -303,17 +190,12 @@ export class GameService implements OnModuleInit {
     return randomPrompt;
   }
 
-  private async generateRoomId() {
-    let roomId = randomUUID().toString().substring(0, 8);
-    while (await this.cacheService.getRoom(roomId)) {
-      roomId = randomUUID().toString().substring(0, 8);
-    }
-    return roomId;
+  async getNewlyJoinedPlayers(roomId: string) {
+    return await this.playerService.getNewlyJoinedUserFromWaitlist(roomId);
   }
 
   async getSyncData(roomId: string) {
-    const room = await this.cacheService.getRoom(roomId);
-    if (!room) return null;
+    const room = await this.roomService.getRoom(roomId);
 
     switch (room.phase) {
       case GamePhase.ROUND_REPLAY:

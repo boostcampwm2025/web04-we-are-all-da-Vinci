@@ -136,16 +136,16 @@ await expect(page.getByRole('listitem')).toHaveCount(3);
 // tests/fixtures.ts
 export async function setupProfileInContext(context: BrowserContext) {
   await context.addInitScript(() => {
-    localStorage.setItem('nickname', 'TestUser');
-    localStorage.setItem('profileId', '1');
+    localStorage.setItem("nickname", "TestUser");
+    localStorage.setItem("profileId", crypto.randomUUID());
   });
 }
 ```
 
-| localStorage 키 | 설명 | 필수 |
-|----------------|------|------|
-| `nickname` | 플레이어 닉네임 | ✅ |
-| `profileId` | 프로필 아바타 ID (1~N) | ✅ |
+| localStorage 키 | 설명                   | 필수 |
+| --------------- | ---------------------- | ---- |
+| `nickname`      | 플레이어 닉네임        | ✅   |
+| `profileId`     | 프로필 아바타 UUIDv4 | ✅   |
 
 > ⚠️ **주의**: `nickname`과 `profileId`가 모두 설정되어야 프로필 설정 모달이 닫힌다.
 
