@@ -5,13 +5,9 @@ import { useState } from 'react';
 
 interface UserProfileEditorProps {
   onNicknameChange: (nickname: string) => void;
-  onEnter?: () => void;
 }
 
-const ProfileEditor = ({
-  onNicknameChange,
-  onEnter,
-}: UserProfileEditorProps) => {
+const ProfileEditor = ({ onNicknameChange }: UserProfileEditorProps) => {
   const [userId, setUserId] = useState(() => getProfileId());
   const [nickname, setNickname] = useState(() => getNickname());
 
@@ -50,7 +46,6 @@ const ProfileEditor = ({
           autoFocus
           showCount
           variant="scribble"
-          onEnter={onEnter}
         />
       </div>
     </div>

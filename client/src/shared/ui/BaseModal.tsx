@@ -1,4 +1,5 @@
 import { TITLES } from '@/shared/config';
+import { useModalKeyboard } from '@/shared/model';
 import { CommonBtn, DecorateTitle, PageBackground, Title } from '@/shared/ui';
 
 interface BaseModalProps {
@@ -28,6 +29,8 @@ const BaseModal = ({
   variant = 'scribble',
   buttonVariant = 'scribble',
 }: BaseModalProps) => {
+  useModalKeyboard({ isOpen, onConfirm, onClose, confirmDisabled, showCancel });
+
   if (!isOpen) return null;
 
   const containerClasses =
