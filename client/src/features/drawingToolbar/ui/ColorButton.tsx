@@ -3,7 +3,7 @@ import {
   BG_COLOR_MAP,
   COLOR_MAP,
   RING_COLOR_MAP,
-} from '@/features/drawingCanvas/config/colors';
+} from '@/features/drawingCanvas';
 
 interface ColorButtonProps {
   color: string;

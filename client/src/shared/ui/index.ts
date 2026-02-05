@@ -22,3 +22,4 @@ export { default as Title } from './Title';
 export { default as Toast } from './Toast';
 export { default as UserAvatar } from './UserAvatar';
 export { default as Loading } from './Loading';
+export { default as Skeleton } from './Skeleton';

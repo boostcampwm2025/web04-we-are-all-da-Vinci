@@ -1,4 +1,4 @@
-import { Browser, Page, BrowserContext } from '@playwright/test';
+import { Browser, Page, BrowserContext, expect } from '@playwright/test';
 
 export interface GameContext {
   hostContext: BrowserContext;
@@ -11,12 +11,18 @@ export interface GameContext {
 /**
  * 브라우저 컨텍스트에 프로필 데이터를 미리 설정
  * 페이지 로드 전에 호출해야 함
+ * 각 컨텍스트마다 고유한 profileId를 생성하여 중복 세션 방지
  */
-export async function setupProfileInContext(context: BrowserContext) {
-  await context.addInitScript(() => {
-    localStorage.setItem('nickname', 'TestUser');
-    localStorage.setItem('profileId', '1');
-  });
+export async function setupProfileInContext(context: BrowserContext, nickname = 'TestUser') {
+  // UUID v4 형식 생성 (서버에서 UUID v4 검증함)
+  const profileId = crypto.randomUUID();
+
+  await context.addInitScript(({ nickname, profileId }) => {
+    localStorage.setItem('nickname', nickname);
+    localStorage.setItem('profileId', profileId);
+    // E2E 테스트 모드: tabLock 및 profileId 보안 검사 비활성화
+    localStorage.setItem('e2eTest', 'true');
+  }, { nickname, profileId });
 }
 
 /**
@@ -104,7 +110,7 @@ export async function createRoomWithPlayers(
 ): Promise<GameContext> {
   // 호스트 브라우저 컨텍스트
   const hostContext = await browser.newContext();
-  await setupProfileInContext(hostContext);
+  await setupProfileInContext(hostContext, 'Host');
   const hostPage = await hostContext.newPage();
 
   // 호스트: 방 생성
@@ -112,14 +118,15 @@ export async function createRoomWithPlayers(
 
   // 게스트 브라우저 컨텍스트
   const guestContext = await browser.newContext();
-  await setupProfileInContext(guestContext);
+  await setupProfileInContext(guestContext, 'Guest');
   const guestPage = await guestContext.newPage();
 
   // 게스트: 방 입장
   await joinRoom(guestPage, roomId);
 
-  // 호스트 페이지에서 게스트가 보일 때까지 대기
-  await hostPage.waitForTimeout(1000);
+  // 호스트의 시작 버튼이 활성화될 때까지 대기 (2명 이상 입장 시 활성화)
+  // 개발환경에 따라 시간이 걸릴 수 있어 넉넉한 시간 여유
+  await expect(hostPage.getByRole('button', { name: '시작' })).toBeEnabled({ timeout: 10000 });
 
   return {
     hostContext,

@@ -7,26 +7,19 @@ import {
 import { GameSettingsCard } from '@/entities/gameSettings';
 import { ChatBox, useChatActions, useChatStore } from '@/features/chat';
 import { PlayerListSection } from '@/features/playerList';
-import { RoomCodeCopy } from '@/features/roomCode';
-import { RoomSettingsModal, type RoomSettings } from '@/features/roomSettings';
-import { WaitingRoomActions } from '@/features/waitingRoomActions';
-import { WaitingRoomOverlay } from '@/features/waitingRoomActions/ui/WaitingRoomOverlay';
-import { getSocket } from '@/shared/api';
-import {
-  MIXPANEL_EVENTS,
-  SERVER_EVENTS,
-  TITLES,
-  BGM_LIST,
-} from '@/shared/config';
-import { trackEvent } from '@/shared/lib/mixpanel';
-import { useBGM, useToastStore } from '@/shared/model';
-import { GameHeader } from '@/shared/ui';
 import { Practice } from '@/features/practice';
-import { useState } from 'react';
+import { RoomCodeCopy } from '@/features/roomCode';
+import { RoomSettingsModal } from '@/features/roomSettings';
+import {
+  WaitingRoomActions,
+  WaitingRoomOverlay,
+} from '@/features/waitingRoomActions';
+import { TITLES, BGM_LIST } from '@/shared/config';
+import { useBGM } from '@/shared/model';
+import { GameHeader } from '@/shared/ui';
+import { useWaitingActions } from '../model/useWaitingActions';
 
 export const Waiting = () => {
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-
   // Zustand에서 실제 데이터 가져오기
   const roomId = useGameStore((state) => state.roomId);
   const players = useGameStore(selectPlayers);
@@ -35,55 +28,20 @@ export const Waiting = () => {
   const isInWaitlist = useGameStore((state) => state.isInWaitlist);
   const isPracticing = useGameStore((state) => state.isPracticing);
 
-  const { addToast } = useToastStore();
+  const {
+    showSettingsModal,
+    setShowSettingsModal,
+    copyRoomId,
+    handleSettingsChange,
+    handleSettingsComplete,
+    handleStartGame,
+  } = useWaitingActions({ roomId, isHostUser });
 
   // 채팅
   const messages = useChatStore((state) => state.messages);
   const { sendMessage } = useChatActions(roomId);
 
   useBGM(BGM_LIST.WAITING);
-
-  const copyRoomId = async () => {
-    try {
-      await navigator.clipboard.writeText(globalThis.location.href);
-      trackEvent(MIXPANEL_EVENTS.CLICK_COPYLINK_BTN);
-      addToast('초대 링크가 복사되었습니다!', 'success');
-    } catch (e) {
-      console.error('클립보드 복사 실패', e);
-      addToast('링크 복사에 실패했습니다.', 'error');
-    }
-  };
-
-  const handleSettingsChange = () => {
-    setShowSettingsModal(true);
-  };
-
-  const handleSettingsComplete = (settings: RoomSettings) => {
-    const socket = getSocket();
-    socket.emit(SERVER_EVENTS.ROOM_SETTINGS, {
-      roomId,
-      maxPlayer: settings.maxPlayers,
-      totalRounds: settings.totalRounds,
-      drawingTime: settings.drawingTime,
-    });
-    setShowSettingsModal(false);
-  };
-  const handleStartGame = () => {
-    // 검증: roomId가 없으면 이벤트 발생 방지
-    if (!roomId) {
-      console.error('Cannot start game: 룸아이디가 있어야 가능');
-      return;
-    }
-
-    // 검증: 방장이 아니면 게임 시작 불가
-    if (!isHostUser) {
-      console.error('Cannot start game: 방장만 가능');
-      return;
-    }
-
-    const socket = getSocket();
-    socket.emit(SERVER_EVENTS.ROOM_START, { roomId });
-  };
 
   return (
     <>
@@ -101,9 +59,7 @@ export const Waiting = () => {
                   <PlayerListSection
                     players={players}
                     maxPlayer={settings.maxPlayer}
-                    roomCode={
-                      <RoomCodeCopy roomId={roomId} onCopy={copyRoomId} />
-                    }
+                    roomCode={<RoomCodeCopy onCopy={copyRoomId} />}
                   />
                   {isInWaitlist && <WaitingRoomOverlay />}
                 </div>
@@ -151,6 +107,7 @@ export const Waiting = () => {
         onClose={() => setShowSettingsModal(false)}
         onComplete={handleSettingsComplete}
         currentPlayerCount={players.length}
+        settings={settings}
       />
     </>
   );

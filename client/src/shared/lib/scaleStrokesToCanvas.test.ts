@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { calculateStrokeScale, transformPoint } from './scaleStrokesToCanvas';
-import type { Stroke } from '@/entities/similarity/model';
+import type { Stroke } from '@/entities/similarity';
 
 describe('scaleStrokesToCanvas', () => {
   describe('calculateStrokeScale', () => {

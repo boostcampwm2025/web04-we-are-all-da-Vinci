@@ -1,2 +1,2 @@
-export { PlayerCard } from './ui/playerCard';
-export { EmptySlot } from './ui/EmptySlot';
+export { PlayerCard } from './ui/PlayerCard';
+export { SlotCard } from './ui/SlotCard';

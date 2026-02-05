@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
-import { GamePhase } from 'src/common/constants';
+import { GamePhase } from '../common/constants';
 import { ErrorCode } from 'src/common/constants/error-code';
 import { WebsocketException } from 'src/common/exceptions/websocket-exception';
 import { Similarity, Stroke } from 'src/common/types';
@@ -23,27 +23,33 @@ export class PlayService {
   }
 
   async updateScore(roomId: string, socketId: string, similarity: number) {
-    await this.leaderboardCacheService.updateScore(
-      roomId,
-      socketId,
-      similarity,
-    );
-
     const players = await this.cacheService.getAllPlayers(roomId);
     if (!players) {
       this.logger.error('게임 방 데이터 오류');
       throw new WebsocketException('서버 오류');
     }
 
-    const playerMapper = createPlayerMapper(players);
+    // socketId로 플레이어를 찾아 profileId 획득
+    const player = players.find((p) => p.socketId === socketId);
+    if (!player) {
+      throw new WebsocketException(ErrorCode.PLAYER_NOT_IN_ROOM);
+    }
+
+    await this.leaderboardCacheService.updateScore(
+      roomId,
+      player.profileId,
+      similarity,
+    );
+
+    const playerMapper = createPlayerMapper(players, 'profileId');
 
     const leaderboard = await this.leaderboardCacheService.getAll(roomId);
 
     const rankings = leaderboard.map(({ value, score }) => ({
-      socketId: value,
+      profileId: value,
       similarity: score,
       nickname: playerMapper[value]?.nickname,
-      profileId: playerMapper[value]?.profileId,
+      socketId: playerMapper[value]?.socketId,
     }));
 
     return rankings;
@@ -65,20 +71,26 @@ export class PlayService {
       throw new WebsocketException(ErrorCode.GAME_NOT_DRAWING_PHASE);
     }
 
-    if (!room.players.find((player) => player.socketId === socketId)) {
+    const player = room.players.find((p) => p.socketId === socketId);
+    if (!player) {
       throw new WebsocketException(ErrorCode.PLAYER_NOT_IN_ROOM);
     }
 
     const currentRound = room.currentRound;
 
+    // profileId 기반으로 저장
     await this.progressCacheService.submitRoundResult(
       roomId,
       currentRound,
-      socketId,
+      player.profileId,
       strokes,
       similarity,
     );
 
-    await this.standingsCacheService.updateScore(roomId, socketId, similarity);
+    await this.standingsCacheService.updateScore(
+      roomId,
+      player.profileId,
+      similarity,
+    );
   }
 }

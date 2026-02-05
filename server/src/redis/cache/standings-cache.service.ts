@@ -7,12 +7,11 @@ import { RedisService } from '../redis.service';
 export class StandingsCacheService {
   constructor(private readonly redisService: RedisService) {}
 
-  async updateScore(roomId: string, socketId: string, similarity: Similarity) {
+  async updateScore(roomId: string, profileId: string, similarity: Similarity) {
     const client = this.redisService.getClient();
     const key = RedisKeys.standings(roomId);
 
-    // TODO: 누적 점수 계산 로직 추가 필요
-    await client.zIncrBy(key, similarity.similarity, socketId);
+    await client.zIncrBy(key, similarity.similarity, profileId);
   }
 
   async getStandings(roomId: string) {
@@ -23,8 +22,15 @@ export class StandingsCacheService {
 
     return standings.map(({ value, score }) => ({
       score: score,
-      socketId: value,
+      profileId: value,
     }));
+  }
+
+  async delete(roomId: string, profileId: string) {
+    const client = this.redisService.getClient();
+    const key = RedisKeys.standings(roomId);
+
+    await client.zRem(key, profileId);
   }
 
   async deleteAll(roomId: string) {

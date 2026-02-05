@@ -1,10 +1,20 @@
 @import 'tailwindcss';
+
+@font-face {
+  font-family: 'GangwonEdu';
+  src: url('/fonts/강원교육현옥샘.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 @theme {
   /* ─────────────────────────────────────────────────────────────
      FONTS
      ───────────────────────────────────────────────────────────── */
-  --font-display: 'Be Vietnam Pro', sans-serif;
-  --font-handwriting: 'Nanum Pen Script', cursive;
+  --font-display:
+    'GangwonEdu', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-handwriting:
+    'GangwonEdu', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
 
   /* ─────────────────────────────────────────────────────────────
      CONTENT COLORS (텍스트용) - text-content-*
@@ -97,7 +107,7 @@
     @apply h-full md:h-auto;
     @apply md:aspect-[3/4];
     @apply xl:aspect-[16/9] xl:max-h-full;
-    max-width: 1920px;
+    max-width: 1420px;
     max-height: 100%;
   }
 

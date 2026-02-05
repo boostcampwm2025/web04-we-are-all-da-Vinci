@@ -1,5 +1,5 @@
 import { StaticCanvas } from '@/entities/drawing';
-import type { Stroke } from '@/entities/similarity/model';
+import type { Stroke } from '@/entities/similarity';
 
 interface PromptSectionProps {
   promptStrokes: Stroke[];
@@ -12,7 +12,7 @@ const PromptSection = ({ promptStrokes }: PromptSectionProps) => {
         <span className="material-symbols-outlined text-base text-yellow-500">
           image
         </span>
-        <h2 className="font-handwriting text-xl font-bold text-gray-800">
+        <h2 className="font-handwriting text-2xl font-bold text-gray-800">
           제시된 그림
         </h2>
       </div>

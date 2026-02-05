@@ -1,36 +1,22 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { Server } from 'socket.io';
-import {
-  ClientEvents,
-  DRAWING_END_DELAY,
-  GAME_END_TIME,
-  GamePhase,
-  PROMPT_TIME,
-  ROUND_REPLAY_TIME,
-  ROUND_STANDING_TIME,
-} from 'src/common/constants';
+import { DRAWING_END_DELAY, GamePhase } from '../common/constants';
 import { GameRoom } from 'src/common/types';
-import { createPlayerMapper } from 'src/common/utils/player.utils';
-import { PromptService } from 'src/prompt/prompt.service';
-import { GameProgressCacheService } from 'src/redis/cache/game-progress-cache.service';
 import { GameRoomCacheService } from 'src/redis/cache/game-room-cache.service';
-import { LeaderboardCacheService } from 'src/redis/cache/leaderboard-cache.service';
-import { StandingsCacheService } from 'src/redis/cache/standings-cache.service';
 import { TimerService } from 'src/timer/timer.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { PhaseEvent, PhaseService } from './phase.service';
 
 @Injectable()
 export class RoundService implements OnModuleInit {
   server!: Server;
-  private phaseChangeHandler?: (roomId: string) => Promise<void>;
 
   constructor(
     private readonly cacheService: GameRoomCacheService,
-    private readonly progressCacheService: GameProgressCacheService,
-    private readonly standingsCacheService: StandingsCacheService,
-    private readonly leaderboardCacheService: LeaderboardCacheService,
     private readonly timerService: TimerService,
-    private readonly promptService: PromptService,
+    private readonly emitter: EventEmitter2,
+    private readonly phaseService: PhaseService,
     private readonly logger: PinoLogger,
   ) {
     this.logger.setContext(RoundService.name);
@@ -45,7 +31,7 @@ export class RoundService implements OnModuleInit {
 
       if (room.phase === GamePhase.DRAWING) {
         setTimeout(() => {
-          this.nextPhase(room);
+          void this.nextPhase(room);
         }, DRAWING_END_DELAY);
         return;
       }
@@ -57,12 +43,8 @@ export class RoundService implements OnModuleInit {
     this.server = server;
   }
 
-  setPhaseChangeHandler(handler: (roomId: string) => Promise<void>) {
-    this.phaseChangeHandler = handler;
-  }
-
-  private async notifyPhaseChange(roomId: string) {
-    if (this.phaseChangeHandler) await this.phaseChangeHandler(roomId);
+  private notifyPhaseChange(roomId: string, events: PhaseEvent[]) {
+    this.emitter.emit('phase_changed', { roomId, events });
   }
 
   async nextPhase(room: GameRoom) {
@@ -90,114 +72,75 @@ export class RoundService implements OnModuleInit {
     }
   }
 
-  private async movePrompt(room: GameRoom) {
-    room.phase = GamePhase.PROMPT;
-    room.currentRound += 1;
+  async endGame(room: GameRoom) {
+    await this.moveGameEnd(room);
+  }
 
-    const promptStrokes = await this.promptService.getPromptForRound(
-      room.roomId,
-      room.currentRound,
-    );
-    if (!promptStrokes) {
-      throw new Error('제시 그림 불러오기에 실패했습니다.');
+  private async moveWaiting(room: GameRoom) {
+    if (room.phase !== GamePhase.GAME_END) {
+      return;
     }
 
-    await this.cacheService.saveRoom(room.roomId, room);
+    await this.phaseService.waiting(room);
+    await this.timerService.cancelTimer(room.roomId);
 
-    this.server.to(room.roomId).emit(ClientEvents.ROOM_PROMPT, promptStrokes);
+    this.logger.info({ roomId: room.roomId }, 'Game Waiting Start');
 
-    await this.timerService.startTimer(room.roomId, PROMPT_TIME);
+    this.notifyPhaseChange(room.roomId, []);
+  }
+
+  private async movePrompt(room: GameRoom) {
+    const { events, timeLeft } = await this.phaseService.prompt(room);
+
+    events.forEach(({ name, payload }) => {
+      this.server.to(room.roomId).emit(name, payload);
+    });
+
+    await this.timerService.startTimer(room.roomId, timeLeft);
     this.logger.info({ room }, 'Prompt Phase Start');
 
-    await this.notifyPhaseChange(room.roomId);
+    this.notifyPhaseChange(room.roomId, events);
   }
 
   private async moveDrawing(room: GameRoom) {
-    room.phase = GamePhase.DRAWING;
-    await this.cacheService.saveRoom(room.roomId, room);
+    const { events, timeLeft } = await this.phaseService.drawing(room);
 
-    await this.timerService.startTimer(room.roomId, room.settings.drawingTime);
+    events.forEach(({ name, payload }) => {
+      this.server.to(room.roomId).emit(name, payload);
+    });
 
+    await this.timerService.startTimer(room.roomId, timeLeft);
     this.logger.info({ room }, 'Drawing Phase Start');
 
-    await this.notifyPhaseChange(room.roomId);
+    this.notifyPhaseChange(room.roomId, events);
   }
 
   private async moveRoundReplay(room: GameRoom) {
-    room.phase = GamePhase.ROUND_REPLAY;
-    await this.cacheService.saveRoom(room.roomId, room);
+    const { events, timeLeft } = await this.phaseService.roundReplay(room);
 
-    const result = await this.getRoundReplayData(room.roomId);
+    events.forEach(({ name, payload }) => {
+      this.server.to(room.roomId).emit(name, payload);
+    });
 
-    await this.timerService.startTimer(room.roomId, ROUND_REPLAY_TIME);
-
-    this.server.to(room.roomId).emit(ClientEvents.ROOM_ROUND_REPLAY, result);
+    await this.timerService.startTimer(room.roomId, timeLeft);
 
     this.logger.info({ room }, 'Round Replay Phase Start');
 
-    await this.notifyPhaseChange(room.roomId);
-  }
-
-  async getRoundReplayData(roomId: string) {
-    const room = await this.cacheService.getRoom(roomId);
-    if (!room) return null;
-
-    const roundResults = await this.progressCacheService.getRoundResults(
-      room.roomId,
-      room.currentRound,
-    );
-
-    const playerMapper = createPlayerMapper(room.players);
-
-    const rankings = roundResults
-      .sort((a, b) => b.similarity.similarity - a.similarity.similarity)
-      .map((value) => ({
-        ...value,
-        nickname: playerMapper[value.socketId]?.nickname,
-        profileId: playerMapper[value.socketId]?.profileId,
-      }));
-
-    return {
-      rankings: rankings,
-      promptStrokes:
-        (await this.promptService.getPromptForRound(
-          room.roomId,
-          room.currentRound,
-        )) || [],
-    };
+    this.notifyPhaseChange(room.roomId, events);
   }
 
   private async moveRoundStanding(room: GameRoom) {
-    room.phase = GamePhase.ROUND_STANDING;
-    await this.cacheService.saveRoom(room.roomId, room);
+    const { events, timeLeft } = await this.phaseService.roundStanding(room);
 
-    const result = await this.getRoundStandingData(room.roomId);
+    events.forEach(({ name, payload }) => {
+      this.server.to(room.roomId).emit(name, payload);
+    });
 
-    await this.timerService.startTimer(room.roomId, ROUND_STANDING_TIME);
-
-    this.server.to(room.roomId).emit(ClientEvents.ROOM_ROUND_STANDING, result);
+    await this.timerService.startTimer(room.roomId, timeLeft);
 
     this.logger.info({ room }, 'Round Standing Phase Start');
 
-    await this.notifyPhaseChange(room.roomId);
-  }
-
-  async getRoundStandingData(roomId: string) {
-    const room = await this.cacheService.getRoom(roomId);
-    if (!room) return null;
-
-    const standings = await this.standingsCacheService.getStandings(
-      room.roomId,
-    );
-    const playerMapper = createPlayerMapper(room.players);
-
-    const rankings = standings.map((value) => ({
-      ...value,
-      nickname: playerMapper[value.socketId]?.nickname,
-      profileId: playerMapper[value.socketId]?.profileId,
-    }));
-
-    return { rankings };
+    this.notifyPhaseChange(room.roomId, events);
   }
 
   private async moveNextRoundOrEnd(room: GameRoom) {
@@ -207,87 +150,31 @@ export class RoundService implements OnModuleInit {
     }
 
     // 게임 종료
-    room.phase = GamePhase.GAME_END;
-    await this.cacheService.saveRoom(room.roomId, room);
+    await this.moveGameEnd(room);
+  }
 
-    const finalResult = await this.getGameEndData(room.roomId);
+  private async moveGameEnd(room: GameRoom) {
+    const { events, timeLeft } = await this.phaseService.gameEnd(room);
 
-    this.server.to(room.roomId).emit(ClientEvents.ROOM_GAME_END, finalResult);
+    events.forEach(({ name, payload }) => {
+      this.server.to(room.roomId).emit(name, payload);
+    });
 
-    await this.timerService.startTimer(room.roomId, GAME_END_TIME);
+    await this.timerService.startTimer(room.roomId, timeLeft);
 
     this.logger.info('Game End Start');
-    await this.notifyPhaseChange(room.roomId);
+    this.notifyPhaseChange(room.roomId, events);
+  }
+
+  async getRoundReplayData(roomId: string) {
+    return await this.phaseService.getRoundReplayData(roomId);
+  }
+
+  async getRoundStandingData(roomId: string) {
+    return await this.phaseService.getRoundStandingData(roomId);
   }
 
   async getGameEndData(roomId: string) {
-    const room = await this.cacheService.getRoom(roomId);
-    if (!room) return null;
-
-    const standings = await this.standingsCacheService.getStandings(
-      room.roomId,
-    );
-
-    const playerMapper = createPlayerMapper(room.players);
-
-    const rankings = standings.map((value) => ({
-      ...value,
-      nickname: playerMapper[value.socketId]?.nickname,
-      profileId: playerMapper[value.socketId]?.profileId,
-    }));
-
-    const champion = rankings[0];
-
-    if (!champion) {
-      return null;
-    }
-
-    const highlight = await this.progressCacheService.getHighlight(
-      room.roomId,
-      champion.socketId,
-      room.settings.totalRounds,
-    );
-
-    if (!highlight) {
-      return null;
-    }
-
-    return {
-      finalRankings: rankings,
-      highlight: {
-        promptStrokes:
-          (await this.promptService.getPromptForRound(
-            room.roomId,
-            highlight.round,
-          )) || [],
-        playerStrokes: highlight.strokes,
-        similarity: highlight.similarity,
-      },
-    };
-  }
-
-  private async moveWaiting(room: GameRoom) {
-    if (room.phase !== GamePhase.GAME_END) {
-      return;
-    }
-
-    // GAME_END 타이머 취소 (재시작 시 자동 시작 방지)
-    await this.timerService.cancelTimer(room.roomId);
-    await this.promptService.resetPromptIds(
-      room.roomId,
-      room.settings.totalRounds,
-    );
-
-    room.phase = GamePhase.WAITING;
-    room.currentRound = 0;
-
-    await this.cacheService.saveRoom(room.roomId, room);
-
-    await this.progressCacheService.deleteAll(room.roomId);
-    await this.standingsCacheService.deleteAll(room.roomId);
-    await this.leaderboardCacheService.deleteAll(room.roomId);
-
-    this.logger.info({ roomId: room.roomId }, 'Game Waiting Start');
-    await this.notifyPhaseChange(room.roomId);
+    return await this.phaseService.getGameEndData(roomId);
   }
 }

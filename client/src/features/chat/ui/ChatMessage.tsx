@@ -1,7 +1,7 @@
-import type { ChatMessage as ChatMessageType } from '../model/types';
-import { useCurrentPlayer } from '@/entities/gameRoom/model/gameStore';
+import { useCurrentPlayer } from '@/entities/gameRoom';
 import { cn } from '@/shared/lib/classNames';
 import { UserAvatar } from '@/shared/ui';
+import type { ChatMessage as ChatMessageType } from '../model/types';
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -9,13 +9,13 @@ interface ChatMessageProps {
 
 const ChatMessage = ({ message }: ChatMessageProps) => {
   const currentPlayer = useCurrentPlayer();
-  const isMe = currentPlayer?.socketId === message.socketId;
+  const isMe = currentPlayer?.profileId === message.profileId;
   const isSystem = message.type === 'system';
 
   if (isSystem) {
     return (
       <div className="my-2 flex justify-center">
-        <span className="bg-surface-muted text-content-secondary rounded-full px-3 py-1 text-xs">
+        <span className="bg-surface-muted text-content-secondary rounded-full px-3 py-1 text-base">
           {message.message}
         </span>
       </div>
@@ -45,13 +45,13 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
           className={cn('flex flex-col', isMe ? 'items-end' : 'items-start')}
         >
           {!isMe && (
-            <span className="text-content-secondary mb-1 text-xs font-medium">
+            <span className="text-content-secondary mb-1 text-lg font-medium">
               {message.nickname}
             </span>
           )}
           <div
             className={cn(
-              'rounded-xl px-3 py-2 text-sm wrap-break-word',
+              'rounded-xl px-2 py-1 text-lg wrap-break-word',
               isMe
                 ? 'bg-brand-primary rounded-tr-sm text-white'
                 : 'bg-surface-muted text-content-primary rounded-tl-sm',

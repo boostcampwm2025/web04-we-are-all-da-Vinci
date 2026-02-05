@@ -23,7 +23,7 @@ export const useRoundStanding = () => {
   // 이전 점수를 빠르게 조회하기 위한 맵
   // → 점수 증가량 표시 등 이전 값 비교에 사용
   const previousScoreMap = useMemo(() => {
-    return new Map(previousStandingResults.map((p) => [p.socketId, p.score]));
+    return new Map(previousStandingResults.map((p) => [p.profileId, p.score]));
   }, [previousStandingResults]);
 
   // 초기 표시 데이터 설정

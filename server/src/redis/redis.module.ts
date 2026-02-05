@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ChatCacheService } from './cache/chat-cache.service';
 import { GameProgressCacheService } from './cache/game-progress-cache.service';
 import { GameRoomCacheService } from './cache/game-room-cache.service';
+import { GracePeriodCacheService } from './cache/grace-period-cache.service';
 import { LeaderboardCacheService } from './cache/leaderboard-cache.service';
 import { PlayerCacheService } from './cache/player-cache.service';
 import { StandingsCacheService } from './cache/standings-cache.service';
@@ -21,6 +22,7 @@ import { RedisService } from './redis.service';
     GameProgressCacheService,
     StandingsCacheService,
     ChatCacheService,
+    GracePeriodCacheService,
   ],
   controllers: [RedisController],
   exports: [
@@ -33,6 +35,7 @@ import { RedisService } from './redis.service';
     GameProgressCacheService,
     StandingsCacheService,
     ChatCacheService,
+    GracePeriodCacheService,
   ],
 })
 export class RedisModule {}

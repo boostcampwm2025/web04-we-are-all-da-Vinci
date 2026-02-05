@@ -1,5 +1,4 @@
 import type { FinalResult, Highlight } from '@/entities/gameResult';
-import type { Player } from '@/entities/player/model';
 import type { RankingEntry } from '@/entities/ranking';
 import type { PlayerScore, RoundResult } from '@/entities/roundResult';
 import type { Stroke } from '@/entities/similarity';
@@ -12,6 +11,7 @@ export interface GameState extends GameRoom {
   // 소켓 연결 상태
   isConnected: boolean;
   mySocketId: string | null;
+  myProfileId: string | null;
 
   // 실시간 데이터
   timer: number;
@@ -37,6 +37,7 @@ export interface GameState extends GameRoom {
 
   // Actions
   setMySocketId: (socketId: string | null) => void;
+  setMyProfileId: (profileId: string | null) => void;
   setConnected: (isConnected: boolean) => void;
   updateRoom: (room: Partial<GameRoom>) => void;
   setTimer: (timer: number) => void;
@@ -64,6 +65,7 @@ export interface GameState extends GameRoom {
 export const initialState = {
   isConnected: false,
   mySocketId: null,
+  myProfileId: null,
   roomId: '',
   players: [],
   phase: 'WAITING' as Phase,
@@ -97,9 +99,17 @@ export const useGameStore = create<GameState>()(
 
       setMySocketId: (mySocketId) => set({ mySocketId }),
 
-      setConnected: (isConnected) => set({ isConnected }),
+      setMyProfileId: (myProfileId) => set({ myProfileId }),
+      updateRoom: (room) => {
+        set((state) => {
+          if (room.phase) {
+            localStorage.setItem('last_game_phase', room.phase);
+          }
+          return { ...state, ...room };
+        });
+      },
 
-      updateRoom: (room) => set((state) => ({ ...state, ...room })),
+      setConnected: (isConnected) => set({ isConnected }),
 
       setTimer: (timer) => set({ timer }),
 
@@ -136,46 +146,3 @@ export const useGameStore = create<GameState>()(
     { name: 'Game Store' },
   ),
 );
-
-// Selectors (재사용 가능)
-export const selectPlayers = (state: GameState) => state.players;
-export const selectSettings = (state: GameState) => state.settings;
-export const selectPhase = (state: GameState) => state.phase;
-export const selectLiveRankings = (state: GameState) => state.liveRankings;
-export const selectTimer = (state: GameState) => state.timer;
-
-// Helper: 현재 플레이어 찾기 (스토어의 mySocketId 기반)
-export const useCurrentPlayer = (): Player | null => {
-  const players = useGameStore(selectPlayers);
-  const mySocketId = useGameStore((state) => state.mySocketId);
-
-  if (!mySocketId) return null;
-
-  return players.find((p) => p.socketId === mySocketId) || null;
-};
-
-// Helper: 호스트 여부 확인
-export const useIsHost = (): boolean => {
-  const currentPlayer = useCurrentPlayer();
-  return currentPlayer?.isHost ?? false;
-};
-
-// Helper: 특정 socketId가 현재 유저인지 확인
-export const useIsCurrentUser = (socketId: string): boolean => {
-  const mySocketId = useGameStore((state) => state.mySocketId);
-
-  return mySocketId === socketId;
-};
-
-// Helper: 현재 플레이어의 등수 계산 (displayResults 기준)
-export const useMyRank = (displayResults: PlayerScore[]): number => {
-  const currentPlayer = useCurrentPlayer();
-
-  if (!currentPlayer) return -1;
-
-  const index = displayResults.findIndex(
-    (p) => p.socketId === currentPlayer.socketId,
-  );
-
-  return index !== -1 ? index + 1 : -1;
-};

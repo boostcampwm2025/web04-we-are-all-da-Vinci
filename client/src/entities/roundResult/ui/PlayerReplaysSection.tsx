@@ -1,5 +1,5 @@
 import { useCurrentPlayer } from '@/entities/gameRoom';
-import type { Stroke } from '@/entities/similarity/model';
+import type { Stroke } from '@/entities/similarity';
 import type { Similarity } from '@/features/similarity';
 import {
   MOBILE_BREAKPOINT,
@@ -26,7 +26,7 @@ interface PlayerReplaysSectionProps {
 
 const PlayerReplaysSection = ({ players = [] }: PlayerReplaysSectionProps) => {
   const currentPlayer = useCurrentPlayer();
-  const mySocketId = currentPlayer?.socketId;
+  const myProfileId = currentPlayer?.profileId;
   const isMobile = useMediaQuery(`(max-width: ${MOBILE_BREAKPOINT}px)`);
 
   // 페이지네이션
@@ -74,12 +74,12 @@ const PlayerReplaysSection = ({ players = [] }: PlayerReplaysSectionProps) => {
         className="flex min-h-0 flex-1 flex-wrap items-center justify-center gap-2"
       >
         {currentPlayers.map((player, index) => {
-          const isCurrentUser = player.socketId === mySocketId;
+          const isCurrentUser = player.profileId === myProfileId;
           const rank = startIndex + index + 1;
 
           return (
             <div
-              key={player.socketId}
+              key={player.profileId}
               style={{
                 width: cardSize.width > 0 ? cardSize.width : 'auto',
                 height: cardSize.height > 0 ? cardSize.height : 'auto',
