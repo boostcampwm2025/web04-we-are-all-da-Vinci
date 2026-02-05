@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { PinoLogger } from 'nestjs-pino';
-import { CreateRoomDto } from './dto/create-room.dto';
+import type { CreateRoomDto } from '@shared/types';
 import { GameController } from './game.controller';
 import { GameService } from './game.service';
 

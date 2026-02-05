@@ -30,7 +30,7 @@ export class RoundService implements OnModuleInit {
 
       if (room.phase === GamePhase.DRAWING) {
         setTimeout(() => {
-          this.nextPhase(room);
+          void this.nextPhase(room);
         }, DRAWING_END_DELAY);
         return;
       }
@@ -74,6 +74,11 @@ export class RoundService implements OnModuleInit {
         this.logger.error({ room }, '알 수 없는 phase입니다');
     }
   }
+
+  async endGame(room: GameRoom) {
+    await this.moveGameEnd(room);
+  }
+
   private async moveWaiting(room: GameRoom) {
     if (room.phase !== GamePhase.GAME_END) {
       return;
@@ -148,8 +153,11 @@ export class RoundService implements OnModuleInit {
     }
 
     // 게임 종료
-    const { events, timeLeft } = await this.phaseService.gameEnd(room);
+    await this.moveGameEnd(room);
+  }
 
+  private async moveGameEnd(room: GameRoom) {
+    const { events, timeLeft } = await this.phaseService.gameEnd(room);
     events.forEach(({ name, payload }) => {
       this.server.to(room.roomId).emit(name, payload);
     });

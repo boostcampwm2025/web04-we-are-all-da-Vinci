@@ -1,6 +1,2 @@
-export interface Similarity {
-  similarity: number;
-  strokeCountSimilarity: number;
-  strokeMatchSimilarity: number;
-  shapeSimilarity: number;
-}
+// Re-export from shared package
+export type { Similarity } from '@shared/types';
