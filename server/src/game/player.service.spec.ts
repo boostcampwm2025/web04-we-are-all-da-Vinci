@@ -59,6 +59,7 @@ describe('PlayerService', () => {
       popAndAddPlayerAtomically: jest.fn(),
       getAllPlayers: jest.fn(),
       deletePlayer: jest.fn(),
+      deletePlayerByProfileId: jest.fn(),
     };
     const mockPlayerCache = {
       set: jest.fn(),
@@ -382,6 +383,67 @@ describe('PlayerService', () => {
 
       // then
       expect(result).toEqual(true);
+    });
+  });
+
+  describe('forceRemovePlayer', () => {
+    it('profileId로 플레이어를 찾아 모든 관련 데이터를 삭제한다.', async () => {
+      // given
+      const player = mockPlayers[0];
+      const roomId = mockBaseRoom.roomId;
+      const { profileId } = player;
+
+      // when
+      await service.forceRemovePlayer(roomId, profileId);
+
+      // then
+      expect(gameRoomCache.deletePlayerByProfileId).toHaveBeenCalledWith(
+        roomId,
+        profileId,
+      );
+      expect(leaderboardCache.delete).toHaveBeenCalledWith(roomId, profileId);
+      expect(progressCache.deletePlayer).toHaveBeenCalledWith(
+        roomId,
+        profileId,
+      );
+      expect(standingCache.delete).toHaveBeenCalledWith(roomId, profileId);
+    });
+  });
+
+  describe('forceKickPlayer', () => {
+    it('socketId로 플레이어를 찾아 즉시 삭제하고 Grace Period도 삭제한다.', async () => {
+      // given
+      const player = mockPlayers[1];
+      const roomId = mockBaseRoom.roomId;
+      const { socketId, profileId } = player;
+
+      gameRoomCache.getAllPlayers.mockResolvedValue(mockPlayers);
+
+      // when
+      const result = await service.forceKickPlayer(roomId, socketId);
+
+      // then
+      expect(result).toEqual(player);
+      expect(gameRoomCache.deletePlayer).toHaveBeenCalledWith(roomId, socketId);
+      expect(playerCache.delete).toHaveBeenCalledWith(socketId);
+      expect(gracePeriodCache.delete).toHaveBeenCalledWith(roomId, profileId);
+    });
+
+    it('플레이어를 찾을 수 없으면 null을 리턴한다.', async () => {
+      // given
+      const roomId = mockBaseRoom.roomId;
+      const nonExistentSocketId = 'nonExistent';
+
+      gameRoomCache.getAllPlayers.mockResolvedValue(mockPlayers);
+
+      // when
+      const result = await service.forceKickPlayer(roomId, nonExistentSocketId);
+
+      // then
+      expect(result).toBeNull();
+      expect(gameRoomCache.deletePlayer).not.toHaveBeenCalled();
+      expect(playerCache.delete).not.toHaveBeenCalled();
+      expect(gracePeriodCache.delete).not.toHaveBeenCalled();
     });
   });
 });

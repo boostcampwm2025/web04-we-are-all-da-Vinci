@@ -241,7 +241,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         profileId,
       );
 
-      // Grace Period가 아직 존재하면 아직 유예 중 
+      // Grace Period가 아직 존재하면 아직 유예 중
       if (gracePeriodExists) {
         this.logger.warn(
           { roomId, profileId },
