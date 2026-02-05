@@ -7,7 +7,6 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-  WsException,
 } from '@nestjs/websockets';
 import { PinoLogger } from 'nestjs-pino';
 import { Server, Socket } from 'socket.io';
@@ -205,7 +204,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ): Promise<string> {
     const parsed = RoomSettingsSchema.safeParse(payload);
     if (!parsed.success) {
-      throw new WsException(parsed.error.message);
+      throw new WebsocketException(parsed.error.message);
     }
     const { roomId, maxPlayer, totalRounds, drawingTime } = parsed.data;
     const room = await this.gameService.updateGameSettings(
