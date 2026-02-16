@@ -43,6 +43,7 @@ export class WebsocketExceptionFilter extends BaseWsExceptionFilter {
 
     if (exception instanceof WsException) {
       super.catch(new WebsocketException(exception), host);
+      return;
     }
 
     super.catch(new WebsocketException(ErrorCode.INTERNAL_ERROR), host);
