@@ -78,24 +78,18 @@ export class PlayService {
 
     const currentRound = room.currentRound;
 
-    const exists = await this.progressCacheService.existsRoundResult(
-      roomId,
-      currentRound,
-      player.profileId,
-    );
-
-    if (exists) {
-      throw new WebsocketException(ErrorCode.ALREADY_SUBMITTED);
-    }
-
     // profileId 기반으로 저장
-    await this.progressCacheService.submitRoundResult(
+    const success = await this.progressCacheService.submitRoundResult(
       roomId,
       currentRound,
       player.profileId,
       strokes,
       similarity,
     );
+
+    if (!success) {
+      throw new WebsocketException(ErrorCode.ALREADY_SUBMITTED);
+    }
 
     await this.standingsCacheService.updateScore(
       roomId,

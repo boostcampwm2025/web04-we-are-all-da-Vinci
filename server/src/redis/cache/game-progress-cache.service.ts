@@ -22,24 +22,21 @@ export class GameProgressCacheService {
     profileId: string,
     strokes: Stroke[],
     similarity: Similarity,
-  ) {
+  ): Promise<boolean> {
     const client = this.redisService.getClient();
     const key = RedisKeys.drawing(roomId, round, profileId);
 
-    const exists = await client.exists(key);
+    const success = await client.setNX(
+      key,
+      JSON.stringify({ strokes, similarity }),
+    );
 
-    if (exists) {
-      return;
+    if (!success) {
+      return false;
     }
 
-    await client.setEx(key, REDIS_TTL, JSON.stringify({ strokes, similarity }));
-  }
-
-  async existsRoundResult(roomId: string, round: number, profileId: string) {
-    const client = this.redisService.getClient();
-    const key = RedisKeys.drawing(roomId, round, profileId);
-
-    return (await client.exists(key)) > 0;
+    await client.expire(key, REDIS_TTL);
+    return true;
   }
 
   async getRoundResults(roomId: string, round: number): Promise<RoundResult[]> {

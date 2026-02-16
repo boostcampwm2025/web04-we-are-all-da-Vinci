@@ -184,6 +184,7 @@ describe('PlayService', () => {
       const room = { ...mockBaseRoom, phase: GamePhase.DRAWING };
 
       cacheService.getRoom.mockResolvedValue(room);
+      progressCacheService.submitRoundResult.mockResolvedValue(true);
 
       // when
       await service.submitDrawing(
@@ -256,7 +257,7 @@ describe('PlayService', () => {
       const room = { ...mockBaseRoom, phase: GamePhase.DRAWING };
 
       cacheService.getRoom.mockResolvedValue(room);
-      progressCacheService.existsRoundResult.mockResolvedValue(true);
+      progressCacheService.submitRoundResult.mockResolvedValue(false);
 
       // when & then
       await expect(
