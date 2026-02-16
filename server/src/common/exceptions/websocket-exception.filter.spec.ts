@@ -43,6 +43,10 @@ describe('WebsocketExceptionFilter', () => {
     filter = module.get<WebsocketExceptionFilter>(WebsocketExceptionFilter);
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('should be defined', () => {
     expect(filter).toBeDefined();
   });
