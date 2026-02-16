@@ -23,6 +23,7 @@ export const ErrorCode = {
   KICK_ONLY_WAITING_PHASE: '대기 상태에서만 퇴장시킬 수 있습니다.',
   UPDATE_SETTINGS_ONLY_WAITING_PHASE:
     '대기 상태에서만 설정을 바꿀 수 있습니다.',
+  ALREADY_SUBMITTED: '이미 제출하였습니다.',
 
   // CHAT
   CHAT_MESSAGE_TOO_LONG: '메시지는 50자 이내로 입력해주세요.',

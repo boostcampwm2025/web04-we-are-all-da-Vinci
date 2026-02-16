@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { SimilaritySchema, StrokeSchema, z } from '@shared/types';
 import { RoundResultEntry, Similarity, Stroke } from 'src/common/types';
 import { REDIS_TTL } from '../../common/constants';
-import { WebsocketException } from '../../common/exceptions/websocket-exception';
 import { RedisKeys } from '../redis-keys';
 import { RedisService } from '../redis.service';
 
@@ -23,17 +22,21 @@ export class GameProgressCacheService {
     profileId: string,
     strokes: Stroke[],
     similarity: Similarity,
-  ) {
+  ): Promise<boolean> {
     const client = this.redisService.getClient();
     const key = RedisKeys.drawing(roomId, round, profileId);
 
-    const exists = await client.get(key);
+    const success = await client.setNX(
+      key,
+      JSON.stringify({ strokes, similarity }),
+    );
 
-    if (exists) {
-      throw new WebsocketException('이미 제출하였습니다.');
+    if (!success) {
+      return false;
     }
 
-    await client.setEx(key, REDIS_TTL, JSON.stringify({ strokes, similarity }));
+    await client.expire(key, REDIS_TTL);
+    return true;
   }
 
   async getRoundResults(roomId: string, round: number): Promise<RoundResult[]> {
