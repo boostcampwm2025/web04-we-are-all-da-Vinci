@@ -53,6 +53,7 @@ describe('PlayService', () => {
 
     const mockProgressCacheService = {
       submitRoundResult: jest.fn(),
+      existsRoundResult: jest.fn(),
     };
 
     const mockStandingsCacheService = {
