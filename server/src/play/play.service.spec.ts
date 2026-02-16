@@ -97,7 +97,7 @@ describe('PlayService', () => {
     cacheService = module.get(GameRoomCacheService);
   });
 
-  beforeEach(() => {
+  afterEach(() => {
     jest.clearAllMocks();
   });
 
@@ -256,9 +256,7 @@ describe('PlayService', () => {
       const room = { ...mockBaseRoom, phase: GamePhase.DRAWING };
 
       cacheService.getRoom.mockResolvedValue(room);
-      progressCacheService.submitRoundResult.mockRejectedValue(
-        new WebsocketException('이미 제출하였습니다.'),
-      );
+      progressCacheService.existsRoundResult.mockResolvedValue(true);
 
       // when & then
       await expect(
