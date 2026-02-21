@@ -1,81 +1,111 @@
-#! /bin/bash
+#!/usr/bin/env bash
+set -Eeuo pipefail
 
-# blue port 사용 중인지 확인
-EXISTS_BLUE=$(docker ps --filter "name=daVinci-blue-server" --format "{{.Ports}}" | grep 3000)
+COMPOSE_FILE="compose.blue-green.yml"
 
-# 사용 중이지 않으면 blue port로 실행
-if [ -z "$EXISTS_BLUE" ]; then
-	echo "Blue 실행"
-  OLD_SERVER="daVinci-green-server"
-  OLD_PORT=3001
+log() { echo -e "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
+
+abort() {
+  log "ERROR: $*"
+  exit 1
+}
+
+# 서비스 컨테이너 ID (없으면 빈 문자열)
+cid_of() {
+  docker compose -f "$COMPOSE_FILE" ps -q "$1" 2>/dev/null || true
+}
+
+# 컨테이너 Health 상태 반환: healthy | unhealthy | starting | (none)
+health_of_cid() {
+  local cid="$1"
+  # Healthcheck가 없으면 .State.Health 자체가 없어서 에러날 수 있음 -> none 처리
+  docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$cid" 2>/dev/null || echo "none"
+}
+
+log "배포를 시작합니다."
+
+# 현재 blue가 떠 있으면 green 배포, 아니면 blue 배포
+BLUE_CID="$(cid_of blue)"
+GREEN_CID="$(cid_of green)"
+
+# "떠 있다" 기준: CID 존재 + running 여부까지 보려면 inspect로 .State.Running 확인 가능
+# 여기서는 CID가 있으면 떠 있다고 가정(필요 시 Running 체크 추가 가능)
+
+if [[ -z "$BLUE_CID" ]]; then
+  log "현재 blue가 없음 -> blue로 배포합니다."
   OLD_SERVICE="green"
-  SERVER="daVinci-blue-server"
-  PORT=3000
+  OLD_PORT=3001
   SERVICE="blue"
+  PORT=3000
 else
-	# 사용 중이면 green port 사용 중인지 확인
-	EXISTS_GREEN=$(docker ps --filter "name=daVinci-green-server" --format "{{.Ports}}" | grep 3001)
-	if [ -n "$EXISTS_GREEN" ]; then
-		echo "3000, 3001 포트 모두 사용 중입니다."
-		exit 1
-	else
-		echo "Green 실행"
-		OLD_SERVER="daVinci-blue-server"
-		OLD_PORT=3000
-    OLD_SERVICE="blue"
-		SERVER="daVinci-green-server"
-		PORT=3001
-		SERVICE="green"
-	fi
+  if [[ -n "$GREEN_CID" ]]; then
+    abort "blue/green이 모두 떠 있습니다. (blue CID=$BLUE_CID, green CID=$GREEN_CID)"
+  fi
+  log "현재 blue가 떠 있음 -> green으로 배포합니다."
+  OLD_SERVICE="blue"
+  OLD_PORT=3000
+  SERVICE="green"
+  PORT=3001
 fi
 
-echo "OLD_SERVER: $OLD_SERVER"
-echo "OLD_PORT: $OLD_PORT"
-echo "SERVER: $SERVER"
-echo "PORT: $PORT"
-echo "SERVICE: $SERVICE"
+log "OLD_SERVICE=$OLD_SERVICE (port=$OLD_PORT)"
+log "NEW_SERVICE=$SERVICE (port=$PORT)"
 
-# 새로 만든 도커 이미지 실행 (Blue 포트와 다른 포트로 실행)
-docker compose -f compose.blue-green.yml up -d --build "$SERVICE" 
+log "새 컨테이너 빌드 및 기동: $SERVICE"
+docker compose -f "$COMPOSE_FILE" up -d --build "$SERVICE"
 
-# 헬스 체크 5회
+NEW_CID="$(cid_of "$SERVICE")"
+[[ -n "$NEW_CID" ]] || abort "새 서비스 컨테이너 CID를 얻지 못했습니다. service=$SERVICE"
+
+# 헬스 체크
 MAX_ATTEMPTS=5
 SLEEP_TIME=5
 
+log "헬스체크 시작 (service=$SERVICE, cid=$NEW_CID)"
 DEPLOY_SUCCESS=false
 
-echo "헬스체크 시작 (대상: $SERVER)"
-
 for ((i=1; i<=MAX_ATTEMPTS; i++)); do
-	echo "Attempt $i/$MAX_ATTEMPTS"
-	
-	IS_HEALTHY=$(docker ps --filter "name=$SERVER" --format "{{.Status}}" | grep healthy)
-	if [ -n "$IS_HEALTHY" ]; then
-		echo "Service is healthy"
-		DEPLOY_SUCCESS=true
-		break
-	else 
-		echo "Service is not healthy"
-	fi
-	
-	if [ $i -lt $MAX_ATTEMPTS ]; then
-		sleep $SLEEP_TIME
-	fi
+  status="$(health_of_cid "$NEW_CID")"
+  log "Attempt $i/$MAX_ATTEMPTS - health=$status"
+
+  if [[ "$status" == "healthy" ]]; then
+    DEPLOY_SUCCESS=true
+    break
+  fi
+
+  if [[ $i -lt $MAX_ATTEMPTS ]]; then
+    sleep "$SLEEP_TIME"
+  fi
 done
 
-
-if [ "$DEPLOY_SUCCESS" = false ]; then
-    echo "지정된 횟수 내에 컨테이너가 정상 상태가 되지 않았습니다."
-    # TODO: 실패 시 이전 컨테이너 유지, 방금 띄운 컨테이너 종료 등 롤백/중단 로직
-    echo "컨테이너를 종료합니다."
-    docker compose -f compose.blue-green.yml down "$SERVICE"
-    exit 1
+if [[ "$DEPLOY_SUCCESS" != "true" ]]; then
+  log "지정된 횟수 내에 컨테이너가 healthy가 되지 않았습니다. 롤백합니다."
+  log "새 서비스 중지/삭제: $SERVICE"
+  docker compose -f "$COMPOSE_FILE" stop "$SERVICE" || true
+  docker compose -f "$COMPOSE_FILE" rm -f "$SERVICE" || true
+  exit 1
 fi
 
-echo "배포된 컨테이너가 정상 작동 중입니다."
+log "새 컨테이너가 정상(healthy) 상태입니다."
 
-echo "set \$service_url http://localhost:$PORT;" > /etc/nginx/conf.d/service_url.inc
-nginx -t
-service nginx reload
+# nginx 전환: 실패하면 새 서비스 내리고 종료 (OLD는 유지)
+{
+  echo "set \$service_url http://localhost:$PORT;" | sudo tee /etc/nginx/conf.d/service_url.inc > /dev/null
 
-docker compose -f compose.blue-green.yml down "$OLD_SERVICE"
+  log "nginx 설정 테스트"
+  sudo nginx -t
+
+  log "nginx reload"
+  sudo service nginx reload
+} || {
+  log "nginx 전환 실패. 새 컨테이너 종료"
+  docker compose -f "$COMPOSE_FILE" stop "$SERVICE" || true
+  docker compose -f "$COMPOSE_FILE" rm -f "$SERVICE" || true
+  exit 1
+}
+
+log "전환 성공. OLD 서비스 종료: $OLD_SERVICE"
+docker compose -f "$COMPOSE_FILE" stop "$OLD_SERVICE" || true
+docker compose -f "$COMPOSE_FILE" rm -f "$OLD_SERVICE" || true
+
+log "배포 완료."
