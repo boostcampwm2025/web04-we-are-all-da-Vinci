@@ -88,8 +88,9 @@ fi
 
 log "새 컨테이너가 정상(healthy) 상태입니다."
 
-# nginx 전환: 실패하면 새 서비스 내리고 종료 (OLD는 유지)
+# nginx 전환 + post-check: 실패하면 nginx 원복 + 새 서비스 내리고 종료
 {
+  # 1) 트래픽 전환
   echo "set \$service_url http://localhost:$PORT;" | sudo tee /etc/nginx/conf.d/service_url.inc > /dev/null
 
   log "nginx 설정 테스트"
@@ -97,13 +98,50 @@ log "새 컨테이너가 정상(healthy) 상태입니다."
 
   log "nginx reload"
   sudo service nginx reload
+
+  # 2) POST-CHECK (nginx 경유 health 확인)
+  HEALTH_URL="http://127.0.0.1/health"
+
+  POST_MAX_ATTEMPTS=5
+  POST_SLEEP_TIME=5
+
+  log "post-check 시작: nginx 경유 health 확인 ($HEALTH_URL)"
+  POST_OK=false
+
+  for ((j=1; j<=POST_MAX_ATTEMPTS; j++)); do
+    # -f: 4xx/5xx면 실패 처리
+    # --max-time: hung 방지
+    if curl -fsS --max-time 2 "$HEALTH_URL" > /dev/null; then
+      POST_OK=true
+      log "post-check 성공 (attempt $j/$POST_MAX_ATTEMPTS)"
+      break
+    fi
+    log "post-check 실패 (attempt $j/$POST_MAX_ATTEMPTS) - 재시도"
+    sleep "$POST_SLEEP_TIME"
+  done
+
+  if [[ "$POST_OK" != "true" ]]; then
+    abort "post-check 실패: nginx 경유 health가 정상 응답하지 않습니다."
+  fi
+
 } || {
-  log "nginx 전환 실패. 새 컨테이너 종료"
+  log "nginx 전환 또는 post-check 실패. 롤백 수행"
+
+  # nginx 복구 (OLD로 되돌리기)
+  log "nginx 트래픽 복구: $OLD_SERVICE (port=$OLD_PORT)"
+  echo "set \$service_url http://localhost:$OLD_PORT;" | sudo tee /etc/nginx/conf.d/service_url.inc > /dev/null
+  sudo nginx -t || true
+  sudo service nginx reload || true
+
+  # 새 서비스 종료/삭제
+  log "새 서비스 중지/삭제: $SERVICE"
   docker compose -f "$COMPOSE_FILE" stop "$SERVICE" || true
   docker compose -f "$COMPOSE_FILE" rm -f "$SERVICE" || true
+
   exit 1
 }
 
+# --- (기존) 여기 아래는 그대로 ---
 log "전환 성공. OLD 서비스 종료: $OLD_SERVICE"
 docker compose -f "$COMPOSE_FILE" stop "$OLD_SERVICE" || true
 docker compose -f "$COMPOSE_FILE" rm -f "$OLD_SERVICE" || true
