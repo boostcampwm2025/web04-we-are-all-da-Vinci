@@ -20,8 +20,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Copy .env file
+        working-directory: ./deploy
         run: |
-          cd deploy 
           cp ~/deploy/.env ./.env
 
           if [ ! -f .env ]; then
@@ -32,8 +32,8 @@ jobs:
           echo ".env file copied."
 
       - name: Build and deploy with Docker Compose
+        working-directory: ./deploy
         run: |
-          cd deploy
           docker compose down
           docker compose up -d --build
 
@@ -49,7 +49,7 @@ jobs:
           curl -f http://localhost:3000/redis/health || exit 1
 
       - name: Show container logs
+        working-directory: ./deploy
         if: always()
         run: |
-          cd deploy
           docker compose logs --tail=50
