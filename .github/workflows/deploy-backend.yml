@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - develop
+      - chore/#266-blue-green
     paths:
       - "server/**"
       - ".github/workflows/deploy-backend.yml"
