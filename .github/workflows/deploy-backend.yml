@@ -31,22 +31,11 @@ jobs:
 
           echo ".env file copied."
 
-      - name: Build and deploy with Docker Compose
+      - name: Blue-Green Release (Compose + Nginx Switch)
         working-directory: ./deploy
         run: |
-          docker compose down
-          docker compose up -d --build
-
-      - name: Wait for container to be healthy
-        run: |
-          echo "Waiting for container to start..."
-          sleep 10
-
-      - name: Check container status
-        run: |
-          docker ps
-          echo "Checking API health..."
-          curl -f http://localhost:3000/redis/health || exit 1
+          chmod +x ./deploy.sh 
+          ./deploy.sh
 
       - name: Show container logs
         working-directory: ./deploy
