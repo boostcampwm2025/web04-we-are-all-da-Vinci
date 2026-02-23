@@ -45,6 +45,7 @@ jobs:
           docker compose -f compose.blue-green.yml logs --tail=50
 
       - name: Clean
+        if: always()
         working-directory: ./deploy
         run: |
           docker image prune -f --filter "until=336h"     # 14일
