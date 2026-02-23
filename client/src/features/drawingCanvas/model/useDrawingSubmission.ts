@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { getSocket } from '@/shared/api';
 import { SERVER_EVENTS, type Phase } from '@/shared/config';
-import { captureMessage } from '@/shared/lib/sentry';
 import type { Stroke } from '@/entities/similarity';
 import {
   calculateFinalSimilarityByPreprocessed,
@@ -74,17 +73,6 @@ export const useDrawingSubmission = ({
         const similarity = calculateFinalSimilarityByPreprocessed(
           preprocessedPrompt,
           preprocessedPlayer,
-        );
-
-        captureMessage(
-          'Drawing Data',
-          'info',
-          {
-            roomId,
-          },
-          {
-            strokesData: JSON.stringify(strokes),
-          },
         );
 
         getSocket().emit(SERVER_EVENTS.USER_DRAWING, {
