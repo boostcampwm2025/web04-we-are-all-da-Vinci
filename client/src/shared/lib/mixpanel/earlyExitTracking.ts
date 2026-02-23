@@ -12,6 +12,7 @@ let exitEventFired = false;
  * useEffect 내에서 호출하면 React가 paint 완료 후 실행을 보장함.
  */
 export const markHomePageRendered = () => {
+  if (homePageRendered) return;
   homePageRendered = true;
   trackEvent(MIXPANEL_EVENTS.HOME_PAGE_RENDERED, {
     // navigation start 기준으로 홈 화면이 그려지기까지 걸린 총 시간
