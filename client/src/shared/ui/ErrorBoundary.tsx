@@ -38,38 +38,34 @@ class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-            gap: '1rem',
-            padding: '2rem',
-            textAlign: 'center',
-          }}
-        >
-          <p style={{ fontSize: '1.125rem', fontWeight: 600 }}>
-            오류가 발생했습니다.
-          </p>
-          <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-            {this.state.error?.message ?? '알 수 없는 오류'}
-          </p>
-          <button
-            onClick={() => this.setState({ hasError: false, error: null })}
-            style={{
-              padding: '0.5rem 1.25rem',
-              borderRadius: '0.5rem',
-              background: '#111318',
-              color: '#fff',
-              cursor: 'pointer',
-              border: 'none',
-              fontSize: '0.875rem',
-            }}
-          >
-            다시 시도
-          </button>
+        <div className="font-display flex h-full flex-col items-center justify-center gap-6 p-8 text-center">
+          <div className="flex flex-col gap-2">
+            <p className="font-handwriting text-4xl font-bold">
+              오류가 발생했습니다.
+            </p>
+            <p className="font-display text-2xl text-gray-500">
+              다시 시도 버튼을 눌러주세요.
+              <br />
+              여러 번의 다시 시도에도 실패한다면 홈으로 이동하여 게임을
+              재시작해주세요.
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => this.setState({ hasError: false, error: null })}
+              className="font-handwriting cursor-pointer rounded-lg bg-[#111318] px-5 py-2 text-2xl text-white transition-colors hover:bg-[#2d3139]"
+            >
+              다시 시도
+            </button>
+            <button
+              onClick={() => {
+                window.location.href = '/';
+              }}
+              className="font-handwriting cursor-pointer rounded-lg border border-gray-300 px-5 py-2 text-2xl text-gray-600 transition-colors hover:bg-gray-100"
+            >
+              홈으로 이동
+            </button>
+          </div>
         </div>
       );
     }
