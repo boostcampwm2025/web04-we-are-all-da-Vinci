@@ -6,7 +6,7 @@ on:
     branches:
       - main
       - develop
-      - chore/#266-blue-green
+      - "chore/#266-blue-green"
     paths:
       - "server/**"
       - ".github/workflows/deploy-backend.yml"
@@ -42,4 +42,4 @@ jobs:
         working-directory: ./deploy
         if: always()
         run: |
-          docker compose logs --tail=50
+          docker compose -f compose.blue-green.yml logs --tail=50
