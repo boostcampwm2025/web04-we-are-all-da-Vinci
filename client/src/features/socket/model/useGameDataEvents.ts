@@ -34,10 +34,16 @@ export const useGameDataEvents = (enabled: boolean) => {
         const currentRankings = useGameStore.getState().liveRankings;
         setLiveRankings(buildRankings(data.rankings, currentRankings));
       } catch (error) {
-        captureException(error instanceof Error ? error : new Error(String(error)), {
-          tags: { error_type: 'socket_event_handler', event: 'ROOM_LEADERBOARD' },
-          level: 'error',
-        });
+        captureException(
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            tags: {
+              error_type: 'socket_event_handler',
+              event: 'ROOM_LEADERBOARD',
+            },
+            level: 'error',
+          },
+        );
       }
     };
 

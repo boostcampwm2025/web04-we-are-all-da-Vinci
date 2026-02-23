@@ -53,10 +53,16 @@ export const useRoomEvents = (enabled: boolean) => {
 
         updateRoom(result.roomUpdate);
       } catch (error) {
-        captureException(error instanceof Error ? error : new Error(String(error)), {
-          tags: { error_type: 'socket_event_handler', event: 'ROOM_METADATA' },
-          level: 'error',
-        });
+        captureException(
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            tags: {
+              error_type: 'socket_event_handler',
+              event: 'ROOM_METADATA',
+            },
+            level: 'error',
+          },
+        );
       }
     };
 
@@ -76,10 +82,13 @@ export const useRoomEvents = (enabled: boolean) => {
           addToast(`${kickedPlayer.nickname}님이 퇴장당했습니다.`, 'info');
         }
       } catch (error) {
-        captureException(error instanceof Error ? error : new Error(String(error)), {
-          tags: { error_type: 'socket_event_handler', event: 'ROOM_KICKED' },
-          level: 'error',
-        });
+        captureException(
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            tags: { error_type: 'socket_event_handler', event: 'ROOM_KICKED' },
+            level: 'error',
+          },
+        );
       }
     };
 

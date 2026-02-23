@@ -35,10 +35,16 @@ export const useResultEvents = (enabled: boolean) => {
         setRoundResults(response.rankings);
         setPromptStrokes(response.promptStrokes);
       } catch (error) {
-        captureException(error instanceof Error ? error : new Error(String(error)), {
-          tags: { error_type: 'socket_event_handler', event: 'ROOM_ROUND_REPLAY' },
-          level: 'error',
-        });
+        captureException(
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            tags: {
+              error_type: 'socket_event_handler',
+              event: 'ROOM_ROUND_REPLAY',
+            },
+            level: 'error',
+          },
+        );
       }
     };
 
@@ -46,10 +52,16 @@ export const useResultEvents = (enabled: boolean) => {
       try {
         setStandingResults(response.rankings);
       } catch (error) {
-        captureException(error instanceof Error ? error : new Error(String(error)), {
-          tags: { error_type: 'socket_event_handler', event: 'ROOM_ROUND_STANDING' },
-          level: 'error',
-        });
+        captureException(
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            tags: {
+              error_type: 'socket_event_handler',
+              event: 'ROOM_ROUND_STANDING',
+            },
+            level: 'error',
+          },
+        );
       }
     };
 
@@ -58,10 +70,16 @@ export const useResultEvents = (enabled: boolean) => {
         setFinalResults(response.finalRankings);
         setHighlight(response.highlight);
       } catch (error) {
-        captureException(error instanceof Error ? error : new Error(String(error)), {
-          tags: { error_type: 'socket_event_handler', event: 'ROOM_GAME_END' },
-          level: 'error',
-        });
+        captureException(
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            tags: {
+              error_type: 'socket_event_handler',
+              event: 'ROOM_GAME_END',
+            },
+            level: 'error',
+          },
+        );
       }
     };
 

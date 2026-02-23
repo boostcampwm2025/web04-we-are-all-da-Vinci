@@ -48,8 +48,14 @@ export const calculateStrokeScale = (
     };
   }
 
-  const scaleX = originalWidth === 0 ? Infinity : (canvasWidth - padding * 2) / originalWidth;
-  const scaleY = originalHeight === 0 ? Infinity : (canvasHeight - padding * 2) / originalHeight;
+  const scaleX =
+    originalWidth === 0
+      ? Infinity
+      : (canvasWidth - padding * 2) / originalWidth;
+  const scaleY =
+    originalHeight === 0
+      ? Infinity
+      : (canvasHeight - padding * 2) / originalHeight;
   const scale = Math.min(scaleX, scaleY);
 
   // 중앙 정렬을 위한 오프셋 계산
