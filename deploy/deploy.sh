@@ -5,6 +5,11 @@ COMPOSE_FILE="compose.blue-green.yml"
 
 log() { echo -e "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 
+error() {
+  log "ERROR: $*"
+  return 1;
+}
+
 abort() {
   log "ERROR: $*"
   exit 1
@@ -91,7 +96,7 @@ log "새 컨테이너가 정상(healthy) 상태입니다."
 # nginx 전환 + post-check: 실패하면 nginx 원복 + 새 서비스 내리고 종료
 {
   # 1) 트래픽 전환
-  echo "set \$service_url http://localhost:$PORT;" | sudo -n tee /etc/nginx/conf.d/service_url.inc > /dev/null
+  echo "set \$service_url http://127.0.0.1:$PORT;" | sudo -n tee /etc/nginx/conf.d/service_url.inc > /dev/null
 
   log "nginx 설정 테스트"
   sudo -n nginx -t
@@ -121,7 +126,7 @@ log "새 컨테이너가 정상(healthy) 상태입니다."
   done
 
   if [[ "$POST_OK" != "true" ]]; then
-    abort "post-check 실패: nginx 경유 health가 정상 응답하지 않습니다."
+    error "post-check 실패: nginx 경유 health가 정상 응답하지 않습니다."
   fi
 
 } || {
@@ -129,7 +134,7 @@ log "새 컨테이너가 정상(healthy) 상태입니다."
 
   # nginx 복구 (OLD로 되돌리기)
   log "nginx 트래픽 복구: $OLD_SERVICE (port=$OLD_PORT)"
-  echo "set \$service_url http://localhost:$OLD_PORT;" | sudo -n tee /etc/nginx/conf.d/service_url.inc > /dev/null
+  echo "set \$service_url http://127.0.0.1:$OLD_PORT;" | sudo -n tee /etc/nginx/conf.d/service_url.inc > /dev/null
   sudo -n nginx -t || true
   sudo -n systemctl reload nginx || true
 
