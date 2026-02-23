@@ -86,7 +86,12 @@ export const useDrawingSubmission = ({
         getSocket().emit(SERVER_EVENTS.USER_DRAWING, {
           roomId,
           strokes,
-          similarity: { similarity: 0 },
+          similarity: {
+            similarity: 0,
+            strokeCountSimilarity: 0,
+            strokeMatchSimilarity: 0,
+            shapeSimilarity: 0,
+          },
         });
       }
     }
