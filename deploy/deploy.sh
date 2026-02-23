@@ -33,9 +33,6 @@ log "배포를 시작합니다."
 BLUE_CID="$(cid_of blue)"
 GREEN_CID="$(cid_of green)"
 
-# "떠 있다" 기준: CID 존재 + running 여부까지 보려면 inspect로 .State.Running 확인 가능
-# 여기서는 CID가 있으면 떠 있다고 가정(필요 시 Running 체크 추가 가능)
-
 if [[ -z "$BLUE_CID" ]]; then
   log "현재 blue가 없음 -> blue로 배포합니다."
   OLD_SERVICE="green"
@@ -146,7 +143,6 @@ log "새 컨테이너가 정상(healthy) 상태입니다."
   exit 1
 }
 
-# --- (기존) 여기 아래는 그대로 ---
 log "전환 성공. OLD 서비스 종료: $OLD_SERVICE"
 docker compose -f "$COMPOSE_FILE" stop "$OLD_SERVICE" || true
 docker compose -f "$COMPOSE_FILE" rm -f "$OLD_SERVICE" || true
