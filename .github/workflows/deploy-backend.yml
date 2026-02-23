@@ -43,3 +43,11 @@ jobs:
         if: always()
         run: |
           docker compose -f compose.blue-green.yml logs --tail=50
+
+      - name: Clean
+        working-directory: ./deploy
+        run: |
+          docker image prune -f --filter "until=336h"     # 14일
+          docker builder prune -f --filter "until=336h"   
+          docker container prune -f --filter "until=168h" # 7일
+          docker network prune -f --filter "until=168h"
