@@ -2,6 +2,7 @@ import { useGameStore } from '@/entities/gameRoom';
 import type { Stroke } from '@/entities/similarity';
 import { getSocket } from '@/shared/api';
 import { CLIENT_EVENTS } from '@/shared/config';
+import { captureException } from '@/shared/lib/sentry';
 import { useEffect } from 'react';
 import { buildRankings, type ServerRankingEntry } from '../lib/socketHandlers';
 
@@ -29,8 +30,15 @@ export const useGameDataEvents = (enabled: boolean) => {
     };
 
     const handleLeaderboard = (data: { rankings: ServerRankingEntry[] }) => {
-      const currentRankings = useGameStore.getState().liveRankings;
-      setLiveRankings(buildRankings(data.rankings, currentRankings));
+      try {
+        const currentRankings = useGameStore.getState().liveRankings;
+        setLiveRankings(buildRankings(data.rankings, currentRankings));
+      } catch (error) {
+        captureException(error instanceof Error ? error : new Error(String(error)), {
+          tags: { error_type: 'socket_event_handler', event: 'ROOM_LEADERBOARD' },
+          level: 'error',
+        });
+      }
     };
 
     const handlePrompt = (promptStrokes: Stroke[]) => {

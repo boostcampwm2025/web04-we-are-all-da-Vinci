@@ -4,6 +4,7 @@ import type { RouteObject } from 'react-router-dom';
 import Home from '@/pages/home/Home';
 import AppLayout from '@/app/ui/AppLayout';
 import { GameLoadingSkeleton } from '@/widgets/game/ui/GameLoadingSkeleton';
+import { ErrorBoundary } from '@/shared/ui';
 
 const Game = lazy(() => import('@/pages/game/Game'));
 
@@ -18,9 +19,11 @@ export const routes: RouteObject[] = [
       {
         path: `${PATHS.GAME}/:roomId`,
         element: (
-          <Suspense fallback={<GameLoadingSkeleton />}>
-            <Game />
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={<GameLoadingSkeleton />}>
+              <Game />
+            </Suspense>
+          </ErrorBoundary>
         ),
       },
     ],

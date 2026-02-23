@@ -71,34 +71,40 @@ export const animateDrawing = (
   const animate = (timestamp: number) => {
     if (animationId === null) return;
 
-    // 리플레이 loop 마다 잠시 대기 처리
-    if (state.isWaiting) {
-      if (timestamp - state.waitStartTime >= LOOP_DELAY_MS) restartLoop();
-      else {
-        animationId = requestAnimationFrame(animate);
-        return;
+    try {
+      // 리플레이 loop 마다 잠시 대기 처리
+      if (state.isWaiting) {
+        if (timestamp - state.waitStartTime >= LOOP_DELAY_MS) restartLoop();
+        else {
+          animationId = requestAnimationFrame(animate);
+          return;
+        }
       }
+
+      // 속도 제어: speed(ms) 만큼 지난 후 다음 점 그리기
+      if (timestamp - state.lastDrawTime >= speed) {
+        state.lastDrawTime = timestamp;
+        drawPoint();
+      }
+
+      // 현재 스트로크 그리기 완료 체크
+      if (state.pointIndex >= strokes[state.strokeIndex].points[0].length)
+        goToNextStroke();
+
+      // 모든 스트로크 그리기 완료 체크
+      if (state.strokeIndex >= strokes.length) {
+        if (loop) {
+          state.isWaiting = true;
+          state.waitStartTime = timestamp;
+        } else return;
+      }
+
+      animationId = requestAnimationFrame(animate);
+    } catch (error) {
+      // 애니메이션 루프 내 오류 발생 시 루프를 중단하여 무한 오류 반복 방지
+      console.error('리플레이 애니메이션 오류로 중단:', error);
+      animationId = null;
     }
-
-    // 속도 제어: speed(ms) 만큼 지난 후 다음 점 그리기
-    if (timestamp - state.lastDrawTime >= speed) {
-      state.lastDrawTime = timestamp;
-      drawPoint();
-    }
-
-    // 현재 스트로크 그리기 완료 체크
-    if (state.pointIndex >= strokes[state.strokeIndex].points[0].length)
-      goToNextStroke();
-
-    // 모든 스트로크 그리기 완료 체크
-    if (state.strokeIndex >= strokes.length) {
-      if (loop) {
-        state.isWaiting = true;
-        state.waitStartTime = timestamp;
-      } else return;
-    }
-
-    animationId = requestAnimationFrame(animate);
   };
 
   clearCanvas();
