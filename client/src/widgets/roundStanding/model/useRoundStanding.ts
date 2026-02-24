@@ -1,9 +1,10 @@
+/* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 import { useGameStore } from '@/entities/gameRoom';
 import type { PlayerScore } from '@/entities/roundResult';
-import { useEffect, useMemo, useState } from 'react';
-import { useFlipAnimation } from './useFlipAnimation';
+import { useEffect, useState } from 'react';
 import { SoundManager } from '@/shared/lib';
 import { SFX_LIST } from '@/shared/config';
+import { useFlipAnimation } from './useFlipAnimation';
 
 const SORT_DELAY = 1500; // 점수 증가 연출 이후 순위 정렬을 시작하기까지의 대기 시간(ms)
 
@@ -15,56 +16,40 @@ export const useRoundStanding = () => {
   const currentRound = useGameStore((s) => s.currentRound);
 
   const [displayResults, setDisplayResults] = useState<PlayerScore[]>([]);
-  const [isSorted, setIsSorted] = useState(false);
+  const isSorted = displayResults === standingResults; // standingResults로 교체된 시점이 정렬 완료
 
-  // 리스트 순서 변경 시 위치 이동을 자연스럽게 보여주기 위한 FLIP 애니메이션
-  const { setRowRef, playFlip } = useFlipAnimation();
+  const { setItemRef, animate } = useFlipAnimation();
 
-  // 이전 점수를 빠르게 조회하기 위한 맵
-  // → 점수 증가량 표시 등 이전 값 비교에 사용
-  const previousScoreMap = useMemo(() => {
-    return new Map(previousStandingResults.map((p) => [p.profileId, p.score]));
-  }, [previousStandingResults]);
+  const previousScoreMap = new Map(
+    previousStandingResults.map((p) => [p.profileId, p.score]),
+  );
 
-  // 초기 표시 데이터 설정
-  // 1) 이전 점수가 있으면: 정렬 전 상태 그대로 표시
-  // 2) 첫 라운드면: 점수 0부터 시작해 증가하는 연출을 만들기 위해 초기화
+  // currentRound 변경 시점에만 반응해 점수 증가 연출 전 표시 상태를 초기화하는 effect
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      setIsSorted(false);
+    if (previousStandingResults.length > 0) {
+      setDisplayResults(previousStandingResults);
+    } else {
+      setDisplayResults(standingResults.map((p) => ({ ...p, score: 0 })));
+    }
+  }, [currentRound]);
 
-      if (previousStandingResults.length > 0) {
-        setDisplayResults(previousStandingResults);
-      } else if (standingResults.length > 0) {
-        setDisplayResults(standingResults.map((p) => ({ ...p, score: 0 })));
-      }
-    }, 0);
-
-    return () => clearTimeout(timeout);
-  }, [currentRound, previousStandingResults, standingResults]);
-
-  // 일정 시간 후 정렬된 순위 표시
-  // → FLIP 애니메이션을 사용해 순위 변화가 자연스럽게 보이도록 처리
-  // (서버에서 이미 점수 높은 순으로 정렬되어 옴)
+  // SORT_DELAY 후 정렬된 순위 공개 + FLIP 애니메이션 실행
   useEffect(() => {
     if (!standingResults.length) return;
 
     const timer = setTimeout(() => {
-      playFlip(setDisplayResults, standingResults);
-      setIsSorted(true);
-
-      const manager = SoundManager.getInstance();
-      manager.playSound(SFX_LIST.ROUND_END);
+      animate(() => setDisplayResults(standingResults));
+      SoundManager.getInstance().playSound(SFX_LIST.ROUND_END);
     }, SORT_DELAY);
 
     return () => clearTimeout(timer);
-  }, [standingResults, playFlip]);
+  }, [standingResults, animate]);
 
   return {
     displayResults,
     isSorted,
     currentRound,
     previousScoreMap,
-    setRowRef,
+    setItemRef,
   };
 };
