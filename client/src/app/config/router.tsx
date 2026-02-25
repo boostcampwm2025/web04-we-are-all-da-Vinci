@@ -4,7 +4,7 @@ import type { RouteObject } from 'react-router-dom';
 import Home from '@/pages/home/Home';
 import AppLayout from '@/app/ui/AppLayout';
 import { GameLoadingSkeleton } from '@/widgets/game/ui/GameLoadingSkeleton';
-import { ErrorBoundary } from '@/shared/ui';
+import ErrorBoundary from '@/app/ui/ErrorBoundary';
 
 const Game = lazy(() => import('@/pages/game/Game'));
 

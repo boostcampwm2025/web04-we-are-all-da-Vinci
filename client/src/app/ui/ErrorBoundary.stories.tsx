@@ -8,7 +8,7 @@ const ThrowOnRender = () => {
 };
 
 const meta = {
-  title: 'shared/ui/ErrorBoundary',
+  title: 'app/ui/ErrorBoundary',
   component: ErrorBoundary,
   parameters: {
     layout: 'fullscreen',
