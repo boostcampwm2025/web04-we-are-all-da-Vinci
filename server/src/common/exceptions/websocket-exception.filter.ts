@@ -7,7 +7,7 @@ import { WebsocketException } from './websocket-exception';
 import { ErrorCode } from '../constants/error-code';
 import { PinoLogger } from 'nestjs-pino';
 
-@Catch(WsException, InternalError)
+@Catch()
 export class WebsocketExceptionFilter extends BaseWsExceptionFilter {
   constructor(private readonly logger: PinoLogger) {
     super();
@@ -17,34 +17,33 @@ export class WebsocketExceptionFilter extends BaseWsExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const client = host.switchToWs().getClient<Socket>();
 
-    if (exception instanceof InternalError) {
-      this.logger.error(
-        { clientId: client.id, exception },
-        'Websocket Exception',
-      );
-      const errorResponse = {
-        message: exception.message,
-      };
-      client.emit(ClientEvents.ERROR, errorResponse);
-      return;
-    }
+    const normalizedException = this.normalizeException(exception);
 
+    this.logger.error(
+      { clientId: client.id, error: normalizedException },
+      'Websocket Exception',
+    );
+
+    const errorResponse = {
+      message: normalizedException.message,
+    };
+
+    client.emit(ClientEvents.ERROR, errorResponse);
+  }
+
+  private normalizeException(exception: unknown): WebsocketException {
     if (exception instanceof WebsocketException) {
-      this.logger.error(
-        { clientId: client.id, exception },
-        'Websocket Exception',
-      );
-      const errorResponse = {
-        message: exception.message,
-      };
-      client.emit(ClientEvents.ERROR, errorResponse);
-      return;
+      return exception;
     }
 
     if (exception instanceof WsException) {
-      super.catch(new WebsocketException(exception), host);
+      return new WebsocketException(exception);
     }
 
-    super.catch(new WebsocketException(ErrorCode.INTERNAL_ERROR), host);
+    if (exception instanceof InternalError) {
+      return new WebsocketException(exception);
+    }
+
+    return new WebsocketException(ErrorCode.INTERNAL_ERROR);
   }
 }
