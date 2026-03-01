@@ -26,16 +26,14 @@ export class GameProgressCacheService {
     const client = this.redisService.getClient();
     const key = RedisKeys.drawing(roomId, round, profileId);
 
-    const success = await client.setNX(
-      key,
-      JSON.stringify({ strokes, similarity }),
-    );
+    const exists = await client.get(key);
 
-    if (!success) {
+    if (exists) {
       return false;
     }
 
-    await client.expire(key, REDIS_TTL);
+    await client.setEx(key, REDIS_TTL, JSON.stringify({ strokes, similarity }));
+
     return true;
   }
 
