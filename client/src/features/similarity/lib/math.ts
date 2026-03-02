@@ -1,3 +1,6 @@
+export const clamp = (v: number, lo: number, hi: number) =>
+  Math.max(lo, Math.min(hi, v));
+
 // 두 점수 간 비율 기반 상대 유사도 계산
 export const getRelativeSimilarity = (a: number, b: number): number => {
   return 1 - Math.abs(a - b) / Math.max(a, b, 0.01);

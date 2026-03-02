@@ -7,6 +7,14 @@ export const getStrokeLength = (stroke: Stroke): number => {
   return getPathLength(xArr, yArr);
 };
 
+export const calculateTotalLength = (strokes: Stroke[]): number => {
+  let total = 0;
+  for (const stroke of strokes) {
+    total += getStrokeLength(stroke);
+  }
+  return total;
+};
+
 // 스트로크 중심점
 export const getStrokeCenter = (stroke: Stroke): Point => {
   const [xArr, yArr] = stroke.points;
