@@ -11,6 +11,8 @@ import { calculateShapeSimilarityByPreprocessed } from './calculateShapeSimilari
 import type { Similarity } from '../model/similarity';
 import type { PreprocessedStrokeData } from '../model/preprocessedStrokeData';
 import { SIMILARITY_CONFIG } from '../config/similarityConfig';
+import { calculateDensityBiasScore } from './densityBias';
+import { calculateInkLengthPenalty } from './inkLength';
 
 // 스트로크에서 유사도 계산에 필요한 수학적 데이터를 미리 계산하는 함수
 export const preprocessStrokes = (
@@ -75,44 +77,32 @@ export const calculateFinalSimilarityByPreprocessed = (
   );
 
   const scaledShapeScore = applyNonLinearScale(shapeScore, 90);
-  let weights;
-
-  const promptStrokeCount = preprocessedPrompt.strokeCount;
-  const playerStrokeCount = normalizedPlayerStrokes.length;
-  const strokeCountDifference = promptStrokeCount - playerStrokeCount;
-  if (strokeCountDifference > 0) {
-    // 스트로크 개수가 더 적을 때: 선 유사도에 가중치
-    weights = {
-      strokeCount: 0.1,
-      strokeMatch: 0.6,
-      shape: 0.3,
-    };
-  } else if (strokeCountDifference === 0) {
-    // 스트로크 개수가 같을 때
-    weights = {
-      strokeCount: 0.15,
-      strokeMatch: 0.35,
-      shape: 0.5,
-    };
-  } else {
-    // 스트로크 개수가 더 많을 때: 형태 유사도에 가중치
-    weights = {
-      strokeCount: 0.1,
-      strokeMatch: 0.3,
-      shape: 0.6,
-    };
-  }
 
   // 최종 유사도 계산
-  const weightedStrokeCountSim = strokeCountSimilarity * weights.strokeCount;
+  const weightedStrokeCountSim =
+    strokeCountSimilarity * SIMILARITY_CONFIG.finalWeights.strokeCount;
   const weightedStrokeMatchSim =
-    strokeMatchSimilarity.score * weights.strokeMatch;
-  const weightedShapeSim = scaledShapeScore * weights.shape;
+    strokeMatchSimilarity.score * SIMILARITY_CONFIG.finalWeights.strokeMatch;
+  const weightedShapeSim =
+    scaledShapeScore * SIMILARITY_CONFIG.finalWeights.shape;
   let similarity =
     weightedStrokeCountSim + weightedStrokeMatchSim + weightedShapeSim;
 
   // 패널티 적용
   let penaltyPoints = 0;
+
+  const densityBias = calculateDensityBiasScore(
+    normalizedPromptStrokes,
+    normalizedPlayerStrokes,
+  );
+  penaltyPoints += densityBias.densityBiasScore;
+
+  const inkLengthResult = calculateInkLengthPenalty(
+    normalizedPromptStrokes,
+    normalizedPlayerStrokes,
+  );
+  penaltyPoints += inkLengthResult.penaltyScore;
+
   if (strokeMatchSimilarity.getPenalty) {
     penaltyPoints += SIMILARITY_CONFIG.strokeMatchPenalty.maxPenalty;
   }
