@@ -1,7 +1,7 @@
 export const SIMILARITY_CONFIG = {
-  strokeMatchWeights: {
+  finalWeights: {
     strokeCount: 0,
-    strokeMatch: 0.8,
+    strokeMatch: 0.9,
     shape: 0.1,
   },
   strokeMatchPenalty: {
