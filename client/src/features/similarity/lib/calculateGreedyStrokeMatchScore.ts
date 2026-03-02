@@ -1,14 +1,21 @@
 import type { Stroke } from '@/entities/similarity';
 import { comparePairwiseStrokeSimilarity } from './comparePairwiseStrokeSimilarity';
 import { calculateColorSimilarity } from './calculateColorSimilarity';
+import { SIMILARITY_CONFIG } from '../config/similarityConfig';
 
 // 두 그림의 스트로크를 모두 일대일로 매칭하여 최종 스트로크 유사도 산출
 export const calculateGreedyStrokeMatchScore = (
   strokes1: Stroke[],
   strokes2: Stroke[],
-): number => {
-  if (strokes1.length === 0 && strokes2.length === 0) return 100;
-  if (strokes1.length === 0 || strokes2.length === 0) return 0;
+): {
+  score: number;
+  getPenalty: boolean;
+  outlierRatio: number;
+} => {
+  if (strokes1.length === 0 && strokes2.length === 0)
+    return { score: 100, getPenalty: false, outlierRatio: 0 };
+  if (strokes1.length === 0 || strokes2.length === 0)
+    return { score: 0, getPenalty: false, outlierRatio: 0 };
 
   const n1 = strokes1.length;
   const n2 = strokes2.length;
@@ -39,6 +46,7 @@ export const calculateGreedyStrokeMatchScore = (
   }
   pairs.sort((a, b) => b.similarity - a.similarity);
 
+  let outlierScoreCount = 0;
   for (const pair of pairs) {
     if (!used1.has(pair.i) && !used2.has(pair.j)) {
       used1.add(pair.i);
@@ -52,6 +60,11 @@ export const calculateGreedyStrokeMatchScore = (
 
       const finalPairSim = strokeShapeSim * (0.7 + 0.3 * strokeColorSim);
       matches.push(finalPairSim);
+
+      const threshold = SIMILARITY_CONFIG.strokeMatchPenalty.threshold;
+      if (finalPairSim <= threshold) {
+        outlierScoreCount += 1;
+      }
     }
   }
 
@@ -64,5 +77,9 @@ export const calculateGreedyStrokeMatchScore = (
   // 평균 계산
   const avgSimilarity =
     matches.reduce((sum, s) => sum + s, 0) / Math.max(n1, n2);
-  return avgSimilarity;
+  return {
+    score: avgSimilarity,
+    getPenalty: outlierScoreCount >= Math.ceil(matches.length / 2),
+    outlierRatio: matches.length > 0 ? outlierScoreCount / matches.length : 0,
+  };
 };

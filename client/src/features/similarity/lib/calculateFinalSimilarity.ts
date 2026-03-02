@@ -10,6 +10,7 @@ import { getRadialSignature } from './radialSignature';
 import { calculateShapeSimilarityByPreprocessed } from './calculateShapeSimilarity';
 import type { Similarity } from '../model/similarity';
 import type { PreprocessedStrokeData } from '../model/preprocessedStrokeData';
+import { SIMILARITY_CONFIG } from '../config/similarityConfig';
 
 // 스트로크에서 유사도 계산에 필요한 수학적 데이터를 미리 계산하는 함수
 export const preprocessStrokes = (
@@ -104,11 +105,19 @@ export const calculateFinalSimilarityByPreprocessed = (
 
   // 최종 유사도 계산
   const weightedStrokeCountSim = strokeCountSimilarity * weights.strokeCount;
-  const weightedStrokeMatchSim = strokeMatchSimilarity * weights.strokeMatch;
+  const weightedStrokeMatchSim =
+    strokeMatchSimilarity.score * weights.strokeMatch;
   const weightedShapeSim = scaledShapeScore * weights.shape;
-  const similarity =
+  let similarity =
     weightedStrokeCountSim + weightedStrokeMatchSim + weightedShapeSim;
 
+  // 패널티 적용
+  let penaltyPoints = 0;
+  if (strokeMatchSimilarity.getPenalty) {
+    penaltyPoints += SIMILARITY_CONFIG.strokeMatchPenalty.maxPenalty;
+  }
+
+  similarity = Math.max(0, similarity - penaltyPoints);
   const roundedSimilarity = Math.round(similarity * 100) / 100;
 
   return {
