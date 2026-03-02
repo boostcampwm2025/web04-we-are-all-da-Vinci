@@ -3,10 +3,7 @@ import { getSocket } from '@/shared/api';
 import { SERVER_EVENTS, type Phase } from '@/shared/config';
 import { captureMessage } from '@/shared/lib/sentry';
 import type { Stroke } from '@/entities/similarity';
-import {
-  calculateFinalSimilarityByPreprocessed,
-  preprocessStrokes,
-} from '@/features/similarity';
+import { scoreFinalSimilarity, preprocessStrokes } from '@/features/similarity';
 import { drawStrokesOnCanvas } from '@/entities/drawing';
 
 interface UseDrawingSubmissionProps {
@@ -70,7 +67,7 @@ export const useDrawingSubmission = ({
       !isPractice
     ) {
       isSubmittedRef.current = true;
-      const similarity = calculateFinalSimilarityByPreprocessed(
+      const similarity = scoreFinalSimilarity(
         preprocessedPrompt,
         preprocessedPlayer,
       );
@@ -109,7 +106,7 @@ export const useDrawingSubmission = ({
     try {
       if (!preprocessedPrompt) return;
 
-      const similarity = calculateFinalSimilarityByPreprocessed(
+      const similarity = scoreFinalSimilarity(
         preprocessedPrompt,
         preprocessedPlayer,
       );

@@ -1,6 +1,7 @@
 import type { Stroke } from '@shared/types';
-import { clamp } from './math';
 import { SIMILARITY_CONFIG } from '../config/similarityConfig';
+import { clamp } from './math';
+import { getTotalLength } from './geometry';
 
 type InkStats = {
   maxRatio: number; // 0~1 (1에 가까울수록 한 셀에 몰림)
@@ -54,11 +55,8 @@ const calcInkStats = (strokes: Stroke[], grid = 8): InkStats => {
   };
 };
 
-/**
- * 밀도 편향 점수(0~100): 플레이어가 프롬프트 대비 너무 한쪽에 몰려 그리면 감점
- * - 난사(한 구역 줄 긋기) 방지 목적
- */
-export const calculateDensityBiasScore = (
+// 밀도 편향 패널티: 플레이어가 프롬프트 대비 너무 한쪽에 몰려 그리면 감점
+export const scoreDensityBiasPenalty = (
   promptStrokes: Stroke[],
   playerStrokes: Stroke[],
 ) => {
@@ -97,5 +95,44 @@ export const calculateDensityBiasScore = (
     maxRatio: [p.maxRatio, u.maxRatio],
     usedRatio: [p.usedRatio, u.usedRatio],
     densityBiasScore,
+  };
+};
+
+// 잉크 길이 비율 패널티: 제시 그림보다 비정상적으로 길면(낙서) 감점
+export const scoreInkLengthPenalty = (
+  promptStrokes: Stroke[],
+  playerStrokes: Stroke[],
+) => {
+  const promptLen = getTotalLength(promptStrokes);
+  const playerLen = getTotalLength(playerStrokes);
+
+  // 0으로 나눔 방지
+  if (promptLen === 0) {
+    return { penaltyScore: 0, ratio: 0, rawPenalty: 0 };
+  }
+
+  const ratio = playerLen / promptLen;
+  const threshold = SIMILARITY_CONFIG.inkLength.threshold;
+  const maxRatio = SIMILARITY_CONFIG.inkLength.maxRatio;
+  const maxPenaltyScore = SIMILARITY_CONFIG.inkLength.maxPenalty;
+
+  // 임계값 이하면 패널티 없음
+  if (ratio <= threshold) {
+    return { penaltyScore: 0, ratio, rawPenalty: 0 };
+  }
+
+  // threshold ~ maxRatio 구간에서 0 ~ 1로 선형 증가
+  // (ratio - threshold) / (maxRatio - threshold)
+  let t = (ratio - threshold) / (maxRatio - threshold);
+  t = clamp(t, 0, 1);
+
+  const penaltyFactor = t;
+
+  const penaltyScore = penaltyFactor * maxPenaltyScore;
+
+  return {
+    penaltyScore,
+    ratio,
+    rawPenalty: penaltyFactor, // 0~1
   };
 };

@@ -4,6 +4,11 @@ export const SIMILARITY_CONFIG = {
     strokeMatch: 0.9,
     shape: 0.1,
   },
+  strokeWeights: {
+    length: 0.35,
+    direction: 0.3,
+    position: 0.35,
+  },
   strokeMatchPenalty: {
     enabled: true,
     threshold: 60,

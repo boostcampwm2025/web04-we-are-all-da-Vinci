@@ -3,10 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useDrawingSubmission } from './useDrawingSubmission';
 import { getSocket } from '@/shared/api';
 import { GAME_PHASE, SERVER_EVENTS } from '@/shared/config';
-import {
-  calculateFinalSimilarityByPreprocessed,
-  preprocessStrokes,
-} from '@/features/similarity';
+import { scoreFinalSimilarity, preprocessStrokes } from '@/features/similarity';
 import { drawStrokesOnCanvas } from '@/entities/drawing';
 import { MOCK_STROKES } from '@/test/mocks/mockStrokes';
 import type { Stroke } from '@/entities/similarity';
@@ -17,7 +14,7 @@ vi.mock('@/shared/api', () => ({
 }));
 
 vi.mock('@/features/similarity', () => ({
-  calculateFinalSimilarityByPreprocessed: vi.fn(),
+  scoreFinalSimilarity: vi.fn(),
   preprocessStrokes: vi.fn(),
 }));
 
@@ -56,9 +53,7 @@ describe('useDrawingSubmission', () => {
     vi.mocked(preprocessStrokes).mockImplementation(
       (strokes: Stroke[]) => strokes,
     );
-    vi.mocked(calculateFinalSimilarityByPreprocessed).mockReturnValue(
-      MOCK_SIMILARITY,
-    );
+    vi.mocked(scoreFinalSimilarity).mockReturnValue(MOCK_SIMILARITY);
   });
 
   it('DRAWING 단계이고 타이머가 0일 때 제출되어야 한다', () => {
@@ -108,7 +103,7 @@ describe('useDrawingSubmission', () => {
     rerender({ ...defaultProps, strokes: newStrokes });
 
     // Verify calculation
-    expect(calculateFinalSimilarityByPreprocessed).toHaveBeenCalled();
+    expect(scoreFinalSimilarity).toHaveBeenCalled();
     // Verify emission (since isPractice is false)
     expect(mockEmit).toHaveBeenCalledWith(SERVER_EVENTS.USER_SCORE, {
       roomId: 'test-room',
@@ -127,7 +122,7 @@ describe('useDrawingSubmission', () => {
     rerender({ ...practiceProps, strokes: newStrokes });
 
     // Verify calculation
-    expect(calculateFinalSimilarityByPreprocessed).toHaveBeenCalled();
+    expect(scoreFinalSimilarity).toHaveBeenCalled();
 
     // Verify NO emission
     expect(mockEmit).not.toHaveBeenCalledWith(
@@ -177,6 +172,6 @@ describe('useDrawingSubmission', () => {
     );
 
     // Verify similarity calculation happens as well
-    expect(calculateFinalSimilarityByPreprocessed).toHaveBeenCalled();
+    expect(scoreFinalSimilarity).toHaveBeenCalled();
   });
 });
