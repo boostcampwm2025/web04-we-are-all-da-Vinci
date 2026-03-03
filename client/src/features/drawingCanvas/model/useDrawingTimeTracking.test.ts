@@ -1,15 +1,10 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { captureMessage } from '@/shared/lib/sentry';
 import { trackEvent } from '@/shared/lib/mixpanel';
 import { MIXPANEL_EVENTS } from '@/shared/config';
 import { useDrawingTimeTracking } from './useDrawingTimeTracking';
 
 // Mock dependencies
-vi.mock('@/shared/lib/sentry', () => ({
-  captureMessage: vi.fn(),
-}));
-
 vi.mock('@/shared/lib/mixpanel', () => ({
   trackEvent: vi.fn(),
 }));
@@ -38,11 +33,6 @@ describe('useDrawingTimeTracking', () => {
 
     unmount();
 
-    expect(captureMessage).toHaveBeenCalledWith(
-      'Drawing Time Check',
-      'info',
-      expect.any(Object),
-    );
     expect(trackEvent).toHaveBeenCalledWith(
       MIXPANEL_EVENTS.DRAWING_TIME,
       expect.objectContaining({
@@ -62,7 +52,6 @@ describe('useDrawingTimeTracking', () => {
 
     unmount();
 
-    expect(captureMessage).not.toHaveBeenCalled();
     expect(trackEvent).not.toHaveBeenCalled();
   });
 
@@ -85,7 +74,6 @@ describe('useDrawingTimeTracking', () => {
     // Actually, `useEffect` cleanup runs when deps change. So it SHOULD send logs when round changes.
 
     // Let's verify if the cleanup function of the FIRST render effect runs.
-    expect(captureMessage).toHaveBeenCalledTimes(1);
     expect(trackEvent).toHaveBeenCalledTimes(1);
 
     // Clear mocks to check next behavior
@@ -98,7 +86,6 @@ describe('useDrawingTimeTracking', () => {
 
     unmount();
 
-    expect(captureMessage).toHaveBeenCalledTimes(1);
     expect(trackEvent).toHaveBeenCalledWith(
       MIXPANEL_EVENTS.DRAWING_TIME,
       expect.objectContaining({

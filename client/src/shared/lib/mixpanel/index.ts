@@ -38,6 +38,16 @@ export const registerUserProperties = (properties: Record<string, unknown>) => {
   mixpanel.register(properties);
 };
 
+// 페이지 언로드 시에도 전송이 보장되는 sendBeacon 방식 트래킹
+export const trackEventBeacon = (
+  eventName: string,
+  properties?: Record<string, unknown>,
+) => {
+  if (isDisabledEnv()) return;
+
+  mixpanel.track(eventName, properties, { transport: 'sendBeacon' });
+};
+
 // 혹시나 회원가입을 만들었을 때 사용할 메서드
 
 // export const identifyUser = (userId: string) => {

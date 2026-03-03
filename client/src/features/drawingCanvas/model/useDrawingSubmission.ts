@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { getSocket } from '@/shared/api';
 import { SERVER_EVENTS, type Phase } from '@/shared/config';
-import { captureMessage } from '@/shared/lib/sentry';
 import type { Stroke } from '@/entities/similarity';
 import {
   calculateFinalSimilarityByPreprocessed,
@@ -70,27 +69,31 @@ export const useDrawingSubmission = ({
       !isPractice
     ) {
       isSubmittedRef.current = true;
-      const similarity = calculateFinalSimilarityByPreprocessed(
-        preprocessedPrompt,
-        preprocessedPlayer,
-      );
+      try {
+        const similarity = calculateFinalSimilarityByPreprocessed(
+          preprocessedPrompt,
+          preprocessedPlayer,
+        );
 
-      captureMessage(
-        'Drawing Data',
-        'info',
-        {
+        getSocket().emit(SERVER_EVENTS.USER_DRAWING, {
           roomId,
-        },
-        {
-          strokesData: JSON.stringify(strokes),
-        },
-      );
-
-      getSocket().emit(SERVER_EVENTS.USER_DRAWING, {
-        roomId,
-        strokes,
-        similarity,
-      });
+          strokes,
+          similarity,
+        });
+      } catch (error) {
+        console.error('최종 유사도 계산/제출 실패:', error);
+        // 계산 실패 시 유사도 0으로 제출하여 라운드 진행이 멈추지 않도록 함
+        getSocket().emit(SERVER_EVENTS.USER_DRAWING, {
+          roomId,
+          strokes,
+          similarity: {
+            similarity: 0,
+            strokeCountSimilarity: 0,
+            strokeMatchSimilarity: 0,
+            shapeSimilarity: 0,
+          },
+        });
+      }
     }
   }, [
     timer,

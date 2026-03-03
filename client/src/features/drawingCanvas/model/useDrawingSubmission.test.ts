@@ -25,10 +25,6 @@ vi.mock('@/entities/drawing', () => ({
   drawStrokesOnCanvas: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/sentry', () => ({
-  captureMessage: vi.fn(),
-}));
-
 describe('useDrawingSubmission', () => {
   const mockEmit = vi.fn();
   const mockCanvasRef = { current: document.createElement('canvas') };

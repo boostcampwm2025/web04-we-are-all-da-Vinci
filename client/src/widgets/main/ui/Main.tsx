@@ -10,7 +10,6 @@ import { ProfileSettingsModal } from '@/features/profileSettings';
 import { RoomSettingsModal, createRoom } from '@/features/roomSettings';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { captureMessage } from '@/shared/lib/sentry';
 import { trackEvent } from '@/shared/lib/mixpanel';
 import { TEXT } from '@/widgets/main/config';
 import type { Settings } from '@/entities/gameRoom';
@@ -45,7 +44,6 @@ export const Main = () => {
   };
 
   const handleShowGuide = () => {
-    captureMessage('설명서 버튼을 클릭했습니다.');
     trackEvent(MIXPANEL_EVENTS.CLICK_DESCRIPTION_BTN);
     setShowGuideModal(true);
   };

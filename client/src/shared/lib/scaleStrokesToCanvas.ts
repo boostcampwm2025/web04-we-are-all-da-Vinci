@@ -38,10 +38,25 @@ export const calculateStrokeScale = (
   // 스케일 계산 (비율 유지하면서 캔버스에 맞춤)
   const originalWidth = bounds.maxX - bounds.minX;
   const originalHeight = bounds.maxY - bounds.minY;
-  const scale = Math.min(
-    (canvasWidth - padding * 2) / originalWidth,
-    (canvasHeight - padding * 2) / originalHeight,
-  );
+
+  // 모든 점이 동일한 좌표(단일 점 스트로크)일 때 division-by-zero 방어
+  if (originalWidth === 0 && originalHeight === 0) {
+    return {
+      scale: 1,
+      offsetX: canvasWidth / 2 - bounds.minX,
+      offsetY: canvasHeight / 2 - bounds.minY,
+    };
+  }
+
+  const scaleX =
+    originalWidth === 0
+      ? Infinity
+      : (canvasWidth - padding * 2) / originalWidth;
+  const scaleY =
+    originalHeight === 0
+      ? Infinity
+      : (canvasHeight - padding * 2) / originalHeight;
+  const scale = Math.min(scaleX, scaleY);
 
   // 중앙 정렬을 위한 오프셋 계산
   const scaledWidth = originalWidth * scale;

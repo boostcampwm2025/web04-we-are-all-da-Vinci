@@ -6,6 +6,7 @@ import type {
 } from '@/entities/roundResult';
 import { getSocket } from '@/shared/api';
 import { CLIENT_EVENTS } from '@/shared/config';
+import { captureException } from '@/shared/lib/sentry';
 import { useEffect } from 'react';
 
 /**
@@ -30,17 +31,56 @@ export const useResultEvents = (enabled: boolean) => {
     const socket = getSocket();
 
     const handleRoundReplay = (response: RoundReplayResponse) => {
-      setRoundResults(response.rankings);
-      setPromptStrokes(response.promptStrokes);
+      try {
+        setRoundResults(response.rankings);
+        setPromptStrokes(response.promptStrokes);
+      } catch (error) {
+        captureException(
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            tags: {
+              error_type: 'socket_event_handler',
+              event: 'ROOM_ROUND_REPLAY',
+            },
+            level: 'error',
+          },
+        );
+      }
     };
 
     const handleRoundStanding = (response: RoundStandingResponse) => {
-      setStandingResults(response.rankings);
+      try {
+        setStandingResults(response.rankings);
+      } catch (error) {
+        captureException(
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            tags: {
+              error_type: 'socket_event_handler',
+              event: 'ROOM_ROUND_STANDING',
+            },
+            level: 'error',
+          },
+        );
+      }
     };
 
     const handleGameEnd = (response: GameEndResponse) => {
-      setFinalResults(response.finalRankings);
-      setHighlight(response.highlight);
+      try {
+        setFinalResults(response.finalRankings);
+        setHighlight(response.highlight);
+      } catch (error) {
+        captureException(
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            tags: {
+              error_type: 'socket_event_handler',
+              event: 'ROOM_GAME_END',
+            },
+            level: 'error',
+          },
+        );
+      }
     };
 
     socket.on(CLIENT_EVENTS.ROOM_ROUND_REPLAY, handleRoundReplay);
