@@ -1,15 +1,16 @@
-import type { Stroke } from '@/entities/similarity';
-import { calculateGreedyStrokeMatchScore } from './calculateGreedyStrokeMatchScore';
+import type { Similarity, Stroke } from '@shared/types';
+import type { PreprocessedStrokeData } from '../model/preprocessedStrokeData';
+import { SIMILARITY_CONFIG } from '../config/similarityConfig';
 import {
-  getConvexHull,
+  buildConvexHull,
+  buildRadialSignature,
   getHullArea,
   getHullPerimeter,
   strokesToPoints,
-} from './convexHullGeometry';
-import { getRadialSignature } from './radialSignature';
-import { calculateShapeSimilarityByPreprocessed } from './calculateShapeSimilarity';
-import type { Similarity } from '../model/similarity';
-import type { PreprocessedStrokeData } from '../model/preprocessedStrokeData';
+} from './geometry';
+import { scoreGreedyStrokeMatch } from './stroke.sim';
+import { scoreShapeSimilarity } from './shape.sim';
+import { scoreDensityBiasPenalty, scoreInkLengthPenalty } from './penalty';
 
 // 스트로크에서 유사도 계산에 필요한 수학적 데이터를 미리 계산하는 함수
 export const preprocessStrokes = (
@@ -18,10 +19,10 @@ export const preprocessStrokes = (
   const validStrokes = getValidStrokes(strokes);
   const normalizedStrokes = normalizeStrokes(validStrokes);
   const points = strokesToPoints(normalizedStrokes);
-  const hull = getConvexHull(points);
+  const hull = buildConvexHull(points);
   const hullArea = getHullArea(hull);
   const hullPerimeter = getHullPerimeter(hull);
-  const radialSignature = getRadialSignature(points);
+  const radialSignature = buildRadialSignature(points);
 
   return {
     normalizedStrokes,
@@ -34,21 +35,7 @@ export const preprocessStrokes = (
   };
 };
 
-// 스트로크 데이터로 최종 유사도 계산
-export const calculateFinalSimilarityByStrokes = (
-  promptStrokes: Stroke[],
-  playerStrokes: Stroke[],
-): Similarity => {
-  const preprocessedPrompt = preprocessStrokes(promptStrokes);
-  const preprocessPlayer = preprocessStrokes(playerStrokes);
-  return calculateFinalSimilarityByPreprocessed(
-    preprocessedPrompt,
-    preprocessPlayer,
-  );
-};
-
-// 전처리한 데이터로 최종 유사도 계산
-export const calculateFinalSimilarityByPreprocessed = (
+export const scoreFinalSimilarity = (
   preprocessedPrompt: PreprocessedStrokeData,
   preprocessedPlayer: PreprocessedStrokeData,
 ): Similarity => {
@@ -56,59 +43,55 @@ export const calculateFinalSimilarityByPreprocessed = (
   const normalizedPlayerStrokes = preprocessedPlayer.normalizedStrokes;
 
   // 스트로크 개수 비교
-  const strokeCountSimilarity = calculateStrokeCountSimilarity(
+  const strokeCountSimilarity = scoreStrokeCountSimilarity(
     normalizedPromptStrokes,
     normalizedPlayerStrokes,
   );
 
   // 스트로크 유사도
-  const strokeMatchSimilarity = calculateGreedyStrokeMatchScore(
+  const strokeMatchSimilarity = scoreGreedyStrokeMatch(
     normalizedPromptStrokes,
     normalizedPlayerStrokes,
   );
 
   // 형태 유사도
-  const shapeScore = calculateShapeSimilarityByPreprocessed(
+  const shapeScore = scoreShapeSimilarity(
     preprocessedPrompt,
     preprocessedPlayer,
   );
 
   const scaledShapeScore = applyNonLinearScale(shapeScore, 90);
-  let weights;
-
-  const promptStrokeCount = preprocessedPrompt.strokeCount;
-  const playerStrokeCount = normalizedPlayerStrokes.length;
-  const strokeCountDifference = promptStrokeCount - playerStrokeCount;
-  if (strokeCountDifference > 0) {
-    // 스트로크 개수가 더 적을 때: 선 유사도에 가중치
-    weights = {
-      strokeCount: 0.1,
-      strokeMatch: 0.6,
-      shape: 0.3,
-    };
-  } else if (strokeCountDifference === 0) {
-    // 스트로크 개수가 같을 때
-    weights = {
-      strokeCount: 0.15,
-      strokeMatch: 0.35,
-      shape: 0.5,
-    };
-  } else {
-    // 스트로크 개수가 더 많을 때: 형태 유사도에 가중치
-    weights = {
-      strokeCount: 0.1,
-      strokeMatch: 0.3,
-      shape: 0.6,
-    };
-  }
 
   // 최종 유사도 계산
-  const weightedStrokeCountSim = strokeCountSimilarity * weights.strokeCount;
-  const weightedStrokeMatchSim = strokeMatchSimilarity * weights.strokeMatch;
-  const weightedShapeSim = scaledShapeScore * weights.shape;
-  const similarity =
+  const weightedStrokeCountSim =
+    strokeCountSimilarity * SIMILARITY_CONFIG.finalWeights.strokeCount;
+  const weightedStrokeMatchSim =
+    strokeMatchSimilarity.score * SIMILARITY_CONFIG.finalWeights.strokeMatch;
+  const weightedShapeSim =
+    scaledShapeScore * SIMILARITY_CONFIG.finalWeights.shape;
+  let similarity =
     weightedStrokeCountSim + weightedStrokeMatchSim + weightedShapeSim;
 
+  // 패널티 적용
+  let penaltyPoints = 0;
+
+  const densityBias = scoreDensityBiasPenalty(
+    normalizedPromptStrokes,
+    normalizedPlayerStrokes,
+  );
+  penaltyPoints += densityBias.densityBiasScore;
+
+  const inkLengthResult = scoreInkLengthPenalty(
+    normalizedPromptStrokes,
+    normalizedPlayerStrokes,
+  );
+  penaltyPoints += inkLengthResult.penaltyScore;
+
+  if (strokeMatchSimilarity.getPenalty) {
+    penaltyPoints += SIMILARITY_CONFIG.strokeMatchPenalty.maxPenalty;
+  }
+
+  similarity = Math.max(0, similarity - penaltyPoints);
   const roundedSimilarity = Math.round(similarity * 100) / 100;
 
   return {
@@ -119,7 +102,8 @@ export const calculateFinalSimilarityByPreprocessed = (
   };
 };
 
-// 일정 길이 이상의 스트로크만 남김
+// ----------helper-----------
+
 const getValidStrokes = (strokes: Stroke[]): Stroke[] => {
   const MIN_STROKE_LENGTH = 10; // 최소 길이 임계값
   return strokes.filter((stroke) => {
@@ -134,11 +118,9 @@ const getValidStrokes = (strokes: Stroke[]): Stroke[] => {
   });
 };
 
-// 스트로크 정규화
 const normalizeStrokes = (strokes: Stroke[]): Stroke[] => {
   if (strokes.length === 0) return [];
 
-  // 모든 점의 min/max 찾기
   let minX = Infinity,
     maxX = -Infinity;
   let minY = Infinity,
@@ -171,11 +153,21 @@ const normalizeStrokes = (strokes: Stroke[]): Stroke[] => {
   return normalized;
 };
 
+const applyNonLinearScale = (
+  score: number,
+  threshold = 70,
+  steepness = 2,
+): number => {
+  // threshold 기준으로 낮은 점수는 더 낮게, 높은 점수는 더 높게
+  if (score < threshold) {
+    return Math.pow(score / 100, steepness) * 100;
+  } else {
+    return score;
+  }
+};
+
 // 스트로크 개수 유사도 점수
-const calculateStrokeCountSimilarity = (
-  strokes1: Stroke[],
-  strokes2: Stroke[],
-) => {
+const scoreStrokeCountSimilarity = (strokes1: Stroke[], strokes2: Stroke[]) => {
   const strokeCount1 = strokes1.length;
   const strokeCount2 = strokes2.length;
   if (strokeCount1 === 0 && strokeCount2 === 0) return 100;
@@ -184,19 +176,4 @@ const calculateStrokeCountSimilarity = (
   const ratio =
     Math.min(strokeCount1, strokeCount2) / Math.max(strokeCount1, strokeCount2);
   return ratio * 100;
-};
-
-// 점수 비선형 스케일링
-const applyNonLinearScale = (
-  score: number,
-  threshold = 70,
-  steepness = 2,
-): number => {
-  // threshold 기준으로 낮은 점수는 더 낮게, 높은 점수는 더 높게
-  if (score < threshold) {
-    // 낮은 점수는 제곱으로 더 낮춤
-    return Math.pow(score / 100, steepness) * 100;
-  } else {
-    return score;
-  }
 };
