@@ -43,6 +43,7 @@ const calcInkStats = (strokes: Stroke[], grid = 8): InkStats => {
   let maxBin = 0;
 
   for (const b of bins) {
+    if (b > 0) used++;
     if (b > maxBin) maxBin = b;
   }
 
@@ -92,8 +93,6 @@ export const scoreDensityBiasPenalty = (
     clamp(weightedPenalty, 0, 1) * SIMILARITY_CONFIG.densityBias.maxPenalty;
 
   return {
-    maxRatio: [p.maxRatio, u.maxRatio],
-    usedRatio: [p.usedRatio, u.usedRatio],
     densityBiasScore,
   };
 };
@@ -132,7 +131,5 @@ export const scoreInkLengthPenalty = (
 
   return {
     penaltyScore,
-    ratio,
-    rawPenalty: penaltyFactor, // 0~1
   };
 };
