@@ -1,7 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { captureException } from '@/shared/lib/sentry';
 
-interface Props {
+export interface ErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode;
 }
@@ -11,8 +11,8 @@ interface State {
   error: Error | null;
 }
 
-class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
+class ErrorBoundaryClass extends Component<ErrorBoundaryProps, State> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
   }
@@ -74,4 +74,6 @@ class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-export default ErrorBoundary;
+export const ErrorBoundary = (props: ErrorBoundaryProps) => (
+  <ErrorBoundaryClass {...props} />
+);

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MemoryRouter } from 'react-router-dom';
-import ErrorBoundary from './ErrorBoundary';
+import { ErrorBoundary } from './ErrorBoundary';
 
 /** 렌더링 중 에러를 강제로 발생시키는 헬퍼 컴포넌트 */
 const ThrowOnRender = () => {
