@@ -23,11 +23,9 @@ export const markHomePageRendered = () => {
 const fireExitEvent = () => {
   if (homePageRendered) return;
   if (exitEventFired) return;
-  // 홈("/") 경로가 아닌 경우 (예: 직접 /game/:roomId 진입) 추적하지 않음
-  if (window.location.pathname !== '/') return;
 
   exitEventFired = true;
-  trackEventBeacon(MIXPANEL_EVENTS.PAGE_EXIT_BEFORE_HOME_RENDER, {
+  trackEventBeacon(MIXPANEL_EVENTS.PAGE_EXIT_BEFORE_RENDER, {
     // 사용자가 navigation start 이후 얼마 만에 이탈했는지
     time_on_page_ms: Math.round(performance.now()),
   });
