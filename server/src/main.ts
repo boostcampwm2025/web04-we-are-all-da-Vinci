@@ -24,6 +24,8 @@ async function bootstrap() {
 
   app.useWebSocketAdapter(redisIoAdapter);
 
+  app.enableShutdownHooks();
+
   await app.listen(process.env.PORT ?? 3000);
 }
 void bootstrap();
