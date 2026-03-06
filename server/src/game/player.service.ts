@@ -42,7 +42,7 @@ export class PlayerService {
       isHost: false,
     });
 
-    await this.playerCache.set(socketId, roomId);
+    await this.playerCache.setSocketRoom(socketId, roomId);
 
     return await this.getNewlyJoinedUserFromWaitlist(roomId);
   }
@@ -67,7 +67,7 @@ export class PlayerService {
         await this.gameRoomCache.popAndAddPlayerAtomically(roomId);
       if (!newPlayer) break;
 
-      await this.playerCache.set(newPlayer.socketId, roomId);
+      await this.playerCache.setSocketRoom(newPlayer.socketId, roomId);
       await this.leaderboardCache.updateScore(roomId, newPlayer.profileId, 0);
 
       newlyJoinedPlayers.push(newPlayer);
@@ -77,7 +77,7 @@ export class PlayerService {
   }
 
   async getJoinedRoomId(socketId: string) {
-    return await this.playerCache.getRoomId(socketId);
+    return await this.playerCache.getRoomBySocket(socketId);
   }
 
   async isRoomFull(roomId: string, maxPlayer: number, currentPlayers: number) {
@@ -88,7 +88,7 @@ export class PlayerService {
   async leaveWaitlist(roomId: string, socketId: string) {
     await Promise.all([
       this.waitlistCache.deleteWaitPlayer(roomId, socketId),
-      this.playerCache.delete(socketId),
+      this.playerCache.removeSocketRoom(socketId),
     ]);
   }
 
@@ -121,7 +121,7 @@ export class PlayerService {
 
       // 플레이어 데이터는 유지, playerCache만 삭제
       // (복구 시 updatePlayerSocketByProfileId로 socketId만 교체)
-      await this.playerCache.delete(socketId);
+      await this.playerCache.removeSocketRoom(socketId);
 
       return { player, isGracePeriod: true };
     }
@@ -129,7 +129,7 @@ export class PlayerService {
     // GAME_END: 즉시 완전 삭제
     await Promise.all([
       this.gameRoomCache.deletePlayer(roomId, socketId),
-      this.playerCache.delete(socketId),
+      this.playerCache.removeSocketRoom(socketId),
       this.leaderboardCache.delete(roomId, player.profileId),
       this.progressCache.deletePlayer(roomId, player.profileId),
       this.standingCache.delete(roomId, player.profileId),
@@ -196,7 +196,7 @@ export class PlayerService {
     }
 
     // player 캐시 갱신
-    await this.playerCache.set(newSocketId, roomId);
+    await this.playerCache.setSocketRoom(newSocketId, roomId);
 
     // profileId 기반이므로 leaderboard/standings 교체 불필요
     // (이미 profileId로 저장되어 있음)
@@ -257,7 +257,7 @@ export class PlayerService {
     // Grace Period 무시하고 즉시 완전 삭제
     await Promise.all([
       this.gameRoomCache.deletePlayer(roomId, socketId),
-      this.playerCache.delete(socketId),
+      this.playerCache.removeSocketRoom(socketId),
       this.gracePeriodCache.delete(roomId, player.profileId),
     ]);
 

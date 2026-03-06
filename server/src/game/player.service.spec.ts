@@ -166,7 +166,7 @@ describe('PlayerService', () => {
         socketId,
         0,
       );
-      expect(playerCache.set).toHaveBeenCalledWith(socketId, roomId);
+      expect(playerCache.setSocketRoom).toHaveBeenCalledWith(socketId, roomId);
     });
     it('현재 그림 제시 단계면, 플레이어를 리턴하지 않는다.', async () => {
       // given
@@ -236,7 +236,7 @@ describe('PlayerService', () => {
       const { socketId, profileId } = player;
 
       gameRoomCache.getAllPlayers.mockResolvedValue(mockPlayers);
-      playerCache.delete.mockResolvedValue(roomId);
+      playerCache.removeSocketRoom.mockResolvedValue(roomId);
 
       // when
       const result = await service.leaveRoom(roomId, socketId, phase);
@@ -249,7 +249,7 @@ describe('PlayerService', () => {
         profileId,
         socketId,
       );
-      expect(playerCache.delete).toHaveBeenCalledWith(socketId);
+      expect(playerCache.removeSocketRoom).toHaveBeenCalledWith(socketId);
       // 플레이어 데이터는 유지됨 (deletePlayer 호출 안함)
       expect(gameRoomCache.deletePlayer).not.toHaveBeenCalled();
       expect(leaderboardCache.delete).not.toHaveBeenCalled();
@@ -267,7 +267,7 @@ describe('PlayerService', () => {
       const { socketId, profileId } = player;
 
       gameRoomCache.getAllPlayers.mockResolvedValue(mockPlayers);
-      playerCache.delete.mockResolvedValue(roomId);
+      playerCache.removeSocketRoom.mockResolvedValue(roomId);
 
       // when
       const result = await service.leaveRoom(roomId, socketId, phase);
@@ -280,7 +280,7 @@ describe('PlayerService', () => {
         profileId,
         socketId,
       );
-      expect(playerCache.delete).toHaveBeenCalledWith(socketId);
+      expect(playerCache.removeSocketRoom).toHaveBeenCalledWith(socketId);
       // 플레이어 데이터는 유지됨 (deletePlayer 호출 안함)
       expect(gameRoomCache.deletePlayer).not.toHaveBeenCalled();
       expect(leaderboardCache.delete).not.toHaveBeenCalled();
@@ -303,14 +303,14 @@ describe('PlayerService', () => {
       const { socketId } = player;
 
       gameRoomCache.getAllPlayers.mockResolvedValue(mockPlayers);
-      playerCache.delete.mockResolvedValue(roomId);
+      playerCache.removeSocketRoom.mockResolvedValue(roomId);
 
       // when
       const result = await service.leaveRoom(roomId, socketId, phase);
 
       // then
       expect(result).toBeNull();
-      expect(playerCache.delete).toHaveBeenCalledWith(socketId);
+      expect(playerCache.removeSocketRoom).toHaveBeenCalledWith(socketId);
       expect(waitlistCache.deleteWaitPlayer).toHaveBeenCalledWith(
         roomId,
         socketId,
@@ -425,7 +425,7 @@ describe('PlayerService', () => {
       // then
       expect(result).toEqual(player);
       expect(gameRoomCache.deletePlayer).toHaveBeenCalledWith(roomId, socketId);
-      expect(playerCache.delete).toHaveBeenCalledWith(socketId);
+      expect(playerCache.removeSocketRoom).toHaveBeenCalledWith(socketId);
       expect(gracePeriodCache.delete).toHaveBeenCalledWith(roomId, profileId);
     });
 
@@ -442,7 +442,7 @@ describe('PlayerService', () => {
       // then
       expect(result).toBeNull();
       expect(gameRoomCache.deletePlayer).not.toHaveBeenCalled();
-      expect(playerCache.delete).not.toHaveBeenCalled();
+      expect(playerCache.removeSocketRoom).not.toHaveBeenCalled();
       expect(gracePeriodCache.delete).not.toHaveBeenCalled();
     });
   });

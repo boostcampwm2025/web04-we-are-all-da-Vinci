@@ -7,7 +7,7 @@ import { REDIS_TTL } from '../../common/constants';
 export class PlayerCacheService {
   constructor(private readonly redisService: RedisService) {}
 
-  async set(socketId: string, roomId: string) {
+  async setSocketRoom(socketId: string, roomId: string) {
     const client = this.redisService.getClient();
     const key = RedisKeys.socket(socketId);
 
@@ -15,7 +15,7 @@ export class PlayerCacheService {
     await client.expire(key, REDIS_TTL);
   }
 
-  async delete(socketId: string) {
+  async removeSocketRoom(socketId: string) {
     const client = this.redisService.getClient();
     const key = RedisKeys.socket(socketId);
 
@@ -24,7 +24,7 @@ export class PlayerCacheService {
     return roomId;
   }
 
-  async getRoomId(socketId: string) {
+  async getRoomBySocket(socketId: string) {
     const client = this.redisService.getClient();
     const key = RedisKeys.socket(socketId);
 
