@@ -112,23 +112,20 @@ export class PlayerService {
       return null;
     }
 
+    const { profileId, nickname } = player;
+
     // GAME_END가 아닌 모든 페이즈: Grace Period 설정 (WAITING 포함)
     const shouldUseGracePeriod = phase !== GamePhase.GAME_END;
 
     if (shouldUseGracePeriod) {
       // Grace Period 설정 (2초 TTL)
-      await this.gracePeriodCache.set(
-        roomId,
-        player.profileId,
-        socketId,
-        player.nickname,
-      );
+      await this.gracePeriodCache.set(roomId, profileId, socketId, nickname);
 
       // 플레이어 데이터는 유지, playerCache만 삭제
       // (복구 시 updatePlayerSocketByProfileId로 socketId만 교체)
       await Promise.all([
         this.playerCache.removeSocketRoom(socketId),
-        this.playerCache.removePlayerSocket(player.profileId, roomId),
+        this.playerCache.removePlayerSocket(profileId, roomId),
       ]);
 
       return { player, isGracePeriod: true };
@@ -138,10 +135,10 @@ export class PlayerService {
     await Promise.all([
       this.gameRoomCache.deletePlayer(roomId, socketId),
       this.playerCache.removeSocketRoom(socketId),
-      this.playerCache.removePlayerSocket(player.profileId, roomId),
-      this.leaderboardCache.delete(roomId, player.profileId),
-      this.progressCache.deletePlayer(roomId, player.profileId),
-      this.standingCache.delete(roomId, player.profileId),
+      this.playerCache.removePlayerSocket(profileId, roomId),
+      this.leaderboardCache.delete(roomId, profileId),
+      this.progressCache.deletePlayer(roomId, profileId),
+      this.standingCache.delete(roomId, profileId),
     ]);
 
     return { player, isGracePeriod: false };
@@ -283,16 +280,14 @@ export class PlayerService {
       return null;
     }
 
+    const { profileId, nickname } = player;
+
     // Grace Period 무시하고 즉시 완전 삭제
     await Promise.all([
       this.gameRoomCache.deletePlayer(roomId, socketId),
       this.playerCache.removeSocketRoom(socketId),
-      this.gracePeriodCache.delete(
-        roomId,
-        player.profileId,
-        socketId,
-        player.nickname,
-      ),
+      this.playerCache.removePlayerSocket(profileId, roomId),
+      this.gracePeriodCache.delete(roomId, profileId, socketId, nickname),
     ]);
 
     return player;
