@@ -9,18 +9,20 @@ on:
     paths:
       - "server/**"
       - ".github/workflows/deploy-backend.yml"
+      - "deploy/**"
 
 jobs:
   deploy:
     runs-on: self-hosted
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Copy .env file
+        working-directory: ./deploy
         run: |
-          cd deploy 
           cp ~/deploy/.env ./.env
 
           if [ ! -f .env ]; then
@@ -30,25 +32,23 @@ jobs:
 
           echo ".env file copied."
 
-      - name: Build and deploy with Docker Compose
+      - name: Blue-Green Release (Compose + Nginx Switch)
+        working-directory: ./deploy
         run: |
-          cd deploy
-          docker compose down
-          docker compose up -d --build
-
-      - name: Wait for container to be healthy
-        run: |
-          echo "Waiting for container to start..."
-          sleep 10
-
-      - name: Check container status
-        run: |
-          docker ps
-          echo "Checking API health..."
-          curl -f http://localhost:3000/redis/health || exit 1
+          chmod +x ./deploy.sh 
+          ./deploy.sh
 
       - name: Show container logs
+        working-directory: ./deploy
         if: always()
         run: |
-          cd deploy
-          docker compose logs --tail=50
+          docker compose -f compose.blue-green.yml logs --tail=50
+
+      - name: Clean
+        if: always()
+        working-directory: ./deploy
+        run: |
+          docker image prune -f --filter "until=336h"     # 14일
+          docker builder prune -f --filter "until=336h"   
+          docker container prune -f --filter "until=168h" # 7일
+          docker network prune -f --filter "until=168h"
