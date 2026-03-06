@@ -62,9 +62,12 @@ describe('PlayerService', () => {
       deletePlayerByProfileId: jest.fn(),
     };
     const mockPlayerCache = {
-      set: jest.fn(),
-      delete: jest.fn(),
-      getRoomId: jest.fn(),
+      setSocketRoom: jest.fn(),
+      removeSocketRoom: jest.fn(),
+      getRoomBySocket: jest.fn(),
+      setPlayerSocket: jest.fn(),
+      getSocketByPlayer: jest.fn(),
+      removePlayerSocket: jest.fn(),
     };
     const mockLeaderboardCache = {
       updateScore: jest.fn(),
@@ -154,8 +157,8 @@ describe('PlayerService', () => {
       const result = await service.requestJoinWaitList(
         roomId,
         socketId,
-        profileId,
         nickname,
+        profileId,
       );
 
       // then
@@ -163,7 +166,7 @@ describe('PlayerService', () => {
       expect(result[0].socketId).toEqual(player.socketId);
       expect(leaderboardCache.updateScore).toHaveBeenCalledWith(
         roomId,
-        socketId,
+        profileId,
         0,
       );
       expect(playerCache.setSocketRoom).toHaveBeenCalledWith(socketId, roomId);
@@ -188,8 +191,8 @@ describe('PlayerService', () => {
       const result = await service.requestJoinWaitList(
         roomId,
         socketId,
-        profileId,
         nickname,
+        profileId,
       );
 
       // then
@@ -216,8 +219,8 @@ describe('PlayerService', () => {
       const result = await service.requestJoinWaitList(
         roomId,
         socketId,
-        profileId,
         nickname,
+        profileId,
       );
 
       // then
@@ -233,7 +236,7 @@ describe('PlayerService', () => {
       const roomId = room.roomId;
       const phase = GamePhase.WAITING;
 
-      const { socketId, profileId } = player;
+      const { socketId, profileId, nickname } = player;
 
       gameRoomCache.getAllPlayers.mockResolvedValue(mockPlayers);
       playerCache.removeSocketRoom.mockResolvedValue(roomId);
@@ -248,8 +251,13 @@ describe('PlayerService', () => {
         roomId,
         profileId,
         socketId,
+        nickname,
       );
       expect(playerCache.removeSocketRoom).toHaveBeenCalledWith(socketId);
+      expect(playerCache.removePlayerSocket).toHaveBeenCalledWith(
+        profileId,
+        roomId,
+      );
       // 플레이어 데이터는 유지됨 (deletePlayer 호출 안함)
       expect(gameRoomCache.deletePlayer).not.toHaveBeenCalled();
       expect(leaderboardCache.delete).not.toHaveBeenCalled();
@@ -264,7 +272,7 @@ describe('PlayerService', () => {
       const roomId = room.roomId;
       const phase = GamePhase.DRAWING;
 
-      const { socketId, profileId } = player;
+      const { socketId, profileId, nickname } = player;
 
       gameRoomCache.getAllPlayers.mockResolvedValue(mockPlayers);
       playerCache.removeSocketRoom.mockResolvedValue(roomId);
@@ -279,8 +287,13 @@ describe('PlayerService', () => {
         roomId,
         profileId,
         socketId,
+        nickname,
       );
       expect(playerCache.removeSocketRoom).toHaveBeenCalledWith(socketId);
+      expect(playerCache.removePlayerSocket).toHaveBeenCalledWith(
+        profileId,
+        roomId,
+      );
       // 플레이어 데이터는 유지됨 (deletePlayer 호출 안함)
       expect(gameRoomCache.deletePlayer).not.toHaveBeenCalled();
       expect(leaderboardCache.delete).not.toHaveBeenCalled();
@@ -415,7 +428,7 @@ describe('PlayerService', () => {
       // given
       const player = mockPlayers[1];
       const roomId = mockBaseRoom.roomId;
-      const { socketId, profileId } = player;
+      const { socketId, profileId, nickname } = player;
 
       gameRoomCache.getAllPlayers.mockResolvedValue(mockPlayers);
 
@@ -426,7 +439,16 @@ describe('PlayerService', () => {
       expect(result).toEqual(player);
       expect(gameRoomCache.deletePlayer).toHaveBeenCalledWith(roomId, socketId);
       expect(playerCache.removeSocketRoom).toHaveBeenCalledWith(socketId);
-      expect(gracePeriodCache.delete).toHaveBeenCalledWith(roomId, profileId);
+      expect(playerCache.removePlayerSocket).toHaveBeenCalledWith(
+        profileId,
+        roomId,
+      );
+      expect(gracePeriodCache.delete).toHaveBeenCalledWith(
+        roomId,
+        profileId,
+        socketId,
+        nickname,
+      );
     });
 
     it('플레이어를 찾을 수 없으면 null을 리턴한다.', async () => {
