@@ -249,7 +249,7 @@ export class GameGateway
       // socketId가 변경되었으면 복구된 것이므로 예전 socketId 기록만 삭제 시도
       // (유령 플레이어 방지)
       if (currentConnectedSocket && currentConnectedSocket !== socketId) {
-        await this.playerService.forceRemovePlayer(roomId, socketId);
+        await this.playerService.removePlayer(roomId, socketId);
         this.logger.info(
           { roomId, profileId },
           'Player recovered with new socketId, skipping cleanup',

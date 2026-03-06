@@ -292,4 +292,8 @@ export class PlayerService {
 
     return player;
   }
+
+  async removePlayer(roomId: string, socketId: string) {
+    await this.gameRoomCache.deletePlayer(roomId, socketId);
+  }
 }
