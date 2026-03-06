@@ -29,6 +29,7 @@ export class LifecycleService
 
   onModuleDestroy() {
     this.state = this.SERVER_STATE.DRAINING;
+    this.logger.info({ state: this.state }, 'Server State');
   }
 
   onApplicationShutdown(signal?: string) {
