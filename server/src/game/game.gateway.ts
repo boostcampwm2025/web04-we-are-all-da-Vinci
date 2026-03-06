@@ -240,6 +240,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const gracePeriodExists = await this.gracePeriodCache.exists(
         roomId,
         profileId,
+        player.socketId,
+        player.nickname,
       );
 
       // Grace Period가 아직 존재하면 아직 유예 중
