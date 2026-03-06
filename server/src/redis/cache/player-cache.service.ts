@@ -9,7 +9,7 @@ export class PlayerCacheService {
 
   async set(socketId: string, roomId: string) {
     const client = this.redisService.getClient();
-    const key = RedisKeys.player(socketId);
+    const key = RedisKeys.socket(socketId);
 
     await client.set(key, roomId);
     await client.expire(key, REDIS_TTL);
@@ -17,7 +17,7 @@ export class PlayerCacheService {
 
   async delete(socketId: string) {
     const client = this.redisService.getClient();
-    const key = RedisKeys.player(socketId);
+    const key = RedisKeys.socket(socketId);
 
     const roomId = await client.getDel(key);
 
@@ -26,10 +26,30 @@ export class PlayerCacheService {
 
   async getRoomId(socketId: string) {
     const client = this.redisService.getClient();
-    const key = RedisKeys.player(socketId);
+    const key = RedisKeys.socket(socketId);
 
     const roomId = await client.get(key);
 
     return roomId;
+  }
+  async setPlayerSocket(profileId: string, roomId: string, socketId: string) {
+    const client = this.redisService.getClient();
+    const key = RedisKeys.player(profileId, roomId);
+
+    await client.setEx(key, REDIS_TTL, socketId);
+  }
+
+  async getSocketByPlayer(profileId: string, roomId: string) {
+    const client = this.redisService.getClient();
+    const key = RedisKeys.player(profileId, roomId);
+
+    return await client.getEx(key, { type: 'EX', value: REDIS_TTL });
+  }
+
+  async removePlayerSocket(profileId: string, roomId: string) {
+    const client = this.redisService.getClient();
+    const key = RedisKeys.player(profileId, roomId);
+
+    await client.unlink(key);
   }
 }

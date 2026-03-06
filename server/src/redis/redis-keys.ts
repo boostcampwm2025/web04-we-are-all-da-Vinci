@@ -10,7 +10,9 @@ export const RedisKeys = {
   activeRooms: () => `active:rooms`,
 
   // Player
-  player: (socketId: string) => `player:${socketId}`,
+  socket: (socketId: string) => `socket:${socketId}`,
+  player: (profileId: string, roomId: string) =>
+    `player:${profileId}:${roomId}`,
 
   // Timer
   timer: (roomId: string) => `timer:${roomId}`,
