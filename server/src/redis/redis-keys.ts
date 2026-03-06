@@ -14,6 +14,7 @@ export const RedisKeys = {
 
   // Timer
   timer: (roomId: string) => `timer:${roomId}`,
+  timers: () => `timers`,
 
   // Waitlist
   waitlist: (roomId: string) => `waiting:${roomId}`,
