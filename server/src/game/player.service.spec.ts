@@ -60,12 +60,15 @@ describe('PlayerService', () => {
       getAllPlayers: jest.fn(),
       deletePlayer: jest.fn(),
       deletePlayerByProfileId: jest.fn(),
+      findPlayerByProfileId: jest.fn(),
+      updatePlayerSocketByProfileId: jest.fn(),
     };
     const mockPlayerCache = {
       setSocketRoom: jest.fn(),
       removeSocketRoom: jest.fn(),
       getRoomBySocket: jest.fn(),
       setPlayerSocket: jest.fn(),
+      setRecoveryMappings: jest.fn(),
       getSocketByPlayer: jest.fn(),
       removePlayerSocket: jest.fn(),
     };
@@ -331,6 +334,61 @@ describe('PlayerService', () => {
     });
   });
 
+  describe('tryRecoverSession', () => {
+    it('grace period 조회/삭제 시 재접속 payload nickname이 아닌 저장된 nickname을 사용한다.', async () => {
+      // given
+      const roomId = mockBaseRoom.roomId;
+      const profileId = mockPlayers[1].profileId;
+      const oldSocketId = mockPlayers[1].socketId;
+      const storedNickname = mockPlayers[1].nickname;
+      const reconnectNickname = 'renamed-after-refresh';
+      const newSocketId = 'new-socket';
+
+      gameRoomCache.findPlayerByProfileId
+        .mockResolvedValueOnce({
+          ...mockPlayers[1],
+          socketId: oldSocketId,
+          nickname: storedNickname,
+        })
+        .mockResolvedValueOnce({
+          ...mockPlayers[1],
+          socketId: newSocketId,
+          nickname: reconnectNickname,
+        });
+      gracePeriodCache.exists.mockResolvedValue(true);
+      gameRoomCache.updatePlayerSocketByProfileId.mockResolvedValue(true);
+
+      // when
+      const result = await service.tryRecoverSession(
+        roomId,
+        profileId,
+        newSocketId,
+        reconnectNickname,
+        GamePhase.WAITING,
+      );
+
+      // then
+      expect(result).not.toBeNull();
+      expect(gracePeriodCache.exists).toHaveBeenCalledWith(
+        roomId,
+        profileId,
+        oldSocketId,
+        storedNickname,
+      );
+      expect(gracePeriodCache.delete).toHaveBeenCalledWith(
+        roomId,
+        profileId,
+        oldSocketId,
+        storedNickname,
+      );
+      expect(playerCache.setRecoveryMappings).toHaveBeenCalledWith(
+        profileId,
+        roomId,
+        newSocketId,
+      );
+    });
+  });
+
   describe('checkIsHost', () => {
     it('플레이어가 방장이 아니면, false를 리턴한다.', () => {
       // given
@@ -424,7 +482,7 @@ describe('PlayerService', () => {
   });
 
   describe('forceKickPlayer', () => {
-    it('socketId로 플레이어를 찾아 즉시 삭제하고 Grace Period도 삭제한다.', async () => {
+    it('socketId로 플레이어를 찾아 관련 데이터를 즉시 완전 삭제하고 Grace Period도 삭제한다.', async () => {
       // given
       const player = mockPlayers[1];
       const roomId = mockBaseRoom.roomId;
@@ -443,6 +501,12 @@ describe('PlayerService', () => {
         profileId,
         roomId,
       );
+      expect(leaderboardCache.delete).toHaveBeenCalledWith(roomId, profileId);
+      expect(progressCache.deletePlayer).toHaveBeenCalledWith(
+        roomId,
+        profileId,
+      );
+      expect(standingCache.delete).toHaveBeenCalledWith(roomId, profileId);
       expect(gracePeriodCache.delete).toHaveBeenCalledWith(
         roomId,
         profileId,
@@ -465,6 +529,9 @@ describe('PlayerService', () => {
       expect(result).toBeNull();
       expect(gameRoomCache.deletePlayer).not.toHaveBeenCalled();
       expect(playerCache.removeSocketRoom).not.toHaveBeenCalled();
+      expect(leaderboardCache.delete).not.toHaveBeenCalled();
+      expect(progressCache.deletePlayer).not.toHaveBeenCalled();
+      expect(standingCache.delete).not.toHaveBeenCalled();
       expect(gracePeriodCache.delete).not.toHaveBeenCalled();
     });
   });

@@ -191,14 +191,14 @@ export class PlayerService {
       return null;
     }
 
-    const { socketId: oldSocketId } = foundPlayer;
+    const { socketId: oldSocketId, nickname: storedNickname } = foundPlayer;
 
     // Grace Period 확인
     const exists = await this.gracePeriodCache.exists(
       roomId,
       profileId,
       oldSocketId,
-      nickname,
+      storedNickname,
     );
 
     if (!exists) {
@@ -213,11 +213,8 @@ export class PlayerService {
       nickname,
     );
 
-    // player 캐시 갱신
-    await Promise.all([
-      this.playerCache.setSocketRoom(newSocketId, roomId),
-      this.playerCache.setPlayerSocket(profileId, roomId, newSocketId),
-    ]);
+    // player 캐시 갱신 (원자적 갱신)
+    await this.playerCache.setRecoveryMappings(profileId, roomId, newSocketId);
 
     // profileId 기반이므로 leaderboard/standings 교체 불필요
     // (이미 profileId로 저장되어 있음)
@@ -240,7 +237,7 @@ export class PlayerService {
       roomId,
       profileId,
       oldSocketId,
-      nickname,
+      storedNickname,
     );
 
     // 복구된 플레이어 정보 반환
@@ -287,6 +284,9 @@ export class PlayerService {
       this.gameRoomCache.deletePlayer(roomId, socketId),
       this.playerCache.removeSocketRoom(socketId),
       this.playerCache.removePlayerSocket(profileId, roomId),
+      this.leaderboardCache.delete(roomId, profileId),
+      this.progressCache.deletePlayer(roomId, profileId),
+      this.standingCache.delete(roomId, profileId),
       this.gracePeriodCache.delete(roomId, profileId, socketId, nickname),
     ]);
 

@@ -241,66 +241,87 @@ export class GameGateway
     }
 
     for (const { roomId, profileId, socketId, nickname } of gracePeriodData) {
-      const currentConnectedSocket = await this.playerCache.getSocketByPlayer(
-        profileId,
-        roomId,
-      );
-
-      // socketId가 변경되었으면 복구된 것이므로 예전 socketId 기록만 삭제 시도
-      // (유령 플레이어 방지)
-      if (currentConnectedSocket && currentConnectedSocket !== socketId) {
-        await this.playerService.removePlayer(roomId, socketId);
-        this.logger.info(
-          { roomId, profileId },
-          'Player recovered with new socketId, skipping cleanup',
+      try {
+        const currentConnectedSocket = await this.playerCache.getSocketByPlayer(
+          profileId,
+          roomId,
         );
-        continue;
-      }
 
-      // 플레이어가 없으면 게임 플레이어 데이터 완전 삭제
-      await this.playerService.forceRemovePlayer(roomId, profileId);
+        // socketId가 변경되었으면 복구된 것이므로 예전 socketId 기록만 삭제 시도
+        // (유령 플레이어 방지)
+        if (currentConnectedSocket && currentConnectedSocket !== socketId) {
+          await this.playerService.removePlayer(roomId, socketId);
+          this.logger.info(
+            { roomId, profileId },
+            'Player recovered with new socketId, skipping cleanup',
+          );
+          continue;
+        }
 
-      this.logger.info(
-        { roomId, profileId, nickname },
-        'Player removed after grace period expiry',
-      );
+        // 플레이어가 없으면 게임 플레이어 데이터 완전 삭제
+        await this.playerService.forceRemovePlayer(roomId, profileId);
 
-      // 퇴장 시스템 메시지
-      const leaveMsg = await this.chatService.createLeaveMessage(
-        roomId,
-        nickname,
-      );
-      this.chatGateway.broadcastSystemMessage(roomId, leaveMsg);
-
-      // 방 상태 확인
-      const room = await this.roomService.getRoom(roomId);
-      if (!room) {
-        continue;
-      }
-
-      // 빈 방이면 삭제
-      if (room.players.length === 0) {
-        await this.roomService.deleteRoom(roomId);
-        await this.chatService.clearHistory(roomId);
-        continue;
-      }
-
-      // 혼자 남으면 게임 즉시 종료
-      if (
-        room.players.length === 1 &&
-        room.phase !== GamePhase.WAITING &&
-        room.phase !== GamePhase.GAME_END
-      ) {
         this.logger.info(
-          { roomId },
-          'Only one player left, ending game immediately',
+          { roomId, profileId, nickname },
+          'Player removed after grace period expiry',
         );
-        await this.roundService.endGame(room);
-        continue;
-      }
 
-      // 메타데이터 브로드캐스트
-      this.broadcastMetadata(room);
+        // 퇴장 시스템 메시지
+        const leaveMsg = await this.chatService.createLeaveMessage(
+          roomId,
+          nickname,
+        );
+        this.chatGateway.broadcastSystemMessage(roomId, leaveMsg);
+
+        // 방 상태 확인
+        const room = await this.roomService.getRoom(roomId);
+        if (!room) {
+          continue;
+        }
+
+        // 빈 방이면 삭제
+        if (room.players.length === 0) {
+          await this.roomService.deleteRoom(roomId);
+          await this.chatService.clearHistory(roomId);
+          continue;
+        }
+
+        // 혼자 남으면 게임 즉시 종료
+        if (
+          room.players.length === 1 &&
+          room.phase !== GamePhase.WAITING &&
+          room.phase !== GamePhase.GAME_END
+        ) {
+          this.logger.info(
+            { roomId },
+            'Only one player left, ending game immediately',
+          );
+          await this.roundService.endGame(room);
+          continue;
+        }
+
+        // 메타데이터 브로드캐스트
+        this.broadcastMetadata(room);
+      } catch (err) {
+        // popUntil 호출 시 이미 큐에서 제거되므로 실패 항목은 재등록한다.
+        try {
+          await this.gracePeriodCache.set(
+            roomId,
+            profileId,
+            socketId,
+            nickname,
+          );
+          this.logger.error(
+            { err, roomId, profileId, socketId },
+            'Grace period cleanup failed and was requeued',
+          );
+        } catch (requeueErr) {
+          this.logger.error(
+            { err, requeueErr, roomId, profileId, socketId },
+            'Grace period cleanup failed and requeue also failed',
+          );
+        }
+      }
     }
   }
 
