@@ -28,6 +28,7 @@
     "@nestjs/event-emitter": "^3.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/platform-socket.io": "^11.1.9",
+    "@nestjs/schedule": "^6.1.1",
     "@nestjs/websockets": "^11.1.9",
     "@shared/types": "workspace:*",
     "@socket.io/redis-streams-adapter": "^0.3.0",
