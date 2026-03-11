@@ -78,7 +78,7 @@ export class GameGateway
     private readonly gracePeriodCache: GracePeriodCacheService,
     private readonly playerCache: PlayerCacheService,
 
-    private readonly liftcycleService: LifecycleService,
+    private readonly lifecycleService: LifecycleService,
     private readonly schedulerRegistry: SchedulerRegistry,
   ) {
     this.logger.setContext(GameGateway.name);
@@ -143,7 +143,7 @@ export class GameGateway
   }
 
   handleConnection(client: Socket) {
-    if (!this.liftcycleService.isRunning()) {
+    if (!this.lifecycleService.isRunning()) {
       this.logger.warn(
         { id: client.id },
         'Connection denied. Server is draining.',
