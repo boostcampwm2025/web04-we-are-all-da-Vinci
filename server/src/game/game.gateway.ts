@@ -102,8 +102,9 @@ export class GameGateway
     this.logger.info('Clear gracePeriodCleanupLoop');
   }
 
-  beforeApplicationShutdown() {
-    this.server.close();
+  async beforeApplicationShutdown(signal?: string) {
+    await this.server.close();
+    this.logger.info({ signal }, 'Server Closed');
   }
 
   @OnEvent('phase_changed')
