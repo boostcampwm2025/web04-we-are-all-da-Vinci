@@ -2,7 +2,7 @@ import { useCurrentPlayer, useGameStore } from '@/entities/gameRoom';
 import { PlayerReplaysSection, PromptSection } from '@/entities/roundResult';
 import { MySimilarityDetail } from '@/entities/similarity';
 import { Timer } from '@/entities/timer';
-import { ChatBox, useChatActions, useChatStore } from '@/features/chat';
+import { ChatBox, useChatActions } from '@/features/chat';
 import { SFX_LIST } from '@/shared/config';
 import { SoundManager } from '@/shared/lib';
 import { GameHeader } from '@/shared/ui';
@@ -25,7 +25,6 @@ const RoundReplay = () => {
   }, [roundResults, currentPlayer]);
 
   // 채팅
-  const messages = useChatStore((state) => state.messages);
   const { sendMessage } = useChatActions(roomId);
 
   useEffect(() => {
@@ -54,7 +53,6 @@ const RoundReplay = () => {
             {/* 우측: 채팅 */}
             <section className="flex w-full shrink-0 flex-col md:w-72">
               <ChatBox
-                messages={messages}
                 onSendMessage={sendMessage}
                 className="h-72 md:h-full"
               />

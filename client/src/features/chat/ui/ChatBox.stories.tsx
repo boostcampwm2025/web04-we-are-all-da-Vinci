@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { MemoryRouter } from 'react-router-dom';
 import ChatBox from './ChatBox';
+import { useChatStore } from '../model/chatStore';
 import type { ChatMessage } from '../model/types';
 
 const SAMPLE_MESSAGES: ChatMessage[] = [
@@ -42,6 +43,11 @@ const SAMPLE_MESSAGES: ChatMessage[] = [
   },
 ];
 
+const withMessages = (messages: ChatMessage[]) => (Story: React.ComponentType) => {
+  useChatStore.setState({ messages });
+  return <Story />;
+};
+
 const meta = {
   title: 'features/chat/ChatBox',
   component: ChatBox,
@@ -66,31 +72,25 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
-  args: {
-    messages: SAMPLE_MESSAGES,
-  },
+  decorators: [withMessages(SAMPLE_MESSAGES)],
 };
 
 export const Empty: Story = {
-  args: {
-    messages: [],
-  },
+  decorators: [withMessages([])],
 };
 
 export const CustomTitle: Story = {
-  args: {
-    messages: SAMPLE_MESSAGES,
-  },
+  decorators: [withMessages(SAMPLE_MESSAGES)],
 };
 
 export const ManyMessages: Story = {
-  args: {
-    messages: [
+  decorators: [
+    withMessages([
       ...SAMPLE_MESSAGES,
       ...SAMPLE_MESSAGES.map((msg, idx) => ({
         ...msg,
         timestamp: msg.timestamp + idx * 1000,
       })),
-    ],
-  },
+    ]),
+  ],
 };

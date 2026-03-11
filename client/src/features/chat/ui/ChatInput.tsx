@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef } from 'react';
 import Input from '@/shared/ui/Input';
 import { CHAT_MAX_LENGTH } from '../model/types';
 
@@ -8,19 +8,19 @@ interface ChatInputProps {
 }
 
 const ChatInput = ({ onSendMessage, disabled }: ChatInputProps) => {
-  const [message, setMessage] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSend = () => {
-    if (!message.trim() || disabled) return;
-    onSendMessage(message);
-    setMessage('');
+    const value = inputRef.current?.value ?? '';
+    if (!value.trim() || disabled) return;
+    onSendMessage(value);
+    if (inputRef.current) inputRef.current.value = '';
   };
 
   return (
     <div className="border-stroke-default bg-surface-default border-t p-1">
       <Input
-        value={message}
-        onChange={setMessage}
+        ref={inputRef}
         onEnter={handleSend}
         maxLength={CHAT_MAX_LENGTH}
         placeholder="메시지 입력..."

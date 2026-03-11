@@ -5,7 +5,7 @@ import {
   useIsHost,
 } from '@/entities/gameRoom';
 import { GameSettingsCard } from '@/entities/gameSettings';
-import { ChatBox, useChatActions, useChatStore } from '@/features/chat';
+import { ChatBox, useChatActions } from '@/features/chat';
 import { PlayerListSection } from '@/features/playerList';
 import { Practice } from '@/features/practice';
 import { RoomCodeCopy } from '@/features/roomCode';
@@ -20,6 +20,7 @@ import { GameHeader } from '@/shared/ui';
 import { useWaitingActions } from '../model/useWaitingActions';
 
 export const Waiting = () => {
+  console.count('Waiting render');
   // Zustand에서 실제 데이터 가져오기
   const roomId = useGameStore((state) => state.roomId);
   const players = useGameStore(selectPlayers);
@@ -38,7 +39,6 @@ export const Waiting = () => {
   } = useWaitingActions({ roomId, isHostUser });
 
   // 채팅
-  const messages = useChatStore((state) => state.messages);
   const { sendMessage } = useChatActions(roomId);
 
   useBGM(BGM_LIST.WAITING);
@@ -84,7 +84,6 @@ export const Waiting = () => {
               </div>
               <div className="flex min-h-0 flex-1 flex-col">
                 <ChatBox
-                  messages={messages}
                   onSendMessage={sendMessage}
                   className="h-72 md:h-full"
                 />

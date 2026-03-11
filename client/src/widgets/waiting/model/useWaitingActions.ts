@@ -12,7 +12,7 @@ interface UseWaitingProps {
 
 export const useWaitingActions = ({ roomId, isHostUser }: UseWaitingProps) => {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const { addToast } = useToastStore();
+  const addToast = useToastStore((s) => s.addToast);
 
   const copyRoomId = async () => {
     try {
