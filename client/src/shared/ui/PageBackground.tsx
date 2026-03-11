@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {
   BrushDoodle,
   JudyDoodle,
@@ -10,7 +11,7 @@ import {
   SunDoodle,
 } from './Doodles';
 
-const PageBackground = () => {
+const PageBackground = memo(() => {
   return (
     <>
       {/* 그리드 패턴 */}
@@ -30,6 +31,6 @@ const PageBackground = () => {
       </div>
     </>
   );
-};
+});
 
 export default PageBackground;

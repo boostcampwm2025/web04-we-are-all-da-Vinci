@@ -13,23 +13,20 @@ import { useEffect } from 'react';
  * @param enabled - 이벤트 리스너 활성화 여부
  */
 export const useChatEvents = (enabled: boolean) => {
-  const addChatMessage = useChatStore((state) => state.addMessage);
-  const setChatHistory = useChatStore((state) => state.setHistory);
-
   useEffect(() => {
     if (!enabled) return;
 
     const socket = getSocket();
 
     const handleBroadcast = (message: ChatMessage) => {
-      addChatMessage(message);
+      useChatStore.getState().addMessage(message);
     };
 
     const handleHistory = (payload: {
       roomId: string;
       messages: ChatMessage[];
     }) => {
-      setChatHistory(payload.messages);
+      useChatStore.getState().setHistory(payload.messages);
     };
 
     const handleError = (error: { message: string }) => {
@@ -39,7 +36,7 @@ export const useChatEvents = (enabled: boolean) => {
         timestamp: Date.now(),
         systemType: 'timer_warning',
       };
-      addChatMessage(errorMessage);
+      useChatStore.getState().addMessage(errorMessage);
     };
 
     socket.on(CLIENT_EVENTS.CHAT_BROADCAST, handleBroadcast);
@@ -51,5 +48,5 @@ export const useChatEvents = (enabled: boolean) => {
       socket.off(CLIENT_EVENTS.CHAT_HISTORY, handleHistory);
       socket.off(CLIENT_EVENTS.CHAT_ERROR, handleError);
     };
-  }, [enabled, addChatMessage, setChatHistory]);
+  }, [enabled]);
 };

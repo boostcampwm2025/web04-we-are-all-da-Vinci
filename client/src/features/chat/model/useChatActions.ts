@@ -22,4 +22,5 @@ const useChatActions = (roomId: string | undefined) => {
 
   return { sendMessage };
 };
+
 export default useChatActions;

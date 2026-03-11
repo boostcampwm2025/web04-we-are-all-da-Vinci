@@ -22,6 +22,7 @@ export const PlayerListSection = ({
   maxPlayer,
   roomCode,
 }: PlayerListSectionProps) => {
+  console.count('PlayerListSection render');
   const socket = getSocket();
   const roomId = useGameStore((state) => state.roomId);
   const settings = useGameStore((state) => state.settings);

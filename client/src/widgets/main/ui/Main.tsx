@@ -17,6 +17,8 @@ import type { Settings } from '@/entities/gameRoom';
 export const Main = () => {
   const navigate = useNavigate();
 
+  console.log('[Main] 렌더링');
+
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -85,13 +87,6 @@ export const Main = () => {
               {TEXT.MANUAL}
             </button>
           </div>
-        </div>
-
-        <div
-          id="boostAD"
-          className="absolute bottom-10 z-40 flex h-10 w-full justify-center px-10 text-center md:h-25 md:w-280"
-        >
-          <div data-boostad-zone className="h-full w-full"></div>
         </div>
       </div>
 

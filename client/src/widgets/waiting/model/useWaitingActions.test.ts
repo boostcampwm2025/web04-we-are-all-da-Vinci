@@ -30,9 +30,11 @@ describe('useWaitingActions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getSocket).mockReturnValue({ emit: mockEmit } as never);
-    vi.mocked(useToastStore).mockReturnValue({
-      addToast: mockAddToast,
-    } as never);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.mocked(useToastStore).mockImplementation((selector?: any) => {
+      const state = { addToast: mockAddToast };
+      return selector ? selector(state) : state;
+    });
 
     Object.assign(navigator, {
       clipboard: {
