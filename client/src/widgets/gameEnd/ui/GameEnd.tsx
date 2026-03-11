@@ -59,10 +59,7 @@ export const GameEnd = () => {
 
           {/* 3. 우측: 채팅 */}
           <section className="flex w-full shrink-0 flex-col md:w-72">
-            <ChatBox
-              onSendMessage={sendMessage}
-              className="h-72 md:h-full"
-            />
+            <ChatBox onSendMessage={sendMessage} className="h-72 md:h-full" />
           </section>
         </div>
       </main>

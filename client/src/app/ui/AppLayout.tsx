@@ -12,29 +12,9 @@ import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { VolumeButton } from '@/features/volume';
 
-// const ToastContainer = () => {
-//   const toasts = useToastStore((s) => s.toasts);
-//   const removeToast = useToastStore((s) => s.removeToast);
-//   return (
-//     <div className="pointer-events-none fixed right-6 bottom-6 z-200 flex flex-col items-end gap-2">
-//       {toasts.map((toast) => (
-//         <Toast
-//           key={toast.id}
-//           message={toast.message}
-//           type={toast.type}
-//           duration={toast.duration}
-//           onClose={() => removeToast(toast.id)}
-//         />
-//       ))}
-//     </div>
-//   );
-// };
-
 const AppLayout = () => {
   const [isModalOpen, setIsModalOpen] = useState(isFirstVisit);
   const { toasts, removeToast } = useToastStore();
-
-  console.count('AppLayout render');
 
   useEffect(() => {
     const nickname = getNickname();

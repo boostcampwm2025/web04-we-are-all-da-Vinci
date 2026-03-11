@@ -43,10 +43,11 @@ const SAMPLE_MESSAGES: ChatMessage[] = [
   },
 ];
 
-const withMessages = (messages: ChatMessage[]) => (Story: React.ComponentType) => {
-  useChatStore.setState({ messages });
-  return <Story />;
-};
+const withMessages =
+  (messages: ChatMessage[]) => (Story: React.ComponentType) => {
+    useChatStore.setState({ messages });
+    return <Story />;
+  };
 
 const meta = {
   title: 'features/chat/ChatBox',

@@ -20,7 +20,6 @@ import { GameHeader } from '@/shared/ui';
 import { useWaitingActions } from '../model/useWaitingActions';
 
 export const Waiting = () => {
-  console.count('Waiting render');
   // Zustand에서 실제 데이터 가져오기
   const roomId = useGameStore((state) => state.roomId);
   const players = useGameStore(selectPlayers);
