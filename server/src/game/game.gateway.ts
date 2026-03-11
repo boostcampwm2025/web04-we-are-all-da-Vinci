@@ -1,4 +1,9 @@
-import { OnModuleDestroy, UseFilters, UseInterceptors } from '@nestjs/common';
+import {
+  BeforeApplicationShutdown,
+  OnModuleDestroy,
+  UseFilters,
+  UseInterceptors,
+} from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -57,7 +62,11 @@ interface PhaseChangedEvent {
 @UseFilters(WebsocketExceptionFilter)
 @UseInterceptors(MetricInterceptor)
 export class GameGateway
-  implements OnGatewayConnection, OnGatewayDisconnect, OnModuleDestroy
+  implements
+    OnGatewayConnection,
+    OnGatewayDisconnect,
+    OnModuleDestroy,
+    BeforeApplicationShutdown
 {
   @WebSocketServer()
   server!: Server;
@@ -91,6 +100,10 @@ export class GameGateway
 
     clearInterval(gracePeriodCleanupLoop);
     this.logger.info('Clear gracePeriodCleanupLoop');
+  }
+
+  beforeApplicationShutdown() {
+    this.server.close();
   }
 
   @OnEvent('phase_changed')
