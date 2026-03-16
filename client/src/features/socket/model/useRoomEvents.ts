@@ -1,6 +1,7 @@
 import { useGameStore, type GameRoom } from '@/entities/gameRoom';
 import { disconnectSocket, getSocket } from '@/shared/api';
 import { CLIENT_EVENTS } from '@/shared/config';
+import { captureException } from '@/shared/lib/sentry';
 import { useToastStore } from '@/shared/model';
 import type { Player } from '@shared/types';
 import { useEffect } from 'react';
@@ -29,27 +30,40 @@ export const useRoomEvents = (enabled: boolean) => {
     const socket = getSocket();
 
     const handleRoomMetadata = (data: GameRoom) => {
-      const { phase: currentPhase, myProfileId } = useGameStore.getState();
-      const result = processRoomMetadata(data, currentPhase, myProfileId!);
+      try {
+        const { phase: currentPhase, myProfileId } = useGameStore.getState();
+        const result = processRoomMetadata(data, currentPhase, myProfileId!);
 
-      if (result.shouldResetGameData) {
-        useGameStore.setState({
-          liveRankings: [],
-          roundResults: [],
-          previousStandingResults: [],
-          standingResults: [],
-          finalResults: [],
-          highlight: null,
-          promptStrokes: [],
-        });
+        if (result.shouldResetGameData) {
+          useGameStore.setState({
+            liveRankings: [],
+            roundResults: [],
+            previousStandingResults: [],
+            standingResults: [],
+            finalResults: [],
+            highlight: null,
+            promptStrokes: [],
+          });
+        }
+
+        if (result.isJoined) {
+          setIsInWaitlist(false);
+          setIsPracticing(false);
+        }
+
+        updateRoom(result.roomUpdate);
+      } catch (error) {
+        captureException(
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            tags: {
+              error_type: 'socket_event_handler',
+              event: 'ROOM_METADATA',
+            },
+            level: 'error',
+          },
+        );
       }
-
-      if (result.isJoined) {
-        setIsInWaitlist(false);
-        setIsPracticing(false);
-      }
-
-      updateRoom(result.roomUpdate);
     };
 
     const handleKicked = ({
@@ -57,14 +71,24 @@ export const useRoomEvents = (enabled: boolean) => {
     }: {
       kickedPlayer: Omit<Player, 'isHost'>;
     }) => {
-      const myProfileId = useGameStore.getState().myProfileId;
-      if (myProfileId === kickedPlayer.profileId) {
-        disconnectSocket();
-        reset();
-        navigate('/');
-        addToast(`방에서 퇴장당했습니다.`, 'error');
-      } else {
-        addToast(`${kickedPlayer.nickname}님이 퇴장당했습니다.`, 'info');
+      try {
+        const myProfileId = useGameStore.getState().myProfileId;
+        if (myProfileId === kickedPlayer.profileId) {
+          disconnectSocket();
+          reset();
+          navigate('/');
+          addToast(`방에서 퇴장당했습니다.`, 'error');
+        } else {
+          addToast(`${kickedPlayer.nickname}님이 퇴장당했습니다.`, 'info');
+        }
+      } catch (error) {
+        captureException(
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            tags: { error_type: 'socket_event_handler', event: 'ROOM_KICKED' },
+            level: 'error',
+          },
+        );
       }
     };
 
