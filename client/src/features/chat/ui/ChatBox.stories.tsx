@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
+import { useEffect } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import ChatBox from './ChatBox';
 import { useChatStore } from '../model/chatStore';
@@ -45,7 +46,10 @@ const SAMPLE_MESSAGES: ChatMessage[] = [
 
 const withMessages =
   (messages: ChatMessage[]) => (Story: React.ComponentType) => {
-    useChatStore.setState({ messages });
+    useEffect(() => {
+      useChatStore.setState({ messages });
+      return () => useChatStore.getState().clear();
+    }, []);
     return <Story />;
   };
 
