@@ -17,8 +17,6 @@ import type { Settings } from '@/entities/gameRoom';
 export const Main = () => {
   const navigate = useNavigate();
 
-  console.log('[Main] 렌더링');
-
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
