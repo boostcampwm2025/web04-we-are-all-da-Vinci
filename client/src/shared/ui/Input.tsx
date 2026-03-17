@@ -1,9 +1,9 @@
 type Variant = 'default' | 'scribble';
 
-import { forwardRef } from 'react';
 import { cn } from '../lib/classNames';
 
 interface InputProps {
+  ref?: React.Ref<HTMLInputElement>;
   value?: string;
   onChange?: (value: string) => void;
   placeholder?: string;
@@ -16,21 +16,19 @@ interface InputProps {
   className?: string;
 }
 
-const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  {
-    value,
-    onChange,
-    placeholder = '',
-    maxLength,
-    onEnter,
-    autoFocus = false,
-    showCount = false,
-    ariaLabel,
-    variant = 'default',
-    className,
-  },
+const Input = ({
   ref,
-) {
+  value,
+  onChange,
+  placeholder = '',
+  maxLength,
+  onEnter,
+  autoFocus = false,
+  showCount = false,
+  ariaLabel,
+  variant = 'default',
+  className,
+}: InputProps) => {
   const handleChange = onChange
     ? (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value;
@@ -84,6 +82,6 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       )}
     </div>
   );
-});
+};
 
 export default Input;
