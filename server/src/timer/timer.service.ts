@@ -43,17 +43,24 @@ export class TimerService implements OnModuleInit, OnModuleDestroy {
   }
 
   async tick() {
-    const timers = await this.timerCacheService.getAllTimers();
-    for (const timer of timers) {
-      const { roomId } = timer;
+    const scheduledTimers = await this.timerCacheService.popExpiredTimers();
+    for (const timer of scheduledTimers) {
+      const { roomId, timestamp } = timer;
 
       const timeLeft = await this.timerCacheService.decrementTimer(roomId);
 
-      if (timeLeft !== null && timeLeft >= 0) {
+      if (timeLeft === null) {
+        await this.timerCacheService.deleteTimer(roomId);
+        continue;
+      }
+
+      if (timeLeft > 0) {
+        await this.timerCacheService.scheduleTimer(roomId, timestamp + 1000);
+      }
+
+      if (timeLeft >= 0 && this.onTimerTickCallback) {
         // Gateway에 알림
-        if (this.onTimerTickCallback) {
-          this.onTimerTickCallback(roomId, timeLeft);
-        }
+        this.onTimerTickCallback(roomId, timeLeft);
       }
 
       if (timeLeft === 0 && this.onTimerEndCallback) {
@@ -64,14 +71,14 @@ export class TimerService implements OnModuleInit, OnModuleDestroy {
             { roomId: roomId, err },
             'Timer end callback failed. Remove Timer',
           );
-          await this.cancelTimer(roomId);
+          await this.timerCacheService.deleteTimer(roomId);
         }
       }
     }
   }
 
   async startTimer(roomId: string, timeLeft: number) {
-    await this.timerCacheService.addTimer(roomId, timeLeft);
+    await this.timerCacheService.registerTimer(roomId, timeLeft);
 
     // 초기 타이머 값 즉시 브로드캐스트 (1초 대기 없이)
     if (this.onTimerTickCallback) {
