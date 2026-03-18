@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useRef, memo, useEffect, useState } from 'react';
 import { VolumeIcon } from './VolumeIcon';
 import { VolumeControlModal } from './VolumeControlModal';
-import { useRef } from 'react';
 
-export const VolumeButton = () => {
+export const VolumeButton = memo(() => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -34,4 +33,4 @@ export const VolumeButton = () => {
       <VolumeControlModal isOpen={isOpen} />
     </div>
   );
-};
+});

@@ -1,7 +1,7 @@
 import { FinalRankingCard, PotgCard } from '@/entities/gameResult';
 import { useGameStore, useIsHost } from '@/entities/gameRoom';
 import { TIMER } from '@/entities/timer';
-import { ChatBox, useChatActions, useChatStore } from '@/features/chat';
+import { ChatBox, useChatActions } from '@/features/chat';
 import { getSocket } from '@/shared/api';
 import { SERVER_EVENTS, TITLES, BGM_LIST } from '@/shared/config';
 import { GameHeader } from '@/shared/ui';
@@ -21,7 +21,6 @@ export const GameEnd = () => {
   const isButtonEnabled = timer <= TIMER.GAME_END_TIME - BUTTON_ENABLE_AFTER;
 
   // 채팅
-  const messages = useChatStore((state) => state.messages);
   const { sendMessage } = useChatActions(roomId);
 
   useBGM(BGM_LIST.GAME_END);
@@ -60,11 +59,7 @@ export const GameEnd = () => {
 
           {/* 3. 우측: 채팅 */}
           <section className="flex w-full shrink-0 flex-col md:w-72">
-            <ChatBox
-              messages={messages}
-              onSendMessage={sendMessage}
-              className="h-72 md:h-full"
-            />
+            <ChatBox onSendMessage={sendMessage} className="h-72 md:h-full" />
           </section>
         </div>
       </main>

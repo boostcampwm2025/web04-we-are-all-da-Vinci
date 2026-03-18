@@ -86,13 +86,6 @@ export const Main = () => {
             </button>
           </div>
         </div>
-
-        <div
-          id="boostAD"
-          className="absolute bottom-10 z-40 flex h-10 w-full justify-center px-10 text-center md:h-25 md:w-280"
-        >
-          <div data-boostad-zone className="h-full w-full"></div>
-        </div>
       </div>
 
       <RoomSettingsModal

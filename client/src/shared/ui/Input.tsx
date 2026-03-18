@@ -3,8 +3,9 @@ type Variant = 'default' | 'scribble';
 import { cn } from '../lib/classNames';
 
 interface InputProps {
-  value: string;
-  onChange: (value: string) => void;
+  ref?: React.Ref<HTMLInputElement>;
+  value?: string;
+  onChange?: (value: string) => void;
   placeholder?: string;
   maxLength?: number;
   onEnter?: () => void;
@@ -16,6 +17,7 @@ interface InputProps {
 }
 
 const Input = ({
+  ref,
   value,
   onChange,
   placeholder = '',
@@ -27,19 +29,21 @@ const Input = ({
   variant = 'default',
   className,
 }: InputProps) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    if (maxLength === undefined || newValue.length <= maxLength) {
-      onChange(newValue);
-    }
-  };
+  const handleChange = onChange
+    ? (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newValue = e.target.value;
+        if (maxLength === undefined || newValue.length <= maxLength) {
+          onChange(newValue);
+        }
+      }
+    : undefined;
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (
       e.key === 'Enter' &&
       !e.nativeEvent.isComposing &&
       onEnter &&
-      value.trim()
+      e.currentTarget.value.trim()
     ) {
       onEnter();
     }
@@ -60,6 +64,7 @@ const Input = ({
   return (
     <div className={cn(wrapperClasses[variant], className)}>
       <input
+        ref={ref}
         type="text"
         value={value}
         onChange={handleChange}
@@ -70,7 +75,7 @@ const Input = ({
         aria-label={ariaLabel || placeholder}
         className={cn(inputClasses[variant], className)}
       />
-      {showCount && maxLength && (
+      {showCount && maxLength && value !== undefined && (
         <span className="text-content-secondary absolute top-1/2 right-3 -translate-y-1/2 text-xs">
           {value.length}/{maxLength}
         </span>
