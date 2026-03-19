@@ -1,54 +1,53 @@
-import type { PlayerScore } from '@/entities/roundResult';
-import { useRef, useCallback } from 'react';
+import { useRef, useLayoutEffect } from 'react';
 
-// 리스트 순서가 바뀔 때 DOM 위치 변화만을 이용해
-// 자연스러운 이동 애니메이션을 만들기 위한 FLIP 애니메이션 훅
-export const useFlipAnimation = () => {
-  const rowRefs = useRef(new Map<string, HTMLDivElement>());
+const EASING = 'cubic-bezier(0.34,1.56,0.64,1)';
+const DURATION = 700;
 
-  const setRowRef = (key: string) => (el: HTMLDivElement | null) => {
+export const useFlipAnimation = <T extends HTMLElement = HTMLDivElement>() => {
+  const elementMap = useRef(new Map<string, T>()); // key로 카드 DOM을 조회하는 맵
+  const prevTopMap = useRef<Map<string, number> | null>(null); // 순서 변경 직전 각 카드의 Y좌표 스냅샷
+
+  // JSX에서 <div ref={setItemRef(key)}>로 카드 DOM을 등록하는 ref 콜백
+  const setItemRef = (key: string) => (el: T | null) => {
     if (el) {
-      rowRefs.current.set(key, el);
+      elementMap.current.set(key, el);
     } else {
-      rowRefs.current.delete(key);
+      elementMap.current.delete(key);
     }
   };
 
-  // FLIP 애니메이션 실행 함수
-  // onUpdate: 실제 상태 업데이트(setState)
-  // next: 업데이트될 다음 데이터 순서
-  const playFlip = useCallback(
-    (onUpdate: (next: PlayerScore[]) => void, next: PlayerScore[]) => {
-      const previousPositions = new Map<string, DOMRect>();
+  // F단계 위치 스냅샷 저장 후 onUpdate 호출로 리렌더를 트리거하는 함수
+  const animate = (onUpdate: () => void) => {
+    const tops = new Map<string, number>();
+    elementMap.current.forEach((el, key) => {
+      tops.set(key, el.getBoundingClientRect().top);
+    });
+    prevTopMap.current = tops;
+    onUpdate();
+  };
 
-      rowRefs.current.forEach((row, key) => {
-        previousPositions.set(key, row.getBoundingClientRect());
-      });
+  // animate 호출 후 리렌더가 일어날 때마다 L+I+P 단계를 실행하는 effect
+  useLayoutEffect(() => {
+    if (!prevTopMap.current) return;
+    const prevTops = prevTopMap.current;
+    prevTopMap.current = null;
 
-      onUpdate(next);
+    elementMap.current.forEach((el, key) => {
+      const prevTop = prevTops.get(key);
+      if (prevTop === undefined) return;
 
-      requestAnimationFrame(() => {
-        rowRefs.current.forEach((row, key) => {
-          const previousPosition = previousPositions.get(key);
-          if (!previousPosition) return;
+      const deltaY = prevTop - el.getBoundingClientRect().top; // L: 이전 Y와 현재 Y의 차이
+      if (deltaY === 0) return;
 
-          const currentPosition = row.getBoundingClientRect();
-          const deltaY = previousPosition.top - currentPosition.top;
-          if (deltaY === 0) return;
+      el.animate(
+        [
+          { transform: `translateY(${deltaY}px)` },
+          { transform: 'translateY(0)' },
+        ],
+        { duration: DURATION, easing: EASING },
+      );
+    });
+  });
 
-          row.style.transform = `translateY(${deltaY}px)`;
-          row.style.transition = 'transform 0s';
-
-          requestAnimationFrame(() => {
-            row.style.transform = '';
-            row.style.transition =
-              'transform 700ms cubic-bezier(0.34,1.56,0.64,1)';
-          });
-        });
-      });
-    },
-    [rowRefs],
-  );
-
-  return { setRowRef, playFlip };
+  return { setItemRef, animate };
 };
