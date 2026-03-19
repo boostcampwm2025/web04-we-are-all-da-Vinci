@@ -9,4 +9,6 @@ export const MIXPANEL_EVENTS = {
   CLICK_UNDO_BTN: '되돌리기 버튼 클릭',
   CLICK_CLEAR_BTN: '초기화 버튼 클릭',
   CLICK_COLOR_PROPERTIES: '색상 선택',
+  HOME_PAGE_RENDERED: '홈 화면 렌더링 완료',
+  PAGE_EXIT_BEFORE_RENDER: '홈 화면 렌더링 전 이탈',
 } as const;

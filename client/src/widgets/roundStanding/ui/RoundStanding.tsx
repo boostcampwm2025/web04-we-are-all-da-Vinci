@@ -11,7 +11,7 @@ export const RoundStanding = () => {
     isSorted,
     currentRound,
     previousScoreMap,
-    setRowRef,
+    setItemRef,
   } = useRoundStanding();
 
   const myRank = useMyRank(displayResults);
@@ -35,7 +35,7 @@ export const RoundStanding = () => {
 
           <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 overflow-y-auto p-3 pl-10 md:pl-20">
             {displayResults.map((player, index) => (
-              <div key={player.profileId} ref={setRowRef(player.profileId)}>
+              <div key={player.profileId} ref={setItemRef(player.profileId)}>
                 <StandingRow
                   player={player}
                   previousScore={previousScoreMap.get(player.profileId) ?? 0}

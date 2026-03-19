@@ -32,7 +32,8 @@ export class ChatService {
     message: string,
   ): Promise<ChatMessage> {
     // 1. 플레이어가 방에 있는지 확인
-    const playerRoomId = await this.playerCacheService.getRoomId(socketId);
+    const playerRoomId =
+      await this.playerCacheService.getRoomBySocket(socketId);
     if (playerRoomId !== roomId) {
       throw new WebsocketException(ErrorCode.CHAT_PLAYER_NOT_IN_ROOM);
     }

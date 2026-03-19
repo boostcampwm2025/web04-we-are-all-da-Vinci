@@ -90,4 +90,8 @@ export class PromptService {
     const randomIdx = Math.floor(Math.random() * promptStrokesData.length);
     return promptStrokesData[randomIdx];
   }
+
+  async checkPrompts() {
+    return (await this.loadPromptStrokes()).length > 0;
+  }
 }

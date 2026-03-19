@@ -42,7 +42,6 @@ export const useSocketConnection = ({
     (state) => state.setPendingNavigation,
   );
   const reset = useGameStore((state) => state.reset);
-  const clearChat = useChatStore((state) => state.clear);
 
   // 새로고침 감지 (reset() 충돌 방지)
   const isPageUnloadingRef = useRef(false);
@@ -124,7 +123,7 @@ export const useSocketConnection = ({
 
       if (!isPageUnloadingRef.current) {
         reset();
-        clearChat();
+        useChatStore.getState().clear();
       }
     };
   }, [
@@ -139,6 +138,5 @@ export const useSocketConnection = ({
     setAlertMessage,
     setPendingNavigation,
     reset,
-    clearChat,
   ]);
 };

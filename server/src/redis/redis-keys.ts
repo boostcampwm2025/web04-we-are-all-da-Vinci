@@ -10,10 +10,13 @@ export const RedisKeys = {
   activeRooms: () => `active:rooms`,
 
   // Player
-  player: (socketId: string) => `player:${socketId}`,
+  socket: (socketId: string) => `socket:${socketId}`,
+  player: (profileId: string, roomId: string) =>
+    `player:${profileId}:${roomId}`,
 
   // Timer
   timer: (roomId: string) => `timer:${roomId}`,
+  timers: () => `timers`,
 
   // Waitlist
   waitlist: (roomId: string) => `waiting:${roomId}`,
@@ -39,6 +42,5 @@ export const RedisKeys = {
     `ratelimit:chat:${window}:${socketId}`,
 
   // Grace Period (새로고침 시 일시적 유예)
-  gracePeriod: (roomId: string, profileId: string) =>
-    `gracePeriod:${roomId}:${profileId}`,
+  gracePeriod: () => `gracePeriod`,
 } as const;

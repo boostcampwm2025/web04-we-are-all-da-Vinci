@@ -7,17 +7,28 @@ interface Timer {
   timeLeft: number;
 }
 
+interface TimerSchedule {
+  roomId: string;
+  timestamp: number;
+}
+
 @Injectable()
 export class TimerCacheService {
   constructor(private readonly redisService: RedisService) {}
 
-  async addTimer(roomId: string, timeLeft: number) {
+  async registerTimer(roomId: string, timeLeft: number) {
     const client = this.redisService.getClient();
     const key = RedisKeys.timer(roomId);
-    await client.hSet(key, {
-      roomId,
-      timeLeft,
-    });
+    const zKey = RedisKeys.timers();
+
+    await client
+      .multi()
+      .hSet(key, {
+        roomId,
+        timeLeft,
+      })
+      .zAdd(zKey, { score: Date.now(), value: roomId })
+      .exec();
   }
 
   async getTimer(roomId: string): Promise<Timer | null> {
@@ -32,29 +43,22 @@ export class TimerCacheService {
     return { roomId: data.roomId, timeLeft: parseInt(data.timeLeft) };
   }
 
-  async getAllTimers(): Promise<Timer[]> {
+  async popExpiredTimers(): Promise<TimerSchedule[]> {
     const client = this.redisService.getClient();
-    const timers = [];
+    const zKey = RedisKeys.timers();
 
-    // Use SCAN instead of KEYS to avoid blocking Redis
-    let cursor = '0';
-    do {
-      const result = await client.scan(cursor, {
-        MATCH: 'timer:*',
-        COUNT: 100,
-      });
-      cursor = result.cursor;
+    const now = Date.now();
 
-      for (const key of result.keys) {
-        const data = await client.hGetAll(key);
-        if (data && Object.keys(data).length > 0) {
-          timers.push({
-            roomId: data.roomId,
-            timeLeft: parseInt(data.timeLeft),
-          });
-        }
-      }
-    } while (cursor !== '0');
+    const [rangeResult] = await client
+      .multi()
+      .zRangeByScoreWithScores(zKey, 0, now)
+      .zRemRangeByScore(zKey, 0, now)
+      .exec<'typed'>();
+
+    const timers = rangeResult.map((result) => ({
+      roomId: result.value,
+      timestamp: result.score,
+    }));
 
     return timers;
   }
@@ -65,18 +69,24 @@ export class TimerCacheService {
 
     const timeLeft = await client.hIncrBy(key, 'timeLeft', -1);
 
-    // 타이머가 처음 등록된 케이스
-    if (timeLeft === -1) {
-      await client.unlink(key);
+    if (timeLeft == -1) {
       return null;
     }
-
     return timeLeft;
   }
 
   async deleteTimer(roomId: string) {
     const client = this.redisService.getClient();
     const key = RedisKeys.timer(roomId);
-    await client.del(key);
+    const zKey = RedisKeys.timers();
+
+    await client.multi().unlink(key).zRem(zKey, roomId).exec();
+  }
+
+  async scheduleTimer(roomId: string, timestamp: number) {
+    const client = this.redisService.getClient();
+    const zKey = RedisKeys.timers();
+
+    await client.zAdd(zKey, { score: timestamp, value: roomId });
   }
 }

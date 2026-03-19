@@ -7,15 +7,9 @@ export const SIMILARITY_ITEMS: {
   color: string;
 }[] = [
   {
-    key: 'strokeCountSimilarity',
-    label: '선 개수 유사도',
-    shortLabel: '선 개수',
-    color: 'bg-yellow-400',
-  },
-  {
     key: 'strokeMatchSimilarity',
-    label: '선 매칭 유사도',
-    shortLabel: '선 매칭',
+    label: '선 유사도',
+    shortLabel: '선',
     color: 'bg-indigo-400',
   },
   {

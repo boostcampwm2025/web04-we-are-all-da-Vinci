@@ -9,6 +9,8 @@ import { PlayModule } from './play/play.module';
 import { PromptModule } from './prompt/prompt.module';
 import { RedisModule } from './redis/redis.module';
 import { RoundModule } from './round/round.module';
+import { HealthModule } from './health/health.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -39,6 +41,7 @@ import { RoundModule } from './round/round.module';
       },
     }),
     EventEmitterModule.forRoot({ delimiter: '_' }),
+    ScheduleModule.forRoot(),
     RedisModule,
     GameModule,
     PlayModule,
@@ -46,6 +49,7 @@ import { RoundModule } from './round/round.module';
     PromptModule,
     ChatModule,
     MetricModule,
+    HealthModule,
   ],
 })
 export class AppModule {}
