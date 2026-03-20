@@ -5,6 +5,9 @@
   "scripts": {
     "dev:client": "pnpm -F client dev",
     "dev:server": "pnpm -F server start:dev",
+    "dev:client-toss": "pnpm -F client-toss dev",
+    "dev:server-toss": "pnpm -F server-toss start:dev",
+    "build:packages": "pnpm -F @shared/types build && pnpm -F @davinci/similarity build && pnpm -F @toss/shared build",
     "infra:up": "docker compose -f infra/local/compose.yaml up -d",
     "infra:down": "docker compose -f infra/local/compose.yaml down",
     "prepare": "lefthook install",
@@ -18,6 +21,15 @@
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.20.0",
+  "pnpm": {
+    "peerDependencyRules": {
+      "ignoreMissing": ["@react-navigation/native"],
+      "allowedVersions": {
+        "react": "19",
+        "react-dom": "19"
+      }
+    }
+  },
   "devDependencies": {
     "@playwright/test": "^1.58.0",
     "@types/node": "^25.1.0",
