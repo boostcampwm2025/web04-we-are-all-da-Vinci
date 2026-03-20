@@ -1,5 +1,5 @@
-import type { PreprocessedStrokeData } from '../model/preprocessedStrokeData';
-import { cosineSimilarity, relativeSimilarity } from './math';
+import type { PreprocessedStrokeData } from "../model/preprocessedStrokeData";
+import { cosineSimilarity, relativeSimilarity } from "./math";
 
 // 전처리된 데이터로 형태 유사도 계산
 export const scoreShapeSimilarity = (

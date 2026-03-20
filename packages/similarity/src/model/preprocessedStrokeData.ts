@@ -1,4 +1,4 @@
-import { type Point, type Stroke } from '@/entities/similarity';
+import type { Point, Stroke } from "@shared/types";
 
 export interface PreprocessedStrokeData {
   normalizedStrokes: Stroke[];

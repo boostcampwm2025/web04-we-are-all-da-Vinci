@@ -105,7 +105,7 @@ export const scoreFinalSimilarity = (
 // ----------helper-----------
 
 const getValidStrokes = (strokes: Stroke[]): Stroke[] => {
-  const MIN_STROKE_LENGTH = 10; // 최소 길이 임계값
+  const MIN_STROKE_LENGTH = 10;
   return strokes.filter((stroke) => {
     const [xs, ys] = stroke.points;
     let length = 0;
@@ -142,7 +142,6 @@ const normalizeStrokes = (strokes: Stroke[]): Stroke[] => {
   const height = maxY - minY || 1;
   const scale = Math.max(width, height);
 
-  // 정규화 (0~1 범위, 중앙 기준)
   const normalized = strokes.map((stroke): Stroke => {
     const [xArr, yArr] = stroke.points;
     const normalizedX = xArr.map((x) => (x - minX) / scale);
@@ -158,7 +157,6 @@ const applyNonLinearScale = (
   threshold = 70,
   steepness = 2,
 ): number => {
-  // threshold 기준으로 낮은 점수는 더 낮게, 높은 점수는 더 높게
   if (score < threshold) {
     return Math.pow(score / 100, steepness) * 100;
   } else {

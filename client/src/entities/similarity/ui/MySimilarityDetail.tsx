@@ -29,7 +29,7 @@ const MySimilarityDetail = ({ similarity }: MySimilarityDetailProps) => {
         </div>
 
         {/* 상세 유사도: 모바일에서는 3컬럼 그리드 */}
-        <div className="grid grid-cols-3 gap-2 md:hidden">
+        <div className="grid grid-cols-2 gap-2 md:hidden">
           {SIMILARITY_ITEMS.map(({ key, shortLabel, color }) => (
             <div
               key={key}
