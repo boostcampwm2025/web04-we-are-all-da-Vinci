@@ -11,7 +11,10 @@ export default defineConfig({
     alias: {
       '@': '/src',
       '@shared/types': path.resolve(__dirname, '../packages/shared/src'),
-      '@davinci/similarity': path.resolve(__dirname, '../packages/similarity/src'),
+      '@davinci/similarity': path.resolve(
+        __dirname,
+        '../packages/similarity/src',
+      ),
     },
   },
   test: {
