@@ -20,6 +20,7 @@
   "dependencies": {
     "@sentry/react": "^10.32.1",
     "@sentry/vite-plugin": "^4.6.1",
+    "@davinci/similarity": "workspace:*",
     "@shared/types": "workspace:*",
     "boring-avatars": "^1.11.2",
     "clsx": "^2.1.1",

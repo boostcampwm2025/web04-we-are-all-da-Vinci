@@ -1,10 +1,10 @@
-import { fileURLToPath } from 'url';
-import path from 'path';
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite';
 import { sentryVitePlugin } from '@sentry/vite-plugin';
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
+import { fileURLToPath } from 'url';
+import { defineConfig } from 'vite';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -32,15 +32,19 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': '/src',
-      '@shared/types': path.resolve(__dirname, '../packages/shared/dist'),
+      '@shared/types': path.resolve(__dirname, '../packages/shared/src'),
+      '@davinci/similarity': path.resolve(
+        __dirname,
+        '../packages/similarity/src',
+      ),
     },
   },
   optimizeDeps: {
-    include: ['@shared/types'],
+    exclude: ['@shared/types', '@davinci/similarity'],
   },
   build: {
     commonjsOptions: {
-      include: [/shared/, /node_modules/],
+      include: [/node_modules/],
     },
     sourcemap: true,
     rollupOptions: {

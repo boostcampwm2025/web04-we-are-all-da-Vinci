@@ -10,8 +10,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@shared/types": ["../packages/shared/dist/index.d.ts"],
-      "@shared/types/*": ["../packages/shared/dist/*"]
+      "@shared/types": ["../packages/shared/src/index.ts"],
+      "@shared/types/*": ["../packages/shared/src/*"],
+      "@davinci/similarity": ["../packages/similarity/src/index.ts"],
+      "@davinci/similarity/*": ["../packages/similarity/src/*"]
     },
 
     /* Bundler mode */
@@ -21,7 +23,6 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
-
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
