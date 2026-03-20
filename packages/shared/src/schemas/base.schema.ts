@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+// Point: 2D 좌표
+export interface Point {
+  x: number;
+  y: number;
+}
+
 // Color: RGB 튜플
 export const ColorSchema = z.tuple([
   z.number().int().min(0).max(255),

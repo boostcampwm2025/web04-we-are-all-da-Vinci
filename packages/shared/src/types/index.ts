@@ -2,6 +2,7 @@ import { z } from 'zod';
 import * as schemas from '../schemas/index';
 
 // ============ Base Types ============
+export type { Point } from '../schemas/base.schema';
 export type Color = z.infer<typeof schemas.ColorSchema>;
 export type Stroke = z.infer<typeof schemas.StrokeSchema>;
 export type Similarity = z.infer<typeof schemas.SimilaritySchema>;
