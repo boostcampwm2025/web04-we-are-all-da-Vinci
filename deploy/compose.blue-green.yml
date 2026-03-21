@@ -12,6 +12,8 @@ services:
     restart: unless-stopped
     networks:
       - app-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test:
         [
@@ -36,6 +38,8 @@ services:
     restart: unless-stopped
     networks:
       - app-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test:
         [
