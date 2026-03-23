@@ -5,12 +5,16 @@ services:
     image: "redis:7.4-alpine"
     container_name: daVinci-redis
     restart: unless-stopped
+    env_file: ".env.redis"
     volumes:
       - "redis_data:/redis"
     networks:
       - app-network
+    command: >
+      redis-server 
+      --requirepass ${REDIS_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      test: ["CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping | grep PONG"]
       interval: 5s
       timeout: 30s
       retries: 3
