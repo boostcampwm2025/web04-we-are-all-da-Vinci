@@ -8,7 +8,7 @@ export default defineConfig({
     icon: "",
   },
   web: {
-    host: "localhost",
+    host: process.env.WEBVIEW_HOST ?? "localhost",
     port: 5173,
     commands: {
       dev: "vite --host",
