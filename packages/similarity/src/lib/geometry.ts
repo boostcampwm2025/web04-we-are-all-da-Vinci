@@ -1,4 +1,4 @@
-import type { Point, Stroke } from "@shared/types";
+import type { Point, Stroke } from "../types";
 import { pathLength } from "./math";
 
 // Strokes -> Points 변환

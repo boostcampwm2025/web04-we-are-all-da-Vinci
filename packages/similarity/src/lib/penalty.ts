@@ -1,5 +1,5 @@
-import type { Stroke } from "@shared/types";
 import { SIMILARITY_CONFIG } from "../config/similarityConfig";
+import type { Stroke } from "../types";
 import { getTotalLength } from "./geometry";
 import { clamp } from "./math";
 

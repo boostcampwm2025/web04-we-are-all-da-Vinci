@@ -23,9 +23,7 @@
       "@toss/shared": ["../packages/toss-shared/dist/index.d.ts"],
       "@toss/shared/*": ["../packages/toss-shared/dist/*"],
       "@davinci/similarity": ["../packages/similarity/dist/index.d.ts"],
-      "@davinci/similarity/*": ["../packages/similarity/dist/*"],
-      "@shared/types": ["../packages/shared/dist/index.d.ts"],
-      "@shared/types/*": ["../packages/shared/dist/*"]
+      "@davinci/similarity/*": ["../packages/similarity/dist/*"]
     }
   },
   "include": ["src/**/*"],

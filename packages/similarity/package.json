@@ -14,9 +14,7 @@
       "default": "./dist/index.js"
     }
   },
-  "dependencies": {
-    "@shared/types": "workspace:*"
-  },
+  "dependencies": {},
   "devDependencies": {
     "typescript": "^5.7.0",
     "rimraf": "^6.0.1"

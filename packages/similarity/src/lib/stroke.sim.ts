@@ -1,4 +1,4 @@
-import type { Color, Stroke } from "@shared/types";
+import type { Color, Stroke } from "../types";
 import { SIMILARITY_CONFIG } from "../config/similarityConfig";
 import {
   getStrokeBoundingBox,

@@ -1,4 +1,4 @@
-import type { Point, Stroke } from "@shared/types";
+import type { Point, Stroke } from "../types";
 
 export interface PreprocessedStrokeData {
   normalizedStrokes: Stroke[];
