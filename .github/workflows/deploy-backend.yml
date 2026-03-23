@@ -1,4 +1,4 @@
-name: Deploy Backend to NCP
+name: Deploy Backend to AWS
 
 on:
   workflow_dispatch:
