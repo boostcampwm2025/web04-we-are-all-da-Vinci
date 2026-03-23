@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "WEBVIEW_HOST=$(ipconfig getifaddr en0) granite dev",
+    "dev": "node scripts/dev.js",
     "build": "ait build",
     "lint": "eslint .",
     "preview": "vite preview",
