@@ -12,9 +12,35 @@ on:
       - "deploy/**"
 
 jobs:
+  prepare:
+    runs-on: self-hosted
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy .env.redis file
+        working-directory: ./infra/deploy/db
+        run: |
+          cp ~/deploy/.env.redis ./.env/redis
+
+          if [ ! -f .env.redis ]; then
+            echo ".env.redis file not exists"
+            exit 1
+          fi 
+
+          echo ".env.redis file copied."
+
+      - name: Ensure Redis running
+        working-directory: ./infra/deploy/db
+        run: |
+          docker compose -f compose.redis.yml up -d
+
   deploy:
     runs-on: self-hosted
     timeout-minutes: 30
+    needs: prepare
 
     steps:
       - name: Checkout code
