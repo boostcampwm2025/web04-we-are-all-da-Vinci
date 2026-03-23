@@ -9,7 +9,7 @@ services:
     volumes:
       - "redis_data:/redis"
     networks:
-      - app-network
+      - davinci-web-network
     command: >
       redis-server 
       --requirepass ${REDIS_PASSWORD}
@@ -23,6 +23,6 @@ volumes:
   redis_data:
 
 networks:
-  app-network:
+  daVinci-web-network:
     external: true
-    name: app-network
+    name: daVinci-web-network

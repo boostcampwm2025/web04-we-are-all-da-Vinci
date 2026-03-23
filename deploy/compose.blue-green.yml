@@ -11,7 +11,7 @@ services:
     env_file: .env
     restart: unless-stopped
     networks:
-      - app-network
+      - daVinci-web-network
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
@@ -37,7 +37,7 @@ services:
     env_file: .env
     restart: unless-stopped
     networks:
-      - app-network
+      - daVinci-web-network
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
@@ -54,6 +54,6 @@ services:
       start_period: 40s
 
 networks:
-  app-network:
-    driver: bridge
-    name: app-network
+  daVinci-web-network:
+    external: true
+    name: daVinci-web-network
