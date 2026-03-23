@@ -1,4 +1,6 @@
 packages:
   - 'client'
   - 'server'
+  - 'client-toss'
+  - 'server-toss'
   - 'packages/*'

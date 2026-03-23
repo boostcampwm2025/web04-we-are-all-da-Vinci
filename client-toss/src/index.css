@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}

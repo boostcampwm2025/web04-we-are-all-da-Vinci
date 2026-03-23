@@ -1,6 +1,5 @@
-import type { Point } from '@/entities/similarity';
-import type { Stroke } from '@shared/types';
-import { pathLength } from './math';
+import type { Point, Stroke } from "../types";
+import { pathLength } from "./math";
 
 // Strokes -> Points 변환
 export const strokesToPoints = (strokes: Stroke[]): Point[] => {
@@ -178,7 +177,6 @@ export const buildRadialSignature = (
   }
 
   // smoothing(이동평균): 각도별 값의 노이즈 줄이기
-  // smooth window 크기만큼의 좌우 이웃 값 + 자기자신의 평균값 사용
   if (smoothWindow <= 1) return maxRadialSignatures;
   const half = Math.floor(smoothWindow / 2);
   const smoothed = Array(binning).fill(0);

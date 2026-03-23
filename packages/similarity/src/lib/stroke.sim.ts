@@ -1,11 +1,11 @@
-import type { Color, Stroke } from '@shared/types';
-import { SIMILARITY_CONFIG } from '../config/similarityConfig';
+import type { Color, Stroke } from "../types";
+import { SIMILARITY_CONFIG } from "../config/similarityConfig";
 import {
   getStrokeBoundingBox,
   getStrokeDirection,
   getStrokeLength,
-} from './geometry';
-import { euclideanDistance, relativeSimilarity } from './math';
+} from "./geometry";
+import { euclideanDistance, relativeSimilarity } from "./math";
 
 // 두 스트로크를 일대일로 비교
 export const scoreStrokeSimilarity = (
@@ -122,7 +122,6 @@ const scoreDirectionSimilarity = (stroke1: Stroke, stroke2: Stroke): number => {
 
 // 위치 유사도: 두 스트로크의 상대위치가 얼마나 비슷한가
 const scorePositionSimilarity = (stroke1: Stroke, stroke2: Stroke): number => {
-  // 각 스트로크의 바운딩 박스
   const bbox1 = getStrokeBoundingBox(stroke1);
   const bbox2 = getStrokeBoundingBox(stroke2);
 

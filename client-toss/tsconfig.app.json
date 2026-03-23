@@ -10,10 +10,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@shared/types": ["../packages/shared/src/index.ts"],
-      "@shared/types/*": ["../packages/shared/src/*"],
-      "@davinci/similarity": ["../packages/similarity/src/index.ts"],
-      "@davinci/similarity/*": ["../packages/similarity/src/*"]
+      "@toss/shared": ["../packages/toss-shared/src/index.ts"],
+      "@toss/shared/*": ["../packages/toss-shared/src/*"]
     },
 
     /* Bundler mode */
@@ -23,14 +21,13 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
+
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noFallthroughCasesInSwitch": true
   },
   "include": ["src"],
-  "exclude": ["src/**/*.stories.tsx", "src/**/*.test.tsx", "src/**/*.test.ts"]
+  "exclude": ["src/**/*.test.tsx", "src/**/*.test.ts"]
 }

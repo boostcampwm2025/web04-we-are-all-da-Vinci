@@ -1,7 +1,7 @@
-import type { Stroke } from '@shared/types';
-import { SIMILARITY_CONFIG } from '../config/similarityConfig';
-import { clamp } from './math';
-import { getTotalLength } from './geometry';
+import { SIMILARITY_CONFIG } from "../config/similarityConfig";
+import type { Stroke } from "../types";
+import { getTotalLength } from "./geometry";
+import { clamp } from "./math";
 
 type InkStats = {
   maxRatio: number; // 0~1 (1에 가까울수록 한 셀에 몰림)
@@ -25,7 +25,6 @@ const calcInkStats = (strokes: Stroke[], grid = 8): InkStats => {
       const len = Math.hypot(dx, dy);
       if (len <= 0) continue;
 
-      // 선분 중점이 속한 셀에 길이를 누적
       const mx = (x0 + x1) / 2;
       const my = (y0 + y1) / 2;
 
@@ -65,8 +64,8 @@ export const scoreDensityBiasPenalty = (
   const p = calcInkStats(promptStrokes, grid);
   const u = calcInkStats(playerStrokes, grid);
 
-  const maxRatioGap = u.maxRatio - p.maxRatio; // +면 플레이어가 더 몰림
-  const usedGap = p.usedRatio - u.usedRatio; // +면 플레이어가 더 적은 셀 사용
+  const maxRatioGap = u.maxRatio - p.maxRatio;
+  const usedGap = p.usedRatio - u.usedRatio;
 
   const maxRatioPenalty = clamp(
     (maxRatioGap - SIMILARITY_CONFIG.densityBias.maxRatioFreezone) /
@@ -85,7 +84,6 @@ export const scoreDensityBiasPenalty = (
     SIMILARITY_CONFIG.densityBias.maxRatioPenaltyWeight * maxRatioPenalty +
     SIMILARITY_CONFIG.densityBias.usedRatioPenaltyWeight * usedPenalty;
 
-  // 가중치 적용
   const weight = SIMILARITY_CONFIG.densityBias.weight;
   const weightedPenalty = penalty * weight;
 
@@ -105,7 +103,6 @@ export const scoreInkLengthPenalty = (
   const promptLen = getTotalLength(promptStrokes);
   const playerLen = getTotalLength(playerStrokes);
 
-  // 0으로 나눔 방지
   if (promptLen === 0) {
     return { penaltyScore: 0, ratio: 0, rawPenalty: 0 };
   }
@@ -115,19 +112,14 @@ export const scoreInkLengthPenalty = (
   const maxRatio = SIMILARITY_CONFIG.inkLength.maxRatio;
   const maxPenaltyScore = SIMILARITY_CONFIG.inkLength.maxPenalty;
 
-  // 임계값 이하면 패널티 없음
   if (ratio <= threshold) {
     return { penaltyScore: 0, ratio, rawPenalty: 0 };
   }
 
-  // threshold ~ maxRatio 구간에서 0 ~ 1로 선형 증가
-  // (ratio - threshold) / (maxRatio - threshold)
   let t = (ratio - threshold) / (maxRatio - threshold);
   t = clamp(t, 0, 1);
 
-  const penaltyFactor = t;
-
-  const penaltyScore = penaltyFactor * maxPenaltyScore;
+  const penaltyScore = t * maxPenaltyScore;
 
   return {
     penaltyScore,

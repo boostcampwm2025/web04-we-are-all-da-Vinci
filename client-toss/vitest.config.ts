@@ -1,7 +1,7 @@
-import { fileURLToPath } from 'url';
-import path from 'path';
-import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { defineConfig } from 'vitest/config';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -9,12 +9,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': '/src',
-      '@shared/types': path.resolve(__dirname, '../packages/shared/src'),
-      '@davinci/similarity': path.resolve(
-        __dirname,
-        '../packages/similarity/src',
-      ),
+      '@': path.resolve(__dirname, './src'),
+      '@toss/shared': path.resolve(__dirname, '../packages/toss-shared/src'),
     },
   },
   test: {
