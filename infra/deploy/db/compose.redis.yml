@@ -1,0 +1,24 @@
+name: "daVinci-deploy-redis"
+
+services:
+  redis:
+    image: "redis:7.4-alpine"
+    container_name: daVinci-redis
+    restart: unless-stopped
+    volumes:
+      - "redis_data:/redis"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 5s
+      timeout: 30s
+      retries: 3
+
+volumes:
+  redis_data:
+
+networks:
+  app-network:
+    external: true
+    name: app-network
