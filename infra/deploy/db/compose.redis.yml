@@ -5,9 +5,9 @@ services:
     image: "redis:7.4-alpine"
     container_name: daVinci-redis
     restart: unless-stopped
-    env_file: ".env.redis"
+    env_file: .env.redis
     volumes:
-      - "redis_data:/redis"
+      - "redis_data:/data"
     networks:
       - daVinci-web-network
     command: >

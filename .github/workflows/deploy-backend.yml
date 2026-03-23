@@ -23,7 +23,7 @@ jobs:
       - name: Copy .env.redis file
         working-directory: ./infra/deploy/db
         run: |
-          cp ~/deploy/.env.redis ./.env/redis
+          cp ~/deploy/.env.redis ./.env.redis
 
           if [ ! -f .env.redis ]; then
             echo ".env.redis file not exists"
@@ -35,7 +35,7 @@ jobs:
       - name: Ensure Redis running
         working-directory: ./infra/deploy/db
         run: |
-          docker compose -f compose.redis.yml up -d
+          docker compose --env-file .env.redis -f compose.redis.yml up -d
 
   deploy:
     runs-on: self-hosted
