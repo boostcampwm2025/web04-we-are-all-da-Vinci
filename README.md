@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="1599" alt="배너" src="https://github.com/user-attachments/assets/2df8cac6-5aa5-47f3-aa1b-487da5c31be5" />
+  <img width="1300" height="930" alt="배너" src="https://github.com/user-attachments/assets/bb4e3b33-4b3c-4995-9807-7820de32c2e1" />
 </p>
 <h2 align="center">우리 모두 다빈치</h2>
 <p align="center">순간의 기억과 손끝 스킬로 승부하는 실시간 드로잉 배틀!</p>
