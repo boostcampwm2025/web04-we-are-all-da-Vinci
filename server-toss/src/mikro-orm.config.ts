@@ -1,11 +1,11 @@
 import { defineConfig } from "@mikro-orm/mysql";
-import { User } from "./user/user.entity";
-import { Drawing } from "./drawing/drawing.entity";
-import { Prompt } from "./prompt/prompt.entity";
-import { DailyPrompt } from "./prompt/daily-prompt.entity";
-import { PointLog } from "./point/point-log.entity";
-import { AdView } from "./ad/ad-view.entity";
-import { Ranking } from "./ranking/ranking.entity";
+import { User } from "./modules/user/user.entity";
+import { Drawing } from "./modules/drawing/drawing.entity";
+import { Prompt } from "./modules/prompt/prompt.entity";
+import { DailyPrompt } from "./modules/prompt/daily-prompt.entity";
+import { PointLog } from "./modules/point/point-log.entity";
+import { AdView } from "./modules/ad/ad-view.entity";
+import { Ranking } from "./modules/ranking/ranking.entity";
 
 export default defineConfig({
   dbName: process.env.MYSQL_DATABASE ?? "daVinci_toss",

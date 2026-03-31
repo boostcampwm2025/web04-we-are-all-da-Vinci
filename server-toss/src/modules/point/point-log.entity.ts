@@ -7,7 +7,7 @@ import {
   Property,
 } from "@mikro-orm/decorators/legacy";
 import { BaseEntity } from "src/common/base.entity";
-import { User } from "src/user/user.entity";
+import { User } from "src/modules/user/user.entity";
 
 @Entity({ tableName: "point_logs" })
 export class PointLog extends BaseEntity {

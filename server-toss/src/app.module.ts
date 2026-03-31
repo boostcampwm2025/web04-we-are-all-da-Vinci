@@ -2,12 +2,12 @@ import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { LoggerModule } from "nestjs-pino";
-import { UserModule } from './user/user.module';
-import { DrawingModule } from './drawing/drawing.module';
-import { PromptModule } from './prompt/prompt.module';
-import { PointModule } from './point/point.module';
-import { AdModule } from './ad/ad.module';
-import { RankingModule } from './ranking/ranking.module';
+import { UserModule } from "./modules/user/user.module";
+import { DrawingModule } from "./modules/drawing/drawing.module";
+import { PromptModule } from "./modules/prompt/prompt.module";
+import { PointModule } from "./modules/point/point.module";
+import { AdModule } from "./modules/ad/ad.module";
+import { RankingModule } from "./modules/ranking/ranking.module";
 import config from "./mikro-orm.config";
 
 @Module({
