@@ -5,6 +5,7 @@ import { LoggerModule } from "nestjs-pino";
 import { UserModule } from './user/user.module';
 import { DrawingModule } from './drawing/drawing.module';
 import { PromptModule } from './prompt/prompt.module';
+import { PointModule } from './point/point.module';
 import config from "./mikro-orm.config";
 
 @Module({
@@ -38,6 +39,7 @@ import config from "./mikro-orm.config";
     UserModule,
     DrawingModule,
     PromptModule,
+    PointModule,
   ],
 })
 export class AppModule {}
