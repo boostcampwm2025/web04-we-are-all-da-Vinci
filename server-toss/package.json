@@ -24,6 +24,7 @@
     "@davinci/similarity": "workspace:*",
     "@mikro-orm/core": "^7.0.6",
     "@mikro-orm/decorators": "^7.0.6",
+    "@mikro-orm/migrations": "^7.0.7",
     "@mikro-orm/mysql": "^7.0.6",
     "@mikro-orm/nestjs": "^7.0.1",
     "@nestjs/common": "^11.1.17",
@@ -41,6 +42,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",
+    "@mikro-orm/cli": "^7.0.7",
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.1.17",
