@@ -23,7 +23,9 @@
   "dependencies": {
     "@davinci/similarity": "workspace:*",
     "@mikro-orm/core": "^7.0.6",
+    "@mikro-orm/decorators": "^7.0.6",
     "@mikro-orm/mysql": "^7.0.6",
+    "@mikro-orm/nestjs": "^7.0.1",
     "@nestjs/common": "^11.1.17",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.17",

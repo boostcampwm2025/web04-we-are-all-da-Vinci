@@ -421,9 +421,15 @@ importers:
       '@mikro-orm/core':
         specifier: ^7.0.6
         version: 7.0.6
+      '@mikro-orm/decorators':
+        specifier: ^7.0.6
+        version: 7.0.6(@mikro-orm/core@7.0.6)(reflect-metadata@0.2.2)
       '@mikro-orm/mysql':
         specifier: ^7.0.6
         version: 7.0.6(@mikro-orm/core@7.0.6)(@types/node@22.19.8)
+      '@mikro-orm/nestjs':
+        specifier: ^7.0.1
+        version: 7.0.1(@mikro-orm/core@7.0.6)(@nestjs/common@11.1.17(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.17)(reflect-metadata@0.2.2)
       '@nestjs/common':
         specifier: ^11.1.17
         version: 11.1.17(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -2686,11 +2692,30 @@ packages:
       dataloader:
         optional: true
 
+  '@mikro-orm/decorators@7.0.6':
+    resolution: {integrity: sha512-1yGoiBQ6Okhufpw5WGITsmktuNS0deU3QA3KLJos99HeNp9nRqSiMkXuOP9zja87zNwAXgx0+zeioE9sCXDebQ==}
+    engines: {node: '>= 22.17.0'}
+    peerDependencies:
+      '@mikro-orm/core': 7.0.6
+      reflect-metadata: ^0.1.0 || ^0.2.0
+    peerDependenciesMeta:
+      reflect-metadata:
+        optional: true
+
   '@mikro-orm/mysql@7.0.6':
     resolution: {integrity: sha512-YnohObPPiXiyMw2jjF6S4pDqFV7I16WL16h7Rx0CMKRwSW3r8hUl6s4N2nSPlyAWUg1LKyf8BEAKd0mK17j+3g==}
     engines: {node: '>= 22.17.0'}
     peerDependencies:
       '@mikro-orm/core': 7.0.6
+
+  '@mikro-orm/nestjs@7.0.1':
+    resolution: {integrity: sha512-0VWaGIsVLMI6XDrrblX5om5lyf4msjlRu405jtuUYQ+nULK+XU2gb2mvzo7UvYZd//eEoXtMlkY5oEykm5Hriw==}
+    engines: {node: '>= 22.17.0'}
+    peerDependencies:
+      '@mikro-orm/core': ^7.0.0 || ^7.0.0-dev.0
+      '@nestjs/common': ^11.0.5
+      '@nestjs/core': ^11.0.5
+      reflect-metadata: ^0.1.0 || ^0.2.0
 
   '@mikro-orm/sql@7.0.6':
     resolution: {integrity: sha512-RfqRNb2cDlsvRfPy8zHUlCK7QS0MFrNmfJYkpG7YjSMHkQEkWNRIwit71iILqKg+mrRsScIEU0w+WooHQYS66A==}
@@ -13504,6 +13529,12 @@ snapshots:
 
   '@mikro-orm/core@7.0.6': {}
 
+  '@mikro-orm/decorators@7.0.6(@mikro-orm/core@7.0.6)(reflect-metadata@0.2.2)':
+    dependencies:
+      '@mikro-orm/core': 7.0.6
+    optionalDependencies:
+      reflect-metadata: 0.2.2
+
   '@mikro-orm/mysql@7.0.6(@mikro-orm/core@7.0.6)(@types/node@22.19.8)':
     dependencies:
       '@mikro-orm/core': 7.0.6
@@ -13513,6 +13544,13 @@ snapshots:
       sqlstring: 2.3.3
     transitivePeerDependencies:
       - '@types/node'
+
+  '@mikro-orm/nestjs@7.0.1(@mikro-orm/core@7.0.6)(@nestjs/common@11.1.17(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.17)(reflect-metadata@0.2.2)':
+    dependencies:
+      '@mikro-orm/core': 7.0.6
+      '@nestjs/common': 11.1.17(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 11.1.17(@nestjs/common@11.1.17(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.17)(@nestjs/websockets@11.1.13)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      reflect-metadata: 0.2.2
 
   '@mikro-orm/sql@7.0.6(@mikro-orm/core@7.0.6)':
     dependencies:

@@ -1,6 +1,8 @@
+import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { LoggerModule } from "nestjs-pino";
+import config from "./mikro-orm.config";
 
 @Module({
   imports: [
@@ -29,6 +31,7 @@ import { LoggerModule } from "nestjs-pino";
         };
       },
     }),
+    MikroOrmModule.forRoot(config),
   ],
 })
 export class AppModule {}
