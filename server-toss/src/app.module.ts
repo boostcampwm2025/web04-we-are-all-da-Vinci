@@ -7,6 +7,7 @@ import { DrawingModule } from './drawing/drawing.module';
 import { PromptModule } from './prompt/prompt.module';
 import { PointModule } from './point/point.module';
 import { AdModule } from './ad/ad.module';
+import { RankingModule } from './ranking/ranking.module';
 import config from "./mikro-orm.config";
 
 @Module({
@@ -42,6 +43,7 @@ import config from "./mikro-orm.config";
     PromptModule,
     PointModule,
     AdModule,
+    RankingModule,
   ],
 })
 export class AppModule {}
