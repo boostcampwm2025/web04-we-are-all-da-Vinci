@@ -3,6 +3,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { LoggerModule } from "nestjs-pino";
 import { UserModule } from './user/user.module';
+import { DrawingModule } from './drawing/drawing.module';
 import config from "./mikro-orm.config";
 
 @Module({
@@ -34,6 +35,7 @@ import config from "./mikro-orm.config";
     }),
     MikroOrmModule.forRoot(config),
     UserModule,
+    DrawingModule,
   ],
 })
 export class AppModule {}

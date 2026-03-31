@@ -1,5 +1,6 @@
 import { defineConfig } from "@mikro-orm/mysql";
 import { User } from "./user/user.entity";
+import { Drawing } from "./drawing/drawing.entity";
 
 export default defineConfig({
   dbName: process.env.MYSQL_DATABASE ?? "daVinci_toss",
@@ -7,6 +8,6 @@ export default defineConfig({
   port: parseInt(process.env.MYSQL_PORT ?? "3306"),
   user: process.env.MYSQL_USER ?? "root",
   password: process.env.MYSQL_PASSWORD ?? "",
-  entities: [User],
+  entities: [User, Drawing],
   debug: process.env.NODE_ENV !== "production",
 });
