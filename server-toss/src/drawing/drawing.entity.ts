@@ -6,6 +6,7 @@ import {
   Property,
 } from "@mikro-orm/decorators/legacy";
 import { BaseEntity } from "src/common/base.entity";
+import { Prompt } from "src/prompt/prompt.entity";
 import { User } from "src/user/user.entity";
 
 @Entity({ tableName: "drawings" })
@@ -21,4 +22,7 @@ export class Drawing extends BaseEntity {
 
   @ManyToOne(() => User)
   user!: Rel<User>;
+
+  @ManyToOne(() => Prompt)
+  prompt!: Rel<Prompt>;
 }
