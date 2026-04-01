@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { defineConfig } from "@mikro-orm/mysql";
 import { User } from "./modules/user/user.entity";
 import { Drawing } from "./modules/drawing/drawing.entity";
