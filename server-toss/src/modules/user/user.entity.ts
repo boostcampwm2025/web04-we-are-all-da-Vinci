@@ -15,4 +15,10 @@ export class User extends BaseEntity {
 
   @Property({ length: 10 })
   name!: string;
+
+  @Property({ length: 8, columnType: "varchar", nullable: true })
+  gender?: string;
+
+  @Property({ columnType: "datetime", nullable: true })
+  birthday?: Date;
 }
