@@ -2,9 +2,9 @@ import { Entity, PrimaryKey, Property } from "@mikro-orm/decorators/legacy";
 
 @Entity({ tableName: "prompts" })
 export class Prompt {
-  @PrimaryKey()
+  @PrimaryKey({ type: "bigint" })
   id!: bigint;
 
-  @Property({ columnType: "text" })
+  @Property({ columnType: "text", type: "text" })
   strokes!: string;
 }

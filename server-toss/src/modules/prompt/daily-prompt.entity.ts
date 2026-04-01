@@ -10,7 +10,7 @@ import { Prompt } from "./prompt.entity";
 
 @Entity({ tableName: "daily_prompts" })
 export class DailyPrompt {
-  @PrimaryKey()
+  @PrimaryKey({ type: "bigint" })
   id!: bigint;
 
   @ManyToOne(() => Prompt)
@@ -19,6 +19,7 @@ export class DailyPrompt {
   @Property({
     fieldName: "prompt_date",
     columnType: "date",
+    type: "date",
     onCreate: () => new Date(),
   })
   promptDate: Opt<Date> = new Date();

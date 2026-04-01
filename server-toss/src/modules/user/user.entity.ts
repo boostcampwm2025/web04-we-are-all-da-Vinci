@@ -7,18 +7,18 @@ import { EntityRepositoryType } from "@mikro-orm/core";
 export class User extends BaseEntity {
   [EntityRepositoryType]?: UserRepository;
 
-  @PrimaryKey()
+  @PrimaryKey({ type: "bigint" })
   id!: bigint;
 
-  @Property({ fieldName: "user_key" })
-  userKey!: string;
+  @Property({ fieldName: "user_key", type: "int" })
+  userKey!: number;
 
-  @Property({ length: 10 })
+  @Property({ length: 10, type: "string" })
   name!: string;
 
-  @Property({ length: 8, columnType: "varchar", nullable: true })
+  @Property({ length: 8, type: "string", nullable: true })
   gender?: string;
 
-  @Property({ columnType: "datetime", nullable: true })
+  @Property({ type: "datetime", nullable: true })
   birthday?: Date;
 }

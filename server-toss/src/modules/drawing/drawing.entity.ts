@@ -11,13 +11,13 @@ import { User } from "src/modules/user/user.entity";
 
 @Entity({ tableName: "drawings" })
 export class Drawing extends BaseEntity {
-  @PrimaryKey({ columnType: "bigint" })
+  @PrimaryKey({ type: "bigint" })
   id!: bigint;
 
-  @Property({ fieldName: "strokes", columnType: "text" })
+  @Property({ fieldName: "strokes", columnType: "text", type: "text" })
   strokes!: string;
 
-  @Property({ fieldName: "similarity", columnType: "text" })
+  @Property({ fieldName: "similarity", columnType: "text", type: "text" })
   similarity!: string;
 
   @ManyToOne(() => User)

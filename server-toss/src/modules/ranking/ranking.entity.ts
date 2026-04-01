@@ -3,21 +3,21 @@ import { BaseEntity } from "src/common/base.entity";
 
 @Entity({ tableName: "rankings" })
 export class Ranking extends BaseEntity {
-  @PrimaryKey()
+  @PrimaryKey({ type: "bigint" })
   id!: bigint;
 
-  @Property({ columnType: "varchar", length: 10 })
+  @Property({ columnType: "varchar(10)", length: 10, type: "varchar(10)" })
   name!: string;
 
-  @Property({ fieldName: "strokes", columnType: "text" })
+  @Property({ fieldName: "strokes", columnType: "text", type: "text" })
   strokes!: string;
 
-  @Property({ fieldName: "similarity", columnType: "text" })
+  @Property({ fieldName: "similarity", columnType: "text", type: "text" })
   similarity!: string;
 
-  @Property({ fieldName: "user_id", columnType: "bigint" })
+  @Property({ fieldName: "user_id", columnType: "bigint", type: "bigint" })
   userId!: bigint;
 
-  @Property({ fieldName: "drawing_id", columnType: "bigint" })
+  @Property({ fieldName: "drawing_id", columnType: "bigint", type: "bigint" })
   drawingId!: bigint;
 }

@@ -3,7 +3,7 @@ import { BaseEntity } from "src/common/base.entity";
 
 @Entity({ tableName: "ad_views" })
 export class AdView extends BaseEntity {
-  @PrimaryKey()
+  @PrimaryKey({ type: "bigint" })
   id!: bigint;
 
   @Enum({ items: () => AdType, nativeEnumName: "ad_type" })
