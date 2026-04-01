@@ -52,9 +52,9 @@
           "enumItems": [],
           "mappedType": "datetime"
         },
-        "type": {
-          "name": "type",
-          "type": "ad_type",
+        "ad_type": {
+          "name": "ad_type",
+          "type": "enum('drawing')",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -68,8 +68,7 @@
           "enumItems": [
             "drawing"
           ],
-          "mappedType": "enum",
-          "nativeEnumName": "ad_type"
+          "mappedType": "enum"
         }
       },
       "indexes": [
@@ -86,22 +85,7 @@
       ],
       "checks": [],
       "foreignKeys": {},
-      "nativeEnums": {
-        "ad_type": {
-          "name": "ad_type",
-          "items": [
-            "drawing"
-          ]
-        },
-        "point_reason": {
-          "name": "point_reason",
-          "items": [
-            "ad",
-            "share",
-            "drawing"
-          ]
-        }
-      }
+      "nativeEnums": {}
     },
     {
       "name": "prompts",
@@ -153,22 +137,7 @@
       ],
       "checks": [],
       "foreignKeys": {},
-      "nativeEnums": {
-        "ad_type": {
-          "name": "ad_type",
-          "items": [
-            "drawing"
-          ]
-        },
-        "point_reason": {
-          "name": "point_reason",
-          "items": [
-            "ad",
-            "share",
-            "drawing"
-          ]
-        }
-      }
+      "nativeEnums": {}
     },
     {
       "name": "daily_prompts",
@@ -258,22 +227,7 @@
           "referencedTableName": "prompts"
         }
       },
-      "nativeEnums": {
-        "ad_type": {
-          "name": "ad_type",
-          "items": [
-            "drawing"
-          ]
-        },
-        "point_reason": {
-          "name": "point_reason",
-          "items": [
-            "ad",
-            "share",
-            "drawing"
-          ]
-        }
-      }
+      "nativeEnums": {}
     },
     {
       "name": "rankings",
@@ -421,22 +375,7 @@
       ],
       "checks": [],
       "foreignKeys": {},
-      "nativeEnums": {
-        "ad_type": {
-          "name": "ad_type",
-          "items": [
-            "drawing"
-          ]
-        },
-        "point_reason": {
-          "name": "point_reason",
-          "items": [
-            "ad",
-            "share",
-            "drawing"
-          ]
-        }
-      }
+      "nativeEnums": {}
     },
     {
       "name": "users",
@@ -568,22 +507,7 @@
       ],
       "checks": [],
       "foreignKeys": {},
-      "nativeEnums": {
-        "ad_type": {
-          "name": "ad_type",
-          "items": [
-            "drawing"
-          ]
-        },
-        "point_reason": {
-          "name": "point_reason",
-          "items": [
-            "ad",
-            "share",
-            "drawing"
-          ]
-        }
-      }
+      "nativeEnums": {}
     },
     {
       "name": "point_logs",
@@ -636,9 +560,9 @@
           "enumItems": [],
           "mappedType": "datetime"
         },
-        "reason": {
-          "name": "reason",
-          "type": "point_reason",
+        "point_reason": {
+          "name": "point_reason",
+          "type": "enum('ad','share','drawing')",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -654,8 +578,7 @@
             "share",
             "drawing"
           ],
-          "mappedType": "enum",
-          "nativeEnumName": "point_reason"
+          "mappedType": "enum"
         },
         "point_amount": {
           "name": "point_amount",
@@ -726,22 +649,7 @@
           "referencedTableName": "users"
         }
       },
-      "nativeEnums": {
-        "ad_type": {
-          "name": "ad_type",
-          "items": [
-            "drawing"
-          ]
-        },
-        "point_reason": {
-          "name": "point_reason",
-          "items": [
-            "ad",
-            "share",
-            "drawing"
-          ]
-        }
-      }
+      "nativeEnums": {}
     },
     {
       "name": "drawings",
@@ -916,39 +824,9 @@
           "referencedTableName": "prompts"
         }
       },
-      "nativeEnums": {
-        "ad_type": {
-          "name": "ad_type",
-          "items": [
-            "drawing"
-          ]
-        },
-        "point_reason": {
-          "name": "point_reason",
-          "items": [
-            "ad",
-            "share",
-            "drawing"
-          ]
-        }
-      }
+      "nativeEnums": {}
     }
   ],
   "views": [],
-  "nativeEnums": {
-    "ad_type": {
-      "name": "ad_type",
-      "items": [
-        "drawing"
-      ]
-    },
-    "point_reason": {
-      "name": "point_reason",
-      "items": [
-        "ad",
-        "share",
-        "drawing"
-      ]
-    }
-  }
+  "nativeEnums": {}
 }

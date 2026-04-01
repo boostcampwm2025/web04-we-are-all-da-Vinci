@@ -1,9 +1,9 @@
 import { Migration } from '@mikro-orm/migrations';
 
-export class Migration20260401154652_init_schema extends Migration {
+export class Migration20260401163729_init_schema extends Migration {
 
   override up(): void | Promise<void> {
-    this.addSql(`create table \`ad_views\` (\`id\` bigint unsigned not null auto_increment primary key, \`created_at\` datetime not null, \`updated_at\` datetime not null, \`type\` ad_type not null) default character set utf8mb4 engine = InnoDB;`);
+    this.addSql(`create table \`ad_views\` (\`id\` bigint unsigned not null auto_increment primary key, \`created_at\` datetime not null, \`updated_at\` datetime not null, \`ad_type\` enum('drawing') not null) default character set utf8mb4 engine = InnoDB;`);
 
     this.addSql(`create table \`prompts\` (\`id\` bigint unsigned not null auto_increment primary key, \`strokes\` text not null) default character set utf8mb4 engine = InnoDB;`);
 
@@ -14,7 +14,7 @@ export class Migration20260401154652_init_schema extends Migration {
 
     this.addSql(`create table \`users\` (\`id\` bigint unsigned not null auto_increment primary key, \`created_at\` datetime not null, \`updated_at\` datetime not null, \`user_key\` int not null, \`name\` varchar(10) not null, \`gender\` varchar(8) null, \`birthday\` datetime null) default character set utf8mb4 engine = InnoDB;`);
 
-    this.addSql(`create table \`point_logs\` (\`id\` bigint unsigned not null auto_increment primary key, \`created_at\` datetime not null, \`updated_at\` datetime not null, \`reason\` point_reason not null, \`point_amount\` int not null, \`user_id\` bigint unsigned not null) default character set utf8mb4 engine = InnoDB;`);
+    this.addSql(`create table \`point_logs\` (\`id\` bigint unsigned not null auto_increment primary key, \`created_at\` datetime not null, \`updated_at\` datetime not null, \`point_reason\` enum('ad','share','drawing') not null, \`point_amount\` int not null, \`user_id\` bigint unsigned not null) default character set utf8mb4 engine = InnoDB;`);
     this.addSql(`alter table \`point_logs\` add index \`point_logs_user_id_index\` (\`user_id\`);`);
 
     this.addSql(`create table \`drawings\` (\`id\` bigint unsigned not null auto_increment primary key, \`created_at\` datetime not null, \`updated_at\` datetime not null, \`strokes\` text not null, \`similarity\` text not null, \`user_id\` bigint unsigned not null, \`prompt_id\` bigint unsigned not null) default character set utf8mb4 engine = InnoDB;`);

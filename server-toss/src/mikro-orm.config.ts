@@ -20,5 +20,7 @@ export default defineConfig({
   extensions: [Migrator],
   migrations: {
     snapshot: process.env.NODE_ENV !== "production",
+    path: "dist/migrations",
+    pathTs: "src/migrations",
   },
 });

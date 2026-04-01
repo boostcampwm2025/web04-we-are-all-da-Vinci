@@ -6,7 +6,7 @@ export class AdView extends BaseEntity {
   @PrimaryKey({ type: "bigint" })
   id!: bigint;
 
-  @Enum({ items: () => AdType, nativeEnumName: "ad_type" })
+  @Enum({ items: () => AdType, fieldName: "ad_type" })
   type!: AdType;
 }
 

@@ -14,7 +14,7 @@ export class PointLog extends BaseEntity {
   @PrimaryKey({ type: "bigint" })
   id!: bigint;
 
-  @Enum({ items: () => PointReason, nativeEnumName: "point_reason" })
+  @Enum({ items: () => PointReason, fieldName: "point_reason" })
   reason!: PointReason;
 
   @Property({ fieldName: "point_amount", type: "int" })
