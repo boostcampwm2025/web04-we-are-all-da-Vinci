@@ -23,6 +23,7 @@ services:
       - daVinci-mysql-data:/var/lib/mysql
     restart: unless-stopped
     environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: true
       MYSQL_DATABASE: daVinci_toss
       TZ: UTC
     healthcheck:
