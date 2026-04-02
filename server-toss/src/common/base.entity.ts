@@ -1,5 +1,3 @@
-import "reflect-metadata";
-
 import type { Opt } from "@mikro-orm/core";
 import { Entity, Property } from "@mikro-orm/decorators/legacy";
 
