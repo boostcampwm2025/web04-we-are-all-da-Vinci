@@ -1,5 +1,12 @@
-import { Entity, Enum, PrimaryKey } from "@mikro-orm/decorators/legacy";
+import {
+  Entity,
+  Enum,
+  ManyToOne,
+  PrimaryKey,
+} from "@mikro-orm/decorators/legacy";
 import { BaseEntity } from "src/common/base.entity";
+import { User } from "../user/user.entity";
+import type { Rel } from "@mikro-orm/core";
 
 @Entity({ tableName: "ad_views" })
 export class AdView extends BaseEntity {
@@ -8,6 +15,9 @@ export class AdView extends BaseEntity {
 
   @Enum({ items: () => AdType, fieldName: "ad_type" })
   type!: AdType;
+
+  @ManyToOne(() => User)
+  user!: Rel<User>;
 }
 
 export enum AdType {
