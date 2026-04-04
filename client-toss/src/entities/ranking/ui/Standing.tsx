@@ -1,7 +1,12 @@
 import { TextButton, Top } from "@toss/tds-mobile";
 import { Podium } from "./Podium";
+import type { Ranking } from "../model/types";
 
-export const Standing = () => {
+interface StandingProps {
+  rankings: Ranking[];
+}
+
+export const Standing = ({ rankings }: StandingProps) => {
   return (
     <div className="flex flex-col items-center gap-8">
       <Top
@@ -16,7 +21,7 @@ export const Standing = () => {
           </Top.SubtitleParagraph>
         }
       />
-      <Podium />
+      <Podium rankings={rankings} />
       <TextButton size="xsmall" variant="arrow" arrowPlacement="inline">
         TOP100 랭킹 보러가기
       </TextButton>
