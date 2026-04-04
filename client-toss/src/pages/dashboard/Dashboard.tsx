@@ -1,4 +1,4 @@
-import { Standing } from "@/entities/ranking/ui/Standing";
+import { DailyPodium } from "@/entities/podium/ui/DailyPodium";
 
 export const Dashboard = () => {
   const rankings = [
@@ -8,7 +8,7 @@ export const Dashboard = () => {
   ];
   return (
     <>
-      <Standing rankings={rankings} />
+      <DailyPodium entries={rankings} />
     </>
   );
 };

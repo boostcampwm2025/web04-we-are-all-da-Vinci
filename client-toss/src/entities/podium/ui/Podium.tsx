@@ -1,7 +1,7 @@
 import { HEIGHTS, WIDTH } from "../config/podiumStyles";
-import type { Ranking } from "../model/types";
+import type { PodiumEntry } from "../model/types";
 interface PodiumProps {
-  rankings: Ranking[];
+  entries: PodiumEntry[];
 }
 
 const clipName = (name: string): string => {
@@ -11,15 +11,15 @@ const clipName = (name: string): string => {
   return name;
 };
 
-export const Podium = ({ rankings }: PodiumProps) => {
+export const Podium = ({ entries }: PodiumProps) => {
   const podium = [
-    { ...rankings[1], rank: 2 },
-    { ...rankings[0], rank: 1 },
-    { ...rankings[2], rank: 3 },
-  ].map((ranking) => ({
-    ...ranking,
-    name: clipName(ranking.name),
-    totalSimilarity: String(ranking.totalSimilarity) + "점",
+    { ...entries[1], rank: 2 },
+    { ...entries[0], rank: 1 },
+    { ...entries[2], rank: 3 },
+  ].map((entry) => ({
+    ...entry,
+    name: clipName(entry.name),
+    totalSimilarity: String(entry.totalSimilarity) + "점",
   }));
 
   return (
@@ -28,17 +28,17 @@ export const Podium = ({ rankings }: PodiumProps) => {
       style={{ height: 205 }}
     >
       <div className="flex items-end justify-center gap-2 pb-16">
-        {podium.map((ranking) => (
+        {podium.map((entry) => (
           <div
-            key={ranking.rank}
+            key={entry.rank}
             className="flex flex-col items-center justify-end gap-2"
           >
             <div className="flex flex-col mb-3 text-center gap-1">
               <div className="w-[75px] truncate text-[16px] font-bold leading-tight text-black">
-                {ranking.name}
+                {entry.name}
               </div>
               <div className="mt-1 text-[14px] leading-none text-[#8f97a3]">
-                {ranking.totalSimilarity}
+                {entry.totalSimilarity}
               </div>
             </div>
 
@@ -46,10 +46,10 @@ export const Podium = ({ rankings }: PodiumProps) => {
               className="flex items-end justify-center bg-[#E5E8EB] text-[14px] font-semibold text-white"
               style={{
                 width: WIDTH,
-                height: HEIGHTS[ranking.rank],
+                height: HEIGHTS[entry.rank],
               }}
             >
-              {ranking.rank}
+              {entry.rank}
             </div>
           </div>
         ))}
