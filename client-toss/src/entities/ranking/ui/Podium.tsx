@@ -19,7 +19,7 @@ export const Podium = ({ rankings }: PodiumProps) => {
   ].map((ranking) => ({
     ...ranking,
     name: clipName(ranking.name),
-    score: String(ranking.score) + "점",
+    totalSimilarity: String(ranking.totalSimilarity) + "점",
   }));
 
   return (
@@ -38,7 +38,7 @@ export const Podium = ({ rankings }: PodiumProps) => {
                 {ranking.name}
               </div>
               <div className="mt-1 text-[14px] leading-none text-[#8f97a3]">
-                {ranking.score}
+                {ranking.totalSimilarity}
               </div>
             </div>
 
