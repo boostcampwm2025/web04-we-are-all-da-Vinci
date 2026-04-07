@@ -28,11 +28,11 @@ npm-debug.log*
 pnpm-debug.log*
 
 # Claude Code
-.claude/
-.claude*
-CLAUDE.md
-claude*
-# test
+.claude/settings.local.json
+.claude/worktrees/
+.agents/
+.claude/skills/
+skills-lock.json
 coverage/
 
 docs
