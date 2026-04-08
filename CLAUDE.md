@@ -11,17 +11,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Workspaces
 
-| Workspace | Description | Details |
-|-----------|-------------|---------|
-| `client/` | React 19 + Vite + TailwindCSS (FSD) — 게임 클라이언트 | See `client/CLAUDE.md` |
-| `server/` | NestJS + Socket.io + Redis — 게임 서버 | See `server/CLAUDE.md` |
-| `client-toss/` | Apps-in-Toss WebView 미니앱 (Granite + TDS) | See `client-toss/CLAUDE.md` |
-| `server-toss/` | NestJS REST API — 앱인토스 서버 | See `server-toss/CLAUDE.md` |
-| `packages/` | Shared packages (shared, toss-shared, similarity) | — |
+| Workspace      | Description                                           | Details                     |
+| -------------- | ----------------------------------------------------- | --------------------------- |
+| `client/`      | React 19 + Vite + TailwindCSS (FSD) — 게임 클라이언트 | See `client/CLAUDE.md`      |
+| `server/`      | NestJS + Socket.io + Redis — 게임 서버                | See `server/CLAUDE.md`      |
+| `client-toss/` | Apps-in-Toss WebView 미니앱 (Granite + TDS)           | See `client-toss/CLAUDE.md` |
+| `server-toss/` | NestJS REST API — 앱인토스 서버                       | See `server-toss/CLAUDE.md` |
+| `packages/`    | Shared packages (shared, toss-shared, similarity)     | —                           |
 
 ## Development Commands
 
 ### Infrastructure
+
 ```bash
 # Start local Redis (required before running server)
 pnpm infra:up
@@ -31,12 +32,29 @@ pnpm infra:down
 ```
 
 ### Root-level shortcuts
+
 ```bash
 # Start client dev server
 pnpm dev:client
 
 # Start server dev server
 pnpm dev:server
+
+# Start client-toss dev server
+pnpm dev:client-toss
+
+# Start server-toss dev server
+pnpm dev:server-toss
+
+# Build shared packages (required before first run)
+pnpm build:packages
+
+# E2E tests (Playwright)
+pnpm test:e2e
+
+# Performance tests (Artillery)
+pnpm perf:single
+pnpm perf:multi
 ```
 
 ## Cross-Cutting Patterns (client/ + server/)
@@ -44,6 +62,7 @@ pnpm dev:server
 ### WebSocket Communication Pattern
 
 **Client Socket Management:**
+
 - Socket instance is a singleton managed by `getSocket()` from `@/shared/api/socket`
 - Configuration: WebSocket transport only, manual connection control (`autoConnect: false`)
 - Connect/disconnect via `useGameSocket` hook in Game page
@@ -53,6 +72,7 @@ pnpm dev:server
 - Pure handler functions (`buildRankings`, `processRoomMetadata`) are extracted to `features/socket/lib/socketHandlers.ts` for testability
 
 **Connection Flow:**
+
 1. Client connects to Socket.io server (CORS configured via `CORS_ORIGIN` env var)
 2. Client emits `user:join` with roomId and nickname (from localStorage)
 3. Server validates room (throws `WebsocketException` if not found or full)
@@ -61,6 +81,7 @@ pnpm dev:server
 6. On disconnect, `GameService.leaveRoom()` removes player and reassigns host if needed
 
 **Game Flow:**
+
 1. Host changes settings → `room:settings` → Server updates Redis → Broadcast `room:metadata`
 2. Host starts game → `room:start` → Server transitions phase to PROMPT
 3. Server emits `room:prompt` with image → Phase transitions to DRAWING
@@ -69,6 +90,7 @@ pnpm dev:server
 6. Repeat for totalRounds → Final `room:game_end` with leaderboard
 
 ### Constants Synchronization
+
 - **CRITICAL**: Client and server constants must stay in sync
 - Client constants: `client/src/shared/config/socketEvents` and `client/src/shared/config/gamePhase`
 - Server constants: `server/src/common/constants/index.ts`
@@ -77,6 +99,7 @@ pnpm dev:server
 - Server imports: `ClientEvents`, `ServerEvents`, `GamePhase` from common constants
 
 ### Timer Pattern
+
 - **Server payload**: `room:timer` event always sends object `{ timeLeft: number }`, never raw number
 - **Client listener**: Must destructure payload: `socket.on(CLIENT_EVENTS.ROOM_TIMER, ({ timeLeft }) => setTimer(timeLeft))`
 - **Widget usage**: Import `<Timer />` from `@/entities/timer` without props
@@ -86,6 +109,7 @@ pnpm dev:server
 - **Visual effects**: Timer shows urgency (animations + red color) when `timeLeft <= 5`
 
 ### Testing Philosophy
+
 - Jest/Vitest configured with `passWithNoTests: true` to allow incremental test development
 - Test files use `*.spec.ts` pattern for server, `*.test.ts(x)` for client
 - Coverage collection enabled for all source files
@@ -94,11 +118,13 @@ pnpm dev:server
 ## Git Workflow
 
 Pre-commit hooks (managed by Lefthook):
+
 - Auto-fixes ESLint issues on staged files
 - Auto-formats with Prettier on staged files
 - Runs separately for client and server workspaces
 
 **Commit Message Format** (enforced by Lefthook):
+
 - Format: `type(scope): message` or `type: message`
 - Scope is optional (fe, be, etc.)
 - Allowed types: `feat`, `fix`, `style`, `design`, `refactor`, `docs`, `chore`, `lint`, `deploy`, `test`, `rename`, `remove`, `type`, `comment`, `build`, `ci`, `perf`, `!HOTFIX`, `!BREAKING CHANGE`

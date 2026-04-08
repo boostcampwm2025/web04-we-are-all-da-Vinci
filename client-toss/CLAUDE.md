@@ -70,31 +70,33 @@ Feature-Sliced Design 구조:
 ```
 src/
 ├── app/              - 라우터 설정 (router.tsx)
-├── pages/            - 라우트 페이지
-│   └── drawing/
-│       ├── ui/       - DrawingPage 컴포넌트 + 테스트
-│       └── index.ts  - Public API export
-├── widgets/          - 페이지 조합 (위젯)
-├── features/         - 사용자 상호작용 로직
+├── views/            - 라우트 뷰 페이지
+│   ├── home/         - 홈 화면
+│   ├── drawing/      - 드로잉 화면
+│   └── memorize/     - 기억하기 화면
+├── feature/          - 사용자 상호작용 로직
+│   └── drawing/      - 드로잉 기능 (ui, config, assets)
 ├── entities/         - 비즈니스 모델
+│   └── phaseHeader/  - 단계 헤더 컴포넌트
 ├── shared/           - 공용 UI, 설정, 유틸리티
-├── App.tsx           - TDSMobileAITProvider + BrowserRouter 래핑
+│   ├── ui/           - 공용 컴포넌트 (score 등)
+│   └── assets/       - 이미지, 아이콘
+├── App.tsx           - TDSMobileAITProvider + RouterProvider 래핑
 ├── index.tsx         - React 진입점
-├── index.css         - Tailwind CSS + WebView 리셋
-└── test/
-    └── setup.ts      - Vitest 설정 (@testing-library/jest-dom)
+└── index.css         - Tailwind CSS + WebView 리셋 + 글로벌 레이아웃
 ```
 
 **FSD Public API Pattern:**
 
 - 각 레이어는 `index.ts`로 export 캡슐화
-- Import: `import { DrawingPage } from '@/pages/drawing'`
+- Import: `import { Drawing } from '@/views/drawing'`
 - 내부 경로 직접 import 금지
 
 ## Code Conventions
 
 - 컴포넌트는 **화살표 함수**로 작성
 - **마지막 줄에 export** (default export 또는 named export)
+- FSD 슬라이스 폴더명은 **camelCase** (e.g., `phaseHeader`, `drawing`)
 
   ```typescript
   const Button = () => {
@@ -111,10 +113,17 @@ src/
 - 하단 버튼 2개: `BottomCTA.Double` (`leftButton` + `rightButton` with `CTAButton`)
 - Typography: TDS 토큰 사용 권장, 하드코딩 지양
 
+## Global Layout (index.css)
+
+- `#root`에 `flex column` + `height: 100%` + `padding-bottom: env(safe-area-inset-bottom)` 적용
+- 별도 Layout 컴포넌트 없음 — CSS로 처리
+- CSS 변수: `--page-px: 20px` (좌우 패딩), `--card-mx: 12px`
+- 각 페이지에서 `px-[var(--page-px)]`로 좌우 패딩 적용
+
 ## Routing
 
-- WebView 환경이므로 파일 기반 라우팅 강제 없음 — React Router 사용
-- `BrowserRouter` + `Routes` 방식 (`App.tsx`에서 설정)
+- WebView 환경이므로 파일 기반 라우팅 강제 없음 — React Router (`createBrowserRouter`)
+- `App.tsx`에서 `RouterProvider`로 라우터 제공
 - 샌드박스 앱은 루트(`/`)로 진입
 
 ## Testing
