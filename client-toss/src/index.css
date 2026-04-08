@@ -1,21 +1,48 @@
 @import "tailwindcss";
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+@layer base {
+  :root {
+    --page-px: 20px;
+    --card-mx: 12px;
+    /* text */
+    --color-description: rgba(3, 24, 50, 0.46);
 
-html,
-body,
-#root {
-  height: 100%;
-  width: 100%;
-}
+    /* palette */
+    --color-black: #000000;
+    --color-red: #ef4444;
+    --color-blue: #3b82f6;
+    --color-green: #22c55e;
+    --color-yellow: #eab308;
 
-body {
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
+    /* brand */
+    --color-toss-blue: #0166fe;
+
+    /* accent */
+    --color-coral: #f04452;
+    --color-grey: #8b95a1;
+
+    /* rank */
+    --color-gold: #ffd158;
+    --color-silver: #d1d6db;
+    --color-bronze: #ee8f11;
+  }
+
+  html,
+  body {
+    height: 100%;
+    width: 100%;
+  }
+
+  #root {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  body {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
 }

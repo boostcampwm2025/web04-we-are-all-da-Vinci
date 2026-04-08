@@ -1,9 +1,10 @@
-import { TDSMobileAITProvider } from '@toss/tds-mobile-ait';
-
+import { router } from "@/app/config/router";
+import { TDSMobileAITProvider } from "@toss/tds-mobile-ait";
+import { RouterProvider } from "react-router-dom";
 function App() {
   return (
     <TDSMobileAITProvider>
-      <div>우리 모두 다빈치</div>
+      <RouterProvider router={router} />
     </TDSMobileAITProvider>
   );
 }
