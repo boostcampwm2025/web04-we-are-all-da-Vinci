@@ -1,4 +1,9 @@
 import { ListRow } from "@toss/tds-mobile";
+import {
+  DEFAULT_RANK_COLOR,
+  MY_RANK_HIGHLIGHT,
+  PODIUM_RANK_COLORS,
+} from "../config/rankingStyles";
 
 interface RankingEntryProps {
   userId: number;
@@ -8,14 +13,12 @@ interface RankingEntryProps {
   rank: number;
 }
 
-const podiumBgColor = ["#FFD158", "#D1D6DB", "#EE8F11"];
-
 const RankingIcon = ({ rank, isMe }: { rank: number; isMe: boolean }) => {
   const bgColor = isMe
-    ? "#3182F6"
+    ? MY_RANK_HIGHLIGHT
     : rank <= 3
-      ? podiumBgColor[rank - 1]
-      : "#F2F4F6";
+      ? PODIUM_RANK_COLORS[rank - 1]
+      : DEFAULT_RANK_COLOR;
 
   const textColor = isMe ? "#FFFFFF" : "#031228B2";
 
