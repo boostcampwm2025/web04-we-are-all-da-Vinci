@@ -10,7 +10,7 @@ export const MyRanking = ({ rank, totalSimilarity }: MyRankingProps) => {
         <div className="text-#03183275 text-xs font-normal">내 등수</div>
         <div className="text-2xl font-medium">{rank}위</div>
         <div className="text-#03183275 text-xs font-normal">
-          {totalSimilarity}
+          {totalSimilarity + "점"}
         </div>
       </div>
     </div>
