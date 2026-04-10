@@ -11,7 +11,7 @@ const MemorizeView = () => {
       />
 
       {/* 제시 이미지 영역 */}
-      <div className="mx-[var(--card-mx)] mt-2 flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl bg-gray-100">
+      <div className="mx-(--card-mx) mt-2 flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl bg-gray-100">
         <img
           src="https://placehold.co/400x400"
           alt="제시 그림"

@@ -22,10 +22,10 @@ const Score = ({ value, size = "m", subtitle }: ScoreProps) => {
     <section className="text-center">
       <p>
         <span className={`${style.score} font-bold`}>{value}</span>
-        <span className={`${style.unit} text-[var(--color-grey)]`}>점</span>
+        <span className={`${style.unit} text-(--color-grey)`}>점</span>
       </p>
       {subtitle && (
-        <p className={`${style.subtitle} text-[var(--color-grey)] mt-0.5`}>
+        <p className={`${style.subtitle} text-(--color-grey) mt-0.5`}>
           {subtitle}
         </p>
       )}

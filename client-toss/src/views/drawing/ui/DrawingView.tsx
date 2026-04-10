@@ -13,7 +13,7 @@ const DrawingView = () => {
       />
 
       {/* 드로잉 영역 (팔레트 + 캔버스) */}
-      <div className="mx-[var(--card-mx)] mt-2 flex min-h-0 flex-1 flex-col rounded-2xl bg-gray-100">
+      <div className="mx-(--card-mx) mt-2 flex min-h-0 flex-1 flex-col rounded-2xl bg-gray-100">
         <Toolbar />
         <Canvas />
       </div>
@@ -23,7 +23,7 @@ const DrawingView = () => {
         <Score value={0} />
       </div>
 
-      <div className="flex gap-2 px-[var(--page-px)] pb-6">
+      <div className="flex gap-2 px-(--page-px) pb-6">
         <Button variant="weak" size="xlarge" display="block" className="flex-1">
           그만두기
         </Button>

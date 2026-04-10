@@ -12,13 +12,13 @@ const StatusView = ({
   description,
 }: StatusViewProps) => {
   return (
-    <div className="flex flex-1 flex-col items-center pt-[30%] px-[var(--page-px)]">
+    <div className="flex flex-1 flex-col items-center pt-[30%] px-(--page-px)">
       <img src={image} alt="" className="mb-6 h-40 w-40 object-contain" />
       <h1 className="text-[22px] font-bold">{title}</h1>
       {description && (
         <div className="mt-2 text-center">
           {description.map((line) => (
-            <p key={line} className="text-sm text-[var(--color-grey)]">
+            <p key={line} className="text-sm text-(--color-grey)">
               {line}
             </p>
           ))}

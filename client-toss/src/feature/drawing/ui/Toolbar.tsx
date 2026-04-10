@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { ConfirmDialog } from "@toss/tds-mobile";
+import { useState } from "react";
 import { BinIcon, UndoIcon } from "../assets/icons";
 import { PALETTE_COLORS } from "../config/colors";
 
@@ -17,12 +17,12 @@ const Toolbar = () => {
         <button
           key={color.name}
           aria-label={`${color.name} 색상`}
-          className="!appearance-none h-7 w-7 shrink-0 !rounded-full"
+          className="appearance-none! h-7 w-7 shrink-0 rounded-full!"
           style={{ backgroundColor: color.hex }}
         />
       ))}
       <button type="button" aria-label="한획 취소" className="ml-auto shrink-0">
-        <UndoIcon width={28} height={28} className="text-[var(--color-grey)]" />
+        <UndoIcon width={28} height={28} className="text-(--color-grey)" />
       </button>
       <button
         type="button"
@@ -30,7 +30,7 @@ const Toolbar = () => {
         className="shrink-0"
         onClick={() => setIsResetDialogOpen(true)}
       >
-        <BinIcon width={28} height={28} className="text-[var(--color-coral)]" />
+        <BinIcon width={28} height={28} className="text-(--color-coral)" />
       </button>
       <ConfirmDialog
         open={isResetDialogOpen}
