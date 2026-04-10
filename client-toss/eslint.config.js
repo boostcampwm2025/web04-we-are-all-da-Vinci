@@ -22,5 +22,38 @@ export default defineConfig([
         tsconfigRootDir: import.meta.dirname,
       },
     },
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/shared/lib/*"],
+              message: "shared/lib는 @/shared/lib를 통해 import하세요.",
+            },
+            {
+              group: ["@/shared/ui/*/*", "@/shared/assets/*/*"],
+              message:
+                "shared 슬라이스는 public API(index.ts)를 통해 import하세요. (예: @/shared/ui/score)",
+            },
+            {
+              group: ["@/feature/*/*"],
+              message:
+                "feature는 슬라이스 단위 public API(index.ts)를 통해 import하세요. (예: @/feature/drawing)",
+            },
+            {
+              group: ["@/entities/*/*"],
+              message:
+                "entities는 슬라이스 단위 public API(index.ts)를 통해 import하세요. (예: @/entities/phaseHeader)",
+            },
+            {
+              group: ["@/views/*/*"],
+              message:
+                "views는 슬라이스 단위 public API(index.ts)를 통해 import하세요. (예: @/views/drawing)",
+            },
+          ],
+        },
+      ],
+    },
   },
 ]);

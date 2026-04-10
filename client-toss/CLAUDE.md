@@ -86,17 +86,23 @@ src/
 └── index.css         - Tailwind CSS + WebView 리셋 + 글로벌 레이아웃
 ```
 
-**FSD Public API Pattern:**
+**FSD Public API Pattern (필수):**
 
 - 각 레이어는 `index.ts`로 export 캡슐화
 - Import: `import { Drawing } from '@/views/drawing'`
-- 내부 경로 직접 import 금지
+- **내부 경로 직접 import 절대 금지** (ESLint `no-restricted-imports`로 강제됨)
+  - shared: 세그먼트 단위 — `@/shared/ui/score` ✓, `@/shared/ui/score/Score` ✗
+  - feature/entities/views: 슬라이스 단위 — `@/feature/drawing` ✓, `@/feature/drawing/ui/Toolbar` ✗
+- 새 모듈 생성 시 반드시 해당 슬라이스의 `index.ts`에 export 추가
 
 ## Code Conventions
 
 - 컴포넌트는 **화살표 함수**로 작성
 - **마지막 줄에 export** (default export 또는 named export)
 - FSD 슬라이스 폴더명은 **camelCase** (e.g., `phaseHeader`, `drawing`)
+- **Tailwind CSS v4 문법 필수** (v3 문법 사용 금지)
+  - CSS 변수: `text-(--color-grey)` ✓, `text-[var(--color-grey)]` ✗
+  - important: `rounded-full!` ✓, `!rounded-full` ✗
 
   ```typescript
   const Button = () => {
