@@ -11,7 +11,7 @@ export class User extends BaseEntity {
   @PrimaryKey({ type: "bigint" })
   id!: bigint;
 
-  @Property({ fieldName: "user_key", type: "int" })
+  @Property({ fieldName: "user_key", type: "int", unique: true })
   userKey!: number;
 
   @Property({ length: 10, type: "string" })

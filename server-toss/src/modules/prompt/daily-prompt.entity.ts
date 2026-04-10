@@ -19,6 +19,7 @@ export class DailyPrompt {
   @Property({
     fieldName: "prompt_date",
     columnType: "date",
+    unique: true,
     type: "date",
     onCreate: () => new Date(),
   })
