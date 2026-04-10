@@ -14,10 +14,10 @@ export class Drawing extends BaseEntity {
   @PrimaryKey({ type: "bigint" })
   id!: bigint;
 
-  @Property({ fieldName: "strokes", columnType: "text", type: "text" })
+  @Property({ fieldName: "strokes", type: "text" })
   strokes!: string;
 
-  @Property({ fieldName: "similarity", columnType: "text", type: "text" })
+  @Property({ fieldName: "similarity", type: "text" })
   similarity!: string;
 
   @ManyToOne(() => User)
