@@ -27,7 +27,7 @@ describe("DrawingView", () => {
     render(<DrawingView />);
 
     expect(
-      screen.getByRole("button", { name: "뒤로가기" }),
+      screen.getByRole("button", { name: "한획 취소" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "초기화" })).toBeInTheDocument();
   });
