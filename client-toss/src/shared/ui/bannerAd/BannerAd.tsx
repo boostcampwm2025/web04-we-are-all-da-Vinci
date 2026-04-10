@@ -1,5 +1,6 @@
 import { TossAds } from "@apps-in-toss/web-framework";
 import { useEffect, useRef } from "react";
+import { initTossAdsOnce } from "@/shared/lib";
 
 interface BannerAdProps {
   adGroupId: string;
@@ -10,28 +11,23 @@ const BannerAd = ({ adGroupId }: BannerAdProps) => {
 
   useEffect(() => {
     let attached: ReturnType<typeof TossAds.attachBanner> | undefined;
+    let canceled = false;
 
-    try {
-      TossAds.initialize({
-        callbacks: {
-          onInitialized: () => {
-            if (!bannerRef.current) return;
-            attached = TossAds.attachBanner(adGroupId, bannerRef.current, {
-              theme: "light",
-              tone: "blackAndWhite",
-              variant: "expanded",
-            });
-          },
-          onInitializationFailed: (error) => {
-            console.warn("광고 SDK 초기화 실패:", error);
-          },
-        },
+    initTossAdsOnce()
+      .then(() => {
+        if (canceled || !bannerRef.current) return;
+        attached = TossAds.attachBanner(adGroupId, bannerRef.current, {
+          theme: "light",
+          tone: "blackAndWhite",
+          variant: "expanded",
+        });
+      })
+      .catch((error) => {
+        console.warn("광고 SDK 초기화 실패:", error);
       });
-    } catch {
-      // 네이티브 브릿지 미지원 환경 무시
-    }
 
     return () => {
+      canceled = true;
       attached?.destroy();
     };
   }, [adGroupId]);
