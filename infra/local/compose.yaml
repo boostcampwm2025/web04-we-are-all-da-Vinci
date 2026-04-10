@@ -29,9 +29,9 @@ services:
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
       interval: 5s
-      timeout: 3s
-      retries: 2
-      start_period: 0s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
 volumes:
   daVinci-redis-data:
