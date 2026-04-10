@@ -2,6 +2,7 @@ import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { LoggerModule } from "nestjs-pino";
+import { HealthModule } from "./health/health.module";
 import { UserModule } from "./modules/user/user.module";
 import { DrawingModule } from "./modules/drawing/drawing.module";
 import { PromptModule } from "./modules/prompt/prompt.module";
@@ -12,6 +13,7 @@ import config from "./mikro-orm.config";
 
 @Module({
   imports: [
+    HealthModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [".env.local", ".env"],
