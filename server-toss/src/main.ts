@@ -25,8 +25,11 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup("/docs", app, document);
 
-  const orm = app.get<MikroORM>(MikroORM);
-  await orm.migrator.up();
+  if (process.env.NODE_ENV !== "production") {
+    const orm = app.get<MikroORM>(MikroORM);
+    await orm.migrator.up();
+  }
+
   await app.listen(process.env.PORT ?? 3001);
 }
 void bootstrap();
