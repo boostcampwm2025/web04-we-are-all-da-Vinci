@@ -117,6 +117,16 @@
           "unique": false
         },
         {
+          "columnNames": [
+            "prompt_date"
+          ],
+          "composite": false,
+          "keyName": "daily_prompts_prompt_date_unique",
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
+        {
           "keyName": "PRIMARY",
           "columnNames": [
             "id"
@@ -408,6 +418,16 @@
         }
       },
       "indexes": [
+        {
+          "columnNames": [
+            "user_key"
+          ],
+          "composite": false,
+          "keyName": "users_user_key_unique",
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
         {
           "keyName": "PRIMARY",
           "columnNames": [
