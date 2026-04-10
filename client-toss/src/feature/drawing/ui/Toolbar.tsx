@@ -46,7 +46,7 @@ const Toolbar = () => {
           <ConfirmDialog.CancelButton
             onClick={() => setIsResetDialogOpen(false)}
           >
-            취소
+            닫기
           </ConfirmDialog.CancelButton>
         }
       />
