@@ -22,6 +22,22 @@ pre-commit:
       root: "server/"
       glob: "*.ts"
       run: npx prettier --write {staged_files}
+    client-toss-lint:
+      root: "client-toss/"
+      glob: "*.{ts,tsx}"
+      run: npx eslint --fix {staged_files}
+    client-toss-format:
+      root: "client-toss/"
+      glob: "*.{ts,tsx}"
+      run: npx prettier --write {staged_files}
+    server-toss-lint:
+      root: "server-toss/"
+      glob: "*.ts"
+      run: npx eslint --fix {staged_files}
+    server-toss-format:
+      root: "server-toss/"
+      glob: "*.ts"
+      run: npx prettier --write {staged_files}
 
 # Commit message 검증
 commit-msg:
