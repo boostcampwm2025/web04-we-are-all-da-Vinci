@@ -1,9 +1,21 @@
 import { PhaseHeader } from "@/entities/phaseHeader";
 import { Canvas, Toolbar } from "@/feature/drawing";
+import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";
-import { BottomCTA, CTAButton } from "@toss/tds-mobile";
+import { BottomCTA, ConfirmDialog } from "@toss/tds-mobile";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const DrawingView = () => {
+  const navigate = useNavigate();
+  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
+
+  const handleSubmit = () => {
+    setIsSubmitDialogOpen(false);
+    // TODO: 서버에 그림 제출 로직
+    navigate("/submitted");
+  };
+
   return (
     <div className="flex h-full flex-col bg-white">
       <PhaseHeader
@@ -17,16 +29,31 @@ const DrawingView = () => {
         <Toolbar />
         <Canvas />
       </div>
-
-      {/* 점수 */}
-      <div className="py-2 pt-4">
-        <Score value={0} />
+      <div onClick={() => setIsSubmitDialogOpen(true)}>
+        <BottomCTA.Single topAccessory={<Score value={0} />}>
+          제출할래요
+        </BottomCTA.Single>
       </div>
-
-      <BottomCTA.Double
-        leftButton={<CTAButton variant="weak">그만두기</CTAButton>}
-        rightButton={<CTAButton>제출하기</CTAButton>}
-      />
+      <ConfirmDialog
+        open={isSubmitDialogOpen}
+        onClose={() => setIsSubmitDialogOpen(false)}
+        title="제출하시겠어요?"
+        description="제출하면 되돌릴 수 없어요"
+        confirmButton={
+          <ConfirmDialog.ConfirmButton onClick={handleSubmit}>
+            제출
+          </ConfirmDialog.ConfirmButton>
+        }
+        cancelButton={
+          <ConfirmDialog.CancelButton
+            onClick={() => setIsSubmitDialogOpen(false)}
+          >
+            닫기
+          </ConfirmDialog.CancelButton>
+        }
+      >
+        <BannerAd adGroupId="ait-ad-test-native-image-id" type="feed" />
+      </ConfirmDialog>
     </div>
   );
 };

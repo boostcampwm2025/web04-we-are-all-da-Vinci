@@ -55,6 +55,14 @@ vi.mock("@toss/tds-mobile", () => ({
       rightButton?: ReactNode;
       topAccessory?: ReactNode;
     }) => createElement("div", props, topAccessory, leftButton, rightButton),
+    Single: ({
+      children,
+      topAccessory,
+      ...props
+    }: Record<string, unknown> & {
+      children?: ReactNode;
+      topAccessory?: ReactNode;
+    }) => createElement("div", props, topAccessory, children),
   },
   CTAButton: ({
     children,
