@@ -16,7 +16,7 @@ export const Ranking = () => {
         <RankingList />
       </main>
 
-      <footer className="fixed bottom-2 w-[90%] bg-white rounded-2xl">
+      <footer className="sticky bottom-2 w-[90%] bg-white rounded-2xl">
         <Link to="/dashboard">
           <Button
             size="xlarge"
