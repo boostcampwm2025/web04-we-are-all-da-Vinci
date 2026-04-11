@@ -24,16 +24,16 @@ export const Podium = ({ entries }: PodiumProps) => {
 
   return (
     <div
-      className="flex flex-col justify-end w-full rounded-[8px] bg-[#F9FAFB] px-4"
+      className="flex flex-col justify-end w-full  bg-[#F9FAFB] px-4"
       style={{ height: 205 }}
     >
-      <div className="flex items-end justify-center gap-2 pb-16">
+      <div className="flex items-end justify-center gap-2 pb-4">
         {podium.map((entry) => (
           <div
             key={entry.rank}
             className="flex flex-col items-center justify-end gap-2"
           >
-            <div className="flex flex-col mb-3 text-center gap-1">
+            <div className="flex flex-col text-center gap-">
               <div className="w-[75px] truncate text-[16px] font-bold leading-tight text-black">
                 {entry.name}
               </div>
