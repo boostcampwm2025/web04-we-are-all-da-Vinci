@@ -1,6 +1,7 @@
 import { TextButton, Top } from "@toss/tds-mobile";
 import { Podium } from "./Podium";
 import type { PodiumEntry } from "../model/types";
+import { Link } from "react-router-dom";
 
 interface DailyPodiumProps {
   entries: PodiumEntry[];
@@ -8,7 +9,7 @@ interface DailyPodiumProps {
 
 export const DailyPodium = ({ entries }: DailyPodiumProps) => {
   return (
-    <div className="flex flex-col items-center gap-8">
+    <div className="flex flex-col items-center gap-4">
       <Top
         title={
           <Top.TitleParagraph role="heading" aria-level={1}>
@@ -22,9 +23,11 @@ export const DailyPodium = ({ entries }: DailyPodiumProps) => {
         }
       />
       <Podium entries={entries} />
-      <TextButton size="xsmall" variant="arrow" arrowPlacement="inline">
-        TOP100 랭킹 보러가기
-      </TextButton>
+      <Link to="/ranking">
+        <TextButton size="xsmall" variant="arrow" arrowPlacement="inline">
+          TOP100 랭킹 보러가기
+        </TextButton>
+      </Link>
     </div>
   );
 };
