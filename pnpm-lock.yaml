@@ -165,6 +165,9 @@ importers:
       '@toss/tds-mobile-ait':
         specifier: ^2.3.0
         version: 2.3.0(@apps-in-toss/web-framework@2.0.9(962be1677037805186dbf8e1a6734f91))(@emotion/react@11.14.0(@types/react@19.2.3)(react@19.2.3))(@toss/tds-mobile@2.3.0(@emotion/react@11.14.0(@types/react@19.2.3)(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
       react:
         specifier: 19.2.3
         version: 19.2.3
@@ -232,6 +235,9 @@ importers:
       tailwindcss:
         specifier: ^4.1.18
         version: 4.1.18
+      tsx:
+        specifier: ^4.19.4
+        version: 4.21.0
       typescript:
         specifier: ~5.9.3
         version: 5.9.3

@@ -1,9 +1,17 @@
 import { ConfirmDialog } from "@toss/tds-mobile";
+import clsx from "clsx";
 import { useState } from "react";
-import { BinIcon, UndoIcon } from "../assets/icons";
+import { MaskedIcon } from "@/shared/ui/maskedIcon";
+import { ICON_URL } from "../config/icons";
 import { PALETTE_COLORS } from "../config/colors";
 
+const toolBtnBase =
+  "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors active:scale-95";
+
 const Toolbar = () => {
+  const [selectedColor, setSelectedColor] = useState<string>(
+    PALETTE_COLORS[0].hex,
+  );
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
 
   const handleReset = () => {
@@ -17,20 +25,28 @@ const Toolbar = () => {
         <button
           key={color.name}
           aria-label={`${color.name} 색상`}
-          className="appearance-none! h-7 w-7 shrink-0 rounded-full!"
+          className={clsx(
+            "appearance-none! h-7 w-7 shrink-0 rounded-full! transition-transform active:scale-95",
+            selectedColor === color.hex && `ring-2 ring-offset-2 ${color.ring}`,
+          )}
           style={{ backgroundColor: color.hex }}
+          onClick={() => setSelectedColor(color.hex)}
         />
       ))}
-      <button type="button" aria-label="한획 취소" className="ml-auto shrink-0">
-        <UndoIcon width={28} height={28} className="text-(--color-grey)" />
+      <button
+        type="button"
+        aria-label="한획 취소"
+        className={clsx(toolBtnBase, "active:bg-gray-200")}
+      >
+        <MaskedIcon src={ICON_URL.refresh} color="var(--color-grey)" />
       </button>
       <button
         type="button"
         aria-label="초기화"
-        className="shrink-0"
+        className={clsx(toolBtnBase, "active:bg-red-100")}
         onClick={() => setIsResetDialogOpen(true)}
       >
-        <BinIcon width={28} height={28} className="text-(--color-coral)" />
+        <MaskedIcon src={ICON_URL.bin} color="var(--color-coral)" />
       </button>
       <ConfirmDialog
         open={isResetDialogOpen}
