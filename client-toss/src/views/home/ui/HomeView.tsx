@@ -20,6 +20,14 @@ const HomeView = () => {
           제출 완료 화면으로 이동
         </Button>
       </Link>
+
+      <Link to="/ranking">
+        <button>랭킹 화면으로 이동</button>
+      </Link>
+
+      <Link to="/dashboard">
+        <button>대시보드 화면으로 이동</button>
+      </Link>
     </div>
   );
 };

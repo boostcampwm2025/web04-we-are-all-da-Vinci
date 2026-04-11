@@ -1,6 +1,7 @@
 import { MyRanking, RankingList } from "@/entities/ranking";
 import { Header } from "@/shared/ui/Header";
 import { Border, Button } from "@toss/tds-mobile";
+import { Link } from "react-router-dom";
 
 export const Ranking = () => {
   return (
@@ -16,14 +17,16 @@ export const Ranking = () => {
       </main>
 
       <footer className="fixed bottom-2 w-[90%] bg-white rounded-2xl">
-        <Button
-          size="xlarge"
-          variant="weak"
-          display="block"
-          aria-label="결과 화면으로 돌아가기"
-        >
-          결과 화면으로 돌아가기
-        </Button>
+        <Link to="/dashboard">
+          <Button
+            size="xlarge"
+            variant="weak"
+            display="block"
+            aria-label="결과 화면으로 돌아가기"
+          >
+            결과 화면으로 돌아가기
+          </Button>
+        </Link>
       </footer>
     </div>
   );
