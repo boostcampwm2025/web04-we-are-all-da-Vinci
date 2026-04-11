@@ -56,6 +56,11 @@ vi.mock("@toss/tds-mobile", () => ({
       topAccessory?: ReactNode;
     }) => createElement("div", props, topAccessory, leftButton, rightButton),
   },
+  CTAButton: ({
+    children,
+    ...props
+  }: Record<string, unknown> & { children?: ReactNode }) =>
+    createElement("button", props, children),
   ConfirmDialog: ConfirmDialogMock,
 }));
 

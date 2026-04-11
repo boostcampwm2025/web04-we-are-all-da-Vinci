@@ -1,7 +1,7 @@
-import { Button } from "@toss/tds-mobile";
 import { PhaseHeader } from "@/entities/phaseHeader";
+import { Canvas, Toolbar } from "@/feature/drawing";
 import { Score } from "@/shared/ui/score";
-import { Toolbar, Canvas } from "@/feature/drawing";
+import { BottomCTA, CTAButton } from "@toss/tds-mobile";
 
 const DrawingView = () => {
   return (
@@ -23,14 +23,10 @@ const DrawingView = () => {
         <Score value={0} />
       </div>
 
-      <div className="flex gap-2 px-(--page-px) pb-6">
-        <Button variant="weak" size="xlarge" display="block" className="flex-1">
-          그만두기
-        </Button>
-        <Button size="xlarge" display="block" className="flex-1">
-          제출하기
-        </Button>
-      </div>
+      <BottomCTA.Double
+        leftButton={<CTAButton variant="weak">그만두기</CTAButton>}
+        rightButton={<CTAButton>제출하기</CTAButton>}
+      />
     </div>
   );
 };

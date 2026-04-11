@@ -4,9 +4,13 @@
       "Read(./.env)",
       "Read(./.env.*)",
       "Read(./server/.env)",
+      "Read(./server/.env.*)",
       "Read(./client/.env)",
+      "Read(./client/.env.*)",
       "Read(./server-toss/.env)",
-      "Read(./client-toss/.env)"
+      "Read(./server-toss/.env.*)",
+      "Read(./client-toss/.env)",
+      "Read(./client-toss/.env.*)"
     ]
   },
   "hooks": {

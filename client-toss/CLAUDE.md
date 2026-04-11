@@ -67,7 +67,7 @@ pnpm format
 
 Feature-Sliced Design 구조:
 
-```
+```text
 src/
 ├── app/              - 라우터 설정 (router.tsx)
 ├── views/            - 라우트 뷰 페이지
@@ -124,7 +124,7 @@ src/
 - `#root`에 `flex column` + `height: 100%` + `padding-bottom: env(safe-area-inset-bottom)` 적용
 - 별도 Layout 컴포넌트 없음 — CSS로 처리
 - CSS 변수: `--page-px: 20px` (좌우 패딩), `--card-mx: 12px`
-- 각 페이지에서 `px-[var(--page-px)]`로 좌우 패딩 적용
+- 각 페이지에서 `px-(--page-px)`로 좌우 패딩 적용
 
 ## Routing
 

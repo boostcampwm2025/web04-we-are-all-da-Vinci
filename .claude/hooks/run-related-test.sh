@@ -25,8 +25,9 @@ fi
 
 # client 소스 → .test.ts(x) 찾기
 if echo "$FILE" | grep -q 'client/src/'; then
-  TEST_FILE_TS=$(echo "$FILE" | sed 's/\.ts$/.test.ts/' | sed 's/\.tsx$/.test.tsx/')
-  TEST_FILE_TSX=$(echo "$FILE" | sed 's/\.ts$/.test.tsx/' | sed 's/\.tsx$/.test.tsx/')
+  BASE="${FILE%.*}"
+  TEST_FILE_TS="${BASE}.test.ts"
+  TEST_FILE_TSX="${BASE}.test.tsx"
   for TF in "$TEST_FILE_TS" "$TEST_FILE_TSX"; do
     if [ -f "$TF" ]; then
       echo "관련 테스트 실행: $TF"

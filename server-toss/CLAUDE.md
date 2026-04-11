@@ -10,13 +10,13 @@
 
 ## Tech Stack
 
-| 항목 | 값 |
-|------|-----|
-| Framework | NestJS ^11.1.17 |
-| Logging | nestjs-pino (구조화 JSON 로그) |
-| Validation | Zod ^4.3.6 |
-| Test | Jest ^30.0.0 (ts-jest) |
-| Target | ES2023, CommonJS |
+| 항목       | 값                             |
+| ---------- | ------------------------------ |
+| Framework  | NestJS ^11.1.17                |
+| Logging    | nestjs-pino (구조화 JSON 로그) |
+| Validation | Zod ^4.3.6                     |
+| Test       | Jest ^30.0.0 (ts-jest)         |
+| Target     | ES2023, CommonJS               |
 
 ## Development Commands
 
@@ -49,7 +49,7 @@ pnpm format
 
 ## Current Architecture
 
-```
+```text
 src/
 ├── main.ts          - 부트스트랩 (CORS, pino logger)
 ├── app.module.ts    - 루트 모듈 (HealthModule + ConfigModule + LoggerModule)
@@ -59,6 +59,7 @@ src/
 ```
 
 ### Conventions
+
 - CORS: `CORS_ORIGIN` 환경변수 (쉼표 구분)
 - 기본 포트: 3001
 - 로깅: nestjs-pino (구조화 JSON)

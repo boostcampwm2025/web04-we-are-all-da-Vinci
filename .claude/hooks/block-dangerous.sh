@@ -12,10 +12,4 @@ if echo "$COMMAND" | grep -qE 'rm\s+-rf\s+/|rm\s+-rf\s+\.|git\s+push\s+--force|g
   exit 2
 fi
 
-# force push to main/master 차단
-if echo "$COMMAND" | grep -qE 'git\s+push.*--force.*\b(main|master)\b|git\s+push.*-f.*\b(main|master)\b'; then
-  echo "BLOCK: main/master 브랜치에 force push는 금지됩니다." >&2
-  exit 2
-fi
-
 exit 0

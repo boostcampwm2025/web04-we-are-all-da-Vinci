@@ -1,4 +1,6 @@
-const UndoIcon = (props: React.SVGProps<SVGSVGElement>) => (
+import type { SVGProps } from "react";
+
+const UndoIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg
     width="28"
     height="28"
@@ -14,7 +16,7 @@ const UndoIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const BinIcon = (props: React.SVGProps<SVGSVGElement>) => (
+const BinIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg
     width="28"
     height="28"

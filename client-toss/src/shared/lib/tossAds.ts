@@ -2,7 +2,7 @@ import { TossAds } from "@apps-in-toss/web-framework";
 
 let initPromise: Promise<void> | null = null;
 
-export const initTossAdsOnce = (): Promise<void> => {
+const initTossAdsOnce = (): Promise<void> => {
   initPromise ??= new Promise<void>((resolve, reject) => {
     try {
       TossAds.initialize({
@@ -18,3 +18,5 @@ export const initTossAdsOnce = (): Promise<void> => {
   });
   return initPromise;
 };
+
+export { initTossAdsOnce };
