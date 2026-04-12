@@ -1,4 +1,5 @@
 import { DailyPodium } from "@/entities/podium/ui/DailyPodium";
+import { ArcScoreBar } from "@/shared/ui/arcScoreBar/ArcScoreBar";
 
 export const Dashboard = () => {
   const rankings = [
@@ -9,6 +10,7 @@ export const Dashboard = () => {
   return (
     <>
       <DailyPodium entries={rankings} />
+      <ArcScoreBar />
     </>
   );
 };
