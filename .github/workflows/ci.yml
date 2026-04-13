@@ -240,6 +240,15 @@ jobs:
         working-directory: client-toss
         run: pnpm run test:coverage
 
+      - name: Coverage Report
+        uses: davelosert/vitest-coverage-report-action@v2
+        if: github.event_name == 'pull_request'
+        with:
+          working-directory: client-toss
+          json-summary-path: ./coverage/coverage-summary.json
+          json-final-path: ./coverage/coverage-final.json
+          name: client-toss
+
       - name: QA Check
         working-directory: client-toss
         run: pnpm run qa:ci
@@ -297,16 +306,16 @@ jobs:
         working-directory: server-toss
         run: pnpm run format:check
 
-      - name: Test
+      - name: Test with Coverage
         working-directory: server-toss
-        run: pnpm run test
+        run: pnpm run test:cov
 
       - name: Build
         working-directory: server-toss
         run: pnpm run build
 
-  bundle-size:
-    name: Bundle Size Check
+  bundle-size-client:
+    name: Bundle Size Check (Client)
     needs: changes
     if: >-
       github.event_name == 'pull_request' &&
@@ -339,9 +348,43 @@ jobs:
           build-script: "build"
           cwd: "./client"
 
+  bundle-size-toss:
+    name: Bundle Size Check (Toss)
+    needs: changes
+    if: >-
+      github.event_name == 'pull_request' &&
+      (needs.changes.outputs.client-toss == 'true' || needs.changes.outputs.packages-toss-shared == 'true' || needs.changes.outputs.packages-similarity == 'true')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared packages
+        run: pnpm build:packages
+
+      - name: Bundle Size Check
+        uses: preactjs/compressed-size-action@v2
+        continue-on-error: true
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          build-script: "build"
+          cwd: "./client-toss"
+
   notify:
     name: Slack Notification
-    needs: [changes, client, server, client-toss, server-toss]
+    needs: [changes, client, server, client-toss, server-toss, bundle-size-client, bundle-size-toss]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
@@ -355,6 +398,8 @@ jobs:
               (needs.server.result == 'success' || needs.server.result == 'skipped') &&
               (needs.client-toss.result == 'success' || needs.client-toss.result == 'skipped') &&
               (needs.server-toss.result == 'success' || needs.server-toss.result == 'skipped') &&
+              (needs.bundle-size-client.result == 'success' || needs.bundle-size-client.result == 'skipped') &&
+              (needs.bundle-size-toss.result == 'success' || needs.bundle-size-toss.result == 'skipped') &&
               'success' || 'failure'
             }}
           fields: repo,message,commit,author,action,eventName,ref,workflow

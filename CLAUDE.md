@@ -123,13 +123,13 @@ pnpm perf:multi
 
 | 변경 대상 | 실행되는 Job |
 |-----------|-------------|
-| `client/**` | Client (lint, format, test, build) + Bundle Size |
+| `client/**` | Client (lint, format, test, build) + Bundle Size (Client) |
 | `server/**` | Server (lint, format, test, build) |
-| `client-toss/**` | Client-Toss (lint, format, test, QA, build) |
+| `client-toss/**` | Client-Toss (lint, format, test, QA, build) + Bundle Size (Toss) |
 | `server-toss/**` | Server-Toss (lint, format, test, build) |
-| `packages/shared/**` | Client, Server, Bundle Size |
-| `packages/similarity/**` | Client, Client-Toss, Server-Toss, Bundle Size |
-| `packages/toss-shared/**` | Client-Toss, Server-Toss |
+| `packages/shared/**` | Client, Server, Bundle Size (Client) |
+| `packages/similarity/**` | Client, Client-Toss, Server-Toss, Bundle Size (Client + Toss) |
+| `packages/toss-shared/**` | Client-Toss, Server-Toss, Bundle Size (Toss) |
 | push to main | 모든 워크스페이스 (Bundle Size 제외) |
 
 - shared 패키지 빌드: `pnpm build:packages`로 전체 빌드 (shared + similarity + toss-shared)
