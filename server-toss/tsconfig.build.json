@@ -5,7 +5,7 @@
     "outDir": "dist",
     "tsBuildInfoFile": "dist/.tsbuildinfo",
     "paths": {
-      "src/*": ["src/*"],
+      "src/*": ["./src/*"],
       "@toss/shared": ["../packages/toss-shared/dist/index.d.ts"],
       "@toss/shared/*": ["../packages/toss-shared/dist/*"],
       "@davinci/similarity": ["../packages/similarity/dist/index.d.ts"],
