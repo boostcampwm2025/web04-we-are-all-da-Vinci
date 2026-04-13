@@ -1,0 +1,47 @@
+# Dependencies
+
+node_modules/
+
+# Build outputs
+
+dist/
+build/
+.vite/
+
+# Lock files
+
+pnpm-lock.yaml
+
+# Test artifacts
+
+coverage/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+playwright/.auth/
+.playwright-mcp/
+
+# Docs & generated
+
+docs/
+
+# OS files
+
+.DS_Store
+Thumbs.db
+
+# Logs
+
+\*.log
+
+# Environment files
+
+.env
+.env.local
+.env.\*.local
+
+# IDE
+
+.vscode/
+.idea/

@@ -1,11 +1,18 @@
-import { TDSMobileAITProvider } from '@toss/tds-mobile-ait';
+import { router } from "@/app/config/router";
+import { initTossAdsOnce } from "@/shared/lib";
+import { TDSMobileAITProvider } from "@toss/tds-mobile-ait";
+import { useEffect } from "react";
+import { RouterProvider } from "react-router-dom";
+const App = () => {
+  useEffect(() => {
+    initTossAdsOnce().catch(console.warn);
+  }, []);
 
-function App() {
   return (
     <TDSMobileAITProvider>
-      <div>우리 모두 다빈치</div>
+      <RouterProvider router={router} />
     </TDSMobileAITProvider>
   );
-}
+};
 
 export default App;
