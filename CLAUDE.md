@@ -115,6 +115,31 @@ pnpm perf:multi
 - Coverage collection enabled for all source files
 - All test descriptions must be in Korean (e.g., `describe('방 생성', () => ...)`)
 
+## CI/CD
+
+### CI 파이프라인 (ci.yml)
+
+`dorny/paths-filter`로 변경된 워크스페이스만 CI를 실행한다.
+
+| 변경 대상 | 실행되는 Job |
+|-----------|-------------|
+| `client/**` | Client (lint, format, test, build) + Bundle Size |
+| `server/**` | Server (lint, format, test, build) |
+| `client-toss/**` | Client-Toss (lint, format, test, QA, build) |
+| `server-toss/**` | Server-Toss (lint, format, test, build) |
+| `packages/**` | 모든 워크스페이스 |
+| push to main | 모든 워크스페이스 (Bundle Size 제외) |
+
+- shared 패키지 빌드: `pnpm build:packages`로 전체 빌드 (shared + similarity + toss-shared)
+- client-toss QA: `pnpm qa:ci`로 앱인토스 심사 기준 자동 검증 (granite config, TDS, UX writing, 다크패턴, 광고, 외부 링크, 번들 사이즈)
+
+### 기타 워크플로우
+
+- `chromatic.yml`: Storybook 비주얼 리그레션 (develop PR, client 변경 시)
+- `lighthouse-ci.yml`: Client 성능 점수 (PR, client 변경 시)
+- `deploy-backend.yml`: Blue-Green 배포 (self-hosted, main push)
+- `deploy-toss-backend.yml`: Toss 서버 배포 (self-hosted, main push)
+
 ## Git Workflow
 
 Pre-commit hooks (managed by Lefthook):
