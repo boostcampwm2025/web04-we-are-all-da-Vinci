@@ -12,7 +12,9 @@
     "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,css}\"",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "qa": "tsx scripts/qa.ts",
+    "qa:ci": "tsx scripts/qa.ts --ci"
   },
   "dependencies": {
     "@apps-in-toss/web-framework": "^2.0.9",
@@ -20,8 +22,10 @@
     "@toss/shared": "workspace:*",
     "@toss/tds-mobile": "^2.3.0",
     "@toss/tds-mobile-ait": "^2.3.0",
+    "clsx": "^2.1.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-router-dom": "^7.13.0",
     "zod": "^4.3.6",
     "zustand": "^5.0.9"
   },
@@ -43,9 +47,11 @@
     "prettier": "^3.7.4",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "tailwindcss": "^4.1.18",
+    "tsx": "^4.19.4",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4",
+    "vite-plugin-svgr": "^5.2.0",
     "vitest": "^4.0.16"
   }
 }

@@ -1,0 +1,47 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./server/.env)",
+      "Read(./server/.env.*)",
+      "Read(./client/.env)",
+      "Read(./client/.env.*)",
+      "Read(./server-toss/.env)",
+      "Read(./server-toss/.env.*)",
+      "Read(./client-toss/.env)",
+      "Read(./client-toss/.env.*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block-dangerous.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=$(cat | jq -r '.tool_input.file_path // .tool_input.filePath'); if [ -n \"$FILE\" ] && [ -f \"$FILE\" ]; then npx prettier --write \"$FILE\" 2>/dev/null; npx eslint --fix \"$FILE\" 2>/dev/null; fi; exit 0"
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/run-related-test.sh",
+            "timeout": 30,
+            "statusMessage": "관련 테스트 실행 중..."
+          }
+        ]
+      }
+    ]
+  }
+}
