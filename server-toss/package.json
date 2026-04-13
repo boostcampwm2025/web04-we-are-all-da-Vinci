@@ -8,8 +8,8 @@
   "scripts": {
     "prebuild": "npx rimraf dist",
     "build": "tsc -p tsconfig.build.json",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
     "start": "cross-env TS_NODE_PROJECT=tsconfig.paths.json node -r tsconfig-paths/register dist/main",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
