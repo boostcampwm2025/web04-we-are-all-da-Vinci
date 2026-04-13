@@ -1,6 +1,5 @@
 import { PhaseHeader } from "@/entities/phaseHeader";
 import { Canvas, Toolbar } from "@/feature/drawing";
-import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";
 import { BottomCTA, ConfirmDialog } from "@toss/tds-mobile";
 import { useState } from "react";
@@ -51,9 +50,7 @@ const DrawingView = () => {
             닫기
           </ConfirmDialog.CancelButton>
         }
-      >
-        <BannerAd adGroupId="ait-ad-test-native-image-id" type="feed" />
-      </ConfirmDialog>
+      />
     </div>
   );
 };
