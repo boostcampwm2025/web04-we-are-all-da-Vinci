@@ -1,8 +1,21 @@
-import { Button, Paragraph, Post, TextButton, Top } from "@toss/tds-mobile";
+import { useRef, useState } from "react";
+import { Button, TextButton, Top } from "@toss/tds-mobile";
 import { colors } from "@toss/tds-colors";
-import { ScoreDetailCard } from "@/entities/scoreDetailCard";
+import { MyScoreCard } from "@/entities/myScoreCard";
+
+const CARD_COUNT = 3;
 
 const DashboardView = () => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const sliderRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = () => {
+    const slider = sliderRef.current;
+    if (!slider) return;
+    const index = Math.round(slider.scrollLeft / slider.clientWidth);
+    setActiveIndex(index);
+  };
+
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       {/* 랭킹 영역 */}
@@ -26,36 +39,35 @@ const DashboardView = () => {
           </TextButton>
         </div>
       </div>
+
       {/* 나의 결과 영역 */}
       <Top title={<Top.TitleParagraph>나의 결과</Top.TitleParagraph>} />
-      {/* 슬라이드할 부분 */}
-      <div className="flex flex-col w-full items-center px-6 gap-3">
-        {/* 내 그림 */}
-        <div
-          className="mx-(--card-mx) mt-2 rounded-2xl p-3"
-          style={{ backgroundColor: colors.grey100 }}
-        >
-          <img
-            src="https://placehold.co/400x400"
-            alt="나의 그림"
-            className="w-full rounded-xl bg-white object-contain shadow-sm"
-          />
-        </div>
-        <div
-          className="h-[160px] w-full"
-          style={{ backgroundColor: colors.grey100 }}
-        >
-          그래프 영역
-        </div>
-        <div className="flex flex-col items-center gap-1">
-          <Paragraph typography="t1">
-            <Paragraph.Text fontWeight="bold">77.99</Paragraph.Text>
-            <Paragraph.Text typography="t5">점</Paragraph.Text>
-          </Paragraph>
-          <Post.Paragraph>현재 18,239위</Post.Paragraph>
-        </div>
 
-        <ScoreDetailCard />
+      {/* 인디케이터 */}
+      <div className="flex justify-center gap-2 py-4">
+        {Array.from({ length: CARD_COUNT }).map((_, i) => (
+          <div
+            key={i}
+            className="h-2 w-2 rounded-full transition-colors duration-200"
+            style={{
+              backgroundColor:
+                i === activeIndex ? colors.blue500 : colors.grey100,
+            }}
+          />
+        ))}
+      </div>
+      {/* 슬라이드할 부분 */}
+      <div
+        ref={sliderRef}
+        className="flex snap-x snap-mandatory overflow-x-scroll"
+        style={{ scrollbarWidth: "none" }}
+        onScroll={handleScroll}
+      >
+        {Array.from({ length: CARD_COUNT }).map((_, i) => (
+          <div key={i} className="w-full shrink-0 snap-start snap-always">
+            <MyScoreCard />
+          </div>
+        ))}
       </div>
 
       {/* 하단 버튼 */}
