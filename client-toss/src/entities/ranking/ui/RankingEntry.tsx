@@ -46,6 +46,7 @@ export const RankingEntry = ({
   const myId = 5;
   return (
     <ListRow
+      id={`${drawingId}`}
       left={<RankingIcon rank={rank} isMe={myId === userId} />}
       contents={
         <ListRow.Texts
