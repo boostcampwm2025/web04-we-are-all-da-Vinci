@@ -1,1 +1,1 @@
-export { default as Ranking } from "./ui/Ranking";
+export { default as RankingView } from "./ui/RankingView";

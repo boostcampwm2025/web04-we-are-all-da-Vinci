@@ -2,7 +2,7 @@ import { Drawing } from "@/views/drawing";
 import { HomeView } from "@/views/home";
 import { Memorize } from "@/views/memorize";
 import { SubmittedView } from "@/views/submitted";
-import { Ranking } from "@/views/ranking";
+import { RankingView } from "@/views/ranking";
 import { createBrowserRouter } from "react-router-dom";
 
 export const router = createBrowserRouter([
@@ -24,6 +24,6 @@ export const router = createBrowserRouter([
   },
   {
     path: "/ranking",
-    element: <Ranking />,
+    element: <RankingView />,
   },
 ]);
