@@ -25,11 +25,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        working-directory: client
 
-      - name: Build shared package
-        run: npx tsc
-        working-directory: packages/shared
+      - name: Build shared packages
+        run: pnpm build:packages
 
       - name: Build
         run: pnpm run build

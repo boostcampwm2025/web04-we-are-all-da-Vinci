@@ -132,6 +132,18 @@ src/
 - `App.tsx`에서 `RouterProvider`로 라우터 제공
 - 샌드박스 앱은 루트(`/`)로 진입
 
+## CI
+
+PR에서 `client-toss/**` 또는 `packages/**` 변경 시 자동 실행 (ci.yml):
+
+1. **Lint** — `pnpm lint`
+2. **Format Check** — `pnpm format:check`
+3. **Test with Coverage** — `pnpm test:coverage`
+4. **QA Check** — `pnpm qa:ci` (앱인토스 심사 기준 자동 검증)
+   - granite config, TDS 사용 여부, UX writing, 다크패턴, 광고 통합, 외부 링크, 번들 사이즈
+   - CI 모드에서는 WARN도 실패 처리
+5. **Build** — `pnpm build` (ait build)
+
 ## Testing
 
 - Vitest with jsdom environment

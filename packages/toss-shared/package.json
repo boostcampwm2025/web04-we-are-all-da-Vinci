@@ -12,10 +12,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "dependencies": {
-    "@davinci/similarity": "workspace:*",
     "zod": "^4.3.6"
   },
   "devDependencies": {

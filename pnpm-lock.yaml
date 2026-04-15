@@ -278,9 +278,6 @@ importers:
 
   packages/toss-shared:
     dependencies:
-      '@davinci/similarity':
-        specifier: workspace:*
-        version: link:../similarity
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -20611,7 +20608,7 @@ snapshots:
       '@egjs/hammerjs': 2.0.17
       hoist-non-react-statics: 3.3.2
       invariant: 2.2.4
-      lodash: 4.17.23
+      lodash: 4.18.1
       prop-types: 15.8.1
       react: 19.2.3
       react-native: 0.72.6(@babel/core@7.29.0)(@babel/preset-env@7.28.5(@babel/core@7.29.0))(react@19.2.3)

@@ -3,6 +3,7 @@ import {
   showFullScreenAd,
 } from "@apps-in-toss/web-framework";
 import { painterMan1Img } from "@/shared/assets/images";
+import { BannerAd } from "@/shared/ui/bannerAd";
 import { BottomCTA } from "@toss/tds-mobile";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -73,6 +74,10 @@ const SubmittedView = () => {
             하루 최대 10번 도전할 수 있어요
           </p>
         </div>
+      </div>
+
+      <div className="px-(--page-px)">
+        <BannerAd adGroupId="ait-ad-test-native-image-id" type="feed" />
       </div>
 
       {/* @ts-expect-error TDS BottomCTA.Single children 타입이 framer-motion/React 19 호환 문제로 에러 발생 */}
