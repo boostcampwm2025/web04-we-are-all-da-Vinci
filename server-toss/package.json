@@ -82,6 +82,9 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "passWithNoTests": true,
+    "transformIgnorePatterns": [
+      "node_modules/(?!(\\.pnpm/)?(@mikro-orm))"
+    ],
     "moduleNameMapper": {
       "^src/(.*)$": "<rootDir>/$1",
       "^@toss/shared$": "<rootDir>/../../packages/toss-shared/dist/index.js",
