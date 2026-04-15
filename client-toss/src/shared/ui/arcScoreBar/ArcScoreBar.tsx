@@ -10,6 +10,8 @@ interface Arc {
 }
 
 const RADIUS = 100;
+const STROKE_WIDTH = 16;
+const GAP = 2;
 
 const calcRad = (score: number) => {
   // Radian = PI / 180 * Degree
@@ -35,7 +37,7 @@ const makeArc = (startAngle: number, rad: number, stroke: string): Arc => {
 };
 
 const ArcScoreBar = () => {
-  const gapRad = calcRad(2);
+  const gapRad = calcRad(GAP);
 
   const shapeSimRad = calcRad(23.44);
   const countSimRad = calcRad(30.4);
@@ -64,13 +66,17 @@ const ArcScoreBar = () => {
   });
 
   return (
-    <svg width="220" height="220" viewBox="-110 -110 220 220">
+    <svg
+      width={`${2 * RADIUS + 20}`}
+      height={`${RADIUS + 20}`}
+      viewBox={`${-RADIUS - 10} ${-RADIUS - 10} ${2 * RADIUS + 20} ${RADIUS + 10}`}
+    >
       {paths.map((p) => (
         <path
-          d={`M${p.start.x},${p.start.y} A100,100 0 0 0 ${p.end.x},${p.end.y}`}
+          d={`M${p.start.x},${p.start.y} A${RADIUS},${RADIUS} 0 0 0 ${p.end.x},${p.end.y}`}
           fill="none"
           stroke={`${p.stroke}`}
-          strokeWidth="16"
+          strokeWidth={`${STROKE_WIDTH}`}
         />
       ))}
     </svg>
