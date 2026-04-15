@@ -34,7 +34,7 @@ const makeArc = (startAngle: number, rad: number, stroke: string): Arc => {
   };
 };
 
-export const ArcScoreBar = () => {
+const ArcScoreBar = () => {
   const gapRad = calcRad(2);
 
   const shapeSimRad = calcRad(23.44);
@@ -76,3 +76,5 @@ export const ArcScoreBar = () => {
     </svg>
   );
 };
+
+export default ArcScoreBar;

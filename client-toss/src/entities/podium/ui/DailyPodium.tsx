@@ -7,7 +7,7 @@ interface DailyPodiumProps {
   entries: PodiumEntry[];
 }
 
-export const DailyPodium = ({ entries }: DailyPodiumProps) => {
+const DailyPodium = ({ entries }: DailyPodiumProps) => {
   return (
     <div className="flex flex-col items-center gap-4">
       <Top
@@ -31,3 +31,5 @@ export const DailyPodium = ({ entries }: DailyPodiumProps) => {
     </div>
   );
 };
+
+export default DailyPodium;

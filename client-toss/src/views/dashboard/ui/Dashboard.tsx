@@ -1,7 +1,7 @@
-import { DailyPodium } from "@/entities/podium/ui/DailyPodium";
-import { ArcScoreBar } from "@/shared/ui/arcScoreBar/ArcScoreBar";
+import { DailyPodium } from "@/entities/podium";
+import { ArcScoreBar } from "@/shared/ui/arcScoreBar";
 
-export const Dashboard = () => {
+const Dashboard = () => {
   const rankings = [
     { userId: 1, name: "김동권", totalSimilarity: 99.54 },
     { userId: 2, name: "엄청나게긴긴이름입니다", totalSimilarity: 80.01 },
@@ -14,3 +14,5 @@ export const Dashboard = () => {
     </>
   );
 };
+
+export default Dashboard;

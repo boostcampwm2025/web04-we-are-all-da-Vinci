@@ -2,7 +2,7 @@ import { MyRanking, RankingList } from "@/entities/ranking";
 import { Border, Button, Top } from "@toss/tds-mobile";
 import { Link } from "react-router-dom";
 
-export const Ranking = () => {
+const Ranking = () => {
   return (
     <div className="flex flex-col items-center  justify-center">
       <main className="w-full">
@@ -38,3 +38,5 @@ export const Ranking = () => {
     </div>
   );
 };
+
+export default Ranking;
