@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Button, TextButton, Top } from "@toss/tds-mobile";
 import { colors } from "@toss/tds-colors";
 import { MyScoreCard } from "@/entities/myScoreCard";
+import { BannerAd } from "@/shared/ui/bannerAd";
 
 const CARD_COUNT = 3;
 
@@ -26,7 +27,7 @@ const DashboardView = () => {
             <Top.SubtitleParagraph>명예의 전당</Top.SubtitleParagraph>
           }
         />
-        <div className="flex w-full flex-col items-center gap-4 px-6">
+        <div className="flex w-full flex-col items-center gap-4 px-(--page-px)">
           {/* 랭킹 TOP3 */}
           <div
             className="h-[205px] w-full rounded-xl"
@@ -70,8 +71,10 @@ const DashboardView = () => {
         ))}
       </div>
 
+      <BannerAd adGroupId="ait-ad-test-banner-id" className="mt-3 mb-3" />
+
       {/* 하단 버튼 */}
-      <div className="px-6 flex flex-col gap-3 mt-9">
+      <div className="px-(--page-px) flex flex-col gap-3">
         <Button color="primary" display="block">
           한번 더 참여하고 포인트 받기
         </Button>

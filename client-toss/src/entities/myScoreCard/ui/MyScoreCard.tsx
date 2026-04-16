@@ -4,7 +4,7 @@ import { Paragraph, Post } from "@toss/tds-mobile";
 
 const MyScoreCard = () => {
   return (
-    <div className="flex flex-col w-full items-center px-6 gap-3">
+    <div className="flex flex-col w-full items-center px-(--page-px) gap-3">
       {/* 내 그림 */}
       <div
         className="mx-(--card-mx) mt-2 rounded-2xl p-3"
