@@ -17,13 +17,14 @@ interface ArcScoreBarProps {
 
 const RADIUS = 100;
 const STROKE_WIDTH = 16;
+const PI = Math.PI;
 const GAP = 2;
 
 const calcRad = (score: number) => {
   // Radian = PI / 180 * Degree
   // Degree = score / 100 * 90
   // 90도가 100점
-  return (Math.PI / 180) * ((score / 100) * 90);
+  return (PI / 180) * ((score / 100) * 90);
 };
 
 const pointOnArc = (angle: number) => ({
@@ -55,8 +56,8 @@ const ArcScoreBar = ({
   const countSimRad = Math.max(calcRad(clampScore(countSimilarity)), 0);
   const penaltyRad = Math.max(calcRad(clampScore(penalty)), 0);
 
-  const baseSimRad = Math.max(Math.PI / 2 - (shapeSimRad + countSimRad), 0);
-  const basePenaltyRad = Math.max(Math.PI / 2 - penaltyRad, 0);
+  const baseSimRad = Math.max(PI / 2 - (shapeSimRad + countSimRad), 0);
+  const basePenaltyRad = Math.max(PI / 2 - penaltyRad, 0);
 
   const segments = [
     { rad: baseSimRad, stroke: "#E8F3FF" },
@@ -71,7 +72,7 @@ const ArcScoreBar = ({
   let currentAngle = 0;
   const paths = segments.map(({ rad, stroke }) => {
     const arc = makeArc(currentAngle, rad, stroke);
-    currentAngle = Math.min(currentAngle + rad, Math.PI);
+    currentAngle = Math.min(currentAngle + rad, PI);
     return arc;
   });
 
