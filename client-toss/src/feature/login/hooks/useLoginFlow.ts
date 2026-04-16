@@ -31,7 +31,10 @@ export const useLoginFlow = () => {
         referrer = result.referrer;
       }
 
-      const { userKey } = await serverTossApi.login({ authorizationCode, referrer });
+      const { userKey } = await serverTossApi.login({
+        authorizationCode,
+        referrer,
+      });
       localStorage.setItem("userKey", String(userKey));
       navigate("/");
     } catch {
