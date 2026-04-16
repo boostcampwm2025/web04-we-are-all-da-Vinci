@@ -2,7 +2,9 @@ import { networkInterfaces } from "os";
 import { spawn } from "child_process";
 
 function getLocalIP() {
-  for (const iface of Object.values(networkInterfaces())) {
+  for (const [name, iface] of Object.entries(networkInterfaces())) {
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes("vethernet") || lowerName.includes("wsl")) continue;
     for (const net of iface) {
       if (net.family === "IPv4" && !net.internal) return net.address;
     }
@@ -11,6 +13,7 @@ function getLocalIP() {
 }
 
 const host = getLocalIP();
+console.log(`host: ${host}`);
 
 const proc = spawn("granite", ["dev"], {
   env: { ...process.env, WEBVIEW_HOST: host },

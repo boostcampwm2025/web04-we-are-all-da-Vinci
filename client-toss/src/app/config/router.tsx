@@ -1,3 +1,4 @@
+import { DashboardView } from "@/views/dashboard";
 import { Drawing } from "@/views/drawing";
 import { HomeView } from "@/views/home";
 import { Memorize } from "@/views/memorize";
@@ -20,5 +21,9 @@ export const router = createBrowserRouter([
   {
     path: "/submitted",
     element: <SubmittedView />,
+  },
+  {
+    path: "/dashboard",
+    element: <DashboardView />,
   },
 ]);

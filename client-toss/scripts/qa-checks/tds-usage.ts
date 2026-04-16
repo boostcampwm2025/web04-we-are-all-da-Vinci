@@ -32,12 +32,17 @@ export async function run(): Promise<CheckResult> {
   const details: string[] = [];
   let status: CheckResult["status"] = "pass";
 
-  const files = execSync('find src -name "*.tsx"', {
+  const findCommand =
+    process.platform === "win32"
+      ? `powershell -Command "Get-ChildItem -Path src -Recurse -Filter '*.tsx' | ForEach-Object { $_.FullName.Substring($PWD.Path.Length + 1).Replace('\\', '/') }"`
+      : 'find src -name "*.tsx"';
+
+  const files = execSync(findCommand, {
     cwd: ROOT,
     encoding: "utf-8",
   })
     .trim()
-    .split("\n")
+    .split(/\r?\n/)
     .filter(Boolean);
 
   for (const relPath of files) {

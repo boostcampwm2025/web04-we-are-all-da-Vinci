@@ -159,6 +159,9 @@ importers:
       '@toss/shared':
         specifier: workspace:*
         version: link:../packages/toss-shared
+      '@toss/tds-colors':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@toss/tds-mobile':
         specifier: ^2.3.0
         version: 2.3.0(@emotion/react@11.14.0(@types/react@19.2.3)(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
