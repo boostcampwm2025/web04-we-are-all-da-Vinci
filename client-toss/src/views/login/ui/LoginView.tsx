@@ -1,7 +1,12 @@
 import { logoImg } from "@/shared/assets/images";
 import { BottomCTA, Paragraph, Top } from "@toss/tds-mobile";
+import type { ComponentType, ComponentProps } from "react";
 import { useLoginFlow } from "@/feature/login";
 import { STEPS } from "../config/steps";
+
+const BottomCTAButton = BottomCTA.Single as ComponentType<
+  ComponentProps<typeof BottomCTA.Single> & { onClick?: () => void }
+>;
 
 const LoginView = () => {
   const { handleLogin, isLoading } = useLoginFlow();
@@ -62,15 +67,13 @@ const LoginView = () => {
         </div>
       </div>
 
-      <div className="flex items-center justify-center " onClick={handleLogin}>
-        <BottomCTA.Single
-          className="w-full"
-          disabled={isLoading}
-          background="default"
-        >
-          {isLoading ? "로그인 중..." : "다음"}
-        </BottomCTA.Single>
-      </div>
+      <BottomCTAButton
+        onClick={handleLogin}
+        disabled={isLoading}
+        background="default"
+      >
+        {isLoading ? "로그인 중..." : "다음"}
+      </BottomCTAButton>
     </div>
   );
 };

@@ -1,7 +1,8 @@
 import { appLogin } from "@apps-in-toss/web-framework";
-import { useNavigate } from "react-router-dom";
 import { useBottomSheet } from "@toss/tds-mobile";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { serverTossApi } from "@/shared/api";
 import { getAgreementModalContent } from "../ui/AgreementModal";
 
 export const useLoginFlow = () => {
@@ -13,19 +14,28 @@ export const useLoginFlow = () => {
     if (isLoading) return;
 
     const modalContent = getAgreementModalContent();
-
-    const agreed = await openOneButtonSheet(modalContent);
-
-    if (!agreed) return;
+    await openOneButtonSheet(modalContent);
 
     setIsLoading(true);
     try {
-      const { authorizationCode, referrer } = await appLogin();
-      // TODO: authorizationCode와 referrer를 server-toss로 전달해 세션 발급
-      console.log("로그인 성공", { authorizationCode, referrer });
+      const isBrowser = !("ReactNativeWebView" in window);
+      let authorizationCode: string;
+      let referrer: "DEFAULT" | "SANDBOX";
+
+      if (isBrowser) {
+        authorizationCode = "mock-code";
+        referrer = "SANDBOX";
+      } else {
+        const result = await appLogin();
+        authorizationCode = result.authorizationCode;
+        referrer = result.referrer;
+      }
+
+      const { userKey } = await serverTossApi.login({ authorizationCode, referrer });
+      localStorage.setItem("userKey", String(userKey));
       navigate("/");
     } catch {
-      // 사용자가 로그인을 취소하거나 오류 발생 시 아무것도 하지 않음
+      // 로그인 실패 시 로딩만 해제
     } finally {
       setIsLoading(false);
     }
