@@ -5,9 +5,9 @@ import { EntityManager } from "@mikro-orm/mysql";
 import { createDecipheriv } from "crypto";
 import { readFileSync } from "fs";
 import https from "https";
-import { User } from "../user/user.entity";
-import { UserRepository } from "../user/user.repository";
-import type { LoginDto } from "./dto/login.dto";
+import { User } from "src/modules/user/user.entity";
+import { UserRepository } from "src/modules/user/user.repository";
+import type { LoginDto } from "src/modules/auth/dto/login.dto";
 
 interface TossTokenResponse {
   resultType: "SUCCESS" | "FAIL";
