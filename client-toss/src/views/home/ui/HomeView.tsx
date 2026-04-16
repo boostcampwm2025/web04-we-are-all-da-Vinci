@@ -25,7 +25,13 @@ const HomeView = () => {
           로그인 페이지로 이동
         </Button>
       </Link>
+      <Link to="/dashboard">
+        <Button size="large" display="block">
+          대시보드 화면으로 이동
+        </Button>
+      </Link>
     </div>
   );
 };
+
 export default HomeView;

@@ -1,7 +1,6 @@
 import type { Opt, Rel } from "@mikro-orm/core";
 import {
   Entity,
-  ManyToMany,
   ManyToOne,
   PrimaryKey,
   Property,
