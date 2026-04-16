@@ -1,4 +1,5 @@
 import { ScoreDetailCard } from "@/entities/scoreDetailCard";
+import { ArcScoreBar } from "@/shared/ui/arcScoreBar";
 import { colors } from "@toss/tds-colors";
 import { Paragraph, Post } from "@toss/tds-mobile";
 
@@ -16,12 +17,11 @@ const MyScoreCard = () => {
           className="w-full rounded-xl bg-white object-contain shadow-sm"
         />
       </div>
-      <div
-        className="h-[160px] w-full"
-        style={{ backgroundColor: colors.grey100 }}
-      >
-        그래프 영역
-      </div>
+      <ArcScoreBar
+        penalty={60}
+        shapeSimilarity={34.56}
+        countSimilarity={23.45}
+      />
       <div className="flex flex-col items-center gap-1">
         <Paragraph typography="t1">
           <Paragraph.Text fontWeight="bold">77.99</Paragraph.Text>
