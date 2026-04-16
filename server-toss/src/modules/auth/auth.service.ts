@@ -120,6 +120,7 @@ export class AuthService {
           method,
           headers,
           agent: this.httpsAgent,
+          timeout: 10000,
         },
         (res) => {
           let data = "";
@@ -133,6 +134,10 @@ export class AuthService {
           });
         },
       );
+      req.on("timeout", () => {
+        req.destroy();
+        reject(new Error("Toss API request timed out"));
+      });
       req.on("error", reject);
       if (body) req.write(body);
       req.end();
