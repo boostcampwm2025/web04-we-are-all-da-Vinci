@@ -20,6 +20,7 @@
     "@apps-in-toss/web-framework": "^2.0.9",
     "@emotion/react": "^11.14.0",
     "@toss/shared": "workspace:*",
+    "@toss/tds-colors": "^0.1.0",
     "@toss/tds-mobile": "^2.3.0",
     "@toss/tds-mobile-ait": "^2.3.0",
     "clsx": "^2.1.1",

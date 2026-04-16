@@ -22,11 +22,15 @@ const HomeView = () => {
       </Link>
 
       <Link to="/ranking">
-        <button>랭킹 화면으로 이동</button>
+        <Button size="large" display="block">
+          랭킹 화면으로 이동
+        </Button>
       </Link>
 
       <Link to="/dashboard">
-        <button>대시보드 화면으로 이동</button>
+        <Button size="large" display="block">
+          대시보드 화면으로 이동
+        </Button>
       </Link>
     </div>
   );

@@ -4,6 +4,7 @@ import { Memorize } from "@/views/memorize";
 import { SubmittedView } from "@/views/submitted";
 import { RankingView } from "@/views/ranking";
 import { createBrowserRouter } from "react-router-dom";
+import { DashboardView } from "@/views/dashboard";
 
 export const router = createBrowserRouter([
   {
@@ -21,6 +22,10 @@ export const router = createBrowserRouter([
   {
     path: "/submitted",
     element: <SubmittedView />,
+  },
+  {
+    path: "/dashboard",
+    element: <DashboardView />,
   },
   {
     path: "/ranking",

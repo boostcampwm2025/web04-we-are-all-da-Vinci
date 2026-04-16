@@ -43,3 +43,6 @@ docs
 /playwright/.cache/
 /playwright/.auth/
 .playwright-mcp/
+
+# App-in-Toss build file
+we-are-all-da-vinci.ait
