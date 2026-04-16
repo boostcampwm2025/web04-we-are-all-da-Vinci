@@ -33,7 +33,7 @@ const Podium = ({ entries }: PodiumProps) => {
             key={entry.rank}
             className="flex flex-col items-center justify-end gap-2"
           >
-            <div className="flex flex-col text-center gap-">
+            <div className="flex flex-col text-center">
               <div className="w-[75px] truncate text-[16px] font-bold leading-tight text-black">
                 {entry.name}
               </div>
