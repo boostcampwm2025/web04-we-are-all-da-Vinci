@@ -9,6 +9,12 @@ interface Arc {
   stroke: string;
 }
 
+interface ArcScoreBarProps {
+  shapeSimilarity: number;
+  countSimilarity: number;
+  penalty: number;
+}
+
 const RADIUS = 100;
 const STROKE_WIDTH = 16;
 const GAP = 2;
@@ -36,12 +42,18 @@ const makeArc = (startAngle: number, rad: number, stroke: string): Arc => {
   };
 };
 
-const ArcScoreBar = () => {
+const clampScore = (value: number) => Math.max(0, Math.min(100, value));
+
+const ArcScoreBar = ({
+  shapeSimilarity,
+  countSimilarity,
+  penalty,
+}: ArcScoreBarProps) => {
   const gapRad = calcRad(GAP);
 
-  const shapeSimRad = calcRad(23.44);
-  const countSimRad = calcRad(30.4);
-  const penaltyRad = calcRad(10.0);
+  const shapeSimRad = calcRad(clampScore(shapeSimilarity));
+  const countSimRad = calcRad(clampScore(countSimilarity));
+  const penaltyRad = calcRad(clampScore(penalty));
 
   const baseSimRad = Math.PI / 2 - (shapeSimRad + countSimRad + 2 * gapRad);
   const basePenaltyRad = Math.PI / 2 - (penaltyRad + 2 * gapRad);
