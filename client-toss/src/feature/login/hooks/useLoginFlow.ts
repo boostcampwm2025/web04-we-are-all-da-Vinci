@@ -13,15 +13,15 @@ export const useLoginFlow = () => {
   const handleLogin = async () => {
     if (isLoading) return;
 
-    const modalContent = getAgreementModalContent();
-    await openOneButtonSheet(modalContent);
+    const agreed = await openOneButtonSheet(getAgreementModalContent());
+    if (!agreed) return;
 
     setIsLoading(true);
     try {
-      const isBrowser = !("ReactNativeWebView" in window);
       let authorizationCode: string;
       let referrer: "DEFAULT" | "SANDBOX";
 
+      const isBrowser = !("ReactNativeWebView" in window);
       if (isBrowser) {
         authorizationCode = "mock-code";
         referrer = "SANDBOX";
