@@ -36,7 +36,7 @@ const LoginView = () => {
           }
         />
 
-        <div className="flex flex-col px-10 gap-4">
+        <div className="flex flex-col px-(--page-px) gap-4">
           {STEPS.map((step, index) => (
             <div key={step.title} className="flex items-start gap-4 min-h-20">
               <div className="flex flex-col items-center self-stretch">
