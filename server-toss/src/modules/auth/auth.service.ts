@@ -4,14 +4,12 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { InjectRepository } from "@mikro-orm/nestjs";
-import { EntityManager } from "@mikro-orm/mysql";
 import { createDecipheriv } from "crypto";
 import { readFileSync } from "fs";
 import https from "https";
-import { User } from "src/modules/user/user.entity";
-import { UserRepository } from "src/modules/user/user.repository";
+import { UserService } from "src/modules/user/user.service";
 import type { LoginDto } from "src/modules/auth/dto/login.dto";
+import type { LoginResponseDto } from "src/modules/auth/dto/login-response.dto";
 
 interface TossTokenResponse {
   resultType: "SUCCESS" | "FAIL";
@@ -59,9 +57,7 @@ export class AuthService {
 
   constructor(
     private readonly configService: ConfigService,
-    @InjectRepository(User)
-    private readonly userRepository: UserRepository,
-    private readonly em: EntityManager,
+    private readonly userService: UserService,
   ) {
     this.baseUrl = this.configService.getOrThrow<string>("TOSS_API_BASE_URL");
     this.apiKey = this.configService.getOrThrow<string>("TOSS_API_KEY");
@@ -82,7 +78,7 @@ export class AuthService {
     });
   }
 
-  async login(dto: LoginDto): Promise<{ userKey: number }> {
+  async login(dto: LoginDto): Promise<LoginResponseDto> {
     const accessToken = await this.generateToken(dto);
     const userInfo = await this.getUserInfo(accessToken);
 
@@ -103,7 +99,7 @@ export class AuthService {
     }
 
     try {
-      await this.upsertUser({
+      await this.userService.upsert({
         userKey: userInfo.userKey,
         name,
         gender,
@@ -231,30 +227,5 @@ export class AuthService {
       return undefined;
     }
     return date;
-  }
-
-  private async upsertUser(data: {
-    userKey: number;
-    name: string;
-    gender?: string;
-    birthday?: Date;
-  }): Promise<void> {
-    let user = await this.userRepository.findOne({ userKey: data.userKey });
-
-    if (!user) {
-      user = this.userRepository.create({
-        userKey: data.userKey,
-        name: data.name,
-        gender: data.gender,
-        birthday: data.birthday,
-      });
-      this.em.persist(user);
-    } else {
-      user.name = data.name;
-      if (data.gender !== undefined) user.gender = data.gender;
-      if (data.birthday !== undefined) user.birthday = data.birthday;
-    }
-
-    await this.em.flush();
   }
 }

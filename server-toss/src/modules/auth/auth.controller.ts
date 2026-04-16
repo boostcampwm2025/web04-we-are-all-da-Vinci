@@ -2,6 +2,7 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import { LoginDto } from "./dto/login.dto";
+import { LoginResponseDto } from "./dto/login-response.dto";
 
 @ApiTags("auth")
 @Controller("oauth/toss")
@@ -15,7 +16,7 @@ export class AuthController {
     description:
       "appLogin()에서 받은 authorizationCode로 토스 사용자 인증 후 userKey를 반환해요.",
   })
-  async login(@Body() dto: LoginDto): Promise<{ userKey: number }> {
+  async login(@Body() dto: LoginDto): Promise<LoginResponseDto> {
     return this.authService.login(dto);
   }
 }

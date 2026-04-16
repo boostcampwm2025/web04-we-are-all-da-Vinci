@@ -1,11 +1,10 @@
-import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Module } from "@nestjs/common";
-import { User } from "src/modules/user/user.entity";
+import { UserModule } from "src/modules/user/user.module";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 
 @Module({
-  imports: [MikroOrmModule.forFeature([User])],
+  imports: [UserModule],
   controllers: [AuthController],
   providers: [AuthService],
 })
