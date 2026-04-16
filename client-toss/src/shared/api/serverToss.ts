@@ -16,6 +16,6 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 }
 
 export const serverTossApi = {
-  login: (body: { authorizationCode: string; referrer: string }) =>
+  login: (body: { authorizationCode: string; referrer: "DEFAULT" | "SANDBOX" }) =>
     post<{ userKey: number }>("/oauth/toss/login", body),
 };
