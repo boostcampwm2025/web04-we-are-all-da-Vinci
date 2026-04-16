@@ -28,7 +28,7 @@ const calcRad = (score: number) => {
 
 const pointOnArc = (angle: number) => ({
   x: RADIUS * Math.cos(angle),
-  y: -RADIUS * Math.sin(angle),
+  y: Math.min(-RADIUS * Math.sin(angle), 0),
 });
 
 const makeArc = (startAngle: number, rad: number, stroke: string): Arc => {
@@ -51,29 +51,27 @@ const ArcScoreBar = ({
 }: ArcScoreBarProps) => {
   const gapRad = calcRad(GAP);
 
-  const shapeSimRad = calcRad(clampScore(shapeSimilarity));
-  const countSimRad = calcRad(clampScore(countSimilarity));
-  const penaltyRad = calcRad(clampScore(penalty));
+  const shapeSimRad = Math.max(calcRad(clampScore(shapeSimilarity)), 0);
+  const countSimRad = Math.max(calcRad(clampScore(countSimilarity)), 0);
+  const penaltyRad = Math.max(calcRad(clampScore(penalty)), 0);
 
-  const baseSimRad = Math.PI / 2 - (shapeSimRad + countSimRad + 2 * gapRad);
-  const basePenaltyRad = Math.PI / 2 - (penaltyRad + 2 * gapRad);
+  const baseSimRad = Math.max(Math.PI / 2 - (shapeSimRad + countSimRad), 0);
+  const basePenaltyRad = Math.max(Math.PI / 2 - penaltyRad, 0);
 
   const segments = [
     { rad: baseSimRad, stroke: "#E8F3FF" },
-    { rad: gapRad, stroke: "#F9FAFB" },
     { rad: shapeSimRad, stroke: "#3182F6" },
     { rad: gapRad, stroke: "#F9FAFB" },
     { rad: countSimRad, stroke: "#3182F6" },
     { rad: gapRad, stroke: "#F9FAFB" },
     { rad: penaltyRad, stroke: "#F66570" },
-    { rad: gapRad, stroke: "#F9FAFB" },
     { rad: basePenaltyRad, stroke: "#FFEEEE" },
   ];
 
   let currentAngle = 0;
   const paths = segments.map(({ rad, stroke }) => {
     const arc = makeArc(currentAngle, rad, stroke);
-    currentAngle += rad;
+    currentAngle = Math.min(currentAngle + rad, Math.PI);
     return arc;
   });
 
