@@ -1,86 +1,29 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  UnauthorizedException,
-} from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { createDecipheriv } from "crypto";
-import { readFileSync } from "fs";
-import https from "https";
 import { UserService } from "src/modules/user/user.service";
+import { TossApiClient } from "src/modules/auth/toss-api.client";
 import type { LoginDto } from "src/modules/auth/dto/login.dto";
 import type { LoginResponseDto } from "src/modules/auth/dto/login-response.dto";
-
-interface TossTokenResponse {
-  resultType: "SUCCESS" | "FAIL";
-  success?: {
-    accessToken: string;
-    refreshToken: string;
-    tokenType: string;
-    expiresIn: number;
-    scope: string;
-  };
-  error?: {
-    errorCode: string;
-    reason: string;
-  };
-}
-
-interface TossUserResponse {
-  resultType: "SUCCESS" | "FAIL";
-  success?: {
-    userKey: number;
-    scope: string;
-    agreedTerms: string[];
-    name?: string;
-    phone?: string;
-    birthday?: string;
-    ci?: string;
-    di?: null;
-    gender?: string;
-    nationality?: string;
-    email?: string | null;
-  };
-  error?: {
-    errorCode: string;
-    reason: string;
-  };
-}
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class AuthService {
-  private readonly baseUrl: string;
-  private readonly apiKey: string;
   private readonly decryptKey: string;
   private readonly decryptAad: string;
-  private readonly httpsAgent: https.Agent;
 
   constructor(
     private readonly configService: ConfigService,
+    private readonly tossApiClient: TossApiClient,
     private readonly userService: UserService,
   ) {
-    this.baseUrl = this.configService.getOrThrow<string>("TOSS_API_BASE_URL");
-    this.apiKey = this.configService.getOrThrow<string>("TOSS_API_KEY");
     this.decryptKey = this.configService.getOrThrow<string>("TOSS_DECRYPT_KEY");
     this.decryptAad =
       this.configService.get<string>("TOSS_DECRYPT_AAD") ?? "TOSS";
-
-    const certPath = this.configService.getOrThrow<string>(
-      "TOSS_CLIENT_CERT_PATH",
-    );
-    const keyPath = this.configService.getOrThrow<string>(
-      "TOSS_CLIENT_KEY_PATH",
-    );
-    this.httpsAgent = new https.Agent({
-      cert: readFileSync(certPath),
-      key: readFileSync(keyPath),
-      rejectUnauthorized: true,
-    });
   }
 
   async login(dto: LoginDto): Promise<LoginResponseDto> {
-    const accessToken = await this.generateToken(dto);
-    const userInfo = await this.getUserInfo(accessToken);
+    const accessToken = await this.tossApiClient.generateToken(dto);
+    const userInfo = await this.tossApiClient.getUserInfo(accessToken);
 
     let name: string;
     let gender: string | undefined;
@@ -110,89 +53,6 @@ export class AuthService {
     }
 
     return { userKey: userInfo.userKey };
-  }
-
-  private tossRequest<T>(
-    method: string,
-    path: string,
-    headers: Record<string, string>,
-    body?: string,
-  ): Promise<T> {
-    return new Promise((resolve, reject) => {
-      const url = new URL(`${this.baseUrl}${path}`);
-      const req = https.request(
-        {
-          hostname: url.hostname,
-          path: url.pathname,
-          method,
-          headers,
-          agent: this.httpsAgent,
-          timeout: 10000,
-        },
-        (res) => {
-          let data = "";
-          res.on("data", (chunk: Buffer) => (data += chunk.toString()));
-          res.on("end", () => {
-            try {
-              resolve(JSON.parse(data) as T);
-            } catch {
-              reject(new Error(`Invalid JSON: ${data}`));
-            }
-          });
-        },
-      );
-      req.on("timeout", () => {
-        req.destroy();
-        reject(new Error("Toss API request timed out"));
-      });
-      req.on("error", reject);
-      if (body) req.write(body);
-      req.end();
-    });
-  }
-
-  private async generateToken(dto: LoginDto): Promise<string> {
-    const data = await this.tossRequest<TossTokenResponse>(
-      "POST",
-      "/api-partner/v1/apps-in-toss/user/oauth2/generate-token",
-      {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.apiKey}`,
-      },
-      JSON.stringify({
-        authorizationCode: dto.authorizationCode,
-        referrer: dto.referrer,
-      }),
-    );
-
-    if (data.resultType !== "SUCCESS" || !data.success) {
-      throw new UnauthorizedException(
-        data.error?.reason ?? "토큰 발급에 실패했어요.",
-      );
-    }
-
-    return data.success.accessToken;
-  }
-
-  private async getUserInfo(
-    accessToken: string,
-  ): Promise<NonNullable<TossUserResponse["success"]>> {
-    const data = await this.tossRequest<TossUserResponse>(
-      "GET",
-      "/api-partner/v1/apps-in-toss/user/oauth2/login-me",
-      {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-    );
-
-    if (data.resultType !== "SUCCESS" || !data.success) {
-      throw new UnauthorizedException(
-        data.error?.reason ?? "유저 정보 조회에 실패했어요.",
-      );
-    }
-
-    return data.success;
   }
 
   private decrypt(encryptedText: string): string {
