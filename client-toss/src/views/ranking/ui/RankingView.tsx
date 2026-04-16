@@ -1,4 +1,5 @@
 import { MyRanking, RankingList } from "@/entities/ranking";
+import { BannerAd } from "@/shared/ui/bannerAd";
 import { Border, Button, Top } from "@toss/tds-mobile";
 import { Link } from "react-router-dom";
 
@@ -20,6 +21,8 @@ const Ranking = () => {
         />
         <Border />
         <MyRanking rank={1010101} totalSimilarity={34.123} />
+        <BannerAd adGroupId="ait-ad-test-banner-id" className="mb-6" />
+
         <RankingList />
       </main>
 
