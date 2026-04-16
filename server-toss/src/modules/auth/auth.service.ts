@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import {
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { EntityManager } from "@mikro-orm/mysql";
@@ -79,8 +83,10 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<{ userKey: number }> {
-    // sandbox/개발 환경: mock-code로 테스트
-    if (dto.authorizationCode === "mock-code") {
+    // sandbox/개발 환경: mock-code로 테스트 (운영 환경에서는 비활성화)
+    const isNonProduction =
+      this.configService.get<string>("NODE_ENV") !== "production";
+    if (isNonProduction && dto.authorizationCode === "mock-code") {
       const mockUserKey = 99999;
       await this.upsertUser({ userKey: mockUserKey, name: "테스트유저" });
       return { userKey: mockUserKey };
@@ -89,18 +95,32 @@ export class AuthService {
     const accessToken = await this.generateToken(dto);
     const userInfo = await this.getUserInfo(accessToken);
 
-    const name = userInfo.name ? this.decrypt(userInfo.name) : "알 수 없음";
-    const gender = userInfo.gender ? this.decrypt(userInfo.gender) : undefined;
-    const birthday = userInfo.birthday
-      ? this.parseBirthday(this.decrypt(userInfo.birthday))
-      : undefined;
+    let name: string;
+    let gender: string | undefined;
+    let birthday: Date | undefined;
 
-    await this.upsertUser({
-      userKey: userInfo.userKey,
-      name,
-      gender,
-      birthday,
-    });
+    try {
+      name = userInfo.name ? this.decrypt(userInfo.name) : "알 수 없음";
+      gender = userInfo.gender ? this.decrypt(userInfo.gender) : undefined;
+      birthday = userInfo.birthday
+        ? this.parseBirthday(this.decrypt(userInfo.birthday))
+        : undefined;
+    } catch {
+      throw new InternalServerErrorException(
+        "사용자 정보 복호화에 실패했어요.",
+      );
+    }
+
+    try {
+      await this.upsertUser({
+        userKey: userInfo.userKey,
+        name,
+        gender,
+        birthday,
+      });
+    } catch {
+      throw new InternalServerErrorException("사용자 정보 저장에 실패했어요.");
+    }
 
     return { userKey: userInfo.userKey };
   }
