@@ -11,7 +11,7 @@ const clipName = (name: string): string => {
   return name;
 };
 
-export const Podium = ({ entries }: PodiumProps) => {
+const Podium = ({ entries }: PodiumProps) => {
   const podium = [
     { ...entries[1], rank: 2 },
     { ...entries[0], rank: 1 },
@@ -57,3 +57,5 @@ export const Podium = ({ entries }: PodiumProps) => {
     </div>
   );
 };
+
+export default Podium;
