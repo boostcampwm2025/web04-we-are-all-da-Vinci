@@ -18,23 +18,8 @@ export const useLoginFlow = () => {
 
     setIsLoading(true);
     try {
-      let authorizationCode: string;
-      let referrer: "DEFAULT" | "SANDBOX";
-
-      const isBrowser = !("ReactNativeWebView" in window);
-      if (isBrowser) {
-        authorizationCode = "mock-code";
-        referrer = "SANDBOX";
-      } else {
-        const result = await appLogin();
-        authorizationCode = result.authorizationCode;
-        referrer = result.referrer;
-      }
-
-      const { userKey } = await serverTossApi.login({
-        authorizationCode,
-        referrer,
-      });
+      const { authorizationCode, referrer } = await appLogin();
+      const { userKey } = await serverTossApi.login({ authorizationCode, referrer });
       localStorage.setItem("userKey", String(userKey));
       navigate("/");
     } catch {

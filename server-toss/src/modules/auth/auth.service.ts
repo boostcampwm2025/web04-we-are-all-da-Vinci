@@ -83,15 +83,6 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<{ userKey: number }> {
-    // sandbox/개발 환경: mock-code로 테스트 (운영 환경에서는 비활성화)
-    const isNonProduction =
-      this.configService.get<string>("NODE_ENV") !== "production";
-    if (isNonProduction && dto.authorizationCode === "mock-code") {
-      const mockUserKey = 99999;
-      await this.upsertUser({ userKey: mockUserKey, name: "테스트유저" });
-      return { userKey: mockUserKey };
-    }
-
     const accessToken = await this.generateToken(dto);
     const userInfo = await this.getUserInfo(accessToken);
 
