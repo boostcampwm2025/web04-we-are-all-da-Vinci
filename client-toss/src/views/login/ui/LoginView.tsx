@@ -68,7 +68,7 @@ const LoginView = () => {
       </div>
 
       <BottomCTAButton
-        onClick={() => handleLogin(() => window.location.replace("/"))}
+        onClick={() => handleLogin()}
         disabled={isLoading}
         background="default"
       >
