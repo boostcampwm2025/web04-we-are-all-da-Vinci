@@ -5,7 +5,7 @@ import { useLoginFlow } from "@/feature/login";
 import { STEPS } from "../config/steps";
 
 const BottomCTAButton = BottomCTA.Single as ComponentType<
-  ComponentProps<typeof BottomCTA.Single> & { onClick?: () => void }
+  ComponentProps<typeof BottomCTA.Single> & { onClick?: () => void; loading?: boolean }
 >;
 
 const LoginView = () => {
@@ -69,10 +69,11 @@ const LoginView = () => {
 
       <BottomCTAButton
         onClick={() => handleLogin()}
+        loading={isLoading}
         disabled={isLoading}
         background="default"
       >
-        {isLoading ? "로그인 중..." : "다음"}
+        다음
       </BottomCTAButton>
     </div>
   );
