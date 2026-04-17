@@ -3,44 +3,14 @@ import { ConfigService } from "@nestjs/config";
 import { readFileSync } from "fs";
 import https from "https";
 import type { LoginDto } from "src/modules/auth/dto/login.dto";
+import type {
+  TossTokenResponse,
+  TossUserResponse,
+  TossUserInfo,
+} from "src/modules/auth/types/toss-api.types";
+import { TOSS_API_ENDPOINTS } from "src/modules/auth/constants/toss-api.constants";
 
-interface TossTokenResponse {
-  resultType: "SUCCESS" | "FAIL";
-  success?: {
-    accessToken: string;
-    refreshToken: string;
-    tokenType: string;
-    expiresIn: number;
-    scope: string;
-  };
-  error?: {
-    errorCode: string;
-    reason: string;
-  };
-}
-
-interface TossUserResponse {
-  resultType: "SUCCESS" | "FAIL";
-  success?: {
-    userKey: number;
-    scope: string;
-    agreedTerms: string[];
-    name?: string;
-    phone?: string;
-    birthday?: string;
-    ci?: string;
-    di?: null;
-    gender?: string;
-    nationality?: string;
-    email?: string | null;
-  };
-  error?: {
-    errorCode: string;
-    reason: string;
-  };
-}
-
-export type TossUserInfo = NonNullable<TossUserResponse["success"]>;
+export type { TossUserInfo };
 
 @Injectable()
 export class TossApiClient {
@@ -68,7 +38,7 @@ export class TossApiClient {
   async generateToken(dto: LoginDto): Promise<string> {
     const data = await this.request<TossTokenResponse>(
       "POST",
-      "/api-partner/v1/apps-in-toss/user/oauth2/generate-token",
+      TOSS_API_ENDPOINTS.GENERATE_TOKEN,
       {
         "Content-Type": "application/json",
         Authorization: `Bearer ${this.apiKey}`,
@@ -91,7 +61,7 @@ export class TossApiClient {
   async getUserInfo(accessToken: string): Promise<TossUserInfo> {
     const data = await this.request<TossUserResponse>(
       "GET",
-      "/api-partner/v1/apps-in-toss/user/oauth2/login-me",
+      TOSS_API_ENDPOINTS.LOGIN_ME,
       {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,

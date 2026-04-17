@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from "@nestjs/common";
 import { createDecipheriv } from "crypto";
 import { UserService } from "src/modules/user/user.service";
 import { TossApiClient } from "src/modules/auth/toss-api.client";
@@ -8,6 +12,7 @@ import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private readonly decryptKey: string;
   private readonly decryptAad: string;
 
@@ -35,7 +40,8 @@ export class AuthService {
       birthday = userInfo.birthday
         ? this.parseBirthday(this.decrypt(userInfo.birthday))
         : undefined;
-    } catch {
+    } catch (err) {
+      this.logger.error(err, "사용자 정보 복호화 실패");
       throw new InternalServerErrorException(
         "사용자 정보 복호화에 실패했어요.",
       );
@@ -48,7 +54,8 @@ export class AuthService {
         gender,
         birthday,
       });
-    } catch {
+    } catch (err) {
+      this.logger.error(err, "사용자 정보 저장 실패");
       throw new InternalServerErrorException("사용자 정보 저장에 실패했어요.");
     }
 
