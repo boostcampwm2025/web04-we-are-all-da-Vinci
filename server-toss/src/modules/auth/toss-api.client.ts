@@ -99,19 +99,13 @@ export class TossApiClient {
           timeout: 10000,
         },
         (res) => {
-          if (res.statusCode && res.statusCode >= 400) {
-            req.destroy();
-            reject(
-              new TossApiError(
-                res.statusCode,
-                `Toss API HTTP ${res.statusCode}`,
-              ),
-            );
-            return;
-          }
           let data = "";
           res.on("data", (chunk: Buffer) => (data += chunk.toString()));
           res.on("end", () => {
+            if (res.statusCode && res.statusCode >= 400) {
+              reject(new TossApiError(res.statusCode, data));
+              return;
+            }
             try {
               resolve(JSON.parse(data) as T);
             } catch {
