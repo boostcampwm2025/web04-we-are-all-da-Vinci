@@ -9,6 +9,10 @@ import type {
   TossUserInfo,
 } from "src/modules/auth/types/toss-api.types";
 import { TOSS_API_ENDPOINTS } from "src/modules/auth/constants/toss-api.constants";
+import {
+  TossApiError,
+  TossTransportError,
+} from "src/modules/auth/errors/toss.errors";
 
 export type { TossUserInfo };
 
@@ -95,22 +99,32 @@ export class TossApiClient {
           timeout: 10000,
         },
         (res) => {
+          if (res.statusCode && res.statusCode >= 400) {
+            req.destroy();
+            reject(
+              new TossApiError(
+                res.statusCode,
+                `Toss API HTTP ${res.statusCode}`,
+              ),
+            );
+            return;
+          }
           let data = "";
           res.on("data", (chunk: Buffer) => (data += chunk.toString()));
           res.on("end", () => {
             try {
               resolve(JSON.parse(data) as T);
             } catch {
-              reject(new Error(`Invalid JSON: ${data}`));
+              reject(new TossTransportError(`Toss API 응답이 JSON이 아닙니다`));
             }
           });
         },
       );
       req.on("timeout", () => {
         req.destroy();
-        reject(new Error("Toss API request timed out"));
+        reject(new TossTransportError("Toss API 요청이 타임아웃됐습니다"));
       });
-      req.on("error", reject);
+      req.on("error", (err) => reject(new TossTransportError(err.message)));
       if (body) req.write(body);
       req.end();
     });

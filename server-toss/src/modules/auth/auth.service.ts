@@ -1,13 +1,19 @@
 import {
+  BadGatewayException,
   Injectable,
   InternalServerErrorException,
   Logger,
+  ServiceUnavailableException,
 } from "@nestjs/common";
 import { createDecipheriv } from "crypto";
 import { UserService } from "src/modules/user/user.service";
 import { TossApiClient } from "src/modules/auth/toss-api.client";
 import type { LoginDto } from "src/modules/auth/dto/login.dto";
 import type { LoginResponseDto } from "src/modules/auth/dto/login-response.dto";
+import {
+  TossApiError,
+  TossTransportError,
+} from "src/modules/auth/errors/toss.errors";
 import { ConfigService } from "@nestjs/config";
 
 @Injectable()
@@ -27,8 +33,23 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<LoginResponseDto> {
-    const accessToken = await this.tossApiClient.generateToken(dto);
-    const userInfo = await this.tossApiClient.getUserInfo(accessToken);
+    let accessToken: string;
+    let userInfo: Awaited<ReturnType<TossApiClient["getUserInfo"]>>;
+
+    try {
+      accessToken = await this.tossApiClient.generateToken(dto);
+      userInfo = await this.tossApiClient.getUserInfo(accessToken);
+    } catch (err) {
+      if (err instanceof TossTransportError) {
+        this.logger.error(err, "Toss API 통신 오류");
+        throw new ServiceUnavailableException("Toss API에 연결할 수 없어요.");
+      }
+      if (err instanceof TossApiError) {
+        this.logger.error(err, `Toss API 오류 (HTTP ${err.statusCode})`);
+        throw new BadGatewayException("Toss API 오류가 발생했어요.");
+      }
+      throw err; // UnauthorizedException (resultType === "FAIL")
+    }
 
     let name: string;
     let gender: string | undefined;
