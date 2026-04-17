@@ -5,7 +5,10 @@ import { useLoginFlow } from "@/feature/login";
 import { STEPS } from "../config/steps";
 
 const BottomCTAButton = BottomCTA.Single as ComponentType<
-  ComponentProps<typeof BottomCTA.Single> & { onClick?: () => void; loading?: boolean }
+  ComponentProps<typeof BottomCTA.Single> & {
+    onClick?: () => void;
+    loading?: boolean;
+  }
 >;
 
 const LoginView = () => {
