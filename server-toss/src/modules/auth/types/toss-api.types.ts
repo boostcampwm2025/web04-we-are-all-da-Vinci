@@ -1,5 +1,12 @@
-export interface TossTokenResponse {
+interface TossBaseResponse {
   resultType: "SUCCESS" | "FAIL";
+  error?: {
+    errorCode: string;
+    reason: string;
+  };
+}
+
+export interface TossTokenResponse extends TossBaseResponse {
   success?: {
     accessToken: string;
     refreshToken: string;
@@ -7,14 +14,9 @@ export interface TossTokenResponse {
     expiresIn: number;
     scope: string;
   };
-  error?: {
-    errorCode: string;
-    reason: string;
-  };
 }
 
-export interface TossUserResponse {
-  resultType: "SUCCESS" | "FAIL";
+export interface TossUserResponse extends TossBaseResponse {
   success?: {
     userKey: number;
     scope: string;
@@ -27,10 +29,6 @@ export interface TossUserResponse {
     gender?: string;
     nationality?: string;
     email?: string | null;
-  };
-  error?: {
-    errorCode: string;
-    reason: string;
   };
 }
 
