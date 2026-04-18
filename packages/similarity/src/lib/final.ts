@@ -87,8 +87,8 @@ export const scoreFinalSimilarity = (
 
   return {
     score: roundedSimilarity,
-    strokeMatchSimilarity: weightedStrokeMatchSim,
-    shapeSimilarity: weightedShapeSim,
+    strokeMatchSimilarity: Math.round(weightedStrokeMatchSim * 100) / 100,
+    shapeSimilarity: Math.round(weightedShapeSim * 100) / 100,
     penalty: penaltyPoints,
   };
 };
