@@ -1,15 +1,8 @@
 import { logoImg } from "@/shared/assets/images";
-import { BottomCTA, Paragraph, Top } from "@toss/tds-mobile";
-import type { ComponentType, ComponentProps } from "react";
+import { BottomCTAButton } from "@/shared/ui/bottomCTAButton";
+import { Paragraph, Top } from "@toss/tds-mobile";
 import { useLoginFlow } from "@/feature/login";
 import { STEPS } from "../config/steps";
-
-const BottomCTAButton = BottomCTA.Single as ComponentType<
-  ComponentProps<typeof BottomCTA.Single> & {
-    onClick?: () => void;
-    loading?: boolean;
-  }
->;
 
 const LoginView = () => {
   const { handleLogin, isLoading } = useLoginFlow();
