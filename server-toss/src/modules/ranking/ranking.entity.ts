@@ -1,8 +1,12 @@
 import { Entity, PrimaryKey, Property } from "@mikro-orm/decorators/legacy";
+import { EntityRepositoryType } from "@mikro-orm/core";
 import { BaseEntity } from "src/common/base.entity";
+import { RankingRepository } from "./ranking.repository";
 
-@Entity({ tableName: "rankings" })
+@Entity({ tableName: "rankings", repository: () => RankingRepository })
 export class Ranking extends BaseEntity {
+  [EntityRepositoryType]?: RankingRepository;
+
   @PrimaryKey({ type: "bigint" })
   id!: bigint;
 
