@@ -1,7 +1,15 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UsePipes,
+} from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ZodValidationPipe } from "src/common/pipes/zod-validation.pipe";
 import { AuthService } from "./auth.service";
-import { LoginDto } from "./dto/login.dto";
+import { LoginDto, LoginSchema } from "./dto/login.dto";
 import { LoginResponseDto } from "./dto/login-response.dto";
 
 @ApiTags("auth")
@@ -11,6 +19,7 @@ export class AuthController {
 
   @Post("login")
   @HttpCode(HttpStatus.OK)
+  @UsePipes(new ZodValidationPipe(LoginSchema))
   @ApiOperation({
     summary: "토스 로그인",
     description:
