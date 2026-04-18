@@ -21,12 +21,7 @@ import { RankingRepository } from "./ranking.repository";
 describe("랭킹 서비스", () => {
   const ranking = {
     name: "홍길동",
-    similarity: JSON.stringify({
-      similarity: 91.25,
-      strokeCountSimilarity: 90,
-      strokeMatchSimilarity: 92,
-      shapeSimilarity: 91,
-    }),
+    totalSimilarity: 91.25,
     userId: 123n,
     drawingId: 456n,
   } as Ranking;

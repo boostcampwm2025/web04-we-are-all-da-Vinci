@@ -1,0 +1,67 @@
+import {
+  EntityManager,
+  QueryOrder,
+  type RequiredEntityData,
+} from "@mikro-orm/core";
+import { Injectable } from "@nestjs/common";
+import { Drawing } from "src/modules/drawing/drawing.entity";
+import { Ranking } from "./ranking.entity";
+
+type RankingSnapshotInsert = RequiredEntityData<Ranking>;
+
+@Injectable()
+export class RankingSnapshotService {
+  private isRefreshing = false;
+
+  constructor(private readonly em: EntityManager) {}
+
+  async refreshRankingSnapshot() {
+    if (this.isRefreshing) {
+      return;
+    }
+
+    this.isRefreshing = true;
+
+    try {
+      await this.em.transactional(async (transactionalEm) => {
+        const drawings = await transactionalEm.find(
+          Drawing,
+          {},
+          {
+            populate: ["user"],
+            orderBy: [
+              {
+                totalSimilarity: QueryOrder.DESC,
+                createdAt: QueryOrder.ASC,
+                user: { name: QueryOrder.ASC },
+              },
+            ],
+            limit: 100,
+          },
+        );
+
+        const snapshotTime = new Date();
+        const rankings = drawings.map<RankingSnapshotInsert>((drawing) => {
+          return {
+            name: drawing.user.name,
+            strokes: drawing.strokes,
+            totalSimilarity: drawing.totalSimilarity,
+            userId: drawing.user.id,
+            drawingId: drawing.id,
+            createdAt: snapshotTime,
+            updatedAt: snapshotTime,
+          };
+        });
+
+        const rankingRepository = transactionalEm.getRepository(Ranking);
+        await rankingRepository.nativeDelete({});
+
+        if (rankings.length > 0) {
+          await rankingRepository.insertMany(rankings);
+        }
+      });
+    } finally {
+      this.isRefreshing = false;
+    }
+  }
+}
