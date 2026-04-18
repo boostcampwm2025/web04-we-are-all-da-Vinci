@@ -42,12 +42,6 @@ export const scoreFinalSimilarity = (
   const normalizedPromptStrokes = preprocessedPrompt.normalizedStrokes;
   const normalizedPlayerStrokes = preprocessedPlayer.normalizedStrokes;
 
-  // 스트로크 개수 비교
-  const strokeCountSimilarity = scoreStrokeCountSimilarity(
-    normalizedPromptStrokes,
-    normalizedPlayerStrokes,
-  );
-
   // 스트로크 유사도
   const strokeMatchSimilarity = scoreGreedyStrokeMatch(
     normalizedPromptStrokes,
@@ -63,14 +57,11 @@ export const scoreFinalSimilarity = (
   const scaledShapeScore = applyNonLinearScale(shapeScore, 90);
 
   // 최종 유사도 계산
-  const weightedStrokeCountSim =
-    strokeCountSimilarity * SIMILARITY_CONFIG.finalWeights.strokeCount;
   const weightedStrokeMatchSim =
     strokeMatchSimilarity.score * SIMILARITY_CONFIG.finalWeights.strokeMatch;
   const weightedShapeSim =
     scaledShapeScore * SIMILARITY_CONFIG.finalWeights.shape;
-  let similarity =
-    weightedStrokeCountSim + weightedStrokeMatchSim + weightedShapeSim;
+  let similarity = weightedStrokeMatchSim + weightedShapeSim;
 
   // 패널티 적용
   let penaltyPoints = 0;
@@ -95,10 +86,10 @@ export const scoreFinalSimilarity = (
   const roundedSimilarity = Math.round(similarity * 100) / 100;
 
   return {
-    similarity: roundedSimilarity,
-    strokeCountSimilarity: Math.round(weightedStrokeCountSim * 100) / 100,
-    strokeMatchSimilarity: Math.round(weightedStrokeMatchSim * 100) / 100,
-    shapeSimilarity: Math.round(weightedShapeSim * 100) / 100,
+    score: roundedSimilarity,
+    strokeMatchSimilarity: weightedStrokeMatchSim,
+    shapeSimilarity: weightedShapeSim,
+    penalty: penaltyPoints,
   };
 };
 
