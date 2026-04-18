@@ -1,6 +1,7 @@
 import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { ScheduleModule } from "@nestjs/schedule";
 import { LoggerModule } from "nestjs-pino";
 import { HealthModule } from "./health/health.module";
 import { UserModule } from "./modules/user/user.module";
@@ -39,6 +40,7 @@ import config from "./mikro-orm.config";
         };
       },
     }),
+    ScheduleModule.forRoot(),
     MikroOrmModule.forRoot(config),
     UserModule,
     DrawingModule,
