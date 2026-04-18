@@ -20,6 +20,9 @@ export class Drawing extends BaseEntity {
   @Property({ fieldName: "similarity", type: "text" })
   similarity!: string;
 
+  @Property({ fieldName: "total_similarity", type: "double" })
+  totalSimilarity!: number;
+
   @ManyToOne(() => User)
   user!: Rel<User>;
 
