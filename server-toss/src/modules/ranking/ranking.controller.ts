@@ -1,7 +1,15 @@
-import { Controller, Get } from "@nestjs/common";
-import { ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { RankingService } from "./ranking.service";
+import { Controller, Get, Headers } from "@nestjs/common";
 import {
+  ApiBadRequestResponse,
+  ApiHeader,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from "@nestjs/swagger";
+import { RankingService } from "./ranking.service";
+import { parseUserIdHeader } from "./ranking.util";
+import {
+  type MyRankingResponse,
   type Top100RankingResponse,
   type Top3RankingResponse,
 } from "./types/ranking.type";
@@ -30,6 +38,35 @@ const top100RankingResponseSchema = {
     },
     required: ["name", "similarity", "userId", "drawingId"],
   },
+};
+
+const myRankingSuccessResponseSchema = {
+  type: "object",
+  properties: {
+    state: { type: "string", example: "FOUND" },
+    ranking: {
+      type: "object",
+      properties: {
+        rank: { type: "integer", example: 1 },
+        similarity: { type: "number", example: 91.25 },
+      },
+      required: ["rank", "similarity"],
+    },
+  },
+  required: ["state", "ranking"],
+};
+
+const myRankingNotSubmittedResponseSchema = {
+  type: "object",
+  properties: {
+    state: { type: "string", example: "NOT_SUBMITTED" },
+    message: { type: "string", example: "NOT_SUBMITTED" },
+  },
+  required: ["state", "message"],
+};
+
+const myRankingResponseSchema = {
+  oneOf: [myRankingSuccessResponseSchema, myRankingNotSubmittedResponseSchema],
 };
 
 @ApiTags("Rankings")
@@ -63,5 +100,31 @@ export class RankingController {
   })
   async findTop100(): Promise<Top100RankingResponse> {
     return await this.rankingService.findTop100();
+  }
+
+  @Get("me")
+  @ApiHeader({
+    name: "X-User-Id",
+    required: true,
+    description: "현재 사용자의 식별자",
+  })
+  @ApiOperation({
+    summary: "내 랭킹 조회",
+    description:
+      "오늘 제출한 drawing 중 가장 높은 순위의 개인 랭킹을 반환합니다. 오늘 제출이 없으면 NOT_SUBMITTED 상태와 내부 키를 반환합니다.",
+  })
+  @ApiOkResponse({
+    description: "개인 랭킹 조회 결과",
+    schema: myRankingResponseSchema,
+  })
+  @ApiBadRequestResponse({
+    description: "X-User-Id 헤더가 없거나 숫자 문자열이 아닌 경우",
+  })
+  async findMyRanking(
+    @Headers("x-user-id") userIdHeader?: string | string[],
+  ): Promise<MyRankingResponse> {
+    const userId = parseUserIdHeader(userIdHeader);
+
+    return await this.rankingService.findMyRanking(userId);
   }
 }
