@@ -115,12 +115,12 @@ export const useDrawingSubmission = ({
       );
 
       if (isPractice) {
-        onSimilarityChange?.(similarity.similarity);
+        onSimilarityChange?.(similarity.score);
       } else {
         const socket = getSocket();
         socket.emit(SERVER_EVENTS.USER_SCORE, {
           roomId,
-          similarity: similarity.similarity,
+          similarity: similarity.score,
         });
       }
     } catch (error) {

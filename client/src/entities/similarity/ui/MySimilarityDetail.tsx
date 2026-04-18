@@ -24,7 +24,7 @@ const MySimilarityDetail = ({ similarity }: MySimilarityDetailProps) => {
             전체 유사도
           </span>
           <span className="font-handwriting text-2xl font-bold text-blue-500 md:text-3xl">
-            {similarity.similarity}%
+            {similarity.score}%
           </span>
         </div>
 

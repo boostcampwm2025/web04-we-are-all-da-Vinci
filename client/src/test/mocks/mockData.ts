@@ -19,10 +19,10 @@ const createSimilarity = (index: number, count: number): number =>
   Math.round(100 - (index / Math.max(count - 1, 1)) * 50); // 100 ~ 50 사이
 
 export const MOCK_SIMILARITY: Similarity = {
-  similarity: 85.5,
-  strokeCountSimilarity: 90,
+  score: 85.5,
   strokeMatchSimilarity: 80,
   shapeSimilarity: 86.5,
+  penalty: 10,
 };
 
 export const MOCK_HIGHLIGHT: Highlight = {
