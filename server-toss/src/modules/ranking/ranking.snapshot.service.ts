@@ -6,6 +6,7 @@ import {
 import { Injectable } from "@nestjs/common";
 import { Drawing } from "src/modules/drawing/drawing.entity";
 import { Ranking } from "./ranking.entity";
+import { getSeoulDayRange } from "src/common/time.util";
 
 type RankingSnapshotInsert = RequiredEntityData<Ranking>;
 
@@ -21,12 +22,18 @@ export class RankingSnapshotService {
     }
 
     this.isRefreshing = true;
+    const { start, end } = getSeoulDayRange();
 
     try {
       await this.em.transactional(async (transactionalEm) => {
         const drawings = await transactionalEm.find(
           Drawing,
-          {},
+          {
+            createdAt: {
+              $gte: start,
+              $lt: end,
+            },
+          },
           {
             populate: ["user"],
             orderBy: [
