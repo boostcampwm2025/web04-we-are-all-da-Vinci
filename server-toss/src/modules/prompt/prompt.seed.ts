@@ -1,18 +1,24 @@
 import { EntityManager, EntityRepository } from "@mikro-orm/core";
 import { InjectRepository } from "@mikro-orm/nestjs";
-import { Injectable, OnModuleInit } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { StrokeSchema, type Stroke } from "@toss/shared";
-import { readFile } from "node:fs/promises";
 import { PinoLogger } from "nestjs-pino";
+import { readFile } from "node:fs/promises";
 import * as path from "node:path";
 import { z } from "zod";
 import { DailyPrompt } from "./daily-prompt.entity";
 import { Prompt } from "./prompt.entity";
 
-export const SEED_START_DATE = new Date(Date.UTC(2026, 4, 1));
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const DatedPromptSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  strokes: z.array(StrokeSchema),
+});
+const PromptStrokesSchema = z.array(DatedPromptSchema);
 
-const PromptStrokesSchema = z.array(z.array(StrokeSchema));
+export interface DatedPrompt {
+  date: string;
+  strokes: Stroke[];
+}
 
 export interface SeedResult {
   seeded: number;
@@ -20,7 +26,7 @@ export interface SeedResult {
 }
 
 @Injectable()
-export class PromptSeedService implements OnModuleInit {
+export class PromptSeedService {
   private readonly logger: PinoLogger | undefined;
 
   constructor(
@@ -35,43 +41,45 @@ export class PromptSeedService implements OnModuleInit {
     this.logger?.setContext(PromptSeedService.name);
   }
 
-  async onModuleInit(): Promise<void> {
+  async run(): Promise<SeedResult> {
     const data = await this.loadPromptStrokes();
     const result = await this.runIfEmpty(data);
     this.logger?.info(result, "Prompt seed executed");
+    return result;
   }
 
-  async runIfEmpty(data: Stroke[][]): Promise<SeedResult> {
+  async runIfEmpty(data: DatedPrompt[]): Promise<SeedResult> {
+    const em = this.em.fork();
+    const promptRepo = em.getRepository(Prompt);
+    const dailyRepo = em.getRepository(DailyPrompt);
     const [promptCount, dailyCount] = await Promise.all([
-      this.promptRepo.count(),
-      this.dailyRepo.count(),
+      promptRepo.count(),
+      dailyRepo.count(),
     ]);
 
     if (promptCount > 0 || dailyCount > 0) {
       return { seeded: 0, skipped: true };
     }
 
-    await this.em.transactional(async (em) => {
-      data.forEach((strokes, index) => {
+    await em.transactional(async (txEm) => {
+      data.forEach(({ date, strokes }) => {
         const prompt = new Prompt();
         prompt.strokes = JSON.stringify(strokes);
 
         const daily = new DailyPrompt();
         daily.prompt = prompt;
-        daily.promptDate = new Date(
-          SEED_START_DATE.getTime() + index * ONE_DAY_MS,
-        );
+        daily.promptDate = new Date(date + "T00:00:00.000Z");
 
-        em.persist(prompt);
-        em.persist(daily);
+        txEm.persist(prompt);
+        txEm.persist(daily);
       });
-      await em.flush();
+      await txEm.flush();
     });
 
     return { seeded: data.length, skipped: false };
   }
 
-  private async loadPromptStrokes(): Promise<Stroke[][]> {
+  private async loadPromptStrokes(): Promise<DatedPrompt[]> {
     const promptPath = path.join(process.cwd(), "data", "promptStrokes.json");
     const raw = await readFile(promptPath, "utf-8");
     return PromptStrokesSchema.parse(JSON.parse(raw));

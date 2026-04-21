@@ -29,7 +29,7 @@ describe("ZodExceptionFilter", () => {
       message: string;
       issues: unknown[];
     };
-    expect(payload.message).toBe("Validation failed");
+    expect(payload.message).toBe("Validation 실패");
     expect(Array.isArray(payload.issues)).toBe(true);
   });
 });
