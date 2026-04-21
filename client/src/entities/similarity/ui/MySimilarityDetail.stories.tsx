@@ -29,10 +29,10 @@ export const Default: Story = {
   name: '기본 상태',
   args: {
     similarity: {
-      similarity: 75,
-      strokeCountSimilarity: 10,
+      score: 75,
       strokeMatchSimilarity: 50,
       shapeSimilarity: 15,
+      penalty: 10,
     },
   },
 };
@@ -41,10 +41,10 @@ export const HighSimilarity: Story = {
   name: '높은 유사도',
   args: {
     similarity: {
-      similarity: 95,
-      strokeCountSimilarity: 50,
+      score: 95,
       strokeMatchSimilarity: 40,
       shapeSimilarity: 5,
+      penalty: 50,
     },
   },
   parameters: {
@@ -60,10 +60,10 @@ export const LowSimilarity: Story = {
   name: '낮은 유사도',
   args: {
     similarity: {
-      similarity: 25,
-      strokeCountSimilarity: 6.5,
+      score: 25,
       strokeMatchSimilarity: 7.5,
       shapeSimilarity: 11,
+      penalty: 6.5,
     },
   },
   parameters: {
@@ -79,10 +79,10 @@ export const UnevenDistribution: Story = {
   name: '불균등 분포',
   args: {
     similarity: {
-      similarity: 80,
-      strokeCountSimilarity: 10,
+      score: 80,
       strokeMatchSimilarity: 50,
       shapeSimilarity: 10,
+      penalty: 10,
     },
   },
   parameters: {
@@ -99,10 +99,10 @@ export const ZeroSimilarity: Story = {
   name: '유사도 0%',
   args: {
     similarity: {
-      similarity: 0,
-      strokeCountSimilarity: 0,
+      score: 0,
       strokeMatchSimilarity: 0,
       shapeSimilarity: 0,
+      penalty: 0,
     },
   },
   parameters: {
@@ -118,10 +118,10 @@ export const PerfectSimilarity: Story = {
   name: '완벽한 유사도 (100%)',
   args: {
     similarity: {
-      similarity: 100,
-      strokeCountSimilarity: 10,
+      score: 100,
       strokeMatchSimilarity: 50,
-      shapeSimilarity: 40,
+      shapeSimilarity: 50,
+      penalty: 0,
     },
   },
   parameters: {

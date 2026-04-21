@@ -63,7 +63,7 @@ export const createMockRoundResults = (count: number): RoundResult[] =>
     ...createPlayerBase(i),
     score: 100 - Math.round((i / Math.max(count - 1, 1)) * 80),
     ranking: i + 1,
-    similarity: { ...MOCK_SIMILARITY, similarity: createSimilarity(i, count) },
+    similarity: { ...MOCK_SIMILARITY, score: createSimilarity(i, count) },
     strokes: MOCK_STROKES,
   }));
 
