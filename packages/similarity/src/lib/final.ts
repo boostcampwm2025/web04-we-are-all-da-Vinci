@@ -154,15 +154,3 @@ const applyNonLinearScale = (
     return score;
   }
 };
-
-// 스트로크 개수 유사도 점수
-const scoreStrokeCountSimilarity = (strokes1: Stroke[], strokes2: Stroke[]) => {
-  const strokeCount1 = strokes1.length;
-  const strokeCount2 = strokes2.length;
-  if (strokeCount1 === 0 && strokeCount2 === 0) return 100;
-  if (strokeCount1 === 0 || strokeCount2 === 0) return 0;
-
-  const ratio =
-    Math.min(strokeCount1, strokeCount2) / Math.max(strokeCount1, strokeCount2);
-  return ratio * 100;
-};

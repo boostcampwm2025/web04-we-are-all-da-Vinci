@@ -84,10 +84,10 @@ export const useDrawingSubmission = ({
           roomId,
           strokes,
           similarity: {
-            similarity: 0,
-            strokeCountSimilarity: 0,
+            score: 0,
             strokeMatchSimilarity: 0,
             shapeSimilarity: 0,
+            penalty: 0,
           },
         });
       }
