@@ -3,6 +3,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { LoggerModule } from "nestjs-pino";
 import { HealthModule } from "./health/health.module";
+import { AuthModule } from "./modules/auth/auth.module";
 import config from "./mikro-orm.config";
 import { AdModule } from "./modules/ad/ad.module";
 import { DrawingModule } from "./modules/drawing/drawing.module";
@@ -40,6 +41,7 @@ import { UserModule } from "./modules/user/user.module";
       },
     }),
     MikroOrmModule.forRoot(config),
+    AuthModule,
     UserModule,
     DrawingModule,
     PromptModule,

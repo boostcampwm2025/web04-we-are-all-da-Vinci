@@ -35,12 +35,17 @@ export async function run(): Promise<CheckResult> {
   }
 
   // 2. 소스에서 제3자 광고 SDK import 스캔
-  const files = execSync('find src -name "*.ts" -o -name "*.tsx"', {
+  const findCommand =
+    process.platform === "win32"
+      ? `powershell -Command "Get-ChildItem -Path src -Recurse -Include '*.ts','*.tsx' | ForEach-Object { $_.FullName.Substring($PWD.Path.Length + 1).Replace('\\', '/') }"`
+      : 'find src -name "*.ts" -o -name "*.tsx"';
+
+  const files = execSync(findCommand, {
     cwd: ROOT,
     encoding: "utf-8",
   })
     .trim()
-    .split("\n")
+    .split(/\r?\n/)
     .filter(Boolean);
 
   for (const relPath of files) {
