@@ -20,9 +20,9 @@ const top3RankingResponseSchema = {
     type: "object",
     properties: {
       name: { type: "string", example: "홍길동" },
-      similarity: { type: "number", example: 91.25 },
+      score: { type: "number", example: 91.25 },
     },
-    required: ["name", "similarity"],
+    required: ["name", "score"],
   },
 };
 
@@ -32,11 +32,11 @@ const top100RankingResponseSchema = {
     type: "object",
     properties: {
       name: { type: "string", example: "홍길동" },
-      similarity: { type: "number", example: 91.25 },
+      score: { type: "number", example: 91.25 },
       userId: { type: "string", example: "123" },
       drawingId: { type: "string", example: "456" },
     },
-    required: ["name", "similarity", "userId", "drawingId"],
+    required: ["name", "score", "userId", "drawingId"],
   },
 };
 
@@ -48,9 +48,9 @@ const myRankingSuccessResponseSchema = {
       type: "object",
       properties: {
         rank: { type: "integer", example: 1 },
-        similarity: { type: "number", example: 91.25 },
+        score: { type: "number", example: 91.25 },
       },
-      required: ["rank", "similarity"],
+      required: ["rank", "score"],
     },
   },
   required: ["state", "ranking"],
