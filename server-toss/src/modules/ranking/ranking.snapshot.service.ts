@@ -38,7 +38,7 @@ export class RankingSnapshotService {
             populate: ["user"],
             orderBy: [
               {
-                totalSimilarity: QueryOrder.DESC,
+                score: QueryOrder.DESC,
                 createdAt: QueryOrder.ASC,
                 user: { name: QueryOrder.ASC },
               },
@@ -52,7 +52,7 @@ export class RankingSnapshotService {
           return {
             name: drawing.user.name,
             strokes: drawing.strokes,
-            totalSimilarity: drawing.totalSimilarity,
+            score: drawing.score,
             userId: drawing.user.id,
             drawingId: drawing.id,
             createdAt: snapshotTime,

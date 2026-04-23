@@ -16,8 +16,8 @@ export class Ranking extends BaseEntity {
   @Property({ fieldName: "strokes", type: "text" })
   strokes!: string;
 
-  @Property({ fieldName: "total_similarity", type: "double" })
-  totalSimilarity!: number;
+  @Property({ fieldName: "score", type: "double" })
+  score!: number;
 
   @Property({ fieldName: "user_id", type: "bigint" })
   userId!: bigint;

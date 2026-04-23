@@ -341,8 +341,8 @@
           "enumItems": [],
           "mappedType": "bigint"
         },
-        "total_similarity": {
-          "name": "total_similarity",
+        "score": {
+          "name": "score",
           "type": "double",
           "unsigned": false,
           "autoincrement": false,
@@ -729,8 +729,8 @@
           "enumItems": [],
           "mappedType": "bigint"
         },
-        "total_similarity": {
-          "name": "total_similarity",
+        "score": {
+          "name": "score",
           "type": "double",
           "unsigned": false,
           "autoincrement": false,

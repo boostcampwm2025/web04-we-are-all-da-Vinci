@@ -11,14 +11,14 @@ const toStringId = (value: bigint) => {
 export const mapRankingToTop3Item = (ranking: Ranking): Top3RankingItem => {
   return {
     name: ranking.name,
-    similarity: ranking.totalSimilarity,
+    score: ranking.score,
   };
 };
 
 export const mapRankingToTop100Item = (ranking: Ranking): Top100RankingItem => {
   return {
     name: ranking.name,
-    similarity: ranking.totalSimilarity,
+    score: ranking.score,
     userId: toStringId(ranking.userId),
     drawingId: toStringId(ranking.drawingId),
   };

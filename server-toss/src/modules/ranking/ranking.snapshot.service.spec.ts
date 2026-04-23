@@ -22,6 +22,14 @@ import { RankingSnapshotService } from "./ranking.snapshot.service";
 describe("랭킹 스냅샷 갱신 서비스", () => {
   describe("refreshRankingSnapshot 메소드는", () => {
     describe("drawings 데이터가 있으면", () => {
+      beforeEach(() => {
+        jest.useFakeTimers();
+        jest.setSystemTime(new Date("2026-04-18T06:00:00.000Z"));
+      });
+
+      afterEach(() => {
+        jest.useRealTimers();
+      });
       it("정렬된 top100 스냅샷을 재생성한다", async () => {
         const insertedRankings: unknown[] = [];
         const nativeDelete = jest.fn().mockResolvedValue(0);
@@ -38,7 +46,7 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
             id: 1n,
             strokes: "strokes-1",
             similarity: "unused-1",
-            totalSimilarity: 98.5,
+            score: 98.5,
             createdAt: new Date("2026-04-18T00:00:00.000Z"),
             updatedAt: new Date("2026-04-18T00:00:00.000Z"),
             user: {
@@ -50,7 +58,7 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
             id: 2n,
             strokes: "strokes-2",
             similarity: "unused-2",
-            totalSimilarity: 87.2,
+            score: 87.2,
             createdAt: new Date("2026-04-18T00:01:00.000Z"),
             updatedAt: new Date("2026-04-18T00:01:00.000Z"),
             user: {
@@ -75,7 +83,12 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
 
         expect(find.mock.calls[0]).toEqual([
           Drawing,
-          {},
+          {
+            createdAt: {
+              $gte: new Date("2026-04-17T15:00:00.000Z"),
+              $lt: new Date("2026-04-18T15:00:00.000Z"),
+            },
+          },
           expect.objectContaining({
             populate: ["user"],
             limit: 100,
@@ -88,7 +101,7 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
           expect.objectContaining({
             name: "가",
             strokes: "strokes-1",
-            totalSimilarity: drawings[0].totalSimilarity,
+            score: drawings[0].score,
             userId: 11n,
             drawingId: 1n,
           }),
@@ -97,7 +110,7 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
           expect.objectContaining({
             name: "나",
             strokes: "strokes-2",
-            totalSimilarity: drawings[1].totalSimilarity,
+            score: drawings[1].score,
             userId: 22n,
             drawingId: 2n,
           }),

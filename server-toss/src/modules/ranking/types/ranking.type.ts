@@ -1,17 +1,17 @@
 import { z } from "zod";
 
 export const RankingSimilaritySchema = z.object({
-  similarity: z.number().min(0).max(100),
+  score: z.number().min(0).max(100),
   strokeCountSimilarity: z.number().min(0).max(100),
-  strokeMatchSimilarity: z.number().min(0).max(100),
   shapeSimilarity: z.number().min(0).max(100),
+  penalty: z.number().min(0).max(100),
 });
 
 export type RankingSimilarity = z.infer<typeof RankingSimilaritySchema>;
 
 export const Top3RankingItemSchema = z.object({
   name: z.string().max(10),
-  similarity: z.number().min(0).max(100),
+  score: z.number().min(0).max(100),
 });
 
 export type Top3RankingItem = z.infer<typeof Top3RankingItemSchema>;
@@ -22,7 +22,7 @@ export type Top3RankingResponse = z.infer<typeof Top3RankingResponseSchema>;
 
 export const Top100RankingItemSchema = z.object({
   name: z.string().max(10),
-  similarity: z.number().min(0).max(100),
+  score: z.number().min(0).max(100),
   userId: z.string().regex(/^\d+$/),
   drawingId: z.string().regex(/^\d+$/),
 });
@@ -37,7 +37,7 @@ export const MyRankingSuccessResponseSchema = z.object({
   state: z.literal("FOUND"),
   ranking: z.object({
     rank: z.number().int().min(1),
-    similarity: z.number().min(0).max(100),
+    score: z.number().min(0).max(100),
   }),
 });
 

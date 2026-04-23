@@ -47,7 +47,7 @@ export class RankingService {
         populate: ["user"],
         orderBy: [
           {
-            totalSimilarity: QueryOrder.DESC,
+            score: QueryOrder.DESC,
             createdAt: QueryOrder.ASC,
             user: { name: QueryOrder.ASC },
           },
@@ -71,7 +71,7 @@ export class RankingService {
       state: "FOUND",
       ranking: {
         rank: rankingIndex + 1,
-        similarity: ranking.totalSimilarity,
+        score: ranking.score,
       },
     };
   }

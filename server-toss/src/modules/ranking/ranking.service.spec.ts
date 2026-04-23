@@ -37,7 +37,7 @@ import { RankingService } from "./ranking.service";
 describe("랭킹 서비스", () => {
   const ranking = {
     name: "홍길동",
-    totalSimilarity: 91.25,
+    score: 91.25,
     userId: 123n,
     drawingId: 456n,
   } as Ranking;
@@ -54,7 +54,7 @@ describe("랭킹 서비스", () => {
       await expect(rankingService.findTop3()).resolves.toEqual([
         {
           name: "홍길동",
-          similarity: 91.25,
+          score: 91.25,
         },
       ]);
 
@@ -72,7 +72,7 @@ describe("랭킹 서비스", () => {
       await expect(rankingService.findTop100()).resolves.toEqual([
         {
           name: "홍길동",
-          similarity: 91.25,
+          score: 91.25,
           userId: "123",
           drawingId: "456",
         },
@@ -97,7 +97,7 @@ describe("랭킹 서비스", () => {
         const drawings = [
           {
             id: 1n,
-            totalSimilarity: 99.8,
+            score: 99.8,
             createdAt: new Date("2026-04-18T15:10:00.000Z"),
             user: {
               id: 11n,
@@ -106,7 +106,7 @@ describe("랭킹 서비스", () => {
           },
           {
             id: 2n,
-            totalSimilarity: 98.2,
+            score: 98.2,
             createdAt: new Date("2026-04-18T15:20:00.000Z"),
             user: {
               id: 22n,
@@ -115,7 +115,7 @@ describe("랭킹 서비스", () => {
           },
           {
             id: 3n,
-            totalSimilarity: 97.7,
+            score: 97.7,
             createdAt: new Date("2026-04-18T15:30:00.000Z"),
             user: {
               id: 11n,
@@ -133,7 +133,7 @@ describe("랭킹 서비스", () => {
           state: "FOUND",
           ranking: {
             rank: 1,
-            similarity: 99.8,
+            score: 99.8,
           },
         });
 
@@ -149,7 +149,7 @@ describe("랭킹 서비스", () => {
             populate: ["user"],
             orderBy: [
               {
-                totalSimilarity: QueryOrder.DESC,
+                score: QueryOrder.DESC,
                 createdAt: QueryOrder.ASC,
                 user: { name: QueryOrder.ASC },
               },
@@ -164,7 +164,7 @@ describe("랭킹 서비스", () => {
         const drawings = [
           {
             id: 1n,
-            totalSimilarity: 99.8,
+            score: 99.8,
             createdAt: new Date("2026-04-18T15:10:00.000Z"),
             user: {
               id: 22n,
