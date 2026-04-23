@@ -3,7 +3,11 @@ import { z } from "zod";
 const RgbChannel = z.number().int().min(0).max(255);
 
 export const StrokeSchema = z.object({
-  points: z.tuple([z.array(z.number()), z.array(z.number())]),
+  points: z
+    .tuple([z.array(z.number()), z.array(z.number())])
+    .refine(([xPoints, yPoints]) => xPoints.length === yPoints.length, {
+      message: "x 좌표와 y 좌표 배열의 길이가 같아야 해요",
+    }),
   color: z.tuple([RgbChannel, RgbChannel, RgbChannel]),
 });
 export type Stroke = z.infer<typeof StrokeSchema>;
@@ -28,7 +32,7 @@ export const PromptResponseSchema = z.object({
 export type PromptResponse = z.infer<typeof PromptResponseSchema>;
 
 export const SubmitDrawingRequestSchema = z.object({
-  userKey: z.string().min(1),
+  userKey: z.string().regex(/^\d+$/),
   strokes: z.array(StrokeSchema),
 });
 export type SubmitDrawingRequest = z.infer<typeof SubmitDrawingRequestSchema>;
