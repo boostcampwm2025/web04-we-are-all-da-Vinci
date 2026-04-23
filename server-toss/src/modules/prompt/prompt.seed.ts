@@ -1,4 +1,8 @@
-import { EntityManager, EntityRepository } from "@mikro-orm/core";
+import {
+  EntityManager,
+  EntityRepository,
+  UniqueConstraintViolationException,
+} from "@mikro-orm/core";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable } from "@nestjs/common";
 import { StrokeSchema, type Stroke } from "@toss/shared";
@@ -50,33 +54,45 @@ export class PromptSeedService {
 
   async runIfEmpty(data: DatedPrompt[]): Promise<SeedResult> {
     const em = this.em.fork();
-    const promptRepo = em.getRepository(Prompt);
-    const dailyRepo = em.getRepository(DailyPrompt);
-    const [promptCount, dailyCount] = await Promise.all([
-      promptRepo.count(),
-      dailyRepo.count(),
-    ]);
+    let seeded = false;
 
-    if (promptCount > 0 || dailyCount > 0) {
-      return { seeded: 0, skipped: true };
+    try {
+      await em.transactional(async (txEm) => {
+        const promptRepo = txEm.getRepository(Prompt);
+        const dailyRepo = txEm.getRepository(DailyPrompt);
+        const [promptCount, dailyCount] = await Promise.all([
+          promptRepo.count(),
+          dailyRepo.count(),
+        ]);
+
+        if (promptCount > 0 || dailyCount > 0) {
+          return;
+        }
+
+        data.forEach(({ date, strokes }) => {
+          const prompt = new Prompt();
+          prompt.strokes = JSON.stringify(strokes);
+
+          const daily = new DailyPrompt();
+          daily.prompt = prompt;
+          daily.promptDate = new Date(date + "T00:00:00.000Z");
+
+          txEm.persist(prompt);
+          txEm.persist(daily);
+        });
+        await txEm.flush();
+        seeded = true;
+      });
+    } catch (error) {
+      if (error instanceof UniqueConstraintViolationException) {
+        return { seeded: 0, skipped: true };
+      }
+      throw error;
     }
 
-    await em.transactional(async (txEm) => {
-      data.forEach(({ date, strokes }) => {
-        const prompt = new Prompt();
-        prompt.strokes = JSON.stringify(strokes);
-
-        const daily = new DailyPrompt();
-        daily.prompt = prompt;
-        daily.promptDate = new Date(date + "T00:00:00.000Z");
-
-        txEm.persist(prompt);
-        txEm.persist(daily);
-      });
-      await txEm.flush();
-    });
-
-    return { seeded: data.length, skipped: false };
+    return seeded
+      ? { seeded: data.length, skipped: false }
+      : { seeded: 0, skipped: true };
   }
 
   private async loadPromptStrokes(): Promise<DatedPrompt[]> {

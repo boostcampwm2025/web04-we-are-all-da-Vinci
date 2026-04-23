@@ -18,7 +18,7 @@ export default defineConfig({
   entities: [User, Drawing, Prompt, DailyPrompt, PointLog, AdView, Ranking],
   debug: process.env.NODE_ENV !== "production",
   forceUtcTimezone: true, // UTC로 시간 설정 고정
-  allowGlobalContext: true, // 테스트환경의 전역 em 사용을 위한 설정
+  allowGlobalContext: process.env.NODE_ENV === "test", // 테스트환경의 전역 em 사용을 위한 설정
   extensions: [Migrator],
   migrations: {
     snapshot: process.env.NODE_ENV !== "production",

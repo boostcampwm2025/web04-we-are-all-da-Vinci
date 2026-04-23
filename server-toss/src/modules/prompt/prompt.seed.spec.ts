@@ -100,7 +100,6 @@ describe("PromptSeedService", () => {
 
     expect(result).toEqual({ seeded: 0, skipped: true });
     expect(forked.persist).not.toHaveBeenCalled();
-    expect(forked.transactional).not.toHaveBeenCalled();
   });
 
   it("daily_prompts만 존재해도 시드하지 않는다", async () => {
