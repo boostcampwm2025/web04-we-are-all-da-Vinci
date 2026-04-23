@@ -15,7 +15,7 @@ Apps-in-Toss 미니앱용 NestJS REST API. 매 획 단위의 유사도 계산과
 
 **MySQL이 이미 실행 중인 경우**
 
-1. `cp server-toss/.env.example .env`로 `server-toss/.env` 파일을 생성합니다.
+1. `cp server-toss/.env.example server-toss/.env`로 `server-toss/.env` 파일을 생성합니다.
 2. 실행 중인 MySQL 설정에 맞게 값을 바꿉니다.
 3. 프로젝트 루트에서 `pnpm dev:server-toss` 명령으로 서버를 실행합니다.
 
@@ -25,7 +25,7 @@ Apps-in-Toss 미니앱용 NestJS REST API. 매 획 단위의 유사도 계산과
 
 1. Nest 앱 생성 + `ZodExceptionFilter` 전역 등록 + CORS/Swagger(`/docs`) 세팅
 2. 비-프로덕션에서 `MikroORM.migrator.up()` 자동 실행
-3. `PromptSeedService.run()` — `prompts` / `daily_prompts`가 **둘 다 비어있을 때만** `data/promptStrokes.json`으로 시드 (SEED_START_DATE = 2026-04-01 KST, i번째 프롬프트 → 4/1 + i일)
+3. `PromptSeedService.run()` — `prompts` / `daily_prompts`가 **둘 다 비어있을 때만** `data/promptStrokes.json`의 명시적 `date` 필드대로 시드
 4. `app.listen(PORT)`
 
 ## API

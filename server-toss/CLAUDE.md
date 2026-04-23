@@ -93,8 +93,10 @@ src/
 ## Conventions
 
 - **KST**: `common/today.ts`의 `getTodayKst()`로 통일. 컨트롤러/서비스가 직접 `new Date()`로 날짜 결정하지 말 것.
-- **MikroORM v7**: `persistAndFlush` 없음 → `em.persist(e); await em.flush()`. 전역 EM 사용 시 `em.fork()` 또는 `allowGlobalContext: true`.
-- **Zod 검증**: 컨트롤러에서 `@Body(new ZodValidationPipe(Schema))` — 파싱 실패는 `ZodExceptionFilter`가 400으로 변환.
+- **MikroORM v7**: `persistAndFlush` 없음 → `em.persist(e); await em.flush()`. `allowGlobalContext`는 테스트 환경에서만 활성 — 서비스/시드에서는 `em.fork()` 필수.
+- **Zod 검증** (NestJS 기본 `ValidationPipe`/`class-validator` 미사용):
+  - 컨트롤러: `@Body(new ZodValidationPipe(Schema))`. 파이프는 `ZodError`를 그대로 throw → `ZodExceptionFilter`(전역)가 400으로 변환.
+  - `ZodError`를 `BadRequestException`으로 감싸지 말 것 — `@Catch(ZodError)` 필터를 우회해서 응답 포맷이 갈라진다.
 - **유사도 재계산**: `POST /drawing`는 클라 값을 저장하지 않고 서버에서 다시 계산한 값을 저장.
 - **`promptId` 전송 금지**: 클라는 보내지 않고, 서버가 오늘 날짜로 매칭.
 - **Swagger**: 모든 컨트롤러에 `@ApiTags`, `@ApiOperation`, `@ApiResponse` 적용. `/docs`에서 확인 가능. `@ApiBody`는 Zod 스키마를 JSON Schema로 수동 기술 (Zod → OpenAPI 자동 변환 미사용).
@@ -104,7 +106,7 @@ src/
 - Jest (ts-jest), `*.spec.ts`, `passWithNoTests` 활성
 - `describe`/`it` **한국어** (루트 CLAUDE.md 규약)
 - **MikroORM 모킹 일원화**: `src/test-setup/setup-mikro-orm-mocks.ts`를 jest `setupFiles`에 등록 → 각 spec에서 `jest.mock("@mikro-orm/...")` 반복 불필요
-- Controller 레이어는 `Test.createTestingModule` + `useValue` 서비스 목 + supertest로 e2e 스모크(라우팅/상태코드)
+- Controller 레이어는 `Test.createTestingModule` + `useValue` 서비스 목 + supertest로 e2e 스모크(라우팅/상태코드). `app.useGlobalFilters(new ZodExceptionFilter())` 등록 필수 — 없으면 Zod 검증 실패가 400 대신 500으로 떨어진다.
 - `moduleNameMapper`: `@toss/shared`, `@davinci/similarity`
 
 ## Environment Configuration

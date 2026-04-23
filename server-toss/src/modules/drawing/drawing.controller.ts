@@ -29,6 +29,7 @@ export class DrawingController {
           type: "array",
           items: {
             type: "object",
+            required: ["points", "color"],
             properties: {
               points: {
                 type: "array",
@@ -70,6 +71,7 @@ export class DrawingController {
           type: "array",
           items: {
             type: "object",
+            required: ["points", "color"],
             properties: {
               points: {
                 type: "array",

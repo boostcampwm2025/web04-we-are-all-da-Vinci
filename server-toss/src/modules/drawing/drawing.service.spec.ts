@@ -1,7 +1,7 @@
-const preprocessStrokesMock = jest.fn((strokes: unknown) => ({
+const mockPreprocessStrokes = jest.fn((strokes: unknown) => ({
   player: strokes,
 }));
-const scoreFinalSimilarityMock = jest.fn(() => ({
+const mockScoreFinalSimilarity = jest.fn(() => ({
   similarity: 87,
   strokeCountSimilarity: 90,
   strokeMatchSimilarity: 85,
@@ -9,8 +9,8 @@ const scoreFinalSimilarityMock = jest.fn(() => ({
 }));
 
 jest.mock("@davinci/similarity", () => ({
-  preprocessStrokes: preprocessStrokesMock,
-  scoreFinalSimilarity: scoreFinalSimilarityMock,
+  preprocessStrokes: mockPreprocessStrokes,
+  scoreFinalSimilarity: mockScoreFinalSimilarity,
 }));
 
 import { NotFoundException } from "@nestjs/common";
@@ -40,11 +40,11 @@ const buildPromptService = () => ({
 
 describe("DrawingService", () => {
   beforeEach(() => {
-    preprocessStrokesMock.mockClear();
-    scoreFinalSimilarityMock.mockClear();
+    mockPreprocessStrokes.mockClear();
+    mockScoreFinalSimilarity.mockClear();
   });
 
-  describe("scoreStrokes", () => {
+  describe("스트로크 점수 계산", () => {
     it("오늘 프롬프트 기반 Similarity를 계산해 반환한다", async () => {
       const promptService = buildPromptService();
       const em = {
@@ -64,8 +64,8 @@ describe("DrawingService", () => {
         new Date(Date.UTC(2026, 3, 15)),
       );
 
-      expect(preprocessStrokesMock).toHaveBeenCalledWith(sampleStrokes);
-      expect(scoreFinalSimilarityMock).toHaveBeenCalledWith(
+      expect(mockPreprocessStrokes).toHaveBeenCalledWith(sampleStrokes);
+      expect(mockScoreFinalSimilarity).toHaveBeenCalledWith(
         promptPreprocessed,
         { player: sampleStrokes },
       );
@@ -75,7 +75,7 @@ describe("DrawingService", () => {
     });
   });
 
-  describe("submitDrawing", () => {
+  describe("드로잉 제출", () => {
     it("유효한 userKey와 strokes를 받으면 drawings를 저장하고 결과를 반환한다", async () => {
       const promptService = buildPromptService();
       const fakeUser = { id: BigInt(1) } as User;
