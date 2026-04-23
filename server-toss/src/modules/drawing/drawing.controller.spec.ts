@@ -2,6 +2,7 @@ import { INestApplication, NotFoundException } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import request from "supertest";
 import type { App } from "supertest/types";
+import { ZodExceptionFilter } from "../../common/zod-exception.filter";
 import { DrawingController } from "./drawing.controller";
 import { DrawingService } from "./drawing.service";
 
@@ -37,6 +38,7 @@ describe("DrawingController (e2e)", () => {
     }).compile();
 
     app = module.createNestApplication();
+    app.useGlobalFilters(new ZodExceptionFilter());
     await app.init();
   });
 
@@ -46,7 +48,7 @@ describe("DrawingController (e2e)", () => {
   });
 
   describe("POST /strokes", () => {
-    it("유효한 payload는 200과 similarity를 반환한다", async () => {
+    it("유효한 payload는 201과 similarity를 반환한다", async () => {
       drawingService.scoreStrokes.mockResolvedValue(similarity);
 
       const res = await request(app.getHttpServer())

@@ -29,7 +29,9 @@ describe("ZodExceptionFilter", () => {
       message: string;
       issues: unknown[];
     };
-    expect(payload.message).toBe("Validation 실패");
+    expect(payload.message).toBe(
+      "요청 데이터가 올바르지 않아요 (Validation Failed)",
+    );
     expect(Array.isArray(payload.issues)).toBe(true);
   });
 });

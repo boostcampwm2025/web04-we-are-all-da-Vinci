@@ -7,7 +7,7 @@ export class ZodExceptionFilter implements ExceptionFilter {
   catch(exception: ZodError, host: ArgumentsHost): void {
     const response = host.switchToHttp().getResponse<Response>();
     response.status(400).json({
-      message: "Validation 실패",
+      message: "요청 데이터가 올바르지 않아요 (Validation Failed)",
       issues: exception.issues,
     });
   }
