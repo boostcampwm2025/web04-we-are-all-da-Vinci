@@ -6,11 +6,11 @@ import {
 } from "../config/rankingStyles";
 
 interface RankingEntryProps {
-  userId: number;
   name: string;
-  drawingId: number;
-  totalSimilarity: number;
+  drawingId: string;
+  score: number;
   rank: number;
+  isMe: boolean;
 }
 
 const RankingIcon = ({ rank, isMe }: { rank: number; isMe: boolean }) => {
@@ -36,24 +36,18 @@ const RankingIcon = ({ rank, isMe }: { rank: number; isMe: boolean }) => {
 };
 
 export const RankingEntry = ({
-  userId,
   name,
   drawingId,
-  totalSimilarity,
+  score,
   rank,
+  isMe,
 }: RankingEntryProps) => {
-  // 임시 데이터: 삭제 필요
-  const myId = 5;
   return (
     <ListRow
       id={`${drawingId}`}
-      left={<RankingIcon rank={rank} isMe={myId === userId} />}
+      left={<RankingIcon rank={rank} isMe={isMe} />}
       contents={
-        <ListRow.Texts
-          type="2RowTypeA"
-          top={name}
-          bottom={totalSimilarity + "점"}
-        />
+        <ListRow.Texts type="2RowTypeA" top={name} bottom={score + "점"} />
       }
       arrowType="right"
     />
