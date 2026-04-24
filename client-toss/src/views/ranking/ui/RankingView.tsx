@@ -1,11 +1,11 @@
-import { MyRanking, RankingList } from "@/entities/ranking";
+import { MyRankingSection, RankingList } from "@/entities/ranking";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Border, Button, Top } from "@toss/tds-mobile";
 import { Link } from "react-router-dom";
 
-const Ranking = () => {
+const RankingView = () => {
   return (
-    <div className="flex flex-col items-center  justify-center">
+    <div className="flex flex-col items-center justify-center">
       <main className="w-full">
         <Top
           title={
@@ -20,13 +20,12 @@ const Ranking = () => {
           }
         />
         <Border />
-        <MyRanking rank={1010101} totalSimilarity={34.123} />
+        <MyRankingSection />
         <BannerAd adGroupId="ait-ad-test-banner-id" className="mb-6" />
-
         <RankingList />
       </main>
 
-      <footer className="sticky bottom-2 w-[90%] bg-white rounded-2xl">
+      <footer className="sticky bottom-2 w-[90%] rounded-2xl bg-white">
         <Link to="/dashboard">
           <Button
             size="xlarge"
@@ -42,4 +41,4 @@ const Ranking = () => {
   );
 };
 
-export default Ranking;
+export default RankingView;
