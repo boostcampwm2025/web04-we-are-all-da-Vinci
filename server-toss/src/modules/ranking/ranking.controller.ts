@@ -10,11 +10,11 @@ import { RankingService } from "./ranking.service";
 import { parseOptionalUserIdHeader, parseUserIdHeader } from "./ranking.util";
 import {
   type MyRankingResponse,
-  type Top100RankingResponse,
-  type Top3RankingResponse,
+  type RankingListResponse,
+  type PodiumResponse,
 } from "./types/ranking.type";
 
-const top3RankingResponseSchema = {
+const podiumResponseSchema = {
   type: "array",
   items: {
     type: "object",
@@ -26,7 +26,7 @@ const top3RankingResponseSchema = {
   },
 };
 
-const top100RankingResponseSchema = {
+const rankingListResponseSchema = {
   type: "array",
   items: {
     type: "object",
@@ -76,7 +76,7 @@ const myRankingResponseSchema = {
 export class RankingController {
   constructor(private readonly rankingService: RankingService) {}
 
-  @Get("top3")
+  @Get("podium")
   @ApiOperation({
     summary: "TOP3 랭킹 조회",
     description:
@@ -84,13 +84,13 @@ export class RankingController {
   })
   @ApiOkResponse({
     description: "상위 3개 랭킹 목록",
-    schema: top3RankingResponseSchema,
+    schema: podiumResponseSchema,
   })
-  async findTop3(): Promise<Top3RankingResponse> {
-    return await this.rankingService.findTop3();
+  async findPodium(): Promise<PodiumResponse> {
+    return await this.rankingService.findPodium();
   }
 
-  @Get("top100")
+  @Get("")
   @ApiHeader({
     name: "X-User-Id",
     required: false,
@@ -103,17 +103,17 @@ export class RankingController {
   })
   @ApiOkResponse({
     description: "상위 100개 랭킹 목록",
-    schema: top100RankingResponseSchema,
+    schema: rankingListResponseSchema,
   })
   @ApiBadRequestResponse({
     description: "X-User-Id 헤더가 숫자 문자열이 아닌 경우",
   })
-  async findTop100(
+  async findRankingList(
     @Headers("x-user-id") userIdHeader?: string | string[],
-  ): Promise<Top100RankingResponse> {
+  ): Promise<RankingListResponse> {
     const userId = parseOptionalUserIdHeader(userIdHeader);
 
-    return await this.rankingService.findTop100(userId);
+    return await this.rankingService.findRankingList(userId);
   }
 
   @Get("me")

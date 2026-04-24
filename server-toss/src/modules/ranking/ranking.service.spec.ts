@@ -51,7 +51,7 @@ describe("랭킹 서비스", () => {
 
       const rankingService = new RankingService(repository, em);
 
-      await expect(rankingService.findTop3()).resolves.toEqual([
+      await expect(rankingService.findPodium()).resolves.toEqual([
         {
           name: "홍길동",
           score: 91.25,
@@ -69,7 +69,7 @@ describe("랭킹 서비스", () => {
 
       const rankingService = new RankingService(repository, em);
 
-      await expect(rankingService.findTop100()).resolves.toEqual([
+      await expect(rankingService.findRankingList()).resolves.toEqual([
         {
           name: "홍길동",
           score: 91.25,
@@ -97,7 +97,7 @@ describe("랭킹 서비스", () => {
 
       const rankingService = new RankingService(repository, em);
 
-      await expect(rankingService.findTop100(123n)).resolves.toEqual([
+      await expect(rankingService.findRankingList(123n)).resolves.toEqual([
         {
           name: "홍길동",
           score: 91.25,

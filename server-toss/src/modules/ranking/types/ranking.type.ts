@@ -9,18 +9,18 @@ export const RankingSimilaritySchema = z.object({
 
 export type RankingSimilarity = z.infer<typeof RankingSimilaritySchema>;
 
-export const Top3RankingItemSchema = z.object({
+export const PodiumItemSchema = z.object({
   name: z.string().max(10),
   score: z.number().min(0).max(100),
 });
 
-export type Top3RankingItem = z.infer<typeof Top3RankingItemSchema>;
+export type PodiumItem = z.infer<typeof PodiumItemSchema>;
 
-export const Top3RankingResponseSchema = z.array(Top3RankingItemSchema);
+export const PodiumResponseSchema = z.array(PodiumItemSchema);
 
-export type Top3RankingResponse = z.infer<typeof Top3RankingResponseSchema>;
+export type PodiumResponse = z.infer<typeof PodiumResponseSchema>;
 
-export const Top100RankingItemSchema = z.object({
+export const RankingListItemSchema = z.object({
   name: z.string().max(10),
   score: z.number().min(0).max(100),
   userId: z.string().regex(/^\d+$/),
@@ -29,11 +29,11 @@ export const Top100RankingItemSchema = z.object({
   isMe: z.boolean(),
 });
 
-export type Top100RankingItem = z.infer<typeof Top100RankingItemSchema>;
+export type RankingListItem = z.infer<typeof RankingListItemSchema>;
 
-export const Top100RankingResponseSchema = z.array(Top100RankingItemSchema);
+export const RankingListResponseSchema = z.array(RankingListItemSchema);
 
-export type Top100RankingResponse = z.infer<typeof Top100RankingResponseSchema>;
+export type RankingListResponse = z.infer<typeof RankingListResponseSchema>;
 
 export const MyRankingSuccessResponseSchema = z.object({
   state: z.literal("FOUND"),

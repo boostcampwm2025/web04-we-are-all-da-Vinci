@@ -1,25 +1,22 @@
 import { Ranking } from "./ranking.entity";
-import {
-  type Top3RankingItem,
-  type Top100RankingItem,
-} from "./types/ranking.type";
+import type { PodiumItem, RankingListItem } from "./types/ranking.type";
 
 const toStringId = (value: bigint) => {
   return value.toString();
 };
 
-export const mapRankingToTop3Item = (ranking: Ranking): Top3RankingItem => {
+export const mapRankingToPodiumItem = (ranking: Ranking): PodiumItem => {
   return {
     name: ranking.name,
     score: ranking.score,
   };
 };
 
-export const mapRankingToTop100Item = (
+export const mapRankingToRankingListItem = (
   ranking: Ranking,
   index: number,
   userId?: bigint,
-): Top100RankingItem => {
+): RankingListItem => {
   return {
     name: ranking.name,
     score: ranking.score,

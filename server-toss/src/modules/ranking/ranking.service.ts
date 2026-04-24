@@ -5,11 +5,14 @@ import { Drawing } from "src/modules/drawing/drawing.entity";
 import { getSeoulDayRange } from "src/common/time.util";
 import {
   type MyRankingResponse,
-  type Top100RankingResponse,
-  type Top3RankingResponse,
+  type RankingListResponse,
+  type PodiumResponse,
 } from "./types/ranking.type";
 import { RankingRepository } from "./ranking.repository";
-import { mapRankingToTop100Item, mapRankingToTop3Item } from "./ranking.mapper";
+import {
+  mapRankingToRankingListItem,
+  mapRankingToPodiumItem,
+} from "./ranking.mapper";
 import { Ranking } from "./ranking.entity";
 
 @Injectable()
@@ -20,17 +23,17 @@ export class RankingService {
     private readonly em: EntityManager,
   ) {}
 
-  async findTop3(): Promise<Top3RankingResponse> {
+  async findPodium(): Promise<PodiumResponse> {
     const rankings = await this.rankingRepository.findTop(3);
 
-    return rankings.map(mapRankingToTop3Item);
+    return rankings.map(mapRankingToPodiumItem);
   }
 
-  async findTop100(userId?: bigint): Promise<Top100RankingResponse> {
+  async findRankingList(userId?: bigint): Promise<RankingListResponse> {
     const rankings = await this.rankingRepository.findTop(100);
 
     return rankings.map((ranking, index) =>
-      mapRankingToTop100Item(ranking, index, userId),
+      mapRankingToRankingListItem(ranking, index, userId),
     );
   }
 
