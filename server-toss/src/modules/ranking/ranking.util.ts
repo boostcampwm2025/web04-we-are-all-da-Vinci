@@ -14,3 +14,17 @@ export const parseUserIdHeader = (
 
   return BigInt(normalizedHeader);
 };
+
+export const parseOptionalUserIdHeader = (
+  userIdHeader: string | string[] | undefined,
+) => {
+  const headerValue = Array.isArray(userIdHeader)
+    ? userIdHeader[0]
+    : userIdHeader;
+
+  if (headerValue === undefined) {
+    return undefined;
+  }
+
+  return parseUserIdHeader(userIdHeader);
+};

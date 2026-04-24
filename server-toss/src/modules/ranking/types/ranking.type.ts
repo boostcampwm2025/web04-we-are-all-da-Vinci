@@ -25,6 +25,8 @@ export const Top100RankingItemSchema = z.object({
   score: z.number().min(0).max(100),
   userId: z.string().regex(/^\d+$/),
   drawingId: z.string().regex(/^\d+$/),
+  rank: z.number().min(1),
+  isMe: z.boolean(),
 });
 
 export type Top100RankingItem = z.infer<typeof Top100RankingItemSchema>;

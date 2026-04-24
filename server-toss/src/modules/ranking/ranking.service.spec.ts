@@ -63,7 +63,7 @@ describe("랭킹 서비스", () => {
   });
 
   describe("findTop100 메소드는 ", () => {
-    it("top100 응답을 반환한다", async () => {
+    it("userId 없이 top100 응답을 반환하면 isMe를 false로 채운다", async () => {
       const findTop = jest.fn().mockResolvedValue([ranking]);
       const repository = { findTop } as unknown as RankingRepository;
 
@@ -75,10 +75,46 @@ describe("랭킹 서비스", () => {
           score: 91.25,
           userId: "123",
           drawingId: "456",
+          rank: 1,
+          isMe: false,
         },
       ]);
 
       expect(findTop.mock.calls[0]).toEqual([100]);
+    });
+
+    it("userId가 주어지면 일치하는 항목만 isMe를 true로 반환한다", async () => {
+      const findTop = jest.fn().mockResolvedValue([
+        ranking,
+        {
+          name: "임꺽정",
+          score: 88.5,
+          userId: 999n,
+          drawingId: 777n,
+        } as Ranking,
+      ]);
+      const repository = { findTop } as unknown as RankingRepository;
+
+      const rankingService = new RankingService(repository, em);
+
+      await expect(rankingService.findTop100(123n)).resolves.toEqual([
+        {
+          name: "홍길동",
+          score: 91.25,
+          userId: "123",
+          drawingId: "456",
+          rank: 1,
+          isMe: true,
+        },
+        {
+          name: "임꺽정",
+          score: 88.5,
+          userId: "999",
+          drawingId: "777",
+          rank: 2,
+          isMe: false,
+        },
+      ]);
     });
   });
 

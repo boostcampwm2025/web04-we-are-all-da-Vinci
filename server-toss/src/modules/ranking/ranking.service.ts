@@ -26,10 +26,12 @@ export class RankingService {
     return rankings.map(mapRankingToTop3Item);
   }
 
-  async findTop100(): Promise<Top100RankingResponse> {
+  async findTop100(userId?: bigint): Promise<Top100RankingResponse> {
     const rankings = await this.rankingRepository.findTop(100);
 
-    return rankings.map(mapRankingToTop100Item);
+    return rankings.map((ranking, index) =>
+      mapRankingToTop100Item(ranking, index, userId),
+    );
   }
 
   async findMyRanking(userId: bigint): Promise<MyRankingResponse> {
