@@ -33,7 +33,7 @@ describe("serverTossApi", () => {
     expect((requestInit.headers as Headers).get("x-user-id")).toBe("1");
   });
 
-  it("TOP100 랭킹 조회 시 /api/rankings으로 요청하고 공통 헤더를 포함한다", async () => {
+  it("랭킹 목록 조회 시 /api/rankings으로 요청하고 공통 헤더를 포함한다", async () => {
     localStorage.setItem("userKey", "123");
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -45,7 +45,7 @@ describe("serverTossApi", () => {
     await serverTossApi.getRankingList();
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/rankings/top100",
+      "/api/rankings",
       expect.objectContaining({
         method: "GET",
         headers: expect.any(Headers),
