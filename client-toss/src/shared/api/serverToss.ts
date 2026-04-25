@@ -1,3 +1,4 @@
+import type { PodiumEntry } from "@/entities/podium";
 import type { MyRankingResponse, RankingListItem } from "@/entities/ranking";
 
 const BASE_URL = "/api";
@@ -72,4 +73,6 @@ export const serverTossApi = {
       headers,
     });
   },
+  getPodium: (options?: RequestOptions) =>
+    get<PodiumEntry[]>("/rankings/podium", options),
 };

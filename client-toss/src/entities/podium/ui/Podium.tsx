@@ -1,8 +1,6 @@
+import { Paragraph, Skeleton } from "@toss/tds-mobile";
 import { HEIGHTS, WIDTH } from "../config/podiumStyles";
-import type { PodiumEntry } from "../model/types";
-interface PodiumProps {
-  entries: PodiumEntry[];
-}
+import { usePodium } from "../hook/usePodium";
 
 const clipName = (name: string): string => {
   if (name.length > 4) {
@@ -11,16 +9,43 @@ const clipName = (name: string): string => {
   return name;
 };
 
-const Podium = ({ entries }: PodiumProps) => {
-  const podium = [
-    { ...entries[1], rank: 2 },
-    { ...entries[0], rank: 1 },
-    { ...entries[2], rank: 3 },
-  ].map((entry) => ({
-    ...entry,
-    name: clipName(entry.name),
-    totalSimilarity: String(entry.totalSimilarity) + "점",
-  }));
+const Podium = () => {
+  const { podium, isLoading } = usePodium();
+
+  if (isLoading) {
+    return <Skeleton pattern="listOnly" style={{ width: "100%" }} />;
+  }
+
+  if (!podium || podium.length === 0) {
+    return (
+      <Paragraph typography="t6" className="flex flex-col items-center ">
+        <Paragraph.Text
+          fontWeight="semibold"
+          typography="t5"
+        >{`아직 아무도 그림을 제출하지 않았어요\n`}</Paragraph.Text>
+        <Paragraph.Text>첫 번째 플레이어가 되어보세요!</Paragraph.Text>
+      </Paragraph>
+    );
+  }
+
+  const order = [2, 1, 3]; // 렌더링 순서
+
+  const entries = order
+    .map((rank) => {
+      const entry = podium[rank - 1]; // podium은 1등부터 시작
+      if (!entry) return null;
+
+      return {
+        ...entry,
+        rank,
+      };
+    })
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+    .map((entry) => ({
+      ...entry,
+      name: clipName(entry.name),
+      score: `${entry.score}점`,
+    }));
 
   return (
     <div
@@ -28,7 +53,7 @@ const Podium = ({ entries }: PodiumProps) => {
       style={{ height: 205 }}
     >
       <div className="flex items-end justify-center gap-2 pb-4">
-        {podium.map((entry) => (
+        {entries.map((entry) => (
           <div
             key={entry.rank}
             className="flex flex-col items-center justify-end gap-2"
@@ -38,7 +63,7 @@ const Podium = ({ entries }: PodiumProps) => {
                 {entry.name}
               </div>
               <div className="mt-1 text-[14px] leading-none text-[#8f97a3]">
-                {entry.totalSimilarity}
+                {entry.score}
               </div>
             </div>
 
