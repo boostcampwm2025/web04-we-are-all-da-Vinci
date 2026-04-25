@@ -1,3 +1,6 @@
+import { Button } from "@toss/tds-mobile";
+import { Link } from "react-router-dom";
+
 const NOT_SUBMITTED_MESSAGE = "아직 오늘 그림을 제출하지 않았어요.";
 
 export const MyRankingNotSubmitted = () => {
@@ -8,6 +11,16 @@ export const MyRankingNotSubmitted = () => {
         <div className="text-lg font-[700] text-[#031228]">
           {NOT_SUBMITTED_MESSAGE}
         </div>
+        <Link to="/">
+          <Button
+            size="large"
+            variant="weak"
+            display="block"
+            aria-label="그림 그리러 가기"
+          >
+            그림 그리러 가기
+          </Button>
+        </Link>
       </div>
     </div>
   );

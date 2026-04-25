@@ -24,7 +24,7 @@ export const useRankingList = () => {
           return;
         }
         setRankingList(data);
-        setIsLoading(true);
+        setIsLoading(false);
       })
       .catch((error) => {
         if (error instanceof Error && error.name === "AbortError") {
