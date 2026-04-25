@@ -1,6 +1,7 @@
-import { Paragraph, Skeleton } from "@toss/tds-mobile";
+import { Skeleton } from "@toss/tds-mobile";
 import { HEIGHTS, WIDTH } from "../config/podiumStyles";
 import { usePodium } from "../hook/usePodium";
+import { PodiumEmpty } from "./PodiumEmpty";
 
 const clipName = (name: string): string => {
   if (name.length > 4) {
@@ -17,15 +18,7 @@ const Podium = () => {
   }
 
   if (!podium || podium.length === 0) {
-    return (
-      <Paragraph typography="t6" className="flex flex-col items-center ">
-        <Paragraph.Text
-          fontWeight="semibold"
-          typography="t5"
-        >{`아직 아무도 그림을 제출하지 않았어요\n`}</Paragraph.Text>
-        <Paragraph.Text>첫 번째 플레이어가 되어보세요!</Paragraph.Text>
-      </Paragraph>
-    );
+    return <PodiumEmpty />;
   }
 
   const order = [2, 1, 3]; // 렌더링 순서
