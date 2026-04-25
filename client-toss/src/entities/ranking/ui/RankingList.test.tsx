@@ -12,6 +12,12 @@ vi.mock("../hooks/useRankingList", () => ({
 vi.mock("@toss/tds-mobile", () => ({
   List: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
   Skeleton: () => <div data-testid="ranking-list-skeleton" />,
+  Paragraph: Object.assign(
+    ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+    {
+      Text: ({ children }: { children?: ReactNode }) => <span>{children}</span>,
+    },
+  ),
 }));
 
 vi.mock("./RankingEntry", () => ({
@@ -39,9 +45,7 @@ describe("RankingList", () => {
     render(<RankingList />);
 
     expect(
-      screen.getByText(
-        "아직 아무도 그림을 제출하지 않았어요 첫 번째 플레이어가 되어보세요!",
-      ),
+      screen.getByText("아직 아무도 그림을 제출하지 않았어요"),
     ).toBeInTheDocument();
   });
 
