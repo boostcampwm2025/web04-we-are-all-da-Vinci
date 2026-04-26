@@ -62,6 +62,18 @@ export class TossApiClient {
     return data.success.accessToken;
   }
 
+  async removeAccessByUserKey(userKey: number): Promise<void> {
+    await this.request<unknown>(
+      "POST",
+      TOSS_API_ENDPOINTS.REMOVE_BY_USER_KEY,
+      {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+      JSON.stringify({ userKey }),
+    );
+  }
+
   async getUserInfo(accessToken: string): Promise<TossUserInfo> {
     const data = await this.request<TossUserResponse>(
       "GET",

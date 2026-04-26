@@ -87,7 +87,6 @@ export class AuthService {
 
   async logout(userKey: number): Promise<void> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       await this.tossApiClient.removeAccessByUserKey(userKey);
     } catch (err) {
       if (err instanceof TossTransportError) {
