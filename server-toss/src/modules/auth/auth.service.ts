@@ -5,6 +5,7 @@ import {
   Logger,
   ServiceUnavailableException,
 } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
 import { createDecipheriv } from "crypto";
 import { UserService } from "src/modules/user/user.service";
 import { TossApiClient } from "src/modules/auth/toss-api.client";
@@ -26,6 +27,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly tossApiClient: TossApiClient,
     private readonly userService: UserService,
+    private readonly jwtService: JwtService,
   ) {
     this.decryptKey = this.configService.getOrThrow<string>("TOSS_DECRYPT_KEY");
     this.decryptAad =
@@ -48,7 +50,7 @@ export class AuthService {
         this.logger.error(err, `Toss API 오류 (HTTP ${err.statusCode})`);
         throw new BadGatewayException("Toss API 오류가 발생했어요.");
       }
-      throw err; // UnauthorizedException (resultType === "FAIL")
+      throw err;
     }
 
     let name: string;
@@ -80,7 +82,24 @@ export class AuthService {
       throw new InternalServerErrorException("사용자 정보 저장에 실패했어요.");
     }
 
-    return { userKey: userInfo.userKey };
+    return { accessToken: this.jwtService.sign({ sub: userInfo.userKey }) };
+  }
+
+  async logout(userKey: number): Promise<void> {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      await this.tossApiClient.removeAccessByUserKey(userKey);
+    } catch (err) {
+      if (err instanceof TossTransportError) {
+        this.logger.error(err, "Toss 로그아웃 통신 오류");
+        throw new ServiceUnavailableException("Toss API에 연결할 수 없어요.");
+      }
+      if (err instanceof TossApiError) {
+        this.logger.error(err, `Toss 로그아웃 오류 (HTTP ${err.statusCode})`);
+        throw new BadGatewayException("Toss API 오류가 발생했어요.");
+      }
+      throw err;
+    }
   }
 
   private decrypt(encryptedText: string): string {
