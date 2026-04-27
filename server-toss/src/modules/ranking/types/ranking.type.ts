@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const RankingSimilaritySchema = z.object({
   score: z.number().min(0).max(100),
-  strokeCountSimilarity: z.number().min(0).max(100),
+  strokeMatchSimilarity: z.number().min(0).max(100),
   shapeSimilarity: z.number().min(0).max(100),
   penalty: z.number().min(0).max(100),
 });
