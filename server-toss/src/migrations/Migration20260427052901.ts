@@ -1,7 +1,6 @@
-import { Migration } from '@mikro-orm/migrations';
+import { Migration } from "@mikro-orm/migrations";
 
 export class Migration20260427052901 extends Migration {
-
   override up(): void | Promise<void> {
     this.addSql(`alter table \`rankings\` drop column \`similarity\`;`);
     this.addSql(`alter table \`rankings\` add \`score\` double not null;`);
@@ -15,5 +14,4 @@ export class Migration20260427052901 extends Migration {
     this.addSql(`alter table \`rankings\` drop column \`score\`;`);
     this.addSql(`alter table \`rankings\` add \`similarity\` text not null;`);
   }
-
 }

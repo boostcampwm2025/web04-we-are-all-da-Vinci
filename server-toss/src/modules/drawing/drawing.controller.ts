@@ -1,13 +1,17 @@
 import { Controller, Get, Query } from "@nestjs/common";
 import { DrawingService } from "./drawing.service";
-import { TodayDrawingsDto } from "./dto/today-drawings.dto";
 
-@Controller("today/drawings")
+@Controller("drawing")
 export class DrawingController {
   constructor(private readonly drawingService: DrawingService) {}
 
-  @Get()
-  async getTodayDrawings(@Query() dto: TodayDrawingsDto) {
-    return this.drawingService.getTodayDrawings(dto.userId);
+  @Get("me")
+  getMyDrawings(@Query() userId: string) {
+    return userId;
+  }
+
+  @Get(":userId")
+  getBestDrawing(@Query() userId: string) {
+    return userId;
   }
 }
