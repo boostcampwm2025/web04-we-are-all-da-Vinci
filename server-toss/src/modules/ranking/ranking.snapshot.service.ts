@@ -55,6 +55,7 @@ export class RankingSnapshotService {
             score: drawing.score,
             userId: drawing.user.id,
             drawingId: drawing.id,
+            submittedAt: drawing.createdAt,
             createdAt: snapshotTime,
             updatedAt: snapshotTime,
           };

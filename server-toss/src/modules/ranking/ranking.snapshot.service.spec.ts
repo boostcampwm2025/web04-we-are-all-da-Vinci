@@ -104,6 +104,7 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
             score: drawings[0].score,
             userId: 11n,
             drawingId: 1n,
+            submittedAt: new Date("2026-04-18T00:00:00.000Z"),
           }),
         );
         expect(insertedRankings[1]).toEqual(
@@ -113,6 +114,7 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
             score: drawings[1].score,
             userId: 22n,
             drawingId: 2n,
+            submittedAt: new Date("2026-04-18T00:01:00.000Z"),
           }),
         );
       });
