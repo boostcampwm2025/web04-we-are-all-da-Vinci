@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Point: 2D 좌표
 export interface Point {
@@ -21,8 +21,8 @@ export const StrokeSchema = z.object({
 
 // Similarity: 유사도 결과
 export const SimilaritySchema = z.object({
-  similarity: z.number().min(0).max(100),
-  strokeCountSimilarity: z.number().min(0).max(100),
+  score: z.number().min(0).max(100),
   strokeMatchSimilarity: z.number().min(0).max(100),
   shapeSimilarity: z.number().min(0).max(100),
+  penalty: z.number().min(0).max(100),
 });

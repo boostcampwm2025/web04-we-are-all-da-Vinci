@@ -103,7 +103,7 @@ describe('useDrawingSubmission', () => {
     // Verify emission (since isPractice is false)
     expect(mockEmit).toHaveBeenCalledWith(SERVER_EVENTS.USER_SCORE, {
       roomId: 'test-room',
-      similarity: MOCK_SIMILARITY.similarity,
+      similarity: MOCK_SIMILARITY.score,
     });
   });
 
@@ -127,9 +127,7 @@ describe('useDrawingSubmission', () => {
     );
 
     // Verify callback
-    expect(mockOnSimilarityChange).toHaveBeenCalledWith(
-      MOCK_SIMILARITY.similarity,
-    );
+    expect(mockOnSimilarityChange).toHaveBeenCalledWith(MOCK_SIMILARITY.score);
   });
 
   it('stroke 길이가 줄어들면(실행 취소) 유사도가 재계산되고 캔버스가 다시 그려져야 한다', () => {

@@ -84,10 +84,10 @@ export const useDrawingSubmission = ({
           roomId,
           strokes,
           similarity: {
-            similarity: 0,
-            strokeCountSimilarity: 0,
+            score: 0,
             strokeMatchSimilarity: 0,
             shapeSimilarity: 0,
+            penalty: 0,
           },
         });
       }
@@ -115,12 +115,12 @@ export const useDrawingSubmission = ({
       );
 
       if (isPractice) {
-        onSimilarityChange?.(similarity.similarity);
+        onSimilarityChange?.(similarity.score);
       } else {
         const socket = getSocket();
         socket.emit(SERVER_EVENTS.USER_SCORE, {
           roomId,
-          similarity: similarity.similarity,
+          similarity: similarity.score,
         });
       }
     } catch (error) {

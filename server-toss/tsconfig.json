@@ -16,6 +16,7 @@
     "skipLibCheck": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
+    "types": ["node", "jest"],
     "paths": {
       "src/*": ["./src/*"],
       "@toss/shared": ["../packages/toss-shared/dist/index.d.ts"],
