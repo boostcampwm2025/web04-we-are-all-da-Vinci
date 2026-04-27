@@ -27,18 +27,27 @@ const podiumResponseSchema = {
 };
 
 const rankingListResponseSchema = {
-  type: "array",
-  items: {
-    type: "object",
-    properties: {
-      name: { type: "string", example: "홍길동" },
-      score: { type: "number", example: 91.25 },
-      userId: { type: "string", example: "123" },
-      drawingId: { type: "string", example: "456" },
-      rank: { type: "integer", example: 1 },
-      isMe: { type: "boolean", example: true },
+  type: "object",
+  properties: {
+    updatedAt: {
+      type: "string",
+      example: "2026-04-18T00:00:00.000Z",
     },
-    required: ["name", "score", "userId", "drawingId", "rank", "isMe"],
+    rankings: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          name: { type: "string", example: "홍길동" },
+          score: { type: "number", example: 91.25 },
+          userId: { type: "string", example: "123" },
+          drawingId: { type: "string", example: "456" },
+          rank: { type: "integer", example: 1 },
+          isMe: { type: "boolean", example: true },
+        },
+        required: ["name", "score", "userId", "drawingId", "rank", "isMe"],
+      },
+    },
   },
 };
 
