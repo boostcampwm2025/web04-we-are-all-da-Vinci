@@ -20,6 +20,7 @@ jest.mock("@mikro-orm/decorators/legacy", () => ({
   ManyToOne: () => () => undefined,
   PrimaryKey: () => () => undefined,
   Property: () => () => undefined,
+  Index: () => () => undefined,
 }));
 jest.mock("@mikro-orm/nestjs", () => ({
   InjectRepository: () => () => undefined,

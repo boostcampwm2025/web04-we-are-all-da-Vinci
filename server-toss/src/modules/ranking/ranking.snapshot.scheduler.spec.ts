@@ -17,9 +17,13 @@ jest.mock("@mikro-orm/decorators/legacy", () => ({
   ManyToOne: () => () => undefined,
   PrimaryKey: () => () => undefined,
   Property: () => () => undefined,
+  Index: () => () => undefined,
 }));
 jest.mock("@mikro-orm/mysql", () => ({
   EntityRepository: class {},
+}));
+jest.mock("nestjs-pino", () => ({
+  PinoLogger: class {},
 }));
 
 import { RankingSnapshotScheduler } from "./ranking.snapshot.scheduler";
@@ -32,13 +36,38 @@ describe("랭킹 스냅샷 스케줄러", () => {
         const rankingSnapshotService = {
           refreshRankingSnapshot,
         };
-
+        const logger = {
+          error: jest.fn().mockResolvedValue(undefined),
+          setContext: jest.fn().mockResolvedValue(undefined),
+        };
         const scheduler = new RankingSnapshotScheduler(
           rankingSnapshotService as never,
+          logger as never,
         );
         await scheduler.handleRankingSnapshotRefresh();
 
         expect(refreshRankingSnapshot.mock.calls.length).toBe(1);
+      });
+    });
+
+    describe("실행에 실패하면", () => {
+      it("에러 로그를 기록한다.", async () => {
+        const refreshRankingSnapshot = jest.fn().mockRejectedValue(undefined);
+        const rankingSnapshotService = {
+          refreshRankingSnapshot,
+        };
+        const error = jest.fn().mockResolvedValue(undefined);
+        const logger = {
+          error,
+          setContext: jest.fn().mockResolvedValue(undefined),
+        };
+        const scheduler = new RankingSnapshotScheduler(
+          rankingSnapshotService as never,
+          logger as never,
+        );
+        await scheduler.handleRankingSnapshotRefresh();
+
+        expect(error.mock.calls.length).toBe(1);
       });
     });
   });
