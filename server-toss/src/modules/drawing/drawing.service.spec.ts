@@ -71,9 +71,7 @@ describe("DrawingService", () => {
 
     it("오늘 그린 그림이 있으면 올바른 형식으로 반환", async () => {
       const drawing = makeDrawing(BigInt(1), 78.5, BigInt(10));
-      em.find
-        .mockResolvedValueOnce([drawing])
-        .mockResolvedValueOnce([drawing]);
+      em.find.mockResolvedValueOnce([drawing]).mockResolvedValueOnce([drawing]);
 
       const result = await service.getMyDrawings("1");
 
@@ -111,7 +109,12 @@ describe("DrawingService", () => {
 
     it("다른 프롬프트의 그림은 drawRanking 계산에 포함되지 않음", async () => {
       const drawing = makeDrawing(BigInt(1), 50, BigInt(10));
-      const otherPromptDrawing = makeDrawing(BigInt(2), 90, BigInt(99), "다른유저");
+      const otherPromptDrawing = makeDrawing(
+        BigInt(2),
+        90,
+        BigInt(99),
+        "다른유저",
+      );
       em.find
         .mockResolvedValueOnce([drawing])
         .mockResolvedValueOnce([drawing, otherPromptDrawing]);
@@ -123,9 +126,7 @@ describe("DrawingService", () => {
 
     it("strokes와 similarity를 JSON 파싱하여 반환", async () => {
       const drawing = makeDrawing(BigInt(1), 78.5, BigInt(10));
-      em.find
-        .mockResolvedValueOnce([drawing])
-        .mockResolvedValueOnce([drawing]);
+      em.find.mockResolvedValueOnce([drawing]).mockResolvedValueOnce([drawing]);
 
       const result = await service.getMyDrawings("1");
 
