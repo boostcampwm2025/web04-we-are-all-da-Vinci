@@ -31,7 +31,10 @@ export const RankingListItemSchema = z.object({
 
 export type RankingListItem = z.infer<typeof RankingListItemSchema>;
 
-export const RankingListResponseSchema = z.array(RankingListItemSchema);
+export const RankingListResponseSchema = z.object({
+  updatedAt: z.iso.datetime(),
+  rankings: z.array(RankingListItemSchema),
+});
 
 export type RankingListResponse = z.infer<typeof RankingListResponseSchema>;
 

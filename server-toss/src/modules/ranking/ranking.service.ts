@@ -30,11 +30,17 @@ export class RankingService {
   }
 
   async findRankingList(userId?: bigint): Promise<RankingListResponse> {
-    const rankings = await this.rankingRepository.findTop(100);
+    const [rankings, updatedAt] = await Promise.all([
+      this.rankingRepository.findTop(100),
+      this.rankingRepository.findLatestUpdatedAt(),
+    ]);
 
-    return rankings.map((ranking, index) =>
-      mapRankingToRankingListItem(ranking, index, userId),
-    );
+    return {
+      updatedAt: (updatedAt ?? new Date()).toISOString(),
+      rankings: rankings.map((ranking, index) =>
+        mapRankingToRankingListItem(ranking, index, userId),
+      ),
+    };
   }
 
   async findMyRanking(userId: bigint): Promise<MyRankingResponse> {

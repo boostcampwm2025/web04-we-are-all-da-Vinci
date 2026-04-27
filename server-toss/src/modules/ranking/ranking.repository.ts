@@ -17,4 +17,17 @@ export class RankingRepository extends EntityRepository<Ranking> {
       },
     );
   }
+
+  async findLatestUpdatedAt(): Promise<Date | null> {
+    const ranking = await this.findOne(
+      {},
+      {
+        orderBy: {
+          updatedAt: QueryOrder.DESC,
+        },
+      },
+    );
+
+    return ranking?.createdAt ?? null;
+  }
 }
