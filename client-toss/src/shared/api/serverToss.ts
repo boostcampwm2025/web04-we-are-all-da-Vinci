@@ -24,7 +24,7 @@ async function reissueToken(): Promise<string> {
     const parsed = LoginResponseSchema.safeParse(await res.json());
     if (!parsed.success) {
       localStorage.removeItem("access_token");
-      throw new Error("토큰 재발급 응답이 올바르지 않습니다");
+      throw new Error("토큰 재발급 응답이 올바르지 않아요");
     }
     localStorage.setItem("access_token", parsed.data.accessToken);
     return parsed.data.accessToken;
