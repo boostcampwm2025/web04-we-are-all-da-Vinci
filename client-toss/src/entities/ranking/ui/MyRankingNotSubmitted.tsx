@@ -1,7 +1,6 @@
 import { Button } from "@toss/tds-mobile";
 import { Link } from "react-router-dom";
-
-const NOT_SUBMITTED_MESSAGE = "아직 오늘 그림을 제출하지 않았어요.";
+import { NOT_SUBMITTED_MESSAGE } from "../config/constants";
 
 export const MyRankingNotSubmitted = () => {
   return (
