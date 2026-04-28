@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import type { PodiumEntry } from "../model/types";
 import { useAbortableQuery } from "@/shared/hooks/useAbortableQuery";
 
-export const usePodium = () => {
+const usePodium = () => {
   const queryFn = useCallback(
     ({ signal }: { signal: AbortSignal }) =>
       serverTossApi.getPodium({ signal }),
@@ -17,3 +17,5 @@ export const usePodium = () => {
     isLoading,
   };
 };
+
+export { usePodium };

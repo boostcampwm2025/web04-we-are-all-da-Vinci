@@ -1,4 +1,4 @@
-export interface MyRankingFoundResponse {
+interface MyRankingFoundResponse {
   state: "FOUND";
   ranking: {
     rank: number;
@@ -6,16 +6,14 @@ export interface MyRankingFoundResponse {
   };
 }
 
-export interface MyRankingNotSubmittedResponse {
+interface MyRankingNotSubmittedResponse {
   state: "NOT_SUBMITTED";
   message: string;
 }
 
-export type MyRankingResponse =
-  | MyRankingFoundResponse
-  | MyRankingNotSubmittedResponse;
+type MyRankingResponse = MyRankingFoundResponse | MyRankingNotSubmittedResponse;
 
-export interface RankingListItem {
+interface RankingListItem {
   userId: string;
   name: string;
   drawingId: string;
@@ -23,3 +21,10 @@ export interface RankingListItem {
   score: number;
   isMe: boolean;
 }
+
+export type {
+  MyRankingFoundResponse,
+  MyRankingNotSubmittedResponse,
+  MyRankingResponse,
+  RankingListItem,
+};

@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import type { MyRankingResponse } from "@/entities/ranking";
 import { useAbortableQuery } from "@/shared/hooks/useAbortableQuery";
 
-export const useMyRanking = () => {
+const useMyRanking = () => {
   const queryFn = useCallback(
     ({ signal }: { signal: AbortSignal }) =>
       serverTossApi.getMyRanking({ signal }),
@@ -14,3 +14,5 @@ export const useMyRanking = () => {
 
   return { myRanking: data, isLoading };
 };
+
+export { useMyRanking };

@@ -4,7 +4,7 @@ import {
   PODIUM_EMPTY_MESSAGE_SUB,
 } from "../config/constants";
 
-export const PodiumEmpty = () => {
+const PodiumEmpty = () => {
   return (
     <div className="flex flex-col w-full items-center justify-center px-(--page-px) py-6 text-center">
       <Paragraph typography="t5" fontWeight="semibold">
@@ -16,3 +16,5 @@ export const PodiumEmpty = () => {
     </div>
   );
 };
+
+export default PodiumEmpty;

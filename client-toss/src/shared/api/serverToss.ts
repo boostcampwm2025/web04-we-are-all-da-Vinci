@@ -8,7 +8,7 @@ interface RequestOptions {
   headers?: HeadersInit;
 }
 
-async function request<T>(path: string, init: RequestInit): Promise<T> {
+const request = async <T>(path: string, init: RequestInit): Promise<T> => {
   const response = await fetch(`${BASE_URL}${path}`, init);
 
   if (!response.ok) {
@@ -17,25 +17,28 @@ async function request<T>(path: string, init: RequestInit): Promise<T> {
   }
 
   return response.json() as Promise<T>;
-}
+};
 
-function createHeaders(headers?: HeadersInit): Headers {
+const createHeaders = (headers?: HeadersInit): Headers => {
   return new Headers(headers);
-}
+};
 
-async function get<T>(path: string, options: RequestOptions = {}): Promise<T> {
+const get = async <T>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<T> => {
   return request<T>(path, {
     method: "GET",
     headers: createHeaders(options.headers),
     signal: options.signal,
   });
-}
+};
 
-async function post<T>(
+const post = async <T>(
   path: string,
   body: unknown,
   options: RequestOptions = {},
-): Promise<T> {
+): Promise<T> => {
   const headers = createHeaders(options.headers);
   headers.set("Content-Type", "application/json");
 
@@ -45,7 +48,7 @@ async function post<T>(
     body: JSON.stringify(body),
     signal: options.signal,
   });
-}
+};
 
 export const serverTossApi = {
   login: (body: {

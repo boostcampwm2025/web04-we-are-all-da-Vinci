@@ -1,5 +1,5 @@
-import { MyRanking } from "./MyRanking";
-import { MyRankingNotSubmitted } from "./MyRankingNotSubmitted";
+import MyRanking from "./MyRanking";
+import MyRankingNotSubmitted from "./MyRankingNotSubmitted";
 import { useMyRanking } from "../hooks/useMyRanking";
 import { Skeleton } from "@toss/tds-mobile";
 

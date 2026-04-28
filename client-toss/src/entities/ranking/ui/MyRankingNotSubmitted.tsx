@@ -2,7 +2,7 @@ import { Button } from "@toss/tds-mobile";
 import { Link } from "react-router-dom";
 import { NOT_SUBMITTED_MESSAGE } from "../config/constants";
 
-export const MyRankingNotSubmitted = () => {
+const MyRankingNotSubmitted = () => {
   return (
     <div className="h-42 flex flex-col items-center justify-center px-(--page-px) text-center">
       <div className="flex flex-col items-center justify-center gap-2">
@@ -24,3 +24,5 @@ export const MyRankingNotSubmitted = () => {
     </div>
   );
 };
+
+export default MyRankingNotSubmitted;

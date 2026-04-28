@@ -3,7 +3,7 @@ interface MyRankingProps {
   score: number;
 }
 
-export const MyRanking = ({ rank, score }: MyRankingProps) => {
+const MyRanking = ({ rank, score }: MyRankingProps) => {
   return (
     <div className="h-42 flex flex-col items-center justify-center">
       <div className="flex flex-col items-center justify-center gap-2">
@@ -17,3 +17,5 @@ export const MyRanking = ({ rank, score }: MyRankingProps) => {
     </div>
   );
 };
+
+export default MyRanking;

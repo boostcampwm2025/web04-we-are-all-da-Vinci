@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import type { RankingListItem } from "../model/types";
 import { useAbortableQuery } from "@/shared/hooks/useAbortableQuery";
 
-export const useRankingList = () => {
+const useRankingList = () => {
   const queryFn = useCallback(
     ({ signal }: { signal: AbortSignal }) =>
       serverTossApi.getRankingList({ signal }),
@@ -17,3 +17,5 @@ export const useRankingList = () => {
     isLoading,
   };
 };
+
+export { useRankingList };
