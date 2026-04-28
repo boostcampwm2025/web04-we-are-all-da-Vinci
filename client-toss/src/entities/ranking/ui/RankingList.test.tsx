@@ -45,7 +45,7 @@ describe("RankingList", () => {
     render(<RankingList />);
 
     expect(
-      screen.getByText("아직 아무도 그림을 제출하지 않았어요"),
+      screen.getByText("아직 아무도 그림을 제출하지 않았어요."),
     ).toBeInTheDocument();
   });
 
