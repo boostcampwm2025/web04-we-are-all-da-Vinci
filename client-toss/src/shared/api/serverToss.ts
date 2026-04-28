@@ -1,20 +1,40 @@
 import { appLogin } from "@apps-in-toss/web-framework";
+import {
+  LoginResponseSchema,
+  UserInfoResponseSchema,
+} from "@toss/shared";
 
 const BASE_URL = "/api";
 const LOGIN_PATH = "/oauth/toss/login";
 
 const getToken = () => localStorage.getItem("access_token");
 
+let reissuePromise: Promise<string> | null = null;
+
 async function reissueToken(): Promise<string> {
-  const { authorizationCode, referrer } = await appLogin();
-  const res = await fetch(`${BASE_URL}${LOGIN_PATH}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ authorizationCode, referrer }),
+  if (reissuePromise) return reissuePromise;
+  reissuePromise = (async () => {
+    const { authorizationCode, referrer } = await appLogin();
+    const res = await fetch(`${BASE_URL}${LOGIN_PATH}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ authorizationCode, referrer }),
+    });
+    if (!res.ok) {
+      localStorage.removeItem("access_token");
+      throw new Error("토큰 재발급 실패");
+    }
+    const parsed = LoginResponseSchema.safeParse(await res.json());
+    if (!parsed.success) {
+      localStorage.removeItem("access_token");
+      throw new Error("토큰 재발급 응답이 올바르지 않습니다");
+    }
+    localStorage.setItem("access_token", parsed.data.accessToken);
+    return parsed.data.accessToken;
+  })().finally(() => {
+    reissuePromise = null;
   });
-  const { accessToken } = (await res.json()) as { accessToken: string };
-  localStorage.setItem("access_token", accessToken);
-  return accessToken;
+  return reissuePromise;
 }
 
 async function request<T>(
@@ -53,18 +73,13 @@ async function request<T>(
 }
 
 export const serverTossApi = {
-  login: (body: {
+  login: async (body: {
     authorizationCode: string;
     referrer: "DEFAULT" | "SANDBOX";
-  }) => request<{ accessToken: string }>("POST", LOGIN_PATH, body),
+  }) => LoginResponseSchema.parse(await request<unknown>("POST", LOGIN_PATH, body)),
 
   logout: () => request<void>("POST", "/oauth/toss/logout"),
 
-  getMe: () =>
-    request<{
-      userKey: number;
-      name: string;
-      gender?: string;
-      birthday?: Date;
-    }>("GET", "/user/me"),
+  getMe: async () =>
+    UserInfoResponseSchema.parse(await request<unknown>("GET", "/user/me")),
 };

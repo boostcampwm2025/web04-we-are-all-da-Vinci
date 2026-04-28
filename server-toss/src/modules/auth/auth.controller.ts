@@ -7,7 +7,7 @@ import {
   UseGuards,
   UsePipes,
 } from "@nestjs/common";
-import { ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ZodValidationPipe } from "src/common/pipes/zod-validation.pipe";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { CurrentUser } from "./decorators/current-user.decorator";
@@ -36,6 +36,7 @@ export class AuthController {
   @Post("logout")
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: "토스 로그아웃",
     description: "Toss API에 연결 끊기를 요청하고 세션을 종료해요.",

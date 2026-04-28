@@ -1,5 +1,5 @@
 import { Controller, Get, UseGuards } from "@nestjs/common";
-import { ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "src/modules/auth/guards/jwt-auth.guard";
 import { CurrentUser } from "src/modules/auth/decorators/current-user.decorator";
 import type { CurrentUserPayload } from "src/modules/auth/decorators/current-user.decorator";
@@ -13,6 +13,7 @@ export class UserController {
 
   @Get("me")
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: "내 정보 조회",
     description: "JWT로 인증된 사용자의 정보를 반환해요.",

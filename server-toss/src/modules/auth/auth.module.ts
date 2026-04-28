@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Global, Module } from "@nestjs/common";
 import { JwtModule } from "@nestjs/jwt";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { UserModule } from "src/modules/user/user.module";
@@ -7,10 +7,12 @@ import { AuthService } from "./auth.service";
 import { TossApiClient } from "./toss-api.client";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 
+@Global()
 @Module({
   imports: [
     UserModule,
     JwtModule.registerAsync({
+      global: true,
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({

@@ -63,7 +63,11 @@ export class TossApiClient {
   }
 
   async removeAccessByUserKey(userKey: number): Promise<void> {
-    await this.request<unknown>(
+    const data = await this.request<{
+      resultType: string;
+      success?: unknown;
+      error?: { reason?: string };
+    }>(
       "POST",
       TOSS_API_ENDPOINTS.REMOVE_BY_USER_KEY,
       {
@@ -72,6 +76,12 @@ export class TossApiClient {
       },
       JSON.stringify({ userKey }),
     );
+
+    if (data.resultType !== "SUCCESS") {
+      throw new UnauthorizedException(
+        data.error?.reason ?? "Toss access 제거에 실패했어요.",
+      );
+    }
   }
 
   async getUserInfo(accessToken: string): Promise<TossUserInfo> {
