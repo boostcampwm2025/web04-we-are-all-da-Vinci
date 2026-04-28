@@ -1,5 +1,5 @@
-import { MikroOrmModule } from "@mikro-orm/nestjs";
-import { Module } from "@nestjs/common";
+import { MikroOrmModule, NestMiddlewareConsumer } from "@mikro-orm/nestjs";
+import { Module, NestModule } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
 import { LoggerModule } from "nestjs-pino";
@@ -12,6 +12,7 @@ import { PointModule } from "./modules/point/point.module";
 import { PromptModule } from "./modules/prompt/prompt.module";
 import { RankingModule } from "./modules/ranking/ranking.module";
 import { UserModule } from "./modules/user/user.module";
+import { RequestContextHelper } from "./common/middlewares/request-context-helper.middleware";
 
 @Module({
   imports: [
@@ -52,4 +53,8 @@ import { UserModule } from "./modules/user/user.module";
     RankingModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: NestMiddlewareConsumer) {
+    consumer.apply(RequestContextHelper).forRoutes("*");
+  }
+}

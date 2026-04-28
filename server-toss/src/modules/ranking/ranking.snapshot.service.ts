@@ -7,6 +7,7 @@ import { Injectable } from "@nestjs/common";
 import { Drawing } from "src/modules/drawing/drawing.entity";
 import { Ranking } from "./ranking.entity";
 import { getSeoulDayRange } from "src/common/time.util";
+import { CreateRequestContext } from "@mikro-orm/decorators/legacy";
 
 type RankingSnapshotInsert = RequiredEntityData<Ranking>;
 
@@ -16,6 +17,7 @@ export class RankingSnapshotService {
 
   constructor(private readonly em: EntityManager) {}
 
+  @CreateRequestContext()
   async refreshRankingSnapshot() {
     if (this.isRefreshing) {
       return;
