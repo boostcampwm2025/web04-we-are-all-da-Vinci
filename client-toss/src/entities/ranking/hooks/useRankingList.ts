@@ -1,51 +1,19 @@
 import { serverTossApi } from "@/shared/api";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback } from "react";
 import type { RankingListItem } from "../model/types";
+import { useAbortableQuery } from "@/shared/hooks/useAbortableQuery";
 
 export const useRankingList = () => {
-  const [rankingList, setRankingList] = useState<RankingListItem[] | null>(
-    null,
+  const queryFn = useCallback(
+    ({ signal }: { signal: AbortSignal }) =>
+      serverTossApi.getRankingList({ signal }),
+    [],
   );
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const controllerRef = useRef<AbortController | null>(null);
 
-  const loadRankingList = useCallback(() => {
-    controllerRef.current?.abort();
-
-    const controller = new AbortController();
-    controllerRef.current = controller;
-
-    setIsLoading(true);
-
-    serverTossApi
-      .getRankingList({ signal: controller.signal })
-      .then((data) => {
-        if (controller.signal.aborted) {
-          return;
-        }
-        setRankingList(data);
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        if (error instanceof Error && error.name === "AbortError") {
-          return;
-        }
-
-        setRankingList(null);
-        setIsLoading(false);
-      });
-  }, []);
-
-  useEffect(() => {
-    loadRankingList();
-
-    return () => {
-      controllerRef.current?.abort();
-    };
-  }, [loadRankingList]);
+  const { data, isLoading } = useAbortableQuery<RankingListItem[]>(queryFn);
 
   return {
-    rankingList,
+    rankingList: data,
     isLoading,
   };
 };
