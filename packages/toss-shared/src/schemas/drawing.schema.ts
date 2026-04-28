@@ -13,10 +13,10 @@ export const StrokeSchema = z.object({
 export type Stroke = z.infer<typeof StrokeSchema>;
 
 export const SimilarityResponseSchema = z.object({
-  similarity: z.number().min(0).max(100),
-  strokeCountSimilarity: z.number().min(0).max(100),
+  score: z.number().min(0).max(100),
   strokeMatchSimilarity: z.number().min(0).max(100),
   shapeSimilarity: z.number().min(0).max(100),
+  penalty: z.number().min(0),
 });
 export type SimilarityResponse = z.infer<typeof SimilarityResponseSchema>;
 
