@@ -165,10 +165,10 @@ describe('PlayService', () => {
 
   describe('submitDrawing', () => {
     const mockSimilarity = {
-      similarity: 10,
-      strokeCountSimilarity: 10,
+      score: 10,
       strokeMatchSimilarity: 10,
       shapeSimilarity: 10,
+      penalty: 10,
     };
     const mockStrokes: Stroke[] = [
       {

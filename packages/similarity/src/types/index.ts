@@ -11,8 +11,8 @@ export interface Stroke {
 }
 
 export interface Similarity {
-  similarity: number;
-  strokeCountSimilarity: number;
+  score: number;
   strokeMatchSimilarity: number;
   shapeSimilarity: number;
+  penalty: number;
 }
