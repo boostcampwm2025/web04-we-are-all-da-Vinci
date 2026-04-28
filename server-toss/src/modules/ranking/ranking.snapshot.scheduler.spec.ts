@@ -18,6 +18,7 @@ jest.mock("@mikro-orm/decorators/legacy", () => ({
   PrimaryKey: () => () => undefined,
   Property: () => () => undefined,
   Index: () => () => undefined,
+  CreateRequestContext: () => () => undefined,
 }));
 jest.mock("@mikro-orm/mysql", () => ({
   EntityRepository: class {},
