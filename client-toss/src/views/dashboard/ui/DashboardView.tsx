@@ -19,12 +19,6 @@ const DashboardView = () => {
     setActiveIndex(index);
   };
 
-  const entries = [
-    { userId: 1, name: "김동권", totalSimilarity: 80.33 },
-    { userId: 2, name: "아주아주긴긴이름", totalSimilarity: 75.33 },
-    { userId: 3, name: "조천산", totalSimilarity: 70.33 },
-  ];
-
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       {/* 랭킹 영역 */}
@@ -37,7 +31,7 @@ const DashboardView = () => {
         />
         <div className="flex w-full flex-col items-center gap-4 px-(--page-px)">
           {/* 랭킹 TOP3 */}
-          <Podium entries={entries} />
+          <Podium />
           <Link to="/ranking">
             <TextButton size="small" variant="arrow">
               TOP 100 랭킹 보러가기
