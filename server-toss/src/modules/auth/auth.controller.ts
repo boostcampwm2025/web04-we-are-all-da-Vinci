@@ -5,10 +5,9 @@ import {
   HttpStatus,
   Post,
   UseGuards,
-  UsePipes,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { ZodValidationPipe } from "src/common/pipes/zod-validation.pipe";
+import { ZodValidationPipe } from "src/common/zod-validation.pipe";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { CurrentUser } from "./decorators/current-user.decorator";
 import type { CurrentUserPayload } from "./decorators/current-user.decorator";
@@ -23,13 +22,14 @@ export class AuthController {
 
   @Post("login")
   @HttpCode(HttpStatus.OK)
-  @UsePipes(new ZodValidationPipe(LoginSchema))
   @ApiOperation({
     summary: "토스 로그인",
     description:
       "appLogin()에서 받은 authorizationCode로 토스 사용자 인증 후 JWT를 반환해요.",
   })
-  async login(@Body() dto: LoginDto): Promise<LoginResponseDto> {
+  async login(
+    @Body(new ZodValidationPipe(LoginSchema)) dto: LoginDto,
+  ): Promise<LoginResponseDto> {
     return this.authService.login(dto);
   }
 

@@ -70,5 +70,15 @@ reviews:
         에러 발생 시 반드시 WebsocketException 사용 (HttpException, WsException 금지).
         import는 src/common/exceptions/websocket-exception.ts에서.
 
+    - path: "server-toss/src/**/*.ts"
+      instructions: |
+        server-toss REST API 규칙:
+        - MikroORM v7: persistAndFlush 없음 → em.persist(e); await em.flush() 분리 필수
+        - 날짜 처리: new Date() 직접 사용 금지 → getTodayKst() (src/common/today.ts) 사용
+        - Zod 검증: 컨트롤러 @Body에 ZodValidationPipe(Schema) 사용, 스키마는 @toss/shared 단일 소스
+        - 유사도: 클라이언트 값 신뢰 X, 서버에서 재계산 후 저장
+        - promptId: 클라이언트가 보내지 않음, 서버가 오늘 날짜로 자동 매칭
+        - Swagger: 컨트롤러에 @ApiTags, @ApiOperation, @ApiResponse 필수
+
 chat:
   auto_reply: true
