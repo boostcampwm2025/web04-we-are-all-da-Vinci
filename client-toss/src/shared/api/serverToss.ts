@@ -1,8 +1,5 @@
 import { appLogin } from "@apps-in-toss/web-framework";
-import {
-  LoginResponseSchema,
-  UserInfoResponseSchema,
-} from "@toss/shared";
+import { LoginResponseSchema, UserInfoResponseSchema } from "@toss/shared";
 
 const BASE_URL = "/api";
 const LOGIN_PATH = "/oauth/toss/login";
@@ -76,7 +73,8 @@ export const serverTossApi = {
   login: async (body: {
     authorizationCode: string;
     referrer: "DEFAULT" | "SANDBOX";
-  }) => LoginResponseSchema.parse(await request<unknown>("POST", LOGIN_PATH, body)),
+  }) =>
+    LoginResponseSchema.parse(await request<unknown>("POST", LOGIN_PATH, body)),
 
   logout: () => request<void>("POST", "/oauth/toss/logout"),
 
