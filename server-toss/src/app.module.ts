@@ -1,5 +1,5 @@
-import { MikroOrmModule, NestMiddlewareConsumer } from "@mikro-orm/nestjs";
-import { Module, NestModule } from "@nestjs/common";
+import { MikroOrmModule } from "@mikro-orm/nestjs";
+import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
 import { LoggerModule } from "nestjs-pino";
@@ -54,7 +54,7 @@ import { RequestContextHelper } from "./common/middlewares/request-context-helpe
   ],
 })
 export class AppModule implements NestModule {
-  configure(consumer: NestMiddlewareConsumer) {
+  configure(consumer: MiddlewareConsumer) {
     consumer.apply(RequestContextHelper).forRoutes("*");
   }
 }
