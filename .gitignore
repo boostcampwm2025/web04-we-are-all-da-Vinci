@@ -44,7 +44,7 @@ docs
 /playwright/.auth/
 .playwright-mcp/
 
+
+server-toss/certs
 # App-in-Toss build file
 we-are-all-da-vinci.ait
-
-server-toss/certs/*

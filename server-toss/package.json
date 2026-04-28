@@ -83,6 +83,12 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "passWithNoTests": true,
+    "setupFiles": [
+      "<rootDir>/test-setup/setup-mikro-orm-mocks.ts"
+    ],
+    "transformIgnorePatterns": [
+      "node_modules/(?!(\\.pnpm/)?(@mikro-orm))"
+    ],
     "moduleNameMapper": {
       "^src/(.*)$": "<rootDir>/$1",
       "^@toss/shared$": "<rootDir>/../../packages/toss-shared/dist/index.js",

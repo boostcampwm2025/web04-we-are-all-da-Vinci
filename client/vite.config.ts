@@ -30,6 +30,7 @@ export default defineConfig({
     }),
   ],
   resolve: {
+    dedupe: ['react', 'react-dom'],
     alias: {
       '@': '/src',
       '@shared/types': path.resolve(__dirname, '../packages/shared/src'),

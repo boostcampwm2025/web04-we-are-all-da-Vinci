@@ -25,7 +25,7 @@ const PotgCard = ({ highlight, totalRounds, nickname }: PotgCardProps) => {
       {highlight && (
         <div className="flex justify-center pb-2">
           <div className="animate-glow text-accent-bright mt-8 text-2xl font-bold md:text-3xl">
-            ✨ 유사도 {highlight.similarity.similarity.toFixed(2)}% ✨
+            ✨ 유사도 {highlight.similarity.score.toFixed(2)}% ✨
           </div>
         </div>
       )}

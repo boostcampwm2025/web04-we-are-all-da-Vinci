@@ -42,12 +42,6 @@ export const scoreFinalSimilarity = (
   const normalizedPromptStrokes = preprocessedPrompt.normalizedStrokes;
   const normalizedPlayerStrokes = preprocessedPlayer.normalizedStrokes;
 
-  // 스트로크 개수 비교
-  const strokeCountSimilarity = scoreStrokeCountSimilarity(
-    normalizedPromptStrokes,
-    normalizedPlayerStrokes,
-  );
-
   // 스트로크 유사도
   const strokeMatchSimilarity = scoreGreedyStrokeMatch(
     normalizedPromptStrokes,
@@ -63,14 +57,11 @@ export const scoreFinalSimilarity = (
   const scaledShapeScore = applyNonLinearScale(shapeScore, 90);
 
   // 최종 유사도 계산
-  const weightedStrokeCountSim =
-    strokeCountSimilarity * SIMILARITY_CONFIG.finalWeights.strokeCount;
   const weightedStrokeMatchSim =
     strokeMatchSimilarity.score * SIMILARITY_CONFIG.finalWeights.strokeMatch;
   const weightedShapeSim =
     scaledShapeScore * SIMILARITY_CONFIG.finalWeights.shape;
-  let similarity =
-    weightedStrokeCountSim + weightedStrokeMatchSim + weightedShapeSim;
+  let similarity = weightedStrokeMatchSim + weightedShapeSim;
 
   // 패널티 적용
   let penaltyPoints = 0;
@@ -95,10 +86,10 @@ export const scoreFinalSimilarity = (
   const roundedSimilarity = Math.round(similarity * 100) / 100;
 
   return {
-    similarity: roundedSimilarity,
-    strokeCountSimilarity: Math.round(weightedStrokeCountSim * 100) / 100,
+    score: roundedSimilarity,
     strokeMatchSimilarity: Math.round(weightedStrokeMatchSim * 100) / 100,
     shapeSimilarity: Math.round(weightedShapeSim * 100) / 100,
+    penalty: penaltyPoints,
   };
 };
 
@@ -162,16 +153,4 @@ const applyNonLinearScale = (
   } else {
     return score;
   }
-};
-
-// 스트로크 개수 유사도 점수
-const scoreStrokeCountSimilarity = (strokes1: Stroke[], strokes2: Stroke[]) => {
-  const strokeCount1 = strokes1.length;
-  const strokeCount2 = strokes2.length;
-  if (strokeCount1 === 0 && strokeCount2 === 0) return 100;
-  if (strokeCount1 === 0 || strokeCount2 === 0) return 0;
-
-  const ratio =
-    Math.min(strokeCount1, strokeCount2) / Math.max(strokeCount1, strokeCount2);
-  return ratio * 100;
 };

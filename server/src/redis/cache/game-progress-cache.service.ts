@@ -114,7 +114,7 @@ export class GameProgressCacheService {
   async getHighlight(roomId: string, profileId: string, totalRounds: number) {
     const results = await this.getPlayerResults(roomId, profileId, totalRounds);
     const highlight = results.sort(
-      (a, b) => b.similarity.similarity - a.similarity.similarity,
+      (a, b) => b.similarity.score - a.similarity.score,
     )[0];
     return highlight;
   }
