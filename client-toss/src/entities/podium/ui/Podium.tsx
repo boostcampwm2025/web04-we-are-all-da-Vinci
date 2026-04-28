@@ -1,6 +1,6 @@
 import { Skeleton } from "@toss/tds-mobile";
 import { HEIGHTS, WIDTH } from "../config/podiumStyles";
-import { usePodium } from "../hook/usePodium";
+import { usePodium } from "../hooks/usePodium";
 import { PodiumEmpty } from "./PodiumEmpty";
 
 const clipName = (name: string): string => {
