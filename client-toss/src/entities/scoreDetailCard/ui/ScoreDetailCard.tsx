@@ -14,6 +14,23 @@ const ScoreDetailCard = ({
   shapeSimilarity,
   penalty,
 }: ScoreDetailCardProps) => {
+  const strokeMatchText =
+    strokeMatchSimilarity >= 80
+      ? "제시 그림과 선 모양이 거의 같아요"
+      : strokeMatchSimilarity >= 50
+        ? "제시 그림과 선 모양이 비슷해요"
+        : "제시 그림과 선 모양에 차이가 있어요";
+
+  const shapeText =
+    shapeSimilarity >= 8
+      ? "제시 그림과 형태가 거의 같아요"
+      : shapeSimilarity >= 5
+        ? "제시 그림과 형태가 비슷해요"
+        : "제시 그림과 형태에 차이가 있어요";
+
+  const penaltyText =
+    penalty === 0 ? "실수 없이 깔끔하게 그렸어요" : "일부 감점이 적용됐어요";
+
   return (
     <div className="w-full flex flex-col gap-2">
       <div className="flex items-center justify-between">
@@ -23,7 +40,7 @@ const ScoreDetailCard = ({
           </Paragraph>
           <Paragraph typography="t6">
             <Paragraph.Text color={colors.grey500}>
-              선의 개수가 유사해요
+              {strokeMatchText}
             </Paragraph.Text>
           </Paragraph>
         </div>
@@ -40,9 +57,7 @@ const ScoreDetailCard = ({
             <Paragraph.Text fontWeight="medium">형태 유사도</Paragraph.Text>
           </Paragraph>
           <Paragraph typography="t6">
-            <Paragraph.Text color={colors.grey500}>
-              전체 그림의 형태가 제시 그림과 달라요
-            </Paragraph.Text>
+            <Paragraph.Text color={colors.grey500}>{shapeText}</Paragraph.Text>
           </Paragraph>
         </div>
         <Paragraph typography="t5">
@@ -59,7 +74,7 @@ const ScoreDetailCard = ({
           </Paragraph>
           <Paragraph typography="t6">
             <Paragraph.Text color={colors.grey500}>
-              실수 없이 깔끔하게 그렸어요
+              {penaltyText}
             </Paragraph.Text>
           </Paragraph>
         </div>
