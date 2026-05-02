@@ -1,6 +1,0 @@
-[mcp_servers.apps-in-toss]
-args = [
-    "mcp",
-    "start",
-]
-command = "ax"
