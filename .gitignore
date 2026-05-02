@@ -48,3 +48,5 @@ docs
 server-toss/certs
 # App-in-Toss build file
 we-are-all-da-vinci.ait
+
+**/.codex/
