@@ -141,6 +141,7 @@ describe("DrawingService", () => {
       expect(saved.prompt).toBe(fakePromptRef);
       expect(JSON.parse(saved.strokes)).toEqual(sampleStrokes);
       expect(JSON.parse(saved.similarity).score).toBe(87);
+      expect(saved.score).toBe(87);
       expect(result.drawingId).toBe(42);
       expect(result.similarity.score).toBe(87);
     });

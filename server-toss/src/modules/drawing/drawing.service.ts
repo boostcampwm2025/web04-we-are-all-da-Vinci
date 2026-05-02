@@ -49,6 +49,7 @@ export class DrawingService {
     drawing.prompt = promptRef;
     drawing.strokes = JSON.stringify(playerStrokes);
     drawing.similarity = JSON.stringify(similarity);
+    drawing.score = similarity.score;
 
     // MikroORM v7: persist로 UoW 등록 후 flush로 일괄 커밋
     this.em.persist(drawing);
