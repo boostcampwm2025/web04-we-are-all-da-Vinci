@@ -8,6 +8,7 @@ import { PointLog } from "./modules/point/point-log.entity";
 import { AdView } from "./modules/ad/ad-view.entity";
 import { Ranking } from "./modules/ranking/ranking.entity";
 import { Migrator } from "@mikro-orm/migrations";
+import { SeedManager } from "@mikro-orm/seeder";
 
 export default defineConfig({
   dbName: process.env.MYSQL_DATABASE ?? "daVinci_toss",
@@ -17,10 +18,14 @@ export default defineConfig({
   password: process.env.MYSQL_PASSWORD ?? "",
   entities: [User, Drawing, Prompt, DailyPrompt, PointLog, AdView, Ranking],
   debug: process.env.NODE_ENV !== "production",
-  extensions: [Migrator],
+  extensions: [Migrator, SeedManager],
   migrations: {
     snapshot: process.env.NODE_ENV !== "production",
     path: "dist/migrations",
     pathTs: "src/migrations",
+  },
+  seeder: {
+    path: "dist/seeders",
+    pathTs: "src/seeders",
   },
 });
