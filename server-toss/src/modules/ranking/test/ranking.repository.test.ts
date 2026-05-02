@@ -9,7 +9,7 @@ import { SmallUserDrawingSeeder } from "src/seeders/small-user-drawing.seeder";
 import { RankingSeeder } from "src/seeders/ranking.seeder";
 import { User } from "src/modules/user/user.entity";
 
-describe("Describe: RankingRepository", () => {
+describe("RankingRepository", () => {
   let orm: MikroORM;
   let repository: RankingRepository;
   let module: TestingModule;
@@ -43,8 +43,8 @@ describe("Describe: RankingRepository", () => {
     }
   });
 
-  describe("Context: findMyRanking 메소드는", () => {
-    describe("제출한 기록이 있으면", () => {
+  describe("Describe: findMyRanking 메소드는", () => {
+    describe("Context: 제출한 기록이 있으면", () => {
       let givenUser: User;
       let givenRank: number;
 
@@ -63,7 +63,7 @@ describe("Describe: RankingRepository", () => {
         givenRank += 1;
       });
 
-      it("순위와 점수를 응답한다.", async () => {
+      it("It: 순위와 점수를 응답한다.", async () => {
         const result = await repository.findMyRanking(givenUser.id);
 
         expect(result).not.toBeNull();
@@ -71,8 +71,8 @@ describe("Describe: RankingRepository", () => {
       });
     });
 
-    describe("제출한 기록이 없으면", () => {
-      it("null을 응답한다.", async () => {
+    describe("Context: 제출한 기록이 없으면", () => {
+      it("It: null을 응답한다.", async () => {
         const result = await repository.findMyRanking(BigInt(0));
 
         expect(result).toBeNull();
