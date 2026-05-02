@@ -3,6 +3,8 @@ import { ArcScoreBar } from "@/shared/ui/arcScoreBar";
 import type { MyDrawingResponse } from "@toss/shared";
 import { colors } from "@toss/tds-colors";
 import { Paragraph, Post } from "@toss/tds-mobile";
+import { useEffect, useRef } from "react";
+import { drawStrokesOnCanvas } from "../lib/drawStrokesOnCanvas";
 
 interface MyScoreCardProps {
   drawing: MyDrawingResponse;
@@ -10,13 +12,17 @@ interface MyScoreCardProps {
 
 const formatScore = (score: number) => score.toFixed(2);
 
-const pointsToPolyline = (points: [number[], number[]]) => {
-  const [xPoints, yPoints] = points;
-  return xPoints.map((x, index) => `${x},${yPoints[index]}`).join(" ");
-};
+const CANVAS_SIZE = 400;
 
 const MyScoreCard = ({ drawing }: MyScoreCardProps) => {
   const { similarity } = drawing;
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    drawStrokesOnCanvas(canvas, drawing.strokes);
+  }, [drawing]);
 
   return (
     <div className="flex flex-col w-full items-center px-(--page-px) gap-3">
@@ -24,24 +30,14 @@ const MyScoreCard = ({ drawing }: MyScoreCardProps) => {
         className="mx-(--card-mx) mt-2 w-full rounded-2xl p-3"
         style={{ backgroundColor: colors.grey100 }}
       >
-        <svg
-          viewBox="0 0 256 256"
+        <canvas
+          ref={canvasRef}
+          width={CANVAS_SIZE}
+          height={CANVAS_SIZE}
           role="img"
           aria-label="나의 그림"
           className="aspect-square w-full rounded-xl bg-white object-contain shadow-sm"
-        >
-          {drawing.strokes.map((stroke, index) => (
-            <polyline
-              key={`${drawing.drawingId}-${index}`}
-              points={pointsToPolyline(stroke.points)}
-              fill="none"
-              stroke={`rgb(${stroke.color.join(",")})`}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="4"
-            />
-          ))}
-        </svg>
+        />
       </div>
       <ArcScoreBar
         penalty={similarity.penalty}
