@@ -1,4 +1,4 @@
-import { EntityRepository, QueryOrder } from "@mikro-orm/mysql";
+import { EntityRepository, QueryOrder, sql } from "@mikro-orm/mysql";
 import { Ranking } from "./ranking.entity";
 
 export class RankingRepository extends EntityRepository<Ranking> {
@@ -32,23 +32,19 @@ export class RankingRepository extends EntityRepository<Ranking> {
   }
 
   async findMyRanking(userId: bigint) {
-    const rankingList = await this.find(
-      {},
-      {
-        orderBy: [
-          {
-            score: QueryOrder.DESC,
-            submittedAt: QueryOrder.ASC,
-            name: QueryOrder.ASC,
-          },
-        ],
-      },
-    );
+    const qb = this.createQueryBuilder("r");
 
-    const rank = rankingList.findIndex((ranking) => ranking.userId === userId);
+    const ranking = await qb
+      .select([
+        "r.score",
+        sql`row_number() over(order by score DESC, submittedAt ASC, name ASC)`.as(
+          "rank",
+        ),
+      ])
+      .where({ "r.userId": userId })
+      .execute<{ rank: number; score: number }[]>();
 
-    if (rank < 0) return null;
-
-    return { rank, score: rankingList[rank].score };
+    if (ranking.length < 1) return null;
+    return ranking[0];
   }
 }
