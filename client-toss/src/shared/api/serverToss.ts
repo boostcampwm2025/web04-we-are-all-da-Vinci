@@ -9,6 +9,11 @@ interface RequestOptions {
   headers?: HeadersInit;
 }
 
+interface RankingListServerResponse {
+  updatedAt: string;
+  rankings: RankingListItem[];
+}
+
 const request = async <T>(path: string, init: RequestInit): Promise<T> => {
   const response = await fetch(`${BASE_URL}${path}`, init);
 
@@ -76,10 +81,10 @@ export const serverTossApi = {
     // TODO: 서버 확정 후 x-user-id에 전달할 식별자로 교체한다.
     headers.set("x-user-id", getCurrentUserId());
 
-    return get<RankingListItem[]>("/rankings", {
+    return get<RankingListServerResponse>("/rankings", {
       ...options,
       headers,
-    });
+    }).then(({ rankings }) => rankings);
   },
   getPodium: (options?: RequestOptions) =>
     get<PodiumEntry[]>("/rankings/podium", options),
