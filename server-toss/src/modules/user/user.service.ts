@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { EntityManager } from "@mikro-orm/mysql";
 import { User } from "src/modules/user/user.entity";
@@ -35,5 +35,13 @@ export class UserService {
     }
 
     await this.em.flush();
+  }
+
+  async findUser(userId: string): Promise<User> {
+    const user = await this.userRepository.findOne({ id: userId });
+    if (!user) {
+      throw new NotFoundException("유저를 찾을 수 없습니다.");
+    }
+    return user;
   }
 }
