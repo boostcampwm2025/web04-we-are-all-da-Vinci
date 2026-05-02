@@ -32,16 +32,23 @@ export class RankingRepository extends EntityRepository<Ranking> {
   }
 
   async findMyRanking(userId: bigint) {
-    const qb = this.createQueryBuilder("r");
-
-    const ranking = await qb
+    const rankQuery = this.createQueryBuilder("r")
       .select([
         "r.score",
-        sql`row_number() over(order by score DESC, submittedAt ASC, name ASC)`.as(
+        "r.userId",
+        sql`row_number() over(order by score DESC, submitted_at ASC, name ASC)`.as(
           "rank",
         ),
       ])
-      .where({ "r.userId": userId })
+      .from(Ranking);
+
+    const qb = this.createQueryBuilder("r");
+
+    const ranking = await qb
+      .select([sql`rq.score`, sql`rq.rank`.as("rank")])
+      .with("rank_query", rankQuery)
+      .where({ [sql`rq.user_id`]: userId })
+      .from("rank_query", "rq")
       .execute<{ rank: number; score: number }[]>();
 
     if (ranking.length < 1) return null;
