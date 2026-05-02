@@ -12,7 +12,7 @@ import {
 } from "@toss/shared";
 import { getTodayKst } from "src/common/today";
 import { ZodValidationPipe } from "src/common/zod-validation.pipe";
-import { DrawingService } from "./drawing.service";
+import { DrawingService } from "./service/drawing.service";
 
 @ApiTags("Drawing")
 @Controller()

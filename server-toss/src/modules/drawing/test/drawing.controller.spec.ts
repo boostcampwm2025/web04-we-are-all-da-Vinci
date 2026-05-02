@@ -2,9 +2,9 @@ import { INestApplication, NotFoundException } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import request from "supertest";
 import type { App } from "supertest/types";
-import { ZodExceptionFilter } from "../../common/zod-exception.filter";
-import { DrawingController } from "./drawing.controller";
-import { DrawingService } from "./drawing.service";
+import { ZodExceptionFilter } from "../../../common/zod-exception.filter";
+import { DrawingController } from "../drawing.controller";
+import { DrawingService } from "../service/drawing.service";
 
 describe("DrawingController (e2e)", () => {
   let app: INestApplication<App>;

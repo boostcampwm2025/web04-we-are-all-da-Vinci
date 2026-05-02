@@ -13,11 +13,10 @@ jest.mock("@davinci/similarity", () => ({
   scoreFinalSimilarity: mockScoreFinalSimilarity,
 }));
 
-import { NotFoundException } from "@nestjs/common";
-import type { Prompt } from "../prompt/prompt.entity";
-import type { User } from "../user/user.entity";
-import { Drawing } from "./drawing.entity";
-import { DrawingService } from "./drawing.service";
+import type { Prompt } from "../../prompt/prompt.entity";
+import { User } from "../../user/user.entity";
+import { Drawing } from "../drawing.entity";
+import { DrawingService } from "../service/drawing.service";
 
 const sampleStrokes = [
   {
@@ -39,6 +38,19 @@ const buildPromptService = () => ({
 });
 
 describe("DrawingService", () => {
+  let userService: never;
+  let drawingAccessService: never;
+  let givenUser: User;
+
+  beforeAll(() => {
+    givenUser = { id: BigInt(1) } as User;
+
+    userService = { findUser: jest.fn().mockResolvedValue(givenUser) } as never;
+    drawingAccessService = {
+      validateAccess: jest.fn().mockResolvedValue(() => undefined),
+    } as never;
+  });
+
   beforeEach(() => {
     mockPreprocessStrokes.mockClear();
     mockScoreFinalSimilarity.mockClear();
@@ -52,11 +64,11 @@ describe("DrawingService", () => {
         persist: jest.fn(),
         flush: jest.fn(),
       };
-      const userRepo = { findOne: jest.fn() };
       const service = new DrawingService(
         em as never,
-        userRepo as never,
+        userService,
         promptService as never,
+        drawingAccessService,
       );
 
       const result = await service.scoreStrokes(
@@ -78,9 +90,7 @@ describe("DrawingService", () => {
   describe("드로잉 제출", () => {
     it("유효한 userKey와 strokes를 받으면 drawings를 저장하고 결과를 반환한다", async () => {
       const promptService = buildPromptService();
-      const fakeUser = { id: BigInt(1) } as User;
       const fakePromptRef = { id: BigInt(7) } as Prompt;
-      const userRepo = { findOne: jest.fn(async () => fakeUser) };
       const persisted: Drawing[] = [];
       const em = {
         getReference: jest.fn(() => fakePromptRef),
@@ -92,8 +102,9 @@ describe("DrawingService", () => {
       };
       const service = new DrawingService(
         em as never,
-        userRepo as never,
+        userService,
         promptService as never,
+        drawingAccessService,
       );
 
       const result = await service.submitDrawing(
@@ -102,40 +113,15 @@ describe("DrawingService", () => {
         new Date(Date.UTC(2026, 3, 15)),
       );
 
-      expect(userRepo.findOne).toHaveBeenCalledWith({ userKey: 1234 });
+      expect(userService.findUser).toHaveBeenCalledWith("1234");
       expect(persisted).toHaveLength(1);
       const saved = persisted[0];
-      expect(saved.user).toBe(fakeUser);
+      expect(saved.user).toBe(givenUser);
       expect(saved.prompt).toBe(fakePromptRef);
       expect(JSON.parse(saved.strokes)).toEqual(sampleStrokes);
       expect(JSON.parse(saved.similarity).similarity).toBe(87);
       expect(result.drawingId).toBe(42);
       expect(result.similarity.similarity).toBe(87);
-    });
-
-    it("userKey에 해당하는 사용자가 없으면 NotFoundException을 던진다", async () => {
-      const promptService = buildPromptService();
-      const em = {
-        getReference: jest.fn(),
-        persist: jest.fn(),
-        flush: jest.fn(),
-      };
-      const userRepo = { findOne: jest.fn(async () => null) };
-      const service = new DrawingService(
-        em as never,
-        userRepo as never,
-        promptService as never,
-      );
-
-      await expect(
-        service.submitDrawing(
-          "9999",
-          sampleStrokes as never,
-          new Date(Date.UTC(2026, 3, 15)),
-        ),
-      ).rejects.toThrow(NotFoundException);
-      expect(em.persist).not.toHaveBeenCalled();
-      expect(em.flush).not.toHaveBeenCalled();
     });
   });
 });
