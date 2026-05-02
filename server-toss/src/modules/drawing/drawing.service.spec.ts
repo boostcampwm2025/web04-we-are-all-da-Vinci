@@ -1,9 +1,3 @@
-jest.mock("@mikro-orm/core", () => ({
-  EntityRepositoryType: Symbol("EntityRepositoryType"),
-  EntityManager: class {},
-  QueryOrder: { ASC: "asc", DESC: "desc" },
-}));
-
 const mockPreprocessStrokes = jest.fn((strokes: unknown) => ({
   player: strokes,
 }));
