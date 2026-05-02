@@ -134,6 +134,9 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
     if (orm) {
       await orm.close();
     }
+    if (module) {
+      await module.close();
+    }
   });
   describe("refreshRankingSnapshot 메소드는", () => {
     describe("drawings 데이터가 있으면", () => {
