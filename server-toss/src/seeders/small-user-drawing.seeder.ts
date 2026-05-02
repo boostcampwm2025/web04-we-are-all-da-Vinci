@@ -7,7 +7,7 @@ import { loadPromptOne, loadStrokesOne } from "./helpers/prompt-seed.helper";
 import { User } from "src/modules/user/user.entity";
 import { SEED_USER_KEY_BASE } from "./helpers/seed.constants";
 
-export class LightSeeder extends Seeder {
+export class SmallUserDrawingSeeder extends Seeder {
   async run(em: EntityManager): Promise<void> {
     const prompt = await loadPromptOne(em);
     const strokes = await loadStrokesOne();

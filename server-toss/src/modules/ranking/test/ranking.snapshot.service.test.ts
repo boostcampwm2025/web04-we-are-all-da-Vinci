@@ -6,7 +6,7 @@ import { Drawing } from "../../drawing/drawing.entity";
 import { Ranking } from "../ranking.entity";
 import { RankingSnapshotService } from "../ranking.snapshot.service";
 import { getSeoulDayRange } from "src/common/time.util";
-import { LightSeeder } from "src/seeders/light.seeder";
+import { SmallUserDrawingSeeder } from "src/seeders/small-user-drawing.seeder";
 import { Test, TestingModule } from "@nestjs/testing";
 import { MikroOrmModule } from "@mikro-orm/nestjs";
 
@@ -140,7 +140,7 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
       beforeAll(async () => {
         if (orm) {
           await orm.schema.refresh();
-          await orm.seeder.seed(LightSeeder);
+          await orm.seeder.seed(SmallUserDrawingSeeder);
         }
       });
       afterAll(async () => {
