@@ -21,8 +21,9 @@
     "test:cov": "jest --coverage",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed:down": "npx mikro-orm migration:fresh",
-    "seed:light": "npx mikro-orm seeder:run --class=LightSeeder",
-    "seed:light:fresh": "npx mikro-orm migration:fresh --seed LightSeeder"
+    "seed:drawing:small": "npx mikro-orm seeder:run --class=SmallUserDrawingSeeder",
+    "seed:drawing:small:fresh": "npx mikro-orm migration:fresh --seed SmallUserDrawingSeeder",
+    "seed:ranking": "npx mikro-orm seeder:run --class=RankingSeeder"
   },
   "dependencies": {
     "@davinci/similarity": "workspace:*",
