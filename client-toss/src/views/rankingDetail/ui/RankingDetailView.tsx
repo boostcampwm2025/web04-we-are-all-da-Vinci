@@ -4,7 +4,7 @@ import { colors } from "@toss/tds-colors";
 import { Button, Skeleton, Top } from "@toss/tds-mobile";
 import { Link, useParams } from "react-router-dom";
 
-const DrawingDetailView = () => {
+const RankingDetailView = () => {
   const { drawingId } = useParams<{ drawingId: string }>();
   const { drawing, isLoading } = useDrawing(drawingId);
 
@@ -38,6 +38,8 @@ const DrawingDetailView = () => {
         </div>
       )}
 
+      <BannerAd adGroupId="ait-ad-test-banner-id" className="mt-3 mb-3" />
+
       <div className="mt-8 px-(--page-px)">
         <Link to="/ranking">
           <Button size="xlarge" variant="weak" display="block">
@@ -45,10 +47,8 @@ const DrawingDetailView = () => {
           </Button>
         </Link>
       </div>
-
-      <BannerAd adGroupId="ait-ad-test-banner-id" className="mt-3 mb-3" />
     </div>
   );
 };
 
-export default DrawingDetailView;
+export default RankingDetailView;
