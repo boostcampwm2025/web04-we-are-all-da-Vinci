@@ -3,6 +3,8 @@ import { Button, TextButton, Top } from "@toss/tds-mobile";
 import { colors } from "@toss/tds-colors";
 import { MyScoreCard } from "@/entities/myScoreCard";
 import { BannerAd } from "@/shared/ui/bannerAd";
+import { Link } from "react-router-dom";
+import { Podium } from "@/entities/podium";
 
 const CARD_COUNT = 3;
 
@@ -29,15 +31,12 @@ const DashboardView = () => {
         />
         <div className="flex w-full flex-col items-center gap-4 px-(--page-px)">
           {/* 랭킹 TOP3 */}
-          <div
-            className="h-[205px] w-full rounded-xl"
-            style={{ backgroundColor: colors.grey100 }}
-          >
-            TOP3
-          </div>
-          <TextButton size="small" variant="arrow">
-            TOP 100 랭킹 보러가기
-          </TextButton>
+          <Podium />
+          <Link to="/ranking">
+            <TextButton size="small" variant="arrow">
+              TOP 100 랭킹 보러가기
+            </TextButton>
+          </Link>
         </div>
       </div>
 

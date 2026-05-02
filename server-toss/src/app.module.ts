@@ -1,15 +1,18 @@
 import { MikroOrmModule } from "@mikro-orm/nestjs";
-import { Module } from "@nestjs/common";
+import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { ScheduleModule } from "@nestjs/schedule";
 import { LoggerModule } from "nestjs-pino";
 import { HealthModule } from "./health/health.module";
-import { UserModule } from "./modules/user/user.module";
-import { DrawingModule } from "./modules/drawing/drawing.module";
-import { PromptModule } from "./modules/prompt/prompt.module";
-import { PointModule } from "./modules/point/point.module";
-import { AdModule } from "./modules/ad/ad.module";
-import { RankingModule } from "./modules/ranking/ranking.module";
+import { AuthModule } from "./modules/auth/auth.module";
 import config from "./mikro-orm.config";
+import { AdModule } from "./modules/ad/ad.module";
+import { DrawingModule } from "./modules/drawing/drawing.module";
+import { PointModule } from "./modules/point/point.module";
+import { PromptModule } from "./modules/prompt/prompt.module";
+import { RankingModule } from "./modules/ranking/ranking.module";
+import { UserModule } from "./modules/user/user.module";
+import { RequestContextHelper } from "./common/middlewares/request-context-helper.middleware";
 
 @Module({
   imports: [
@@ -39,7 +42,9 @@ import config from "./mikro-orm.config";
         };
       },
     }),
+    ScheduleModule.forRoot(),
     MikroOrmModule.forRoot(config),
+    AuthModule,
     UserModule,
     DrawingModule,
     PromptModule,
@@ -48,4 +53,8 @@ import config from "./mikro-orm.config";
     RankingModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestContextHelper).forRoutes("*");
+  }
+}

@@ -32,6 +32,7 @@
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.17",
     "@nestjs/platform-express": "^11.1.17",
+    "@nestjs/schedule": "^6.1.1",
     "@nestjs/swagger": "^11.2.6",
     "@toss/shared": "workspace:*",
     "nestjs-pino": "^4.5.0",
@@ -83,6 +84,12 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "passWithNoTests": true,
+    "setupFiles": [
+      "<rootDir>/test-setup/setup-mikro-orm-mocks.ts"
+    ],
+    "transformIgnorePatterns": [
+      "node_modules/(?!(\\.pnpm/)?(@mikro-orm))"
+    ],
     "moduleNameMapper": {
       "^src/(.*)$": "<rootDir>/$1",
       "^@toss/shared$": "<rootDir>/../../packages/toss-shared/dist/index.js",

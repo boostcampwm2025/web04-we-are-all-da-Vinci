@@ -122,13 +122,13 @@ const PlayerReplayCard = ({
             <span
               className={`font-handwriting text-2xl font-bold ${rankStyles.text || 'text-blue-600'}`}
             >
-              {similarity.similarity}%
+              {similarity.score}%
             </span>
           </div>
           <div className="h-1.5 w-full rounded-full bg-gray-200">
             <div
               className="h-1.5 rounded-full bg-blue-600"
-              style={{ width: `${similarity.similarity}%` }}
+              style={{ width: `${similarity.score}%` }}
             />
           </div>
         </div>

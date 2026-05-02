@@ -1,0 +1,33 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'C:\\dev\\web04-we-are-all-da-Vinci\\.codex\\hooks\\block-dangerous.sh'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=$(cat | jq -r '.tool_input.file_path // .tool_input.filePath'); if [ -n \"$FILE\" ] && [ -f \"$FILE\" ]; then npx prettier --write \"$FILE\" 2>/dev/null; npx eslint --fix \"$FILE\" 2>/dev/null; fi; exit 0"
+          },
+          {
+            "type": "command",
+            "command": "'C:\\dev\\web04-we-are-all-da-Vinci\\.codex\\hooks\\run-related-test.sh'",
+            "timeout": 30,
+            "statusMessage": "관련 테스트 실행 중..."
+          }
+        ]
+      }
+    ]
+  }
+}

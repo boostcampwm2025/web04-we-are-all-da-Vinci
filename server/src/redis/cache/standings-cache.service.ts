@@ -11,7 +11,7 @@ export class StandingsCacheService {
     const client = this.redisService.getClient();
     const key = RedisKeys.standings(roomId);
 
-    await client.zIncrBy(key, similarity.similarity, profileId);
+    await client.zIncrBy(key, similarity.score, profileId);
   }
 
   async getStandings(roomId: string) {

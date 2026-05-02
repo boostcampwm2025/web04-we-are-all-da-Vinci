@@ -62,9 +62,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [
-            "drawing"
-          ]
+          "enumItems": ["drawing"]
         },
         "user_id": {
           "name": "user_id",
@@ -84,18 +82,14 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "user_id"
-          ],
+          "columnNames": ["user_id"],
           "keyName": "ad_views_user_id_index",
           "unique": false,
           "primary": false,
           "constraint": false
         },
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -105,15 +99,11 @@
       "checks": [],
       "foreignKeys": {
         "ad_views_user_id_foreign": {
-          "columnNames": [
-            "user_id"
-          ],
+          "columnNames": ["user_id"],
           "constraintName": "ad_views_user_id_foreign",
           "localTableName": "ad_views",
           "referencedTableName": "users",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "updateRule": "no action",
           "deleteRule": "no action"
         }
@@ -172,27 +162,21 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "prompt_date"
-          ],
+          "columnNames": ["prompt_date"],
           "keyName": "daily_prompts_prompt_date_unique",
           "unique": true,
           "primary": false,
           "constraint": true
         },
         {
-          "columnNames": [
-            "prompt_id"
-          ],
+          "columnNames": ["prompt_id"],
           "keyName": "daily_prompts_prompt_id_index",
           "unique": false,
           "primary": false,
           "constraint": false
         },
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -202,15 +186,11 @@
       "checks": [],
       "foreignKeys": {
         "daily_prompts_prompt_id_foreign": {
-          "columnNames": [
-            "prompt_id"
-          ],
+          "columnNames": ["prompt_id"],
           "constraintName": "daily_prompts_prompt_id_foreign",
           "localTableName": "daily_prompts",
           "referencedTableName": "prompts",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "updateRule": "no action",
           "deleteRule": "no action"
         }
@@ -344,27 +324,21 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "prompt_id"
-          ],
+          "columnNames": ["prompt_id"],
           "keyName": "drawings_prompt_id_index",
           "unique": false,
           "primary": false,
           "constraint": false
         },
         {
-          "columnNames": [
-            "user_id"
-          ],
+          "columnNames": ["user_id"],
           "keyName": "drawings_user_id_index",
           "unique": false,
           "primary": false,
           "constraint": false
         },
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -374,28 +348,20 @@
       "checks": [],
       "foreignKeys": {
         "drawings_prompt_id_foreign": {
-          "columnNames": [
-            "prompt_id"
-          ],
+          "columnNames": ["prompt_id"],
           "constraintName": "drawings_prompt_id_foreign",
           "localTableName": "drawings",
           "referencedTableName": "prompts",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "updateRule": "no action",
           "deleteRule": "no action"
         },
         "drawings_user_id_foreign": {
-          "columnNames": [
-            "user_id"
-          ],
+          "columnNames": ["user_id"],
           "constraintName": "drawings_user_id_foreign",
           "localTableName": "drawings",
           "referencedTableName": "users",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "updateRule": "no action",
           "deleteRule": "no action"
         }
@@ -464,11 +430,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [
-            "ad",
-            "share",
-            "drawing"
-          ]
+          "enumItems": ["ad", "share", "drawing"]
         },
         "point_amount": {
           "name": "point_amount",
@@ -503,18 +465,14 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "user_id"
-          ],
+          "columnNames": ["user_id"],
           "keyName": "point_logs_user_id_index",
           "unique": false,
           "primary": false,
           "constraint": false
         },
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -524,15 +482,11 @@
       "checks": [],
       "foreignKeys": {
         "point_logs_user_id_foreign": {
-          "columnNames": [
-            "user_id"
-          ],
+          "columnNames": ["user_id"],
           "constraintName": "point_logs_user_id_foreign",
           "localTableName": "point_logs",
           "referencedTableName": "users",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "updateRule": "no action",
           "deleteRule": "no action"
         }
@@ -576,9 +530,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -712,13 +664,40 @@
           "default": null,
           "comment": null,
           "enumItems": []
+        },
+        "submitted_at": {
+          "name": "submitted_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 0,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": []
         }
       },
       "indexes": [
         {
-          "columnNames": [
-            "id"
+          "columnNames": ["score", "submitted_at", "name"],
+          "keyName": "idx_ranking_score_submit_name",
+          "unique": false,
+          "primary": false,
+          "constraint": false,
+          "columns": [
+            {
+              "name": "score",
+              "sort": "DESC"
+            }
           ],
+          "composite": true
+        },
+        {
+          "columnNames": ["id"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -841,18 +820,14 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
           "constraint": true
         },
         {
-          "columnNames": [
-            "user_key"
-          ],
+          "columnNames": ["user_key"],
           "keyName": "users_user_key_unique",
           "unique": true,
           "primary": false,
