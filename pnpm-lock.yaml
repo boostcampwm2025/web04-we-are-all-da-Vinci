@@ -446,8 +446,8 @@ importers:
         specifier: ^7.0.1
         version: 7.0.1(@mikro-orm/core@7.0.10)(@nestjs/common@11.1.17(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.17)(reflect-metadata@0.2.2)
       '@mikro-orm/seeder':
-        specifier: ^7.0.13
-        version: 7.0.13(@mikro-orm/core@7.0.10)
+        specifier: 7.0.10
+        version: 7.0.10(@mikro-orm/core@7.0.10)
       '@nestjs/common':
         specifier: ^11.1.17
         version: 11.1.17(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -2758,11 +2758,11 @@ packages:
       '@nestjs/core': ^11.0.5
       reflect-metadata: ^0.1.0 || ^0.2.0
 
-  '@mikro-orm/seeder@7.0.13':
-    resolution: {integrity: sha512-andXFruUz/ED39ir+HiBRvtWvZSt1XgQP057l7H9aoUGvjc+K/doogMtR38qgsrGvg7138ThoV6c/g5CwFqzeA==}
+  '@mikro-orm/seeder@7.0.10':
+    resolution: {integrity: sha512-SHJFrVm0umSMhKePkVUIIGsN17E/dFrRozLoJEsUMZwdITa/EoaUpLvnyjDjZePMriE8Fg2Rn6wUuXraB4CIKg==}
     engines: {node: '>= 22.17.0'}
     peerDependencies:
-      '@mikro-orm/core': 7.0.13
+      '@mikro-orm/core': 7.0.10
 
   '@mikro-orm/sql@7.0.10':
     resolution: {integrity: sha512-LAa5YbcTDNv4C6X21c+kdnMRBLjvFAVXWn9ev+JqO0g5C5nWnsHV7j/KXhJJwQFUCC6EXi2Gw24j4nTOe4HiVQ==}
@@ -13739,7 +13739,7 @@ snapshots:
       '@nestjs/core': 11.1.17(@nestjs/common@11.1.17(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.17)(@nestjs/websockets@11.1.13)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       reflect-metadata: 0.2.2
 
-  '@mikro-orm/seeder@7.0.13(@mikro-orm/core@7.0.10)':
+  '@mikro-orm/seeder@7.0.10(@mikro-orm/core@7.0.10)':
     dependencies:
       '@mikro-orm/core': 7.0.10
 
