@@ -11,6 +11,7 @@ describe("DrawingController (e2e)", () => {
   const drawingService = {
     scoreStrokes: jest.fn(),
     submitDrawing: jest.fn(),
+    getMyDrawings: jest.fn(),
   };
 
   const validPayload = {
@@ -97,6 +98,29 @@ describe("DrawingController (e2e)", () => {
         .post("/drawing")
         .send({ userKey: "9999", ...validPayload })
         .expect(404);
+    });
+  });
+
+  describe("GET /drawing/me", () => {
+    it("X-User-Id 헤더로 내 그림 목록을 조회한다", async () => {
+      drawingService.getMyDrawings.mockResolvedValue({
+        userId: "1",
+        drawings: [],
+      });
+
+      const res = await request(app.getHttpServer())
+        .get("/drawing/me")
+        .set("X-User-Id", "1")
+        .expect(200);
+
+      expect(res.body).toEqual({ userId: "1", drawings: [] });
+      expect(drawingService.getMyDrawings).toHaveBeenCalledWith(1n);
+    });
+
+    it("X-User-Id 헤더가 없으면 400을 반환한다", async () => {
+      await request(app.getHttpServer()).get("/drawing/me").expect(400);
+
+      expect(drawingService.getMyDrawings).not.toHaveBeenCalled();
     });
   });
 });

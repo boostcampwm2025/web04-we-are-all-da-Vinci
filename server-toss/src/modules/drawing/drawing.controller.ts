@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
+import { Body, Controller, Get, Headers, Param, Post } from "@nestjs/common";
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import type {
   SimilarityResponse,
@@ -12,8 +12,9 @@ import {
 } from "@toss/shared";
 import { getTodayKst } from "src/common/today";
 import { ZodValidationPipe } from "src/common/zod-validation.pipe";
+import { parseUserIdHeader } from "src/modules/ranking/ranking.util";
 import { DrawingService } from "./drawing.service";
-import { DrawingMeDto, DrawingUserDto } from "./dto/drawing.dto";
+import { DrawingUserDto } from "./dto/drawing.dto";
 
 @ApiTags("Drawing")
 @Controller()
@@ -108,7 +109,9 @@ export class DrawingController {
   }
 
   @Get("drawing/me")
-  getMyDrawings(@Query() { userId }: DrawingMeDto) {
+  getMyDrawings(@Headers("x-user-id") userIdHeader?: string | string[]) {
+    const userId = parseUserIdHeader(userIdHeader);
+
     return this.drawingService.getMyDrawings(userId);
   }
 

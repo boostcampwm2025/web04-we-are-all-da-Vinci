@@ -1,7 +1,19 @@
 import { colors } from "@toss/tds-colors";
 import { Border, Paragraph } from "@toss/tds-mobile";
 
-const ScoreDetailCard = () => {
+interface ScoreDetailCardProps {
+  strokeMatchSimilarity: number;
+  shapeSimilarity: number;
+  penalty: number;
+}
+
+const formatScore = (score: number) => score.toFixed(2);
+
+const ScoreDetailCard = ({
+  strokeMatchSimilarity,
+  shapeSimilarity,
+  penalty,
+}: ScoreDetailCardProps) => {
   return (
     <div className="w-full flex flex-col gap-2">
       <div className="flex items-center justify-between">
@@ -17,7 +29,7 @@ const ScoreDetailCard = () => {
         </div>
         <Paragraph typography="t5">
           <Paragraph.Text fontWeight="medium" color={colors.blue500}>
-            +80.55점
+            +{formatScore(strokeMatchSimilarity)}점
           </Paragraph.Text>
         </Paragraph>
       </div>
@@ -35,7 +47,7 @@ const ScoreDetailCard = () => {
         </div>
         <Paragraph typography="t5">
           <Paragraph.Text fontWeight="medium" color={colors.blue500}>
-            +80.55점
+            +{formatScore(shapeSimilarity)}점
           </Paragraph.Text>
         </Paragraph>
       </div>
@@ -53,7 +65,7 @@ const ScoreDetailCard = () => {
         </div>
         <Paragraph typography="t5">
           <Paragraph.Text fontWeight="medium" color={colors.red500}>
-            -10.00점
+            -{formatScore(penalty)}점
           </Paragraph.Text>
         </Paragraph>
       </div>

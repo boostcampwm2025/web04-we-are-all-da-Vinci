@@ -1,5 +1,6 @@
 import type { PodiumEntry } from "@/entities/podium";
 import type { MyRankingResponse, RankingListItem } from "@/entities/ranking";
+import type { MyDrawingsResponse } from "@toss/shared";
 
 const BASE_URL = "/api";
 
@@ -21,6 +22,10 @@ const request = async <T>(path: string, init: RequestInit): Promise<T> => {
 
 const createHeaders = (headers?: HeadersInit): Headers => {
   return new Headers(headers);
+};
+
+const getCurrentUserId = () => {
+  return localStorage.getItem("userId") ?? "1";
 };
 
 const get = async <T>(
@@ -58,7 +63,7 @@ export const serverTossApi = {
   getMyRanking: (options?: RequestOptions) => {
     const headers = createHeaders(options?.headers);
 
-    headers.set("x-user-id", `1`);
+    headers.set("x-user-id", getCurrentUserId());
 
     return get<MyRankingResponse>("/rankings/me", {
       ...options,
@@ -69,7 +74,7 @@ export const serverTossApi = {
     const headers = createHeaders(options?.headers);
 
     // TODO: 서버 확정 후 x-user-id에 전달할 식별자로 교체한다.
-    headers.set("x-user-id", `1`);
+    headers.set("x-user-id", getCurrentUserId());
 
     return get<RankingListItem[]>("/rankings", {
       ...options,
@@ -78,4 +83,14 @@ export const serverTossApi = {
   },
   getPodium: (options?: RequestOptions) =>
     get<PodiumEntry[]>("/rankings/podium", options),
+  getMyDrawings: (options?: RequestOptions) => {
+    const headers = createHeaders(options?.headers);
+
+    headers.set("x-user-id", getCurrentUserId());
+
+    return get<MyDrawingsResponse>("/drawing/me", {
+      ...options,
+      headers,
+    });
+  },
 };

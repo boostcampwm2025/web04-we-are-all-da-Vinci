@@ -57,7 +57,7 @@ export class DrawingService {
     return { drawingId: Number(drawing.id), similarity };
   }
 
-  private async findTodayByUser(userId: string): Promise<Drawing[]> {
+  private async findTodayByUser(userId: bigint | string): Promise<Drawing[]> {
     const { start, end } = getSeoulDayRange();
     return this.em.find(
       Drawing,
@@ -69,12 +69,13 @@ export class DrawingService {
     );
   }
 
-  async getMyDrawings(userId: string) {
+  async getMyDrawings(userId: bigint) {
     const { start, end } = getSeoulDayRange();
-    const myDrawings = await this.findTodayByUser(userId);
+    const userIdString = userId.toString();
+    const myDrawings = await this.findTodayByUser(userIdString);
 
     if (myDrawings.length === 0) {
-      return { userId, drawings: [] };
+      return { userId: userIdString, drawings: [] };
     }
 
     // 그림의 등수 정보를 가져오기 위해 같은 prompt의 그림들을 모두 가져와서 순위 계산
@@ -91,7 +92,7 @@ export class DrawingService {
         ).length + 1;
 
       return {
-        drawingId: drawing.id,
+        drawingId: drawing.id.toString(),
         drawRanking: rank,
         strokes: JSON.parse(drawing.strokes) as Stroke[],
         score: drawing.score,
@@ -99,7 +100,7 @@ export class DrawingService {
       };
     });
 
-    return { userId, drawings };
+    return { userId: userIdString, drawings };
   }
 
   async getBestDrawing(userId: string) {

@@ -183,7 +183,7 @@ describe("DrawingService", () => {
     it("오늘 그린 그림이 없으면 빈 배열 반환", async () => {
       em.find.mockResolvedValueOnce([]);
 
-      const result = await service.getMyDrawings("1");
+      const result = await service.getMyDrawings(BigInt(1));
 
       expect(result).toEqual({ userId: "1", drawings: [] });
     });
@@ -192,7 +192,7 @@ describe("DrawingService", () => {
       const drawing = makeDrawing(BigInt(1), 78.5, BigInt(10));
       em.find.mockResolvedValueOnce([drawing]).mockResolvedValueOnce([drawing]);
 
-      const result = await service.getMyDrawings("1");
+      const result = await service.getMyDrawings(BigInt(1));
 
       expect(result.userId).toBe("1");
       expect(result.drawings).toHaveLength(1);
@@ -209,7 +209,7 @@ describe("DrawingService", () => {
         .mockResolvedValueOnce([drawing])
         .mockResolvedValueOnce([drawing, otherDrawing]);
 
-      const result = await service.getMyDrawings("1");
+      const result = await service.getMyDrawings(BigInt(1));
 
       expect(result.drawings[0].drawRanking).toBe(1);
     });
@@ -221,7 +221,7 @@ describe("DrawingService", () => {
         .mockResolvedValueOnce([drawing])
         .mockResolvedValueOnce([drawing, otherDrawing]);
 
-      const result = await service.getMyDrawings("1");
+      const result = await service.getMyDrawings(BigInt(1));
 
       expect(result.drawings[0].drawRanking).toBe(2);
     });
@@ -238,7 +238,7 @@ describe("DrawingService", () => {
         .mockResolvedValueOnce([drawing])
         .mockResolvedValueOnce([drawing, otherPromptDrawing]);
 
-      const result = await service.getMyDrawings("1");
+      const result = await service.getMyDrawings(BigInt(1));
 
       expect(result.drawings[0].drawRanking).toBe(1);
     });
@@ -247,7 +247,7 @@ describe("DrawingService", () => {
       const drawing = makeDrawing(BigInt(1), 78.5, BigInt(10));
       em.find.mockResolvedValueOnce([drawing]).mockResolvedValueOnce([drawing]);
 
-      const result = await service.getMyDrawings("1");
+      const result = await service.getMyDrawings(BigInt(1));
 
       expect(result.drawings[0].strokes).toEqual([
         { points: [[0], [0]], color: [255, 0, 0] },
