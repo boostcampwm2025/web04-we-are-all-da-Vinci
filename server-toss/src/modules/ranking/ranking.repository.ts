@@ -30,4 +30,25 @@ export class RankingRepository extends EntityRepository<Ranking> {
 
     return ranking?.createdAt ?? null;
   }
+
+  async findMyRanking(userId: bigint) {
+    const rankingList = await this.find(
+      {},
+      {
+        orderBy: [
+          {
+            score: QueryOrder.DESC,
+            submittedAt: QueryOrder.ASC,
+            name: QueryOrder.ASC,
+          },
+        ],
+      },
+    );
+
+    const rank = rankingList.findIndex((ranking) => ranking.userId === userId);
+
+    if (rank < 0) return null;
+
+    return { rank, score: rankingList[rank].score };
+  }
 }

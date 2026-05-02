@@ -32,7 +32,7 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
       afterEach(() => {
         jest.useRealTimers();
       });
-      it("정렬된 top100 스냅샷을 재생성한다", async () => {
+      it("정렬된 랭킹 스냅샷을 재생성한다", async () => {
         const insertedRankings: unknown[] = [];
         const nativeDelete = jest.fn().mockResolvedValue(0);
         const insertMany = jest.fn().mockImplementation((rankings) => {
@@ -93,7 +93,6 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
           },
           expect.objectContaining({
             populate: ["user"],
-            limit: 100,
           }),
         ]);
         expect(nativeDelete.mock.calls[0]).toEqual([{}]);

@@ -45,7 +45,6 @@ export class RankingSnapshotService {
                 user: { name: QueryOrder.ASC },
               },
             ],
-            limit: 100,
           },
         );
 
