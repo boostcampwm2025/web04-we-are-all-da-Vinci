@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 
-export class DrawingUserDto {
-  @ApiProperty({ description: "조회할 사용자 id" })
-  userId!: string;
+export class DrawingDetailDto {
+  @ApiProperty({ description: "조회할 그림 id" })
+  drawingId!: string;
 }

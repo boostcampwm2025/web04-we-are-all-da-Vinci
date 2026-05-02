@@ -1,6 +1,6 @@
 import type { PodiumEntry } from "@/entities/podium";
 import type { MyRankingResponse, RankingListItem } from "@/entities/ranking";
-import type { MyDrawingsResponse } from "@toss/shared";
+import type { MyDrawingResponse, MyDrawingsResponse } from "@toss/shared";
 
 const BASE_URL = "/api";
 
@@ -13,6 +13,10 @@ interface RankingListServerResponse {
   updatedAt: string;
   rankings: RankingListItem[];
 }
+
+type DrawingDetailResponse = MyDrawingResponse & {
+  name: string;
+};
 
 const request = async <T>(path: string, init: RequestInit): Promise<T> => {
   const response = await fetch(`${BASE_URL}${path}`, init);
@@ -98,4 +102,6 @@ export const serverTossApi = {
       headers,
     });
   },
+  getDrawing: (drawingId: string, options?: RequestOptions) =>
+    get<DrawingDetailResponse>(`/drawing/${drawingId}`, options),
 };

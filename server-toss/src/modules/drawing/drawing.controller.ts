@@ -14,7 +14,7 @@ import { getTodayKst } from "src/common/today";
 import { ZodValidationPipe } from "src/common/zod-validation.pipe";
 import { parseUserIdHeader } from "src/modules/ranking/ranking.util";
 import { DrawingService } from "./drawing.service";
-import { DrawingUserDto } from "./dto/drawing.dto";
+import { DrawingDetailDto } from "./dto/drawing.dto";
 
 @ApiTags("Drawing")
 @Controller()
@@ -115,8 +115,8 @@ export class DrawingController {
     return this.drawingService.getMyDrawings(userId);
   }
 
-  @Get("drawing/:userId")
-  getBestDrawing(@Param() { userId }: DrawingUserDto) {
-    return this.drawingService.getBestDrawing(userId);
+  @Get("drawing/:drawingId")
+  getDrawing(@Param() { drawingId }: DrawingDetailDto) {
+    return this.drawingService.getDrawing(drawingId);
   }
 }

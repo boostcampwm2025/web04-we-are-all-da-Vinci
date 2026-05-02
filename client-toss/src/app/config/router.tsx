@@ -6,6 +6,7 @@ import { SubmittedView } from "@/views/submitted";
 import { RankingView } from "@/views/ranking";
 import { createBrowserRouter } from "react-router-dom";
 import { DashboardView } from "@/views/dashboard";
+import { DrawingDetailView } from "@/views/drawingDetail";
 
 export const router = createBrowserRouter([
   {
@@ -23,6 +24,10 @@ export const router = createBrowserRouter([
   {
     path: "/drawing",
     element: <Drawing />,
+  },
+  {
+    path: "/drawing/:drawingId",
+    element: <DrawingDetailView />,
   },
   {
     path: "/submitted",

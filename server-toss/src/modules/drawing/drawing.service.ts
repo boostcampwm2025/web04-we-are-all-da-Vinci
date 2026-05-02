@@ -92,7 +92,7 @@ export class DrawingService {
         ).length + 1;
 
       return {
-        drawingId: drawing.id.toString(),
+        drawingId: Number(drawing.id),
         drawRanking: rank,
         strokes: JSON.parse(drawing.strokes) as Stroke[],
         score: drawing.score,
@@ -103,20 +103,34 @@ export class DrawingService {
     return { userId: userIdString, drawings };
   }
 
-  async getBestDrawing(userId: string) {
-    const drawings = await this.findTodayByUser(userId);
-    const best = drawings[0];
+  async getDrawing(drawingId: string) {
+    const drawing = await this.em.findOne(
+      Drawing,
+      { id: BigInt(drawingId) },
+      { populate: ["prompt", "user"] },
+    );
 
-    if (!best) {
+    if (!drawing) {
       return null;
     }
 
+    const { start, end } = getSeoulDayRange(drawing.createdAt);
+    const allDrawings = await this.em.find(Drawing, {
+      prompt: drawing.prompt.id,
+      createdAt: { $gte: start, $lt: end },
+    });
+    const drawRanking =
+      allDrawings.filter(
+        (other) =>
+          other.prompt.id === drawing.prompt.id && other.score > drawing.score,
+      ).length + 1;
+
     return {
-      userId,
-      name: best.user.name,
-      strokes: JSON.parse(best.strokes) as Stroke[],
-      score: best.score,
-      similarity: JSON.parse(best.similarity) as SimilarityResponse,
+      drawingId: Number(drawing.id),
+      name: drawing.user.name,
+      drawRanking,
+      strokes: JSON.parse(drawing.strokes) as Stroke[],
+      similarity: JSON.parse(drawing.similarity) as SimilarityResponse,
     };
   }
 }
