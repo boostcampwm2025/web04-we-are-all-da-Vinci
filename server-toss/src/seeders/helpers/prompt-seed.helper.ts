@@ -47,5 +47,5 @@ export const loadStrokesOne = async (): Promise<string> => {
   }
 
   const datedPrompt = datedPrompts[0];
-  return JSON.stringify(datedPrompt);
+  return JSON.stringify(datedPrompt.strokes);
 };
