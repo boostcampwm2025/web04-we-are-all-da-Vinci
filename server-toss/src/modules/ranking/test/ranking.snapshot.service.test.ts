@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from "@jest/globals";
 import { QueryOrder } from "@mikro-orm/core";
 import { MikroORM } from "@mikro-orm/mysql";
-import config from "../../mikro-orm.config";
-import { Drawing } from "../drawing/drawing.entity";
-import { Ranking } from "./ranking.entity";
-import { RankingSnapshotService } from "./ranking.snapshot.service";
+import config from "../../../mikro-orm.config";
+import { Drawing } from "../../drawing/drawing.entity";
+import { Ranking } from "../ranking.entity";
+import { RankingSnapshotService } from "../ranking.snapshot.service";
 import { getSeoulDayRange } from "src/common/time.util";
 import { LightSeeder } from "src/seeders/light.seeder";
 import { Test, TestingModule } from "@nestjs/testing";

@@ -24,9 +24,9 @@ jest.mock("@mikro-orm/mysql", () => ({
   EntityRepository: class {},
 }));
 
-import { Ranking } from "./ranking.entity";
-import { RankingRepository } from "./ranking.repository";
-import { RankingService } from "./ranking.service";
+import { Ranking } from "../ranking.entity";
+import { RankingRepository } from "../ranking.repository";
+import { RankingService } from "../ranking.service";
 
 describe("랭킹 서비스", () => {
   const ranking = {

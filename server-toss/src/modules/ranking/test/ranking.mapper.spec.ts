@@ -1,9 +1,9 @@
 import { describe, expect, it } from "@jest/globals";
-import { Ranking } from "./ranking.entity";
+import { Ranking } from "../ranking.entity";
 import {
   mapRankingToRankingListItem,
   mapRankingToPodiumItem,
-} from "./ranking.mapper";
+} from "../ranking.mapper";
 
 describe("랭킹 매퍼", () => {
   const ranking = {

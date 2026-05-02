@@ -27,7 +27,7 @@ jest.mock("nestjs-pino", () => ({
   PinoLogger: class {},
 }));
 
-import { RankingSnapshotScheduler } from "./ranking.snapshot.scheduler";
+import { RankingSnapshotScheduler } from "../ranking.snapshot.scheduler";
 
 describe("랭킹 스냅샷 스케줄러", () => {
   describe("handleRankingSnapshotRefresh 메소드는", () => {

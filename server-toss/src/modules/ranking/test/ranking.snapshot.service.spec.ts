@@ -37,7 +37,7 @@ jest.mock("@mikro-orm/mysql", () => {
 });
 
 import { Drawing } from "src/modules/drawing/drawing.entity";
-import { RankingSnapshotService } from "./ranking.snapshot.service";
+import { RankingSnapshotService } from "../ranking.snapshot.service";
 
 function createQueryBuilderMock(rows: Array<{ id: bigint }> = []) {
   return {
