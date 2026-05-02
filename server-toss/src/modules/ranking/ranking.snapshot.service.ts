@@ -1,8 +1,5 @@
-import {
-  EntityManager,
-  QueryOrder,
-  type RequiredEntityData,
-} from "@mikro-orm/core";
+import { QueryOrder, type RequiredEntityData } from "@mikro-orm/core";
+import { EntityManager, sql } from "@mikro-orm/mysql";
 import { Injectable } from "@nestjs/common";
 import { Drawing } from "src/modules/drawing/drawing.entity";
 import { Ranking } from "./ranking.entity";
@@ -28,25 +25,53 @@ export class RankingSnapshotService {
 
     try {
       await this.em.transactional(async (transactionalEm) => {
-        const drawings = await transactionalEm.find(
-          Drawing,
-          {
+        const rankedDrawingsQb = transactionalEm
+          .createQueryBuilder(Drawing, "d")
+          .select([
+            "d.id",
+            "d.score",
+            "d.createdAt",
+            "d.user",
+            sql`u.name`.as("user_name"),
+            sql`
+      row_number() over (
+        partition by d.user_id
+        order by d.score desc, d.created_at asc, d.id asc
+      )
+    `.as("rank_no"),
+          ])
+          .leftJoin("d.user", "u")
+          .where({
             createdAt: {
               $gte: start,
               $lt: end,
             },
-          },
-          {
-            populate: ["user"],
-            orderBy: [
-              {
-                score: QueryOrder.DESC,
-                createdAt: QueryOrder.ASC,
-                user: { name: QueryOrder.ASC },
-              },
-            ],
-          },
+          });
+
+        const rows = await transactionalEm
+          .createQueryBuilder(Drawing)
+          .with("ranked_drawings", rankedDrawingsQb)
+          .select([sql`rd.id`])
+          .from("ranked_drawings", "rd")
+          .where("rd.rank_no = ?", [1])
+          .orderBy({
+            [sql`rd.score`]: QueryOrder.DESC,
+            [sql`rd.created_at`]: QueryOrder.ASC,
+            [sql`rd.user_name`]: QueryOrder.ASC,
+          })
+          .execute<{ id: bigint }[]>();
+
+        const ids = rows.map((row) => row.id);
+
+        const drawings = await transactionalEm.find(
+          Drawing,
+          { id: { $in: ids } },
+          { populate: ["user"] },
         );
+
+        const orderMap = new Map(ids.map((id, index) => [id, index]));
+
+        drawings.sort((a, b) => orderMap.get(a.id)! - orderMap.get(b.id)!);
 
         const snapshotTime = new Date();
         const rankings = drawings.map<RankingSnapshotInsert>((drawing) => {

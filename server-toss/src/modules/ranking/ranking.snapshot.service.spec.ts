@@ -14,12 +14,42 @@ jest.mock("@mikro-orm/decorators/legacy", () => ({
   Index: () => () => undefined,
   CreateRequestContext: () => () => undefined,
 }));
-jest.mock("@mikro-orm/mysql", () => ({
-  EntityRepository: class {},
-}));
+jest.mock("@mikro-orm/mysql", () => {
+  const createSqlExpression = (expression: string) => ({
+    as: (alias: string) => createSqlExpression(alias),
+    toString: () => expression,
+    valueOf: () => expression,
+    [Symbol.toPrimitive]: () => expression,
+  });
+
+  return {
+    EntityManager: class {},
+    EntityRepository: class {},
+    sql: (strings: TemplateStringsArray, ...values: unknown[]) => {
+      const expression = strings.reduce((acc, string, index) => {
+        const value = index < values.length ? String(values[index]) : "";
+        return `${acc}${string}${value}`;
+      }, "");
+
+      return createSqlExpression(expression);
+    },
+  };
+});
 
 import { Drawing } from "src/modules/drawing/drawing.entity";
 import { RankingSnapshotService } from "./ranking.snapshot.service";
+
+function createQueryBuilderMock(rows: Array<{ id: bigint }> = []) {
+  return {
+    select: jest.fn().mockReturnThis(),
+    leftJoin: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    with: jest.fn().mockReturnThis(),
+    from: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    execute: jest.fn().mockResolvedValue(rows),
+  };
+}
 
 describe("랭킹 스냅샷 갱신 서비스", () => {
   describe("refreshRankingSnapshot 메소드는", () => {
@@ -70,7 +100,14 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
           },
         ] as Drawing[];
         const find = jest.fn().mockResolvedValue(drawings);
+        const rankedDrawingsQb = createQueryBuilderMock();
+        const rowsQb = createQueryBuilderMock([{ id: 1n }, { id: 2n }]);
+        const createQueryBuilder = jest
+          .fn()
+          .mockReturnValueOnce(rankedDrawingsQb)
+          .mockReturnValueOnce(rowsQb);
         const transactionalEm = {
+          createQueryBuilder,
           find,
           getRepository: jest.fn().mockReturnValue(rankingRepository),
         };
@@ -83,12 +120,27 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
         const service = new RankingSnapshotService(em as never);
         await service.refreshRankingSnapshot();
 
+        expect(createQueryBuilder.mock.calls).toEqual([
+          [Drawing, "d"],
+          [Drawing],
+        ]);
+        expect(rankedDrawingsQb.select).toHaveBeenCalledTimes(1);
+        expect(rankedDrawingsQb.leftJoin).toHaveBeenCalledTimes(1);
+        expect(rankedDrawingsQb.where).toHaveBeenCalledTimes(1);
+        expect(rowsQb.with).toHaveBeenCalledWith(
+          "ranked_drawings",
+          rankedDrawingsQb,
+        );
+        expect(rowsQb.select).toHaveBeenCalledTimes(1);
+        expect(rowsQb.from).toHaveBeenCalledTimes(1);
+        expect(rowsQb.where).toHaveBeenCalledTimes(1);
+        expect(rowsQb.orderBy).toHaveBeenCalledTimes(1);
+        expect(rowsQb.execute).toHaveBeenCalledTimes(1);
         expect(find.mock.calls[0]).toEqual([
           Drawing,
           {
-            createdAt: {
-              $gte: new Date("2026-04-17T15:00:00.000Z"),
-              $lt: new Date("2026-04-18T15:00:00.000Z"),
+            id: {
+              $in: [1n, 2n],
             },
           },
           expect.objectContaining({
