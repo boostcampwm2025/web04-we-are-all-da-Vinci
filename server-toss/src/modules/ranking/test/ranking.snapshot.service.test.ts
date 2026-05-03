@@ -16,7 +16,6 @@ type DrawingWithUser = {
   createdAt: Date;
   strokes: string;
   user: {
-    id: bigint;
     userKey: number;
     name: string;
   };

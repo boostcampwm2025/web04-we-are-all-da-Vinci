@@ -35,7 +35,7 @@ describe("PromptService", () => {
   let givenUser: User;
 
   beforeAll(() => {
-    givenUser = { id: BigInt(1) } as User;
+    givenUser = { userKey: 1 } as User;
 
     userService = { findUser: jest.fn().mockResolvedValue(givenUser) } as never;
     drawingAccessService = {

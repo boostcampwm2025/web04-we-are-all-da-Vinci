@@ -63,7 +63,7 @@ export class DrawingService {
     const { start, end } = getSeoulDayRange();
     return this.em.find(
       Drawing,
-      { user: userKey, createdAt: { $gte: start, $lt: end } },
+      { user: { userKey: userKey }, createdAt: { $gte: start, $lt: end } },
       {
         populate: ["user", "prompt"],
         orderBy: [{ score: QueryOrder.DESC }],

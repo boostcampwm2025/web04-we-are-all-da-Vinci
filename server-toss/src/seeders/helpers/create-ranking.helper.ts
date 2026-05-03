@@ -20,17 +20,17 @@ const compareDrawings = (left: Drawing, right: Drawing) => {
 };
 
 const groupDrawingsByUser = (drawings: Drawing[]) => {
-  const grouped = new Map<bigint, Drawing[]>();
+  const grouped = new Map<number, Drawing[]>();
 
   for (const drawing of drawings) {
-    const drawingsByUser = grouped.get(drawing.user.id);
+    const drawingsByUser = grouped.get(drawing.user.userKey);
 
     if (drawingsByUser) {
       drawingsByUser.push(drawing);
       continue;
     }
 
-    grouped.set(drawing.user.id, [drawing]);
+    grouped.set(drawing.user.userKey, [drawing]);
   }
 
   return grouped;
@@ -38,11 +38,11 @@ const groupDrawingsByUser = (drawings: Drawing[]) => {
 
 const pickBestDrawingByUser = (drawings: Drawing[]) => {
   const grouped = groupDrawingsByUser(drawings);
-  const bestByUser = new Map<bigint, Drawing>();
+  const bestByUser = new Map<number, Drawing>();
 
-  for (const [userId, userDrawings] of grouped.entries()) {
+  for (const [userKey, userDrawings] of grouped.entries()) {
     const [best] = [...userDrawings].sort(compareDrawings);
-    bestByUser.set(userId, best);
+    bestByUser.set(userKey, best);
   }
 
   return bestByUser;

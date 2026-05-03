@@ -279,10 +279,10 @@ export class DatabaseSeeder extends Seeder {
       const existingUsers = await txEm.find(User, {
         userKey: { $in: TEST_USER_KEYS },
       });
-      const existingUserIds = existingUsers.map((user) => user.id);
+      const existingUserIds = existingUsers.map((user) => user.userKey);
 
       if (existingUserIds.length > 0) {
-        await txEm.nativeDelete(Ranking, { userId: { $in: existingUserIds } });
+        await txEm.nativeDelete(Ranking, { userKey: { $in: existingUserIds } });
         await txEm.nativeDelete(Drawing, { user: { $in: existingUsers } });
         await txEm.nativeDelete(PointLog, { user: { $in: existingUsers } });
         await txEm.nativeDelete(AdView, { user: { $in: existingUsers } });
@@ -341,7 +341,7 @@ export class DatabaseSeeder extends Seeder {
           name: users[index].name,
           strokes: drawing.strokes,
           score: drawing.score,
-          userId: users[index].id,
+          userKey: users[index].userKey,
           drawingId: drawing.id,
           submittedAt: drawing.createdAt,
           createdAt: new Date(),

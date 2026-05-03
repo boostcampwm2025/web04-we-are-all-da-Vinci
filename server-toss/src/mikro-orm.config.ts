@@ -25,6 +25,8 @@ export default defineConfig({
     snapshot: process.env.NODE_ENV !== "production",
     path: "dist/migrations",
     pathTs: "src/migrations",
+    transactional: false,
+    allOrNothing: false,
   },
   seeder: {
     path: "dist/seeders",
