@@ -5,5 +5,8 @@ export { drawStrokesOnCanvas } from "./lib/drawStrokesOnCanvas";
 export { normalizeStrokes } from "./lib/normalizeStrokes";
 export { calculateStrokeScale, transformPoint } from "./lib/scaleStrokes";
 export { useCanvasSetup } from "./model/useCanvasSetup";
+export { useDrawingStrokes } from "./model/useDrawingStrokes";
+export { useDrawingSubmit } from "./model/useDrawingSubmit";
+export { useStrokeScoring } from "./model/useStrokeScoring";
 export { default as Canvas } from "./ui/Canvas";
 export { default as Toolbar } from "./ui/Toolbar";
