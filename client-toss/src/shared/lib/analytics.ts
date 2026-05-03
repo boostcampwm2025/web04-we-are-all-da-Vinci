@@ -8,7 +8,10 @@ const trackAnalyticsError = () => {
   }
 };
 
-export const trackClick = (logName: string, params?: Record<string, unknown>) => {
+export const trackClick = (
+  logName: string,
+  params?: Record<string, unknown>,
+) => {
   try {
     Analytics.click({ ...params, log_name: logName });
   } catch {
