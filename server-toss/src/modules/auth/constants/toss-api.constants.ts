@@ -5,6 +5,5 @@ export const TOSS_API_ENDPOINTS = {
     "/api-partner/v1/apps-in-toss/user/oauth2/access/remove-by-user-key",
   PROMOTION_GET_KEY:
     "/api-partner/v1/apps-in-toss/promotion/execute-promotion/get-key",
-  EXECUTE_PROMOTION:
-    "/api-partner/v1/apps-in-toss/promotion/execute-promotion",
+  EXECUTE_PROMOTION: "/api-partner/v1/apps-in-toss/promotion/execute-promotion",
 } as const;

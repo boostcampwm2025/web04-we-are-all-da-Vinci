@@ -210,11 +210,7 @@ describe("DrawingService", () => {
         tossApiClient as never,
       );
 
-      await service.submitDrawing(
-        "1234",
-        sampleStrokes as never,
-        new Date(),
-      );
+      await service.submitDrawing("1234", sampleStrokes as never, new Date());
 
       expect(tossApiClient.getPromotionKey).not.toHaveBeenCalled();
       expect(pointService.saveDrawingPointLog).not.toHaveBeenCalled();
@@ -231,11 +227,7 @@ describe("DrawingService", () => {
         tossApiClient as never,
       );
 
-      await service.submitDrawing(
-        "1234",
-        sampleStrokes as never,
-        new Date(),
-      );
+      await service.submitDrawing("1234", sampleStrokes as never, new Date());
 
       expect(tossApiClient.getPromotionKey).toHaveBeenCalledWith(1234);
       expect(tossApiClient.executePromotion).toHaveBeenCalledWith(
@@ -261,11 +253,7 @@ describe("DrawingService", () => {
         tossApiClient as never,
       );
 
-      await service.submitDrawing(
-        "1234",
-        sampleStrokes as never,
-        new Date(),
-      );
+      await service.submitDrawing("1234", sampleStrokes as never, new Date());
 
       expect(tossApiClient.getPromotionKey).toHaveBeenCalledTimes(2);
       expect(pointService.saveDrawingPointLog).toHaveBeenCalledTimes(1);
@@ -285,11 +273,7 @@ describe("DrawingService", () => {
         tossApiClient as never,
       );
 
-      await service.submitDrawing(
-        "1234",
-        sampleStrokes as never,
-        new Date(),
-      );
+      await service.submitDrawing("1234", sampleStrokes as never, new Date());
 
       expect(tossApiClient.getPromotionKey).toHaveBeenCalledTimes(2);
       expect(pointService.saveDrawingPointLog).toHaveBeenCalledTimes(1);

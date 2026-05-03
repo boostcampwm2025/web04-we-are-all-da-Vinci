@@ -14,6 +14,7 @@ import { PromptService } from "../prompt/prompt.service";
 import { UserRepository } from "../user/user.repository";
 import { Drawing } from "./drawing.entity";
 
+// TODO: 프로모션 승인 후 코드 변경 (테스트 시 TEST_ 접두사 사용)
 const TEMP_PROMOTION_CODE = "TEMP_PROMOTION_CODE";
 const PROMOTION_AMOUNT = 2;
 const PROMOTION_MAX_RETRIES = 2;

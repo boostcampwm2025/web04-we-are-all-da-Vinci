@@ -5,6 +5,7 @@ import { MyScoreCard, useMyDrawings } from "@/entities/myScoreCard";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Link } from "react-router-dom";
 import { Podium } from "@/entities/podium";
+import { RewardAd } from "@/shared/ui/rewardAd";
 
 const DashboardView = () => {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -98,9 +99,7 @@ const DashboardView = () => {
 
       {/* 하단 버튼 */}
       <div className="px-(--page-px) flex flex-col gap-3">
-        <Button color="primary" display="block">
-          한번 더 참여하고 포인트 받기
-        </Button>
+        <RewardAd adGroupId="ait-ad-test-rewarded-id" onReward={() => {}} />
         <Button color="primary" display="block" variant="weak">
           공유하고 포인트 받기
         </Button>
