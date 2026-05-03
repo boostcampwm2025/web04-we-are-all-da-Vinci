@@ -17,6 +17,7 @@ export const usePointerDrawing = ({
 }: UsePointerDrawingOptions) => {
   const [isDrawing, setIsDrawing] = useState(false);
   const currentStrokeRef = useRef<[number[], number[]] | null>(null);
+  const activePointerIdRef = useRef<number | null>(null);
 
   const getPos = (e: React.PointerEvent) => {
     const canvas = canvasRef.current;
@@ -36,6 +37,9 @@ export const usePointerDrawing = ({
     const ctx = ctxRef.current;
     if (!ctx) return;
 
+    if (activePointerIdRef.current !== null) return;
+
+    activePointerIdRef.current = e.pointerId;
     (e.target as HTMLCanvasElement).setPointerCapture(e.pointerId);
     const { x, y } = getPos(e);
 
@@ -48,7 +52,8 @@ export const usePointerDrawing = ({
 
   const handlePointerMove = (e: React.PointerEvent) => {
     const ctx = ctxRef.current;
-    if (!ctx || !isDrawing) return;
+    if (!ctx || !isDrawing || e.pointerId !== activePointerIdRef.current)
+      return;
 
     const { x, y } = getPos(e);
     ctx.lineTo(x, y);
@@ -58,10 +63,12 @@ export const usePointerDrawing = ({
     currentStrokeRef.current?.[1].push(y);
   };
 
-  const handlePointerUp = () => {
+  const handlePointerUp = (e: React.PointerEvent) => {
     const ctx = ctxRef.current;
-    if (!ctx || !isDrawing) return;
+    if (!ctx || !isDrawing || e.pointerId !== activePointerIdRef.current)
+      return;
 
+    activePointerIdRef.current = null;
     ctx.closePath();
     setIsDrawing(false);
 
