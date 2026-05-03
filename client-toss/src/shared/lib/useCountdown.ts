@@ -1,34 +1,49 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-const useCountdown = (seconds: number, onComplete: () => void) => {
-  const [timeLeft, setTimeLeft] = useState(seconds);
+const calcRemaining = (endTime: number) =>
+  Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+
+const useCountdown = (
+  endTime: number,
+  totalSeconds: number,
+  onComplete: () => void,
+) => {
+  const [timeLeft, setTimeLeft] = useState(() => calcRemaining(endTime));
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
+  const completedRef = useRef(false);
 
   useEffect(() => {
-    setTimeLeft(seconds);
-  }, [seconds]);
+    completedRef.current = false;
+    setTimeLeft(calcRemaining(endTime));
+  }, [endTime]);
 
   useEffect(() => {
-    if (timeLeft <= 0) {
+    const remaining = calcRemaining(endTime);
+    if (completedRef.current) return;
+
+    if (remaining <= 0) {
+      completedRef.current = true;
       onCompleteRef.current();
       return;
     }
 
-    const id = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
+    const tick = () => {
+      const r = calcRemaining(endTime);
+      setTimeLeft(r);
+      if (r <= 0 && !completedRef.current) {
+        completedRef.current = true;
+        onCompleteRef.current();
+      }
+    };
 
+    const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [timeLeft]);
+  }, [endTime]);
 
-  const progress = seconds > 0 ? (seconds - timeLeft) / seconds : 1;
+  const progress = totalSeconds > 0 ? 1 - timeLeft / totalSeconds : 1;
 
-  const reset = useCallback(() => {
-    setTimeLeft(seconds);
-  }, [seconds]);
-
-  return { timeLeft, progress, reset };
+  return { timeLeft, progress };
 };
 
 export const MEMORIZE_SECONDS = 10;

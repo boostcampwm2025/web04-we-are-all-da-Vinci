@@ -9,7 +9,7 @@ import {
 import { BannerAd } from "@/shared/ui/bannerAd";
 import type { Stroke } from "@toss/shared";
 import { ConfirmDialog } from "@toss/tds-mobile";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface MemorizeRouteState {
@@ -23,9 +23,17 @@ const MemorizeView = () => {
   const routeState = useRequiredState<MemorizeRouteState>();
   const { showDialog, setShowDialog } = useExitGuard();
   const { containerRef, canvasRef, ctxRef, canvasSize } = useCanvasSetup();
+  const [endTime] = useState(() => {
+    const stored = sessionStorage.getItem("memorizeEndTime");
+    if (stored) return Number(stored);
+    const et = Date.now() + MEMORIZE_SECONDS * 1000;
+    sessionStorage.setItem("memorizeEndTime", String(et));
+    return et;
+  });
 
-  const { timeLeft, progress } = useCountdown(MEMORIZE_SECONDS, () => {
+  const goToDrawing = () => {
     if (!routeState) return;
+    sessionStorage.removeItem("memorizeEndTime");
     navigate("/drawing", {
       state: {
         promptId: routeState.promptId,
@@ -34,7 +42,13 @@ const MemorizeView = () => {
       },
       replace: true,
     });
-  });
+  };
+
+  const { timeLeft, progress } = useCountdown(
+    endTime,
+    MEMORIZE_SECONDS,
+    goToDrawing,
+  );
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -74,7 +88,10 @@ const MemorizeView = () => {
         description="나가면 처음부터 다시 시작해야 해요"
         confirmButton={
           <ConfirmDialog.ConfirmButton
-            onClick={() => navigate("/", { replace: true })}
+            onClick={() => {
+              sessionStorage.removeItem("memorizeEndTime");
+              navigate("/", { replace: true });
+            }}
           >
             나가기
           </ConfirmDialog.ConfirmButton>

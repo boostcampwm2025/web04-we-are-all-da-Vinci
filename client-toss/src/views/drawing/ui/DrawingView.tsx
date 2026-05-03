@@ -30,6 +30,13 @@ const DrawingView = () => {
   const routeState = useRequiredState<DrawingRouteState>();
   const { showDialog, setShowDialog } = useExitGuard();
 
+  const [endTime] = useState(() => {
+    const stored = sessionStorage.getItem("drawingEndTime");
+    if (stored) return Number(stored);
+    const et = Date.now() + DRAWING_SECONDS * 1000;
+    sessionStorage.setItem("drawingEndTime", String(et));
+    return et;
+  });
   const [selectedColor, setSelectedColor] = useState<RGB>([0, 0, 0]);
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
 
@@ -47,11 +54,20 @@ const DrawingView = () => {
     strokes,
     similarity: scoring.similarity,
   });
-  const { timeLeft, progress } = useCountdown(DRAWING_SECONDS, handleSubmit);
+  const submitAndCleanup = () => {
+    sessionStorage.removeItem("drawingEndTime");
+    handleSubmit();
+  };
+
+  const { timeLeft, progress } = useCountdown(
+    endTime,
+    DRAWING_SECONDS,
+    submitAndCleanup,
+  );
 
   const confirmSubmit = () => {
     setIsSubmitDialogOpen(false);
-    handleSubmit();
+    submitAndCleanup();
   };
 
   if (!routeState) return null;
@@ -119,7 +135,10 @@ const DrawingView = () => {
         description="그림이 저장되지 않아요"
         confirmButton={
           <ConfirmDialog.ConfirmButton
-            onClick={() => navigate("/", { replace: true })}
+            onClick={() => {
+              sessionStorage.removeItem("drawingEndTime");
+              navigate("/", { replace: true });
+            }}
           >
             나가기
           </ConfirmDialog.ConfirmButton>
