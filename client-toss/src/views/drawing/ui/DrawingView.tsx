@@ -1,5 +1,6 @@
 import { PhaseHeader } from "@/entities/phaseHeader";
 import { Canvas, Toolbar } from "@/feature/drawing";
+import { clearPlaySession, useRequirePlaySession } from "@/feature/playChance";
 import { Score } from "@/shared/ui/score";
 import { BottomCTA, ConfirmDialog } from "@toss/tds-mobile";
 import { useState } from "react";
@@ -7,13 +8,17 @@ import { useNavigate } from "react-router-dom";
 
 const DrawingView = () => {
   const navigate = useNavigate();
+  const { isCheckingSession } = useRequirePlaySession();
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsSubmitDialogOpen(false);
     // TODO: 서버에 그림 제출 로직
+    await clearPlaySession();
     navigate("/submitted");
   };
+
+  if (isCheckingSession) return null;
 
   return (
     <div className="flex h-full flex-col bg-white">

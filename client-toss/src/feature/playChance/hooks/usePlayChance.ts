@@ -5,6 +5,7 @@ import {
   loadPlayChance,
   type PlayChanceState,
 } from "../model/playChanceStorage";
+import { startPlaySession } from "../model/playSessionStorage";
 
 export const usePlayChance = () => {
   const [state, setState] = useState<PlayChanceState | null>(null);
@@ -41,6 +42,16 @@ export const usePlayChance = () => {
     const result = await consumePlayChance();
     setState(result.state);
     return result.consumed;
+  }, []);
+
+  const startPlay = useCallback(async () => {
+    const result = await consumePlayChance();
+    setState(result.state);
+
+    if (!result.consumed) return false;
+
+    await startPlaySession();
+    return true;
   }, []);
 
   useEffect(() => {
@@ -80,5 +91,6 @@ export const usePlayChance = () => {
     refresh,
     charge,
     consume,
+    startPlay,
   };
 };

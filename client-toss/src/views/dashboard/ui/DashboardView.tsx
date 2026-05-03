@@ -20,7 +20,7 @@ const DashboardView = () => {
     hasChance,
     isLoading: isChanceLoading,
     charge,
-    consume,
+    startPlay,
   } = usePlayChance();
   const cardCount = Math.max(myDrawings.length, 1);
 
@@ -37,8 +37,8 @@ const DashboardView = () => {
     setIsStartingGame(true);
 
     try {
-      const consumed = await consume();
-      if (!consumed) return;
+      const started = await startPlay();
+      if (!started) return;
 
       navigate("/memorize");
     } catch {
@@ -56,8 +56,8 @@ const DashboardView = () => {
     try {
       await serverTossApi.recordAdView();
       await charge();
-      const consumed = await consume();
-      if (!consumed) return;
+      const started = await startPlay();
+      if (!started) return;
 
       navigate("/memorize");
     } catch {

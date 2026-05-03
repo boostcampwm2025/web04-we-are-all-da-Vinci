@@ -6,4 +6,16 @@ export {
   loadPlayChance,
   type PlayChanceState,
 } from "./model/playChanceStorage";
-export { MAX_PLAY_CHANCE, PLAY_CHANCE_STORAGE_KEY } from "./config/constants";
+export {
+  clearPlaySession,
+  loadActivePlaySession,
+  startPlaySession,
+  type PlaySessionState,
+} from "./model/playSessionStorage";
+export { useRequirePlaySession } from "./hooks/useRequirePlaySession";
+export {
+  MAX_PLAY_CHANCE,
+  PLAY_CHANCE_STORAGE_KEY,
+  PLAY_SESSION_STORAGE_KEY,
+  PLAY_SESSION_TTL_MS,
+} from "./config/constants";

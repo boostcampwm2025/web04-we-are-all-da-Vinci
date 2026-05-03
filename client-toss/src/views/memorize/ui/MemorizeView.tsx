@@ -1,7 +1,12 @@
 import { PhaseHeader } from "@/entities/phaseHeader";
+import { useRequirePlaySession } from "@/feature/playChance";
 import { BannerAd } from "@/shared/ui/bannerAd";
 
 const MemorizeView = () => {
+  const { isCheckingSession } = useRequirePlaySession();
+
+  if (isCheckingSession) return null;
+
   return (
     <div className="flex h-full flex-col bg-white pb-0!">
       <PhaseHeader
