@@ -1,5 +1,6 @@
 /// <reference types="@testing-library/jest-dom/vitest" />
 import { serverTossApi } from "@/shared/api";
+import { formatLocalDate } from "@/shared/lib";
 import {
   appLogin,
   loadFullScreenAd,
@@ -100,7 +101,7 @@ describe("SubmittedView", () => {
       expect(serverTossApi.submitDrawing).toHaveBeenCalled();
     });
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = formatLocalDate();
     expect(lastPlayedAtApiCall).toBe(today);
   });
 
@@ -139,7 +140,10 @@ describe("SubmittedView", () => {
     await user.click(screen.getByText("저장하고 결과확인하기"));
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith("/", { replace: true });
+      expect(navigateMock).toHaveBeenCalledWith("/", {
+        replace: true,
+        state: { fromSubmitted: true },
+      });
     });
   });
 
@@ -155,7 +159,10 @@ describe("SubmittedView", () => {
     await user.click(screen.getByText("저장하고 결과확인하기"));
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith("/", { replace: true });
+      expect(navigateMock).toHaveBeenCalledWith("/", {
+        replace: true,
+        state: { fromSubmitted: true },
+      });
     });
   });
 
@@ -172,7 +179,7 @@ describe("SubmittedView", () => {
       expect(navigateMock).toHaveBeenCalled();
     });
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = formatLocalDate();
     expect(localStorage.getItem("lastPlayed_test-hash")).toBe(today);
   });
 
@@ -216,7 +223,10 @@ describe("SubmittedView", () => {
 
     await waitFor(() => {
       expect(showFullScreenAd).not.toHaveBeenCalled();
-      expect(navigateMock).toHaveBeenCalledWith("/", { replace: true });
+      expect(navigateMock).toHaveBeenCalledWith("/", {
+        replace: true,
+        state: { fromSubmitted: true },
+      });
     });
   });
 });

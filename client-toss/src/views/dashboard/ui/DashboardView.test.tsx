@@ -1,11 +1,12 @@
 /// <reference types="@testing-library/jest-dom/vitest" />
+import { serverTossApi } from "@/shared/api";
+import { formatLocalDate } from "@/shared/lib";
+import { getDeviceId } from "@apps-in-toss/web-framework";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi, beforeEach } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import DashboardView from "./DashboardView";
-import { getDeviceId } from "@apps-in-toss/web-framework";
-import { serverTossApi } from "@/shared/api";
 
 const navigateMock = vi.fn();
 vi.mock("react-router-dom", async () => {
@@ -123,8 +124,8 @@ describe("DashboardView", () => {
     });
   });
 
-  it("lastPlayed가 오늘이면 게임을 시작하지 않고 결과 UI를 표시한다", async () => {
-    const today = new Date().toISOString().slice(0, 10);
+  it("lastPlayed가 오늘이면 게임을 시작하지 않고 대시보드 UI를 표시한다", async () => {
+    const today = formatLocalDate();
     localStorage.setItem("lastPlayed_test-device", today);
 
     renderDashboard();
@@ -157,7 +158,7 @@ describe("DashboardView", () => {
   });
 
   it("한번 더 그리기 버튼이 startGame을 호출한다", async () => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = formatLocalDate();
     localStorage.setItem("lastPlayed_test-device", today);
     const user = userEvent.setup();
 
@@ -181,7 +182,7 @@ describe("DashboardView", () => {
   });
 
   it("공유하고 포인트 받기 버튼이 렌더링되지 않는다", async () => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = formatLocalDate();
     localStorage.setItem("lastPlayed_test-device", today);
 
     renderDashboard();

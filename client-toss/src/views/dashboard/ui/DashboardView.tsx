@@ -1,15 +1,17 @@
 import { MyScoreCard, useMyDrawings } from "@/entities/myScoreCard";
 import { Podium } from "@/entities/podium";
 import { serverTossApi } from "@/shared/api";
+import { formatLocalDate } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { getDeviceId } from "@apps-in-toss/web-framework";
 import { colors } from "@toss/tds-colors";
 import { Button, TextButton, Top } from "@toss/tds-mobile";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const DashboardView = () => {
   const navigate = useNavigate();
+  const { state: locationState } = useLocation();
   const [activeIndex, setActiveIndex] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
   const anonymousHashRef = useRef<string>("local");
@@ -39,6 +41,9 @@ const DashboardView = () => {
   );
 
   useEffect(() => {
+    const fromSubmitted = (locationState as { fromSubmitted?: boolean })
+      ?.fromSubmitted;
+
     const init = async () => {
       let hash: string;
       try {
@@ -49,8 +54,13 @@ const DashboardView = () => {
       }
       anonymousHashRef.current = hash;
 
-      const now = new Date();
-      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      if (fromSubmitted) {
+        localStorage.setItem(`lastPlayed_${hash}`, formatLocalDate());
+        setIsStartingGame(false);
+        return;
+      }
+
+      const today = formatLocalDate();
       const lastPlayed = localStorage.getItem(`lastPlayed_${hash}`);
 
       if (lastPlayed === today) {
@@ -62,7 +72,7 @@ const DashboardView = () => {
     };
 
     init();
-  }, [startGame]);
+  }, [startGame, locationState]);
 
   const handleScroll = () => {
     const slider = sliderRef.current;

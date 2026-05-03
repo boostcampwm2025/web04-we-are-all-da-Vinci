@@ -1,6 +1,6 @@
 import { serverTossApi } from "@/shared/api";
 import { painterMan1Img } from "@/shared/assets/images";
-import { useRequiredState } from "@/shared/lib";
+import { formatLocalDate, useRequiredState } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";
 import {
@@ -58,8 +58,10 @@ const SubmittedView = () => {
     setIsSaving(true);
 
     // 게임은 이미 플레이했으므로 API 성공/실패 관계없이 기록
-    const today = new Date().toISOString().slice(0, 10);
-    localStorage.setItem(`lastPlayed_${routeState.anonymousHash}`, today);
+    localStorage.setItem(
+      `lastPlayed_${routeState.anonymousHash}`,
+      formatLocalDate(),
+    );
 
     try {
       let userKey = localStorage.getItem("userKey");
@@ -84,7 +86,7 @@ const SubmittedView = () => {
       });
 
       const goHome = () => {
-        navigate("/", { replace: true });
+        navigate("/", { replace: true, state: { fromSubmitted: true } });
       };
 
       // 보상형 광고 표시 후 홈 이동
@@ -102,7 +104,7 @@ const SubmittedView = () => {
     } catch (error) {
       console.error("결과 저장 실패:", error);
       setIsSaving(false);
-      navigate("/", { replace: true });
+      navigate("/", { replace: true, state: { fromSubmitted: true } });
     }
   };
 

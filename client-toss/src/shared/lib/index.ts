@@ -1,3 +1,4 @@
+export { formatLocalDate } from "./formatLocalDate";
 export { initTossAdsOnce } from "./tossAds";
 export {
   DRAWING_SECONDS,
