@@ -1,6 +1,10 @@
-import { renderHook, act } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { useCountdown, MEMORIZE_SECONDS, DRAWING_SECONDS } from "./useCountdown";
+import { act, renderHook } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  DRAWING_SECONDS,
+  MEMORIZE_SECONDS,
+  useCountdown,
+} from "./useCountdown";
 
 describe("useCountdown", () => {
   beforeEach(() => {

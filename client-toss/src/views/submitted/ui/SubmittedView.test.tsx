@@ -1,15 +1,15 @@
 /// <reference types="@testing-library/jest-dom/vitest" />
-import { render, screen, waitFor, act } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
-import SubmittedView from "./SubmittedView";
+import { serverTossApi } from "@/shared/api";
 import {
   appLogin,
   loadFullScreenAd,
   showFullScreenAd,
 } from "@apps-in-toss/web-framework";
-import { serverTossApi } from "@/shared/api";
+import { act, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import SubmittedView from "./SubmittedView";
 
 const navigateMock = vi.fn();
 vi.mock("react-router-dom", async () => {
@@ -46,7 +46,12 @@ vi.mock("@/shared/assets/images", () => ({
 const mockRouteState = {
   promptId: 1,
   strokes: [{ points: [[10], [20]], color: [0, 0, 0] }],
-  similarity: { score: 75.5, shapeSimilarity: 80, strokeMatchSimilarity: 70, penalty: 5 },
+  similarity: {
+    score: 75.5,
+    shapeSimilarity: 80,
+    strokeMatchSimilarity: 70,
+    penalty: 5,
+  },
   anonymousHash: "test-hash",
 };
 
@@ -157,9 +162,7 @@ describe("SubmittedView", () => {
   it("submitDrawing 실패해도 lastPlayed가 유지된다", async () => {
     const user = userEvent.setup();
     localStorage.setItem("userKey", "existing-user");
-    vi.mocked(serverTossApi.submitDrawing).mockRejectedValue(
-      new Error("실패"),
-    );
+    vi.mocked(serverTossApi.submitDrawing).mockRejectedValue(new Error("실패"));
 
     renderWithState();
 
