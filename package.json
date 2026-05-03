@@ -5,8 +5,13 @@
   "scripts": {
     "dev:client": "pnpm -F client dev",
     "dev:server": "pnpm -F server start:dev",
-    "infra:up": "docker compose -f infra/local/compose.yaml up -d",
-    "infra:down": "docker compose -f infra/local/compose.yaml down",
+    "dev:client-toss": "pnpm -F client-toss dev",
+    "dev:server-toss": "pnpm -F server-toss start:dev",
+    "build:packages": "pnpm -F @shared/types build && pnpm -F @davinci/similarity build && pnpm -F @toss/shared build",
+    "infra:redis:up": "docker compose -f infra/local/compose.yaml up -d redis",
+    "infra:redis:down": "docker compose -f infra/local/compose.yaml down redis",
+    "infra:mysql:up": "docker compose -f infra/local/compose.yaml up -d mysql",
+    "infra:mysql:down": "docker compose -f infra/local/compose.yaml down mysql",
     "prepare": "lefthook install",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
@@ -16,8 +21,19 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "packageManager": "pnpm@10.20.0",
+  "pnpm": {
+    "peerDependencyRules": {
+      "ignoreMissing": [
+        "@react-navigation/native"
+      ],
+      "allowedVersions": {
+        "react": "19",
+        "react-dom": "19"
+      }
+    }
+  },
   "devDependencies": {
     "@playwright/test": "^1.58.0",
     "@types/node": "^25.1.0",

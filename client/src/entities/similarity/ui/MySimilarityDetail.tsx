@@ -24,12 +24,12 @@ const MySimilarityDetail = ({ similarity }: MySimilarityDetailProps) => {
             전체 유사도
           </span>
           <span className="font-handwriting text-2xl font-bold text-blue-500 md:text-3xl">
-            {similarity.similarity}%
+            {similarity.score}%
           </span>
         </div>
 
         {/* 상세 유사도: 모바일에서는 3컬럼 그리드 */}
-        <div className="grid grid-cols-3 gap-2 md:hidden">
+        <div className="grid grid-cols-2 gap-2 md:hidden">
           {SIMILARITY_ITEMS.map(({ key, shortLabel, color }) => (
             <div
               key={key}

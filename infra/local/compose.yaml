@@ -14,6 +14,25 @@ services:
       interval: 5s
       timeout: 30s
       retries: 3
+  mysql:
+    image: mysql:8.4
+    container_name: daVinci-mysql
+    ports:
+      - "3306:3306"
+    volumes:
+      - daVinci-mysql-data:/var/lib/mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: true
+      MYSQL_DATABASE: daVinci_toss
+      TZ: UTC
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
 volumes:
   daVinci-redis-data:
+  daVinci-mysql-data:

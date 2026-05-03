@@ -1,0 +1,156 @@
+import { SIMILARITY_CONFIG } from "../config/similarityConfig";
+import type { PreprocessedStrokeData } from "../model/preprocessedStrokeData";
+import type { Similarity, Stroke } from "../types";
+import {
+  buildConvexHull,
+  buildRadialSignature,
+  getHullArea,
+  getHullPerimeter,
+  strokesToPoints,
+} from "./geometry";
+import { scoreDensityBiasPenalty, scoreInkLengthPenalty } from "./penalty";
+import { scoreShapeSimilarity } from "./shape.sim";
+import { scoreGreedyStrokeMatch } from "./stroke.sim";
+
+// 스트로크에서 유사도 계산에 필요한 수학적 데이터를 미리 계산하는 함수
+export const preprocessStrokes = (
+  strokes: Stroke[],
+): PreprocessedStrokeData => {
+  const validStrokes = getValidStrokes(strokes);
+  const normalizedStrokes = normalizeStrokes(validStrokes);
+  const points = strokesToPoints(normalizedStrokes);
+  const hull = buildConvexHull(points);
+  const hullArea = getHullArea(hull);
+  const hullPerimeter = getHullPerimeter(hull);
+  const radialSignature = buildRadialSignature(points);
+
+  return {
+    normalizedStrokes,
+    strokeCount: normalizedStrokes.length,
+    points,
+    hull,
+    hullArea,
+    hullPerimeter,
+    radialSignature,
+  };
+};
+
+export const scoreFinalSimilarity = (
+  preprocessedPrompt: PreprocessedStrokeData,
+  preprocessedPlayer: PreprocessedStrokeData,
+): Similarity => {
+  const normalizedPromptStrokes = preprocessedPrompt.normalizedStrokes;
+  const normalizedPlayerStrokes = preprocessedPlayer.normalizedStrokes;
+
+  // 스트로크 유사도
+  const strokeMatchSimilarity = scoreGreedyStrokeMatch(
+    normalizedPromptStrokes,
+    normalizedPlayerStrokes,
+  );
+
+  // 형태 유사도
+  const shapeScore = scoreShapeSimilarity(
+    preprocessedPrompt,
+    preprocessedPlayer,
+  );
+
+  const scaledShapeScore = applyNonLinearScale(shapeScore, 90);
+
+  // 최종 유사도 계산
+  const weightedStrokeMatchSim =
+    strokeMatchSimilarity.score * SIMILARITY_CONFIG.finalWeights.strokeMatch;
+  const weightedShapeSim =
+    scaledShapeScore * SIMILARITY_CONFIG.finalWeights.shape;
+  let similarity = weightedStrokeMatchSim + weightedShapeSim;
+
+  // 패널티 적용
+  let penaltyPoints = 0;
+
+  const densityBias = scoreDensityBiasPenalty(
+    normalizedPromptStrokes,
+    normalizedPlayerStrokes,
+  );
+  penaltyPoints += densityBias.densityBiasScore;
+
+  const inkLengthResult = scoreInkLengthPenalty(
+    normalizedPromptStrokes,
+    normalizedPlayerStrokes,
+  );
+  penaltyPoints += inkLengthResult.penaltyScore;
+
+  if (strokeMatchSimilarity.getPenalty) {
+    penaltyPoints += SIMILARITY_CONFIG.strokeMatchPenalty.maxPenalty;
+  }
+
+  similarity = Math.max(0, similarity - penaltyPoints);
+  const roundedSimilarity = Math.round(similarity * 100) / 100;
+
+  return {
+    score: roundedSimilarity,
+    strokeMatchSimilarity: Math.round(weightedStrokeMatchSim * 100) / 100,
+    shapeSimilarity: Math.round(weightedShapeSim * 100) / 100,
+    penalty: penaltyPoints,
+  };
+};
+
+// ----------helper-----------
+
+const getValidStrokes = (strokes: Stroke[]): Stroke[] => {
+  const MIN_STROKE_LENGTH = 10;
+  return strokes.filter((stroke) => {
+    const [xs, ys] = stroke.points;
+    let length = 0;
+    for (let i = 1; i < xs.length; i++) {
+      const dx = xs[i] - xs[i - 1];
+      const dy = ys[i] - ys[i - 1];
+      length += Math.sqrt(dx * dx + dy * dy);
+    }
+    return length >= MIN_STROKE_LENGTH;
+  });
+};
+
+const normalizeStrokes = (strokes: Stroke[]): Stroke[] => {
+  if (strokes.length === 0) return [];
+
+  let minX = Infinity,
+    maxX = -Infinity;
+  let minY = Infinity,
+    maxY = -Infinity;
+
+  for (const stroke of strokes) {
+    const [xArr, yArr] = stroke.points;
+    for (const x of xArr) {
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+    }
+    for (const y of yArr) {
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+    }
+  }
+
+  const width = maxX - minX || 1;
+  const height = maxY - minY || 1;
+  const scale = Math.max(width, height);
+
+  const normalized = strokes.map((stroke): Stroke => {
+    const [xArr, yArr] = stroke.points;
+    const normalizedX = xArr.map((x) => (x - minX) / scale);
+    const normalizedY = yArr.map((y) => (y - minY) / scale);
+    return { points: [normalizedX, normalizedY], color: stroke.color };
+  });
+
+  return normalized;
+};
+
+const applyNonLinearScale = (
+  score: number,
+  threshold = 70,
+  steepness = 2,
+): number => {
+  if (score < threshold) {
+    return Math.pow(score / 100, steepness) * 100;
+  } else {
+    return score;
+  }
+};

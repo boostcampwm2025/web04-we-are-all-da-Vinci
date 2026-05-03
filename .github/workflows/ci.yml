@@ -7,8 +7,49 @@ on:
     branches: [main]
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      client: ${{ steps.filter.outputs.client }}
+      server: ${{ steps.filter.outputs.server }}
+      client-toss: ${{ steps.filter.outputs.client-toss }}
+      server-toss: ${{ steps.filter.outputs.server-toss }}
+      packages-shared: ${{ steps.filter.outputs.packages-shared }}
+      packages-similarity: ${{ steps.filter.outputs.packages-similarity }}
+      packages-toss-shared: ${{ steps.filter.outputs.packages-toss-shared }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            client:
+              - 'client/**'
+            server:
+              - 'server/**'
+            client-toss:
+              - 'client-toss/**'
+            server-toss:
+              - 'server-toss/**'
+            packages-shared:
+              - 'packages/shared/**'
+            packages-similarity:
+              - 'packages/similarity/**'
+            packages-toss-shared:
+              - 'packages/toss-shared/**'
+
   client:
     name: Client
+    needs: changes
+    if: >-
+      github.event_name == 'push' ||
+      needs.changes.outputs.client == 'true' ||
+      needs.changes.outputs.packages-shared == 'true' ||
+      needs.changes.outputs.packages-similarity == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -39,9 +80,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build shared package
-        working-directory: packages/shared
-        run: npx tsc
+      - name: Build shared packages
+        run: pnpm build:packages
 
       - name: Security Audit
         working-directory: client
@@ -79,6 +119,11 @@ jobs:
 
   server:
     name: Server
+    needs: changes
+    if: >-
+      github.event_name == 'push' ||
+      needs.changes.outputs.server == 'true' ||
+      needs.changes.outputs.packages-shared == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -109,9 +154,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build shared package
-        working-directory: packages/shared
-        run: npx tsc
+      - name: Build shared packages
+        run: pnpm build:packages
 
       - name: Security Audit
         working-directory: server
@@ -131,14 +175,6 @@ jobs:
         working-directory: server
         run: pnpm run format:check
 
-      - name: Test
-        working-directory: server
-        run: pnpm run test
-
-      - name: Build
-        working-directory: server
-        run: pnpm run build
-
       - name: Server Coverage Report
         uses: ArtiomTr/jest-coverage-report-action@v2
         if: github.event_name == 'pull_request'
@@ -147,10 +183,144 @@ jobs:
           package-manager: pnpm
           test-script: pnpm run test:cov
 
-  bundle-size:
-    name: Bundle Size Check
+      - name: Build
+        working-directory: server
+        run: pnpm run build
+
+  client-toss:
+    name: Client-Toss
+    needs: changes
+    if: >-
+      github.event_name == 'push' ||
+      needs.changes.outputs.client-toss == 'true' ||
+      needs.changes.outputs.packages-toss-shared == 'true' ||
+      needs.changes.outputs.packages-similarity == 'true'
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Cache pnpm dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared packages
+        run: pnpm build:packages
+
+      - name: Lint
+        working-directory: client-toss
+        run: pnpm run lint
+
+      - name: Format Check
+        working-directory: client-toss
+        run: pnpm run format:check
+
+      - name: Test with Coverage
+        working-directory: client-toss
+        run: pnpm run test:coverage
+
+      - name: Coverage Report
+        uses: davelosert/vitest-coverage-report-action@v2
+        if: github.event_name == 'pull_request'
+        with:
+          working-directory: client-toss
+          json-summary-path: ./coverage/coverage-summary.json
+          json-final-path: ./coverage/coverage-final.json
+          name: client-toss
+
+      - name: QA Check
+        working-directory: client-toss
+        run: pnpm run qa:ci
+
+      - name: Build
+        working-directory: client-toss
+        run: pnpm run build
+
+  server-toss:
+    name: Server-Toss
+    needs: changes
+    if: >-
+      github.event_name == 'push' ||
+      needs.changes.outputs.server-toss == 'true' ||
+      needs.changes.outputs.packages-toss-shared == 'true' ||
+      needs.changes.outputs.packages-similarity == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Cache pnpm dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared packages
+        run: pnpm build:packages
+
+      - name: Lint
+        working-directory: server-toss
+        run: pnpm run lint
+
+      - name: Format Check
+        working-directory: server-toss
+        run: pnpm run format:check
+
+      - name: Test with Coverage
+        working-directory: server-toss
+        run: pnpm run test:cov
+
+      - name: Build
+        working-directory: server-toss
+        run: pnpm run build
+
+  bundle-size-client:
+    name: Bundle Size Check (Client)
+    needs: changes
+    if: >-
+      github.event_name == 'pull_request' &&
+      (needs.changes.outputs.client == 'true' || needs.changes.outputs.packages-shared == 'true' || needs.changes.outputs.packages-similarity == 'true')
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
@@ -167,9 +337,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build shared package
-        working-directory: packages/shared
-        run: npx tsc
+      - name: Build shared packages
+        run: pnpm build:packages
 
       - name: Bundle Size Check
         uses: preactjs/compressed-size-action@v2
@@ -179,9 +348,43 @@ jobs:
           build-script: "build"
           cwd: "./client"
 
+  bundle-size-toss:
+    name: Bundle Size Check (Toss)
+    needs: changes
+    if: >-
+      github.event_name == 'pull_request' &&
+      (needs.changes.outputs.client-toss == 'true' || needs.changes.outputs.packages-toss-shared == 'true' || needs.changes.outputs.packages-similarity == 'true')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared packages
+        run: pnpm build:packages
+
+      - name: Bundle Size Check
+        uses: preactjs/compressed-size-action@v2
+        continue-on-error: true
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          build-script: "build"
+          cwd: "./client-toss"
+
   notify:
     name: Slack Notification
-    needs: [client, server]
+    needs: [changes, client, server, client-toss, server-toss, bundle-size-client, bundle-size-toss]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
@@ -189,7 +392,16 @@ jobs:
       - name: Slack Notification
         uses: 8398a7/action-slack@v3
         with:
-          status: ${{ (needs.client.result == 'success' && needs.server.result == 'success') && 'success' || 'failure' }}
+          status: |
+            ${{
+              (needs.client.result == 'success' || needs.client.result == 'skipped') &&
+              (needs.server.result == 'success' || needs.server.result == 'skipped') &&
+              (needs.client-toss.result == 'success' || needs.client-toss.result == 'skipped') &&
+              (needs.server-toss.result == 'success' || needs.server-toss.result == 'skipped') &&
+              (needs.bundle-size-client.result == 'success' || needs.bundle-size-client.result == 'skipped') &&
+              (needs.bundle-size-toss.result == 'success' || needs.bundle-size-toss.result == 'skipped') &&
+              'success' || 'failure'
+            }}
           fields: repo,message,commit,author,action,eventName,ref,workflow
           mention: "here"
           if_mention: failure

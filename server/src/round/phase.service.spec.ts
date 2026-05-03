@@ -59,20 +59,20 @@ describe('PhaseService', () => {
       profileId: 'test1',
       strokes: mockPromptStrokes,
       similarity: {
-        similarity: 40,
-        strokeCountSimilarity: 10,
+        score: 40,
         strokeMatchSimilarity: 10,
         shapeSimilarity: 20,
+        penalty: 10,
       },
     },
     {
       profileId: 'test2',
       strokes: mockPromptStrokes,
       similarity: {
-        similarity: 70,
-        strokeCountSimilarity: 20,
+        score: 70,
         strokeMatchSimilarity: 30,
         shapeSimilarity: 20,
+        penalty: 20,
       },
     },
   ];
@@ -93,10 +93,10 @@ describe('PhaseService', () => {
     round: 1,
     strokes: mockPromptStrokes,
     similarity: {
-      similarity: 40,
-      strokeCountSimilarity: 10,
+      score: 40,
       strokeMatchSimilarity: 10,
       shapeSimilarity: 20,
+      penalty: 10,
     },
   };
 

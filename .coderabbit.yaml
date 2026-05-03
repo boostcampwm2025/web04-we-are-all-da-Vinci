@@ -1,73 +1,84 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 
 language: "ko-KR"
-early_access: false # 실험적 기능 활성화 여부
+early_access: false
 
 reviews:
-  profile: "chill" # 리뷰톤 (느긋함, 중요한 이슈만 지적, 코멘트 적음)
-  request_changes_workflow: false # 일반 코멘트로만 표시 (머지 차단 없음)
-  high_level_summary: true # PR 변경사항 요약 생성
-  review_status: true # 리뷰 상태 표시
-  collapse_walkthrough: false # 코드 워크스루(상세 분석) 펼침
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  collapse_walkthrough: false
 
   auto_review:
-    enabled: true # 자동 리뷰 활성화
-    drafts: false # 리뷰 초안 제외
+    enabled: true
+    drafts: false
 
-  # 팀 컨벤션 가이드
+  path_filters:
+    - "!**/pnpm-lock.yaml"
+    - "!**/dist/**"
+    - "!**/node_modules/**"
+    - "!**/playwright-report/**"
+    - "!**/test-results/**"
+    - "!**/coverage/**"
+
   instructions: |
-    ## 네이밍 규칙
-    - 변수/함수: camelCase
-    - 클래스/컴포넌트: PascalCase
-    - 상수: UPPER_SNAKE_CASE
-    - Boolean: is, has 접두사 (isLoading, hasError)
-    - 핸들러: handle~ 접두사
-    - Props 콜백: on~ 접두사
+    ## 리뷰 원칙
+    - 런타임 에러, 타입 안전성, 비동기 에러 처리에 집중
+    - 스타일/포맷팅은 ESLint + Prettier가 처리하므로 지적하지 않기
+    - 이 프로젝트는 monorepo: client(React+Socket.io), client-toss(Toss WebView+TDS), server(NestJS+Socket.io+Redis), server-toss(NestJS REST), packages(공유 타입)
 
-    ## 프론트엔드 규칙
-    - 컴포넌트 파일: PascalCase
-    - 함수/hook/타입 파일: camelCase
-    - 화살표 함수 export const 사용
-    - Props는 interface 우선, 결합 시 type 사용
-    - 구조 분해 할당 사용
-    - Early return 패턴 활용
-    - 한 파일에 한 컴포넌트
-    - 절대 경로(@/) 사용
+    ## 공유 패키지 동기화
+    - client/와 server/ 간 공유 상수(이벤트명, 게임 페이즈)는 packages/shared에 정의
+    - 한쪽에만 상수를 추가하고 다른 쪽을 업데이트하지 않는 PR은 지적
 
-    ## Import 순서
-    1. React 관련
-    2. 외부 라이브러리
-    3. 내부 컴포넌트
-    4. 유틸/타입
-    5. 스타일/에셋
+    ## 네이밍 (핵심만)
+    - Boolean: is/has 접두사
+    - 이벤트 핸들러: handle~ 접두사, Props 콜백: on~ 접두사
 
-    ## 백엔드 규칙
-    - 파일명: kebab-case
-    - 접미사: .types.ts, .dto.ts, .controller.ts, .service.ts, .spec.ts
-
-  # 경로별 세부 규칙
   path_instructions:
-    - path: "client/**/*.tsx"
+    - path: "client/src/**/*.{ts,tsx}"
       instructions: |
-        프론트엔드 컴포넌트 규칙:
-        - 화살표 함수로 컴포넌트 정의 (export const)
-        - Props는 interface로 정의 ({Component}Props 형식)
-        - 구조 분해 할당으로 props 받기
-        - Early return 패턴 사용
-        - 한 파일에 한 컴포넌트만
+        FSD 레이어 의존성 검증 (ESLint 미강제, 수동 확인 필요):
+        - pages → widgets, features, entities, shared만 import 가능
+        - widgets → features, entities, shared만 import 가능
+        - features → entities, shared만 import 가능
+        - entities → shared만 import 가능
+        - 같은 레이어의 다른 슬라이스 직접 import 금지
+        - 슬라이스 내부(model, ui, api)를 외부에서 직접 접근 금지 → index.ts public API 사용
 
-    - path: "client/**/use*.ts"
+    - path: "client/src/shared/config/**/*.ts"
       instructions: |
-        커스텀 훅 규칙:
-        - 파일명은 camelCase (useFetch.ts)
-        - use 접두사 필수
-        - 반환값 타입 명시
+        @shared/types에서 re-export하는 상수 파일입니다.
+        새 상수 추가 시 packages/shared에 원본이 있는지 확인하세요.
+        client 자체 상수가 server에도 존재하면 packages/shared로 이동을 제안하세요.
 
-    - path: "server/**/*.ts"
+    - path: "server/src/common/constants/**/*.ts"
       instructions: |
-        백엔드 규칙:
-        - 파일명은 kebab-case
-        - NestJS 스타일 준수
+        클라이언트에서도 사용되는 상수(이벤트명, 게임 페이즈)는 packages/shared에 정의 필수.
+        서버 전용 상수(REDIS_TTL, RATE_LIMIT 등)만 이곳에 직접 정의.
+
+    - path: "client-toss/src/**/*.{ts,tsx}"
+      instructions: |
+        Apps-in-Toss WebView 규칙:
+        - UI는 @toss/tds-mobile 컴포넌트 사용 지향
+        - Tailwind CSS v4 문법 필수: text-(--color-grey) ✓ / text-[var(...)] ✗, rounded-full! ✓ / !rounded-full ✗
+        - 컴포넌트는 파일 끝에서 export default
+
+    - path: "server/src/**/*.gateway.ts"
+      instructions: |
+        에러 발생 시 반드시 WebsocketException 사용 (HttpException, WsException 금지).
+        import는 src/common/exceptions/websocket-exception.ts에서.
+
+    - path: "server-toss/src/**/*.ts"
+      instructions: |
+        server-toss REST API 규칙:
+        - MikroORM v7: persistAndFlush 없음 → em.persist(e); await em.flush() 분리 필수
+        - 날짜 처리: new Date() 직접 사용 금지 → getTodayKst() (src/common/today.ts) 사용
+        - Zod 검증: 컨트롤러 @Body에 ZodValidationPipe(Schema) 사용, 스키마는 @toss/shared 단일 소스
+        - 유사도: 클라이언트 값 신뢰 X, 서버에서 재계산 후 저장
+        - promptId: 클라이언트가 보내지 않음, 서버가 오늘 날짜로 자동 매칭
+        - Swagger: 컨트롤러에 @ApiTags, @ApiOperation, @ApiResponse 필수
 
 chat:
   auto_reply: true

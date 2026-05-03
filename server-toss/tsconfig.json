@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "module": "nodenext",
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "esnext",
+    "sourceMap": true,
+    "rootDir": "src",
+    "outDir": "dist/src",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node", "jest"],
+    "paths": {
+      "src/*": ["./src/*"],
+      "@toss/shared": ["../packages/toss-shared/dist/index.d.ts"],
+      "@toss/shared/*": ["../packages/toss-shared/dist/*"],
+      "@davinci/similarity": ["../packages/similarity/dist/index.d.ts"],
+      "@davinci/similarity/*": ["../packages/similarity/dist/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules"]
+}

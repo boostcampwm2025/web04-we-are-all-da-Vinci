@@ -1,0 +1,65 @@
+name: Deploy Toss Backend to AWS
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "server-toss/**"
+      - ".github/workflows/deploy-toss-backend.yml"
+      - "deploy-toss/**"
+      - "packages/toss-shared/**"
+      - "packages/similarity/**"
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, toss]
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy .env file
+        working-directory: ./deploy-toss
+        run: |
+          cp ~/deploy/.env ./.env
+
+          if [ ! -f .env ]; then
+            echo ".env file not exists"
+            exit 1
+          fi
+
+          echo ".env file copied."
+
+      - name: Deploy
+        working-directory: ./deploy-toss
+        run: |
+          docker compose -f compose.yml up -d --build
+
+      - name: Health check
+        run: |
+          for i in $(seq 1 10); do
+            if curl -fsS --max-time 2 http://localhost:3000/health > /dev/null 2>&1; then
+              echo "Health check passed (attempt $i)"
+              exit 0
+            fi
+            echo "Health check failed (attempt $i/10)"
+            sleep 5
+          done
+          echo "Health check failed after 10 attempts"
+          exit 1
+
+      - name: Show container logs
+        if: always()
+        working-directory: ./deploy-toss
+        run: |
+          docker compose -f compose.yml logs --tail=50
+
+      - name: Clean
+        if: always()
+        run: |
+          docker image prune -f --filter "until=336h"
+          docker builder prune -f --filter "until=336h"
+          docker container prune -f --filter "until=168h"

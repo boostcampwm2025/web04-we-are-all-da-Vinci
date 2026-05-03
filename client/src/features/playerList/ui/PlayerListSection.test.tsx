@@ -12,6 +12,10 @@ vi.mock('@/shared/api/socket', () => ({
   })),
 }));
 
+vi.mock('boring-avatars', () => ({
+  default: ({ name }: { name: string }) => name,
+}));
+
 const createMockPlayers = (count: number): Player[] =>
   Array.from({ length: count }, (_, i) => ({
     socketId: `socket-${i + 1}`,

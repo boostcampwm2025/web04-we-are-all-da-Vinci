@@ -22,7 +22,6 @@ export interface PhaseEvent {
 
 export interface PhaseResult {
   timeLeft: number;
-
   events: PhaseEvent[];
 }
 
@@ -150,7 +149,7 @@ export class PhaseService {
     const playerMapper = createPlayerMapper(room.players);
 
     const rankings = roundResults
-      .sort((a, b) => b.similarity.similarity - a.similarity.similarity)
+      .sort((a, b) => b.similarity.score - a.similarity.score)
       .map((value) => ({
         ...value,
         nickname: playerMapper[value.profileId]?.nickname,
