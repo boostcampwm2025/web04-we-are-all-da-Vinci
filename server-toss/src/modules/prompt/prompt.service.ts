@@ -21,14 +21,16 @@ export class PromptService {
     private readonly drawingAccessService: DrawingAccessService,
   ) {}
 
+  async getDailyPrompt(userKey: number, date: Date) {
+    const user = await this.userService.getUserInfo(userKey);
+    await this.drawingAccessService.validateAccess(user);
+
+    return await this.getPromptByDate(date);
+  }
+
   async getPromptByDate(
     date: Date,
   ): Promise<{ promptId: number; strokes: Stroke[] }> {
-    const userKey = "123";
-
-    const user = await this.userService.findUser(userKey);
-    await this.drawingAccessService.validateAccess(user);
-
     const daily = await this.dailyRepo.findOne(
       { promptDate: date },
       { populate: ["prompt"] }, // prompt 관계까지 JOIN으로 함께 로드 (기본 lazy)

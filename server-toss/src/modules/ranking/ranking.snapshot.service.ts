@@ -79,7 +79,7 @@ export class RankingSnapshotService {
             name: drawing.user.name,
             strokes: drawing.strokes,
             score: drawing.score,
-            userId: drawing.user.id,
+            userKey: drawing.user.userKey,
             drawingId: drawing.id,
             submittedAt: drawing.createdAt,
             createdAt: snapshotTime,

@@ -108,12 +108,12 @@ describe("DrawingService", () => {
       );
 
       const result = await service.submitDrawing(
-        "1234",
+        1234,
         sampleStrokes as never,
         new Date(Date.UTC(2026, 3, 15)),
       );
 
-      expect(userService.findUser).toHaveBeenCalledWith("1234");
+      expect(userService.getUserInfo).toHaveBeenCalledWith(1234);
       expect(persisted).toHaveLength(1);
       const saved = persisted[0];
       expect(saved.user).toBe(givenUser);

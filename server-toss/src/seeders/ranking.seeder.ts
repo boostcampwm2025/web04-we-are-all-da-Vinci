@@ -8,7 +8,7 @@ export class RankingSeeder extends Seeder {
   async run(em: EntityManager): Promise<void> {
     const drawings: Drawing[] = await em
       .fork()
-      .findAll(Drawing, { populate: ["user.id", "user.name"] });
+      .findAll(Drawing, { populate: ["user.id", "user.name", "user.userKey"] });
 
     if (drawings.length < 1) {
       throw new Error("유저, 그림 데이터가 필요합니다.");

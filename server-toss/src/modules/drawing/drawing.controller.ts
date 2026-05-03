@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from "@nestjs/common";
+import { Body, Controller, Post, UseGuards } from "@nestjs/common";
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import type {
   SimilarityResponse,
@@ -13,8 +13,14 @@ import {
 import { getTodayKst } from "src/common/today";
 import { ZodValidationPipe } from "src/common/zod-validation.pipe";
 import { DrawingService } from "./service/drawing.service";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import {
+  CurrentUser,
+  type CurrentUserPayload,
+} from "../auth/decorators/current-user.decorator";
 
 @ApiTags("Drawing")
+@UseGuards(JwtAuthGuard)
 @Controller()
 export class DrawingController {
   constructor(private readonly drawingService: DrawingService) {}
@@ -98,9 +104,10 @@ export class DrawingController {
   async submitDrawing(
     @Body(new ZodValidationPipe(SubmitDrawingRequestSchema))
     body: SubmitDrawingRequest,
+    @CurrentUser() user: CurrentUserPayload,
   ): Promise<SubmitDrawingResponse> {
     return this.drawingService.submitDrawing(
-      body.userKey,
+      user.userKey,
       body.strokes,
       getTodayKst(),
     );

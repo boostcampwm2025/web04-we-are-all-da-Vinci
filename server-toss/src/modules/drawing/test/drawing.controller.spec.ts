@@ -5,6 +5,7 @@ import type { App } from "supertest/types";
 import { ZodExceptionFilter } from "../../../common/zod-exception.filter";
 import { DrawingController } from "../drawing.controller";
 import { DrawingService } from "../service/drawing.service";
+import { JwtAuthGuard } from "src/modules/auth/guards/jwt-auth.guard";
 
 describe("DrawingController (e2e)", () => {
   let app: INestApplication<App>;
@@ -39,6 +40,7 @@ describe("DrawingController (e2e)", () => {
 
     app = module.createNestApplication();
     app.useGlobalFilters(new ZodExceptionFilter());
+    app.useGlobalGuards(JwtAuthGuard);
     await app.init();
   });
 

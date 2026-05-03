@@ -29,11 +29,11 @@ export class DrawingService {
 
   // 최종 제출. 유사도를 다시 계산해 저장 (클라가 보낸 similarity는 사용하지 않음)
   async submitDrawing(
-    userKey: string,
+    userKey: number,
     playerStrokes: Stroke[],
     date: Date,
   ): Promise<{ drawingId: number; similarity: Similarity }> {
-    const user = await this.userService.findUser(userKey);
+    const user = await this.userService.getUserInfo(userKey);
     await this.drawingAccessService.validateAccess(user);
 
     const { promptId, preprocessed } =
