@@ -32,6 +32,7 @@
     "@nestjs/core": "^11.1.17",
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/platform-express": "^11.1.17",
+    "@nestjs/schedule": "^6.1.1",
     "@nestjs/swagger": "^11.2.6",
     "@toss/shared": "workspace:*",
     "cookie-parser": "^1.4.7",

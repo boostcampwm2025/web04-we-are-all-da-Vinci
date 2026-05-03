@@ -1,8 +1,13 @@
+import { Skeleton } from "@toss/tds-mobile";
 import { HEIGHTS, WIDTH } from "../config/podiumStyles";
+import { usePodium } from "../hooks/usePodium";
 import type { PodiumEntry } from "../model/types";
-interface PodiumProps {
-  entries: PodiumEntry[];
-}
+import PodiumEmpty from "./PodiumEmpty";
+
+type PodiumSlot = {
+  rank: number;
+  entry?: PodiumEntry;
+};
 
 const clipName = (name: string): string => {
   if (name.length > 4) {
@@ -11,15 +16,22 @@ const clipName = (name: string): string => {
   return name;
 };
 
-const Podium = ({ entries }: PodiumProps) => {
-  const podium = [
-    { ...entries[1], rank: 2 },
-    { ...entries[0], rank: 1 },
-    { ...entries[2], rank: 3 },
-  ].map((entry) => ({
-    ...entry,
-    name: clipName(entry.name),
-    totalSimilarity: String(entry.totalSimilarity) + "점",
+const Podium = () => {
+  const { podium, isLoading } = usePodium();
+
+  if (isLoading) {
+    return <Skeleton pattern="listOnly" style={{ width: "100%" }} />;
+  }
+
+  if (!podium || podium.length === 0) {
+    return <PodiumEmpty />;
+  }
+
+  const order = [2, 1, 3]; // 렌더링 순서
+
+  const slots: PodiumSlot[] = order.map((rank) => ({
+    rank,
+    entry: podium[rank - 1], // podium은 1등부터 시작
   }));
 
   return (
@@ -28,28 +40,29 @@ const Podium = ({ entries }: PodiumProps) => {
       style={{ height: 205 }}
     >
       <div className="flex items-end justify-center gap-2 pb-4">
-        {podium.map((entry) => (
+        {slots.map(({ rank, entry }) => (
           <div
-            key={entry.rank}
+            key={rank}
             className="flex flex-col items-center justify-end gap-2"
           >
             <div className="flex flex-col text-center">
               <div className="w-[75px] truncate text-[16px] font-bold leading-tight text-black">
-                {entry.name}
+                {entry ? clipName(entry.name) : ""}
               </div>
               <div className="mt-1 text-[14px] leading-none text-[#8f97a3]">
-                {entry.totalSimilarity}
+                {entry ? `${entry.score}점` : ""}
               </div>
             </div>
 
             <div
+              data-testid="podium-slot"
               className="flex items-end justify-center bg-[#E5E8EB] text-[14px] font-semibold text-white"
               style={{
                 width: WIDTH,
-                height: HEIGHTS[entry.rank],
+                height: HEIGHTS[rank],
               }}
             >
-              {entry.rank}
+              {rank}
             </div>
           </div>
         ))}

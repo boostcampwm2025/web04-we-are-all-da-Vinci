@@ -1,5 +1,7 @@
-export interface PodiumEntry {
+interface PodiumEntry {
   userId: number;
   name: string;
-  totalSimilarity: number;
+  score: number;
 }
+
+export { type PodiumEntry };
