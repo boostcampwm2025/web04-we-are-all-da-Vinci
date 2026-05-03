@@ -24,7 +24,6 @@ export const useLoginFlow = () => {
         referrer,
       });
       localStorage.setItem("access_token", accessToken);
-      alert(`[login] accessToken:\n${accessToken}`);
       navigate("/", { replace: true });
     } catch (err) {
       console.error("[login error]", err);
