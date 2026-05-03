@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 
 interface RewardAdProps {
   adGroupId: string;
-  onReward: () => void;
+  onReward: () => void | Promise<void>;
   text?: string;
 }
 
@@ -17,6 +17,7 @@ const RewardAd = ({
   text = "광고 보고 기회 충전하기",
 }: RewardAdProps) => {
   const [isAdLoaded, setIsAdLoaded] = useState(false);
+  const [isRewarding, setIsRewarding] = useState(false);
 
   useEffect(() => {
     if (!loadFullScreenAd.isSupported()) {
@@ -46,11 +47,18 @@ const RewardAd = ({
   };
 
   const handleShowAd = () => {
+    if (isRewarding) return;
+
     showFullScreenAd({
       options: { adGroupId },
-      onEvent: (event) => {
+      onEvent: async (event) => {
         if (event.type === "userEarnedReward") {
-          onReward();
+          setIsRewarding(true);
+          try {
+            await onReward();
+          } finally {
+            setIsRewarding(false);
+          }
         }
         if (event.type === "dismissed") {
           setIsAdLoaded(false);
@@ -64,9 +72,10 @@ const RewardAd = ({
   return (
     <Button
       onClick={handleShowAd}
-      disabled={!isAdLoaded}
+      disabled={!isAdLoaded || isRewarding}
       color="primary"
       display="block"
+      loading={isRewarding}
     >
       {isAdLoaded ? text : "광고 준비 중이에요"}
     </Button>

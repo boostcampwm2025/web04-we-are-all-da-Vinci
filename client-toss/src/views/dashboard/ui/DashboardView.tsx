@@ -7,6 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Podium } from "@/entities/podium";
 import { RewardAd } from "@/shared/ui/rewardAd";
 import { usePlayChance } from "@/feature/playChance";
+import { serverTossApi } from "@/shared/api/serverToss";
 
 const DashboardView = () => {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -53,6 +54,7 @@ const DashboardView = () => {
     setIsStartingGame(true);
 
     try {
+      await serverTossApi.recordAdView();
       await charge();
       const consumed = await consume();
       if (!consumed) return;
