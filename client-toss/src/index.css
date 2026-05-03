@@ -41,6 +41,10 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
+  #root:has([data-no-safe-area-bottom]) {
+    padding-bottom: 0;
+  }
+
   body {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
