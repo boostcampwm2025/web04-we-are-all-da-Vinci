@@ -21,6 +21,10 @@ jest.mock("src/common/time.util", () => ({
 }));
 
 import { NotFoundException } from "@nestjs/common";
+import {
+  TossPromotionError,
+  TossTransportError,
+} from "src/modules/auth/errors/toss.errors";
 import type { Prompt } from "../prompt/prompt.entity";
 import type { User } from "../user/user.entity";
 import { Drawing } from "./drawing.entity";
@@ -64,6 +68,16 @@ const buildPromptService = () => ({
   })),
 });
 
+const buildPointService = (canGrant = true) => ({
+  canGrantTodayPromotion: jest.fn(async () => canGrant),
+  saveDrawingPointLog: jest.fn(async () => undefined),
+});
+
+const buildTossApiClient = () => ({
+  getPromotionKey: jest.fn(async () => "test-key"),
+  executePromotion: jest.fn(async () => undefined),
+});
+
 describe("DrawingService", () => {
   beforeEach(() => {
     mockPreprocessStrokes.mockClear();
@@ -83,6 +97,8 @@ describe("DrawingService", () => {
         em as never,
         userRepo as never,
         promptService as never,
+        buildPointService() as never,
+        buildTossApiClient() as never,
       );
 
       const result = await service.scoreStrokes(
@@ -104,7 +120,7 @@ describe("DrawingService", () => {
   describe("드로잉 제출", () => {
     it("유효한 userKey와 strokes를 받으면 drawings를 저장하고 결과를 반환한다", async () => {
       const promptService = buildPromptService();
-      const fakeUser = { id: BigInt(1) } as User;
+      const fakeUser = { id: BigInt(1), userKey: 1234 } as User;
       const fakePromptRef = { id: BigInt(7) } as Prompt;
       const userRepo = { findOne: jest.fn(async () => fakeUser) };
       const persisted: Drawing[] = [];
@@ -120,6 +136,8 @@ describe("DrawingService", () => {
         em as never,
         userRepo as never,
         promptService as never,
+        buildPointService(false) as never,
+        buildTossApiClient() as never,
       );
 
       const result = await service.submitDrawing(
@@ -152,6 +170,8 @@ describe("DrawingService", () => {
         em as never,
         userRepo as never,
         promptService as never,
+        buildPointService() as never,
+        buildTossApiClient() as never,
       );
 
       await expect(
@@ -166,13 +186,181 @@ describe("DrawingService", () => {
     });
   });
 
+  describe("프로모션 지급", () => {
+    const baseEm = () => ({
+      getReference: jest.fn(() => ({ id: BigInt(7) })),
+      persist: jest.fn((d: Drawing) => {
+        d.id = BigInt(1);
+      }),
+      flush: jest.fn(async () => undefined),
+    });
+    const baseUserRepo = (userKey = 1234) => ({
+      findOne: jest.fn(async () => ({ id: BigInt(1), userKey })),
+    });
+    const basePromptService = () => buildPromptService();
+
+    it("일일 한도(2회)에 도달하면 Toss API를 호출하지 않는다", async () => {
+      const pointService = buildPointService(false);
+      const tossApiClient = buildTossApiClient();
+      const service = new DrawingService(
+        baseEm() as never,
+        baseUserRepo() as never,
+        basePromptService() as never,
+        pointService as never,
+        tossApiClient as never,
+      );
+
+      await service.submitDrawing(
+        "1234",
+        sampleStrokes as never,
+        new Date(),
+      );
+
+      expect(tossApiClient.getPromotionKey).not.toHaveBeenCalled();
+      expect(pointService.saveDrawingPointLog).not.toHaveBeenCalled();
+    });
+
+    it("정상 지급 시 getPromotionKey → executePromotion → saveDrawingPointLog 순서로 호출한다", async () => {
+      const pointService = buildPointService(true);
+      const tossApiClient = buildTossApiClient();
+      const service = new DrawingService(
+        baseEm() as never,
+        baseUserRepo() as never,
+        basePromptService() as never,
+        pointService as never,
+        tossApiClient as never,
+      );
+
+      await service.submitDrawing(
+        "1234",
+        sampleStrokes as never,
+        new Date(),
+      );
+
+      expect(tossApiClient.getPromotionKey).toHaveBeenCalledWith(1234);
+      expect(tossApiClient.executePromotion).toHaveBeenCalledWith(
+        1234,
+        "test-key",
+        "TEMP_PROMOTION_CODE",
+        2,
+      );
+      expect(pointService.saveDrawingPointLog).toHaveBeenCalledWith(BigInt(1));
+    });
+
+    it("4110 오류 시 재시도하여 성공하면 saveDrawingPointLog를 호출한다", async () => {
+      const pointService = buildPointService(true);
+      const tossApiClient = buildTossApiClient();
+      tossApiClient.executePromotion
+        .mockRejectedValueOnce(new TossPromotionError("4110", "내부 오류"))
+        .mockResolvedValueOnce(undefined);
+      const service = new DrawingService(
+        baseEm() as never,
+        baseUserRepo() as never,
+        basePromptService() as never,
+        pointService as never,
+        tossApiClient as never,
+      );
+
+      await service.submitDrawing(
+        "1234",
+        sampleStrokes as never,
+        new Date(),
+      );
+
+      expect(tossApiClient.getPromotionKey).toHaveBeenCalledTimes(2);
+      expect(pointService.saveDrawingPointLog).toHaveBeenCalledTimes(1);
+    });
+
+    it("TossTransportError 발생 시 재시도하여 성공하면 saveDrawingPointLog를 호출한다", async () => {
+      const pointService = buildPointService(true);
+      const tossApiClient = buildTossApiClient();
+      tossApiClient.getPromotionKey
+        .mockRejectedValueOnce(new TossTransportError("타임아웃"))
+        .mockResolvedValueOnce("test-key");
+      const service = new DrawingService(
+        baseEm() as never,
+        baseUserRepo() as never,
+        basePromptService() as never,
+        pointService as never,
+        tossApiClient as never,
+      );
+
+      await service.submitDrawing(
+        "1234",
+        sampleStrokes as never,
+        new Date(),
+      );
+
+      expect(tossApiClient.getPromotionKey).toHaveBeenCalledTimes(2);
+      expect(pointService.saveDrawingPointLog).toHaveBeenCalledTimes(1);
+    });
+
+    it("최대 재시도(3회) 모두 실패해도 submitDrawing은 정상 결과를 반환한다", async () => {
+      const pointService = buildPointService(true);
+      const tossApiClient = buildTossApiClient();
+      tossApiClient.executePromotion.mockRejectedValue(
+        new TossPromotionError("4110", "내부 오류"),
+      );
+      const em = baseEm();
+      const service = new DrawingService(
+        em as never,
+        baseUserRepo() as never,
+        basePromptService() as never,
+        pointService as never,
+        tossApiClient as never,
+      );
+
+      const result = await service.submitDrawing(
+        "1234",
+        sampleStrokes as never,
+        new Date(),
+      );
+
+      expect(tossApiClient.executePromotion).toHaveBeenCalledTimes(3);
+      expect(pointService.saveDrawingPointLog).not.toHaveBeenCalled();
+      expect(result.drawingId).toBe(1);
+    });
+
+    it("재시도 불필요 에러(예: 4109 예산 소진)가 발생해도 submitDrawing은 정상 결과를 반환한다", async () => {
+      const pointService = buildPointService(true);
+      const tossApiClient = buildTossApiClient();
+      tossApiClient.getPromotionKey.mockRejectedValue(
+        new TossPromotionError("4109", "프로모션이 실행중이 아니에요"),
+      );
+      const em = baseEm();
+      const service = new DrawingService(
+        em as never,
+        baseUserRepo() as never,
+        basePromptService() as never,
+        pointService as never,
+        tossApiClient as never,
+      );
+
+      const result = await service.submitDrawing(
+        "1234",
+        sampleStrokes as never,
+        new Date(),
+      );
+
+      expect(tossApiClient.getPromotionKey).toHaveBeenCalledTimes(1);
+      expect(pointService.saveDrawingPointLog).not.toHaveBeenCalled();
+      expect(result.drawingId).toBe(1);
+    });
+  });
+
   describe("getMyDrawings", () => {
     let service: DrawingService;
     let em: { find: jest.Mock };
 
     beforeEach(() => {
       em = { find: jest.fn() };
-      service = new DrawingService(em as never, {} as never, {} as never);
+      service = new DrawingService(
+        em as never,
+        {} as never,
+        {} as never,
+        {} as never,
+        {} as never,
+      );
     });
 
     it("오늘 그린 그림이 없으면 빈 배열 반환", async () => {
@@ -257,7 +445,13 @@ describe("DrawingService", () => {
 
     beforeEach(() => {
       em = { findOne: jest.fn(), find: jest.fn() };
-      service = new DrawingService(em as never, {} as never, {} as never);
+      service = new DrawingService(
+        em as never,
+        {} as never,
+        {} as never,
+        {} as never,
+        {} as never,
+      );
     });
 
     it("drawingId에 해당하는 그림이 없으면 null 반환", async () => {
