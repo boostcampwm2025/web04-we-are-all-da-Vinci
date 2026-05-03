@@ -1,42 +1,128 @@
-import { Button } from "@toss/tds-mobile";
-import { Link } from "react-router-dom";
+import { serverTossApi } from "@/shared/api";
+import { getDeviceId } from "@apps-in-toss/web-framework";
+import { Button, Top } from "@toss/tds-mobile";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const HomeView = () => {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
+  const [anonymousHash, setAnonymousHash] = useState<string | null>(null);
+
+  const [error, setError] = useState<string | null>(null);
+
+  const startGame = useCallback(
+    async (hash: string) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const { promptId, strokes } = await serverTossApi.getPrompt();
+        console.log("[Home] prompt loaded:", {
+          promptId,
+          strokeCount: strokes.length,
+          sampleStroke: strokes[0],
+        });
+        navigate("/memorize", {
+          state: { promptId, promptStrokes: strokes, anonymousHash: hash },
+          replace: true,
+        });
+      } catch (err) {
+        console.error("프롬프트 로드 실패:", err);
+        setError("서버에 연결할 수 없어요. 다시 시도해주세요.");
+        setIsLoading(false);
+      }
+    },
+    [navigate],
+  );
+
+  useEffect(() => {
+    const init = async () => {
+      let hash: string;
+      try {
+        const { deviceId } = await getDeviceId();
+        hash = deviceId;
+      } catch {
+        hash = "local";
+      }
+      setAnonymousHash(hash);
+
+      const today = new Date().toISOString().slice(0, 10);
+      const lastPlayed = localStorage.getItem(`lastPlayed_${hash}`);
+
+      if (lastPlayed === today) {
+        setIsLoading(false);
+        return;
+      }
+
+      await startGame(hash);
+    };
+
+    init();
+  }, [startGame]);
+
+  if (isLoading && !error) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <p className="text-(--color-grey)">준비 중...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-4 px-(--page-px)">
+        <p className="text-center text-(--color-grey)">{error}</p>
+        <Button
+          size="large"
+          onClick={() => anonymousHash && startGame(anonymousHash)}
+        >
+          다시 시도
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex-1 px-(--page-px) pt-4">
-      <h1>홈</h1>
-      <Link to="/drawing">
-        <Button size="large" display="block">
-          드로잉 페이지로 이동
-        </Button>
-      </Link>
-      <Link to="/memorize">
-        <Button size="large" display="block">
-          기억하기 페이지로 이동
-        </Button>
-      </Link>
-      <Link to="/submitted">
-        <Button size="large" display="block">
-          제출 완료 화면으로 이동
-        </Button>
-      </Link>
-      <Link to="/login">
-        <Button size="large" display="block">
-          로그인 페이지로 이동
-        </Button>
-      </Link>
+    <div className="flex h-full flex-col">
+      <Top
+        className="p-4"
+        title={
+          <Top.TitleParagraph size={24}>
+            오늘의 드로잉 챌린지
+          </Top.TitleParagraph>
+        }
+        subtitleBottom={
+          <Top.SubtitleParagraph>
+            기억력으로 그림을 따라 그려보세요!
+          </Top.SubtitleParagraph>
+        }
+      />
 
-      <Link to="/ranking">
-        <Button size="large" display="block">
-          랭킹 화면으로 이동
+      <div className="flex flex-1 flex-col gap-3 px-(--page-px) pt-4">
+        <Button
+          size="xlarge"
+          display="block"
+          onClick={() => anonymousHash && startGame(anonymousHash)}
+        >
+          다시 도전하기
         </Button>
-      </Link>
-
-      <Link to="/dashboard">
-        <Button size="large" display="block">
-          대시보드 화면으로 이동
+        <Button
+          size="xlarge"
+          variant="secondary"
+          display="block"
+          onClick={() => navigate("/dashboard")}
+        >
+          결과 보기
         </Button>
-      </Link>
+        <Button
+          size="xlarge"
+          variant="weak"
+          display="block"
+          onClick={() => navigate("/ranking")}
+        >
+          랭킹 보기
+        </Button>
+      </div>
     </div>
   );
 };
