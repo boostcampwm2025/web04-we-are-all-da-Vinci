@@ -1,16 +1,26 @@
 import { useRef, useState } from "react";
-import { Button, TextButton, Top } from "@toss/tds-mobile";
+import { Button, TextButton, Toast, Top } from "@toss/tds-mobile";
 import { colors } from "@toss/tds-colors";
 import { MyScoreCard, useMyDrawings } from "@/entities/myScoreCard";
 import { BannerAd } from "@/shared/ui/bannerAd";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Podium } from "@/entities/podium";
 import { RewardAd } from "@/shared/ui/rewardAd";
+import { usePlayChance } from "@/feature/playChance";
 
 const DashboardView = () => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isStartingGame, setIsStartingGame] = useState(false);
+  const [toastOpen, setToastOpen] = useState(false);
   const sliderRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   const { myDrawings, isLoading } = useMyDrawings();
+  const {
+    hasChance,
+    isLoading: isChanceLoading,
+    charge,
+    consume,
+  } = usePlayChance();
   const cardCount = Math.max(myDrawings.length, 1);
 
   const handleScroll = () => {
@@ -20,8 +30,51 @@ const DashboardView = () => {
     setActiveIndex(Math.min(index, cardCount - 1));
   };
 
+  const startGame = async () => {
+    if (isStartingGame) return;
+
+    setIsStartingGame(true);
+
+    try {
+      const consumed = await consume();
+      if (!consumed) return;
+
+      navigate("/memorize");
+    } catch {
+      setToastOpen(true);
+    } finally {
+      setIsStartingGame(false);
+    }
+  };
+
+  const handleReward = async () => {
+    if (isStartingGame) return;
+
+    setIsStartingGame(true);
+
+    try {
+      await charge();
+      const consumed = await consume();
+      if (!consumed) return;
+
+      navigate("/memorize");
+    } catch {
+      setToastOpen(true);
+    } finally {
+      setIsStartingGame(false);
+    }
+  };
+
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
+      <Toast
+        position="top"
+        open={toastOpen}
+        text="일시적 오류가 발생했어요"
+        leftAddon={<Toast.Icon name="icon-warning-circle-red-opacity-small" />}
+        duration={3000}
+        onClose={() => setToastOpen(false)}
+      />
       {/* 랭킹 영역 */}
       <div>
         <Top
@@ -99,7 +152,27 @@ const DashboardView = () => {
 
       {/* 하단 버튼 */}
       <div className="px-(--page-px) flex flex-col gap-3">
-        <RewardAd adGroupId="ait-ad-test-rewarded-id" onReward={() => {}} />
+        {isChanceLoading ? (
+          <Button color="primary" display="block" loading disabled>
+            플레이 기회 확인 중
+          </Button>
+        ) : hasChance ? (
+          <Button
+            color="primary"
+            display="block"
+            loading={isStartingGame}
+            disabled={isStartingGame}
+            onClick={startGame}
+          >
+            플레이하기
+          </Button>
+        ) : (
+          <RewardAd
+            adGroupId="ait-ad-test-rewarded-id"
+            onReward={handleReward}
+            text="광고 보고 기회 충전하기"
+          />
+        )}
         <Button color="primary" display="block" variant="weak">
           공유하고 포인트 받기
         </Button>
