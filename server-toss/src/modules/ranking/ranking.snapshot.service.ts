@@ -35,7 +35,7 @@ export class RankingSnapshotService {
             sql`u.name`.as("user_name"),
             sql`
       row_number() over (
-        partition by d.user_id
+        partition by d.user_key
         order by d.score desc, d.created_at asc, d.id asc
       )
     `.as("rank_no"),
@@ -79,7 +79,7 @@ export class RankingSnapshotService {
             name: drawing.user.name,
             strokes: drawing.strokes,
             score: drawing.score,
-            userId: drawing.user.id,
+            userKey: drawing.user.userKey,
             drawingId: drawing.id,
             submittedAt: drawing.createdAt,
             createdAt: snapshotTime,

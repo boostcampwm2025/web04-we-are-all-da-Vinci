@@ -8,18 +8,20 @@ import { PointLog, PointReason } from "./point-log.entity";
 export class PointService {
   constructor(private readonly em: EntityManager) {}
 
-  async canGrantTodayPromotion(userId: bigint): Promise<boolean> {
+  async canGrantTodayPromotion(userKey: number): Promise<boolean> {
     const { start, end } = getSeoulDayRange();
     const count = await this.em.count(PointLog, {
-      user: userId,
+      user: {
+        userKey: userKey,
+      },
       reason: PointReason.DRAWING,
       createdAt: { $gte: start, $lt: end },
     });
     return count < 2;
   }
 
-  async saveDrawingPointLog(userId: bigint): Promise<void> {
-    const userRef = this.em.getReference(User, userId);
+  async saveDrawingPointLog(userKey: number): Promise<void> {
+    const userRef = this.em.getReference(User, userKey as unknown as User);
     const log = new PointLog();
     log.user = userRef;
     log.reason = PointReason.DRAWING;

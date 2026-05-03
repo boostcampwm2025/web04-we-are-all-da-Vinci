@@ -1,22 +1,24 @@
 import { preprocessStrokes, scoreFinalSimilarity } from "@davinci/similarity";
-import { EntityManager, QueryOrder } from "@mikro-orm/core";
 import { ConfigService } from "@nestjs/config";
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import type { SimilarityResponse, Stroke } from "@toss/shared";
-import { getSeoulDayRange } from "src/common/time.util";
+import { Injectable, Logger } from "@nestjs/common";
 import { TossApiClient } from "src/modules/auth/toss-api.client";
 import {
   TossPromotionError,
   TossTransportError,
 } from "src/modules/auth/errors/toss.errors";
 import { PointService } from "src/modules/point/point.service";
-import { Prompt } from "../prompt/prompt.entity";
-import { PromptService } from "../prompt/prompt.service";
-import { UserRepository } from "../user/user.repository";
-import { Drawing } from "./drawing.entity";
 
 const PROMOTION_AMOUNT = 2;
 const PROMOTION_MAX_RETRIES = 2;
+import { EntityManager, QueryOrder } from "@mikro-orm/mysql";
+
+import { Prompt } from "../../prompt/prompt.entity";
+import { PromptService } from "../../prompt/prompt.service";
+import { Drawing } from "../drawing.entity";
+import { DrawingAccessService } from "./drawing-access.service";
+import { UserService } from "src/modules/user/user.service";
+import type { SimilarityResponse, Stroke } from "@toss/shared";
+import { getSeoulDayRange } from "src/common/time.util";
 
 type Similarity = ReturnType<typeof scoreFinalSimilarity>;
 
@@ -27,11 +29,12 @@ export class DrawingService {
 
   constructor(
     private readonly em: EntityManager,
-    private readonly userRepo: UserRepository,
+    private readonly userService: UserService,
     private readonly promptService: PromptService,
     private readonly pointService: PointService,
     private readonly tossApiClient: TossApiClient,
     private readonly configService: ConfigService,
+    private readonly drawingAccessService: DrawingAccessService,
   ) {
     const promotionCode =
       this.configService.getOrThrow<string>("PROMOTION_CODE");
@@ -40,7 +43,6 @@ export class DrawingService {
 
     this.promotionCode = isProduction ? promotionCode : `TEST_${promotionCode}`;
   }
-
   // 획 단위 실시간 호출 엔드포인트. 클라 값 신뢰 X → 서버가 매번 유사도 재계산
   async scoreStrokes(playerStrokes: Stroke[], date: Date): Promise<Similarity> {
     const { preprocessed } =
@@ -51,7 +53,7 @@ export class DrawingService {
 
   // 최종 제출. 유사도를 다시 계산해 저장 (클라가 보낸 similarity는 사용하지 않음)
   async submitDrawing(
-    userKey: string,
+    userKey: number,
     playerStrokes: Stroke[],
     date: Date,
   ): Promise<{
@@ -59,15 +61,13 @@ export class DrawingService {
     similarity: Similarity;
     promotionGranted: boolean;
   }> {
+    const user = await this.userService.getUserInfo(userKey);
+    await this.drawingAccessService.validateAccess(user);
+
     const { promptId, preprocessed } =
       await this.promptService.getPreprocessedByDate(date);
     const playerPreprocessed = preprocessStrokes(playerStrokes);
     const similarity = scoreFinalSimilarity(preprocessed, playerPreprocessed);
-
-    const user = await this.userRepo.findOne({ userKey: Number(userKey) });
-    if (!user) {
-      throw new NotFoundException("USER_NOT_FOUND");
-    }
 
     // FK만 필요 — DB 조회 없이 id만으로 참조 객체 생성 (findOne 대체 최적화)
     const promptRef = this.em.getReference(Prompt, BigInt(promptId));
@@ -82,19 +82,13 @@ export class DrawingService {
     this.em.persist(drawing);
     await this.em.flush();
 
-    const promotionGranted = await this.grantPromotionIfEligible(
-      user.id,
-      user.userKey,
-    );
+    const promotionGranted = await this.grantPromotionIfEligible(user.userKey);
 
     return { drawingId: Number(drawing.id), similarity, promotionGranted };
   }
 
-  private async grantPromotionIfEligible(
-    userId: bigint,
-    userKey: number,
-  ): Promise<boolean> {
-    const canGrant = await this.pointService.canGrantTodayPromotion(userId);
+  private async grantPromotionIfEligible(userKey: number): Promise<boolean> {
+    const canGrant = await this.pointService.canGrantTodayPromotion(userKey);
     if (!canGrant) return false;
 
     let lastError: unknown;
@@ -108,7 +102,7 @@ export class DrawingService {
           this.promotionCode,
           PROMOTION_AMOUNT,
         );
-        await this.pointService.saveDrawingPointLog(userId);
+        await this.pointService.saveDrawingPointLog(userKey);
         return true;
       } catch (err) {
         if (
@@ -127,11 +121,11 @@ export class DrawingService {
     return false;
   }
 
-  private async findTodayByUser(userId: bigint | string): Promise<Drawing[]> {
+  private async findTodayByUser(userKey: number): Promise<Drawing[]> {
     const { start, end } = getSeoulDayRange();
     return this.em.find(
       Drawing,
-      { user: userId, createdAt: { $gte: start, $lt: end } },
+      { user: { userKey: userKey }, createdAt: { $gte: start, $lt: end } },
       {
         populate: ["user", "prompt"],
         orderBy: [{ score: QueryOrder.DESC }],
@@ -139,13 +133,12 @@ export class DrawingService {
     );
   }
 
-  async getMyDrawings(userId: bigint) {
+  async getMyDrawings(userKey: number) {
     const { start, end } = getSeoulDayRange();
-    const userIdString = userId.toString();
-    const myDrawings = await this.findTodayByUser(userIdString);
+    const myDrawings = await this.findTodayByUser(userKey);
 
     if (myDrawings.length === 0) {
-      return { userId: userIdString, drawings: [] };
+      return { userKey, drawings: [] };
     }
 
     // 그림의 등수 정보를 가져오기 위해 같은 prompt의 그림들을 모두 가져와서 순위 계산
@@ -170,7 +163,7 @@ export class DrawingService {
       };
     });
 
-    return { userId: userIdString, drawings };
+    return { userKey, drawings };
   }
 
   async getDrawing(drawingId: string) {

@@ -20,7 +20,7 @@ export class PointLog extends BaseEntity {
   @Property({ fieldName: "point_amount", type: "int" })
   pointAmount!: number;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { joinColumn: "user_key" })
   user!: Rel<User>;
 }
 

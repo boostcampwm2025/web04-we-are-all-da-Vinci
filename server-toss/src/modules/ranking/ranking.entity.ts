@@ -33,8 +33,8 @@ export class Ranking extends BaseEntity {
   @Property({ fieldName: "score", type: "double" })
   score!: number;
 
-  @Property({ fieldName: "user_id", type: "bigint" })
-  userId!: bigint;
+  @Property({ fieldName: "user_key", type: "integer" })
+  userKey!: number;
 
   @Property({ fieldName: "drawing_id", type: "bigint" })
   drawingId!: bigint;
