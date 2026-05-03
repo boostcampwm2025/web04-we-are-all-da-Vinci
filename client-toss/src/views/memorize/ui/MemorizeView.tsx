@@ -61,7 +61,10 @@ const MemorizeView = () => {
   if (!routeState) return null;
 
   return (
-    <div data-no-safe-area-bottom className="flex h-full flex-col bg-white pb-0!">
+    <div
+      data-no-safe-area-bottom
+      className="flex h-full flex-col bg-white pb-0!"
+    >
       <PhaseHeader
         title="기억하세요!"
         description={`${timeLeft}초 동안 그림을 기억하세요`}
