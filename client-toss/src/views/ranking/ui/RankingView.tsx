@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 
 const Ranking = () => {
   return (
-    <div className="flex flex-col items-center  justify-center">
+    <div className="flex min-h-full flex-col items-center">
       <main className="w-full">
         <Top
           title={
@@ -24,10 +24,11 @@ const Ranking = () => {
         <BannerAd adGroupId="ait-ad-test-banner-id" className="mb-6" />
 
         <RankingList />
+        <div className="h-20" />
       </main>
 
-      <footer className="sticky bottom-2 w-[90%] bg-white rounded-2xl">
-        <Link to="/dashboard">
+      <footer className="sticky bottom-0 w-full rounded-t-2xl bg-white px-(--page-px) pb-4 pt-2">
+        <Link to="/">
           <Button
             size="xlarge"
             variant="weak"
