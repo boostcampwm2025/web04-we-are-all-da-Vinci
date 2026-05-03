@@ -73,6 +73,7 @@ const DashboardView = () => {
     setIsStartingGame(true);
 
     try {
+      await serverTossApi.recordAdView();
       await charge();
       const started = await startPlay();
       if (!started) return;

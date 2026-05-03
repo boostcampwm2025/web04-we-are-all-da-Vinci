@@ -47,7 +47,11 @@ const DrawingView = () => {
       window.setTimeout(() => navigate("/submitted"), 700);
     } catch (err) {
       console.error("[submit drawing error]", err);
-      setToastText("일시적 오류가 발생했어요");
+      setToastText(
+        err instanceof Error && err.message === "NO_DRAWING_CHANCE"
+          ? "플레이 기회가 없어요"
+          : "일시적 오류가 발생했어요",
+      );
       setIsErrorToast(true);
       setToastOpen(true);
     } finally {
