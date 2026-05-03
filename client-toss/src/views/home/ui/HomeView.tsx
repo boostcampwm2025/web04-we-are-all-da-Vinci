@@ -1,7 +1,9 @@
 import { Button } from "@toss/tds-mobile";
 import { Link } from "react-router-dom";
+import { useLoginFlow } from "@/feature/login";
 
 const HomeView = () => {
+  const { handleLogout } = useLoginFlow();
   return (
     <div className="flex-1 px-(--page-px) pt-4">
       <h1>홈</h1>
@@ -37,6 +39,9 @@ const HomeView = () => {
           대시보드 화면으로 이동
         </Button>
       </Link>
+      <Button size="large" display="block" onClick={handleLogout}>
+        로그아웃 (토큰 삭제)
+      </Button>
     </div>
   );
 };

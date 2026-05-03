@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import { BadRequestException } from "@nestjs/common";
-import { parseOptionalUserIdHeader, parseUserIdHeader } from "./ranking.util";
+import { parseOptionalUserIdHeader, parseUserIdHeader } from "../ranking.util";
 
 describe("랭킹 유틸", () => {
   describe("parseUserIdHeader는", () => {

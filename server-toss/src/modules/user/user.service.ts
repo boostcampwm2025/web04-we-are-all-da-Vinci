@@ -37,11 +37,9 @@ export class UserService {
     await this.em.flush();
   }
 
-  async findUser(userId: string): Promise<User> {
-    const user = await this.userRepository.findOne({ id: userId });
-    if (!user) {
-      throw new NotFoundException("유저를 찾을 수 없습니다.");
-    }
+  async getUserInfo(userKey: number): Promise<User> {
+    const user = await this.userRepository.findOne({ userKey });
+    if (!user) throw new NotFoundException("사용자를 찾을 수 없어요.");
     return user;
   }
 }

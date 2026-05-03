@@ -23,6 +23,7 @@ async function bootstrap() {
     .setTitle("DaVinci Toss Server API")
     .setDescription("DaVinci Toss Server API description")
     .setVersion("1.0")
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, options);
