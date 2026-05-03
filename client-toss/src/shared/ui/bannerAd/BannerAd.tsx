@@ -46,10 +46,11 @@ const BannerAd = ({ adGroupId, type = "list", className }: BannerAdProps) => {
     const el = bannerRef.current;
     if (!el) return;
 
+    const adId = adGroupId;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          trackImpression("banner_ad_impression", { ad_group_id: adGroupId });
+          trackImpression("banner_ad_impression", { ad_group_id: adId });
           observer.disconnect();
         }
       },
@@ -57,7 +58,7 @@ const BannerAd = ({ adGroupId, type = "list", className }: BannerAdProps) => {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [adGroupId]);
+  }, []);
 
   useEffect(() => {
     let attached: ReturnType<typeof TossAds.attachBanner> | undefined;
