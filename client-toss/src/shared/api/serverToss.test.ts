@@ -9,12 +9,11 @@ describe("serverTossApi", () => {
 
   it("내 랭킹 조회 시 /api/rankings/me로 요청하고 공통 헤더를 포함한다", async () => {
     localStorage.setItem("userKey", "123");
+    const body = { state: "FOUND", ranking: { rank: 7, score: 88.5 } };
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({
-        state: "FOUND",
-        ranking: { rank: 7, score: 88.5 },
-      }),
+      text: async () => JSON.stringify(body),
+      json: async () => body,
     });
 
     vi.stubGlobal("fetch", fetchMock);
@@ -37,6 +36,7 @@ describe("serverTossApi", () => {
     localStorage.setItem("userKey", "123");
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
+      text: async () => JSON.stringify([]),
       json: async () => [],
     });
 
