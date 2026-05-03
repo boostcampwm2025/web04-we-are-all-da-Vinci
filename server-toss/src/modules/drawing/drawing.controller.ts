@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import type {
   SimilarityResponse,
@@ -18,6 +18,8 @@ import {
   CurrentUser,
   type CurrentUserPayload,
 } from "../auth/decorators/current-user.decorator";
+
+import { DrawingDetailDto } from "./dto/drawing.dto";
 
 @ApiTags("Drawing")
 @UseGuards(JwtAuthGuard)
@@ -111,5 +113,15 @@ export class DrawingController {
       body.strokes,
       getTodayKst(),
     );
+  }
+
+  @Get("drawing/me")
+  getMyDrawings(@CurrentUser() user: CurrentUserPayload) {
+    return this.drawingService.getMyDrawings(user.userKey);
+  }
+
+  @Get("drawing/:drawingId")
+  getDrawing(@Param() { drawingId }: DrawingDetailDto) {
+    return this.drawingService.getDrawing(drawingId);
   }
 }

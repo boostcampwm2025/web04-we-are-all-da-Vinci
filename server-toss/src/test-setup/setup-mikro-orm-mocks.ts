@@ -5,10 +5,14 @@ jest.mock("@mikro-orm/core", () => ({
   EntityManager: class {},
   EntityRepository: class {},
   EntityRepositoryType: Symbol("EntityRepositoryType"),
+  QueryOrder: { ASC: "asc", DESC: "desc" },
 }));
 jest.mock("@mikro-orm/mysql", () => ({
+  EntityManager: class {},
   EntityRepository: class {},
+  QueryOrder: { ASC: "asc", DESC: "desc" },
 }));
+
 jest.mock("@mikro-orm/decorators/legacy", () => ({
   Entity: () => (target: unknown) => target,
   PrimaryKey: () => () => undefined,

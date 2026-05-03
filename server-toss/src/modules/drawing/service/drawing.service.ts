@@ -1,12 +1,14 @@
 import { preprocessStrokes, scoreFinalSimilarity } from "@davinci/similarity";
-import { EntityManager } from "@mikro-orm/core";
+import { EntityManager, QueryOrder } from "@mikro-orm/mysql";
+
 import { Injectable } from "@nestjs/common";
-import type { Stroke } from "@toss/shared";
 import { Prompt } from "../../prompt/prompt.entity";
 import { PromptService } from "../../prompt/prompt.service";
 import { Drawing } from "../drawing.entity";
 import { DrawingAccessService } from "./drawing-access.service";
 import { UserService } from "src/modules/user/user.service";
+import type { SimilarityResponse, Stroke } from "@toss/shared";
+import { getSeoulDayRange } from "src/common/time.util";
 
 type Similarity = ReturnType<typeof scoreFinalSimilarity>;
 
@@ -48,11 +50,88 @@ export class DrawingService {
     drawing.prompt = promptRef;
     drawing.strokes = JSON.stringify(playerStrokes);
     drawing.similarity = JSON.stringify(similarity);
+    drawing.score = similarity.score;
 
     // MikroORM v7: persist로 UoW 등록 후 flush로 일괄 커밋
     this.em.persist(drawing);
     await this.em.flush();
 
     return { drawingId: Number(drawing.id), similarity };
+  }
+
+  private async findTodayByUser(userKey: number): Promise<Drawing[]> {
+    const { start, end } = getSeoulDayRange();
+    return this.em.find(
+      Drawing,
+      { user: userKey, createdAt: { $gte: start, $lt: end } },
+      {
+        populate: ["user", "prompt"],
+        orderBy: [{ score: QueryOrder.DESC }],
+      },
+    );
+  }
+
+  async getMyDrawings(userKey: number) {
+    const { start, end } = getSeoulDayRange();
+    const myDrawings = await this.findTodayByUser(userKey);
+
+    if (myDrawings.length === 0) {
+      return { userKey, drawings: [] };
+    }
+
+    // 그림의 등수 정보를 가져오기 위해 같은 prompt의 그림들을 모두 가져와서 순위 계산
+    const promptIds = myDrawings.map((d) => d.prompt.id);
+    const allDrawings = await this.em.find(Drawing, {
+      prompt: { $in: promptIds },
+      createdAt: { $gte: start, $lt: end },
+    });
+
+    const drawings = myDrawings.map((drawing) => {
+      const rank =
+        allDrawings.filter(
+          (d) => d.prompt.id === drawing.prompt.id && d.score > drawing.score,
+        ).length + 1;
+
+      return {
+        drawingId: Number(drawing.id),
+        drawRanking: rank,
+        strokes: JSON.parse(drawing.strokes) as Stroke[],
+        score: drawing.score,
+        similarity: JSON.parse(drawing.similarity) as SimilarityResponse,
+      };
+    });
+
+    return { userKey, drawings };
+  }
+
+  async getDrawing(drawingId: string) {
+    const drawing = await this.em.findOne(
+      Drawing,
+      { id: BigInt(drawingId) },
+      { populate: ["prompt", "user"] },
+    );
+
+    if (!drawing) {
+      return null;
+    }
+
+    const { start, end } = getSeoulDayRange(drawing.createdAt);
+    const allDrawings = await this.em.find(Drawing, {
+      prompt: drawing.prompt.id,
+      createdAt: { $gte: start, $lt: end },
+    });
+    const drawRanking =
+      allDrawings.filter(
+        (other) =>
+          other.prompt.id === drawing.prompt.id && other.score > drawing.score,
+      ).length + 1;
+
+    return {
+      drawingId: Number(drawing.id),
+      name: drawing.user.name,
+      drawRanking,
+      strokes: JSON.parse(drawing.strokes) as Stroke[],
+      similarity: JSON.parse(drawing.similarity) as SimilarityResponse,
+    };
   }
 }

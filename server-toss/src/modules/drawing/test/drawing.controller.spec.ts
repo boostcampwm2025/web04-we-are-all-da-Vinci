@@ -12,6 +12,8 @@ describe("DrawingController (e2e)", () => {
   const drawingService = {
     scoreStrokes: jest.fn(),
     submitDrawing: jest.fn(),
+    getMyDrawings: jest.fn(),
+    getDrawing: jest.fn(),
   };
   const mockAuthGaurd = {
     canActivate: jest.fn((context) => {
@@ -110,6 +112,31 @@ describe("DrawingController (e2e)", () => {
         .post("/drawing")
         .send({ userKey: "9999", ...validPayload })
         .expect(404);
+    });
+  });
+
+  describe("GET /drawing/:drawingId", () => {
+    it("drawingId로 그림 상세를 조회한다", async () => {
+      drawingService.getDrawing.mockResolvedValue({
+        drawingId: 42,
+        name: "SeedA",
+        drawRanking: 3,
+        strokes: validPayload.strokes,
+        similarity,
+      });
+
+      const res = await request(app.getHttpServer())
+        .get("/drawing/42")
+        .expect(200);
+
+      expect(res.body).toEqual({
+        drawingId: 42,
+        name: "SeedA",
+        drawRanking: 3,
+        strokes: validPayload.strokes,
+        similarity,
+      });
+      expect(drawingService.getDrawing).toHaveBeenCalledWith("42");
     });
   });
 });
