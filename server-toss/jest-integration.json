@@ -1,0 +1,33 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "src",
+  "testRegex": ".*\\.test\\.ts$",
+  "collectCoverageFrom": ["**/*.(t|j)s"],
+  "coverageDirectory": "../coverage",
+  "testEnvironment": "node",
+  "passWithNoTests": true,
+  "transform": {
+    "^.+\\.(t|j)s$": [
+      "ts-jest",
+      {
+        "useESM": true,
+        "tsconfig": {
+          "module": "ESNext",
+          "target": "ESNext",
+          "esModuleInterop": true
+        }
+      }
+    ]
+  },
+  "transformIgnorePatterns": ["node_modules/(?!(\\.pnpm/)?(@mikro-orm))"],
+  "moduleNameMapper": {
+    "^(\\.{1,2}/.*)\\.js$": "$1",
+    "^src/(.*)$": "<rootDir>/$1",
+    "^@toss/shared$": "<rootDir>/../../packages/toss-shared/dist/index.js",
+    "^@toss/shared/(.*)$": "<rootDir>/../../packages/toss-shared/dist/$1",
+    "^@davinci/similarity$": "<rootDir>/../../packages/similarity/dist/index.js",
+    "^@davinci/similarity/(.*)$": "<rootDir>/../../packages/similarity/dist/$1"
+  },
+  "preset": "ts-jest/presets/default-esm",
+  "extensionsToTreatAsEsm": [".ts"]
+}

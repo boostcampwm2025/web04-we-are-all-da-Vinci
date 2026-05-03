@@ -29,5 +29,8 @@ export default defineConfig({
   seeder: {
     path: "dist/seeders",
     pathTs: "src/seeders",
+    emit: "ts",
+    glob: "!(*.d).{js,ts}",
+    fileName: (className: string) => className,
   },
 });
