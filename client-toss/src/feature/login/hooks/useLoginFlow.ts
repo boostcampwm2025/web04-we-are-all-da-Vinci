@@ -8,7 +8,7 @@ export const useLoginFlow = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem("userKey")) {
+    if (localStorage.getItem("access_token")) {
       navigate("/", { replace: true });
     }
   }, [navigate]);
@@ -19,11 +19,12 @@ export const useLoginFlow = () => {
     setIsLoading(true);
     try {
       const { authorizationCode, referrer } = await appLogin();
-      const { userKey } = await serverTossApi.login({
+      const { accessToken } = await serverTossApi.login({
         authorizationCode,
         referrer,
       });
-      localStorage.setItem("userKey", String(userKey));
+      localStorage.setItem("access_token", accessToken);
+      navigate("/", { replace: true });
     } catch (err) {
       console.error("[login error]", err);
     } finally {
@@ -31,8 +32,20 @@ export const useLoginFlow = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await serverTossApi.logout();
+    } catch (err) {
+      console.error("[logout error]", err);
+    } finally {
+      localStorage.removeItem("access_token");
+      navigate("/login", { replace: true });
+    }
+  };
+
   return {
     handleLogin,
+    handleLogout,
     isLoading,
   };
 };

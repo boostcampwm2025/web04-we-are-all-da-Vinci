@@ -64,14 +64,16 @@ const SubmittedView = () => {
     try {
       let userKey = localStorage.getItem("userKey");
 
-      // 비로그인이면 appLogin
+      // 비로그인이면 appLogin → accessToken 저장 → getMe로 userKey 획득
       if (!userKey) {
         const { authorizationCode, referrer } = await appLogin();
-        const { userKey: newKey } = await serverTossApi.login({
+        const { accessToken } = await serverTossApi.login({
           authorizationCode,
           referrer,
         });
-        userKey = String(newKey);
+        localStorage.setItem("access_token", accessToken);
+        const { userKey: numericKey } = await serverTossApi.getMe();
+        userKey = String(numericKey);
         localStorage.setItem("userKey", userKey);
       }
 
@@ -106,7 +108,7 @@ const SubmittedView = () => {
 
   if (!routeState) return null;
 
-  const score = routeState.similarity?.similarity ?? 0;
+  const score = routeState.similarity?.score ?? 0;
 
   return (
     <div className="flex h-full flex-col bg-white">

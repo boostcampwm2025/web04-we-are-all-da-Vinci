@@ -1,26 +1,33 @@
-import { List } from "@toss/tds-mobile";
+import { List, Skeleton } from "@toss/tds-mobile";
 import { RankingEntry } from "./RankingEntry";
+import { useRankingList } from "../hooks/useRankingList";
+import RankingListEmpty from "./RankingListEmpty";
 
-export const RankingList = () => {
-  // 임시 데이터: 삭제 필요
-  const rankings = new Array(100).fill({}).map((_, index) => ({
-    name: `사용자${index}`,
-    userId: index,
-    drawingId: index,
-    rank: index + 1,
-    totalSimilarity: 100 - index * 0.75,
-  }));
+const RankingList = () => {
+  const { rankingList, isLoading } = useRankingList();
+
+  if (isLoading) {
+    return <Skeleton pattern="listOnly" style={{ width: "100%" }} />;
+  }
+
+  if (!rankingList || rankingList.length === 0) {
+    return <RankingListEmpty />;
+  }
+
   return (
     <List>
-      {rankings.map((ranking) => (
+      {rankingList.map((ranking) => (
         <RankingEntry
+          key={`${ranking.userId}-${ranking.drawingId}`}
           name={ranking.name}
           rank={ranking.rank}
-          totalSimilarity={ranking.totalSimilarity}
-          userId={ranking.userId}
+          score={ranking.score}
           drawingId={ranking.drawingId}
+          isMe={ranking.isMe}
         />
       ))}
     </List>
   );
 };
+
+export default RankingList;

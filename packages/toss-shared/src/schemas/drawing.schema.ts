@@ -13,10 +13,10 @@ export const StrokeSchema = z.object({
 export type Stroke = z.infer<typeof StrokeSchema>;
 
 export const SimilarityResponseSchema = z.object({
-  similarity: z.number().min(0).max(100),
-  strokeCountSimilarity: z.number().min(0).max(100),
-  strokeMatchSimilarity: z.number().min(0).max(100),
+  score: z.number().min(0).max(100),
   shapeSimilarity: z.number().min(0).max(100),
+  strokeMatchSimilarity: z.number().min(0).max(100),
+  penalty: z.number().min(0).max(100),
 });
 export type SimilarityResponse = z.infer<typeof SimilarityResponseSchema>;
 
@@ -42,3 +42,17 @@ export const SubmitDrawingResponseSchema = z.object({
   similarity: SimilarityResponseSchema,
 });
 export type SubmitDrawingResponse = z.infer<typeof SubmitDrawingResponseSchema>;
+
+export const MyDrawingResponseSchema = z.object({
+  drawingId: z.number().int().positive(),
+  similarity: SimilarityResponseSchema,
+  strokes: z.array(StrokeSchema),
+  drawRanking: z.number().int().positive(),
+});
+export type MyDrawingResponse = z.infer<typeof MyDrawingResponseSchema>;
+
+export const MyDrawingsResponseSchema = z.object({
+  userId: z.string().regex(/^\d+$/),
+  drawings: z.array(MyDrawingResponseSchema),
+});
+export type MyDrawingsResponse = z.infer<typeof MyDrawingsResponseSchema>;

@@ -23,9 +23,11 @@ const renderWithState = () =>
   );
 
 describe("DrawingView", () => {
-  it('페이지 타이틀 "그려주세요!"가 렌더링된다', () => {
+  it("페이지 타이틀이 렌더링된다", () => {
     renderWithState();
-    expect(screen.getByText("그려주세요!")).toBeInTheDocument();
+    expect(
+      screen.getByText("30초 동안 가장 비슷하게 그려요"),
+    ).toBeInTheDocument();
   });
 
   it("캔버스 영역이 렌더링된다", () => {

@@ -1,11 +1,13 @@
+import { useLoginFlow } from "@/feature/login";
 import { serverTossApi } from "@/shared/api";
 import { getDeviceId } from "@apps-in-toss/web-framework";
 import { Button, Top } from "@toss/tds-mobile";
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const HomeView = () => {
   const navigate = useNavigate();
+  const { handleLogout } = useLoginFlow();
   const [isLoading, setIsLoading] = useState(true);
   const [anonymousHash, setAnonymousHash] = useState<string | null>(null);
 
@@ -87,7 +89,7 @@ const HomeView = () => {
       <Top
         className="p-4"
         title={
-          <Top.TitleParagraph size={24}>
+          <Top.TitleParagraph size={28}>
             오늘의 드로잉 챌린지
           </Top.TitleParagraph>
         }
@@ -108,7 +110,7 @@ const HomeView = () => {
         </Button>
         <Button
           size="xlarge"
-          variant="secondary"
+          variant="weak"
           display="block"
           onClick={() => navigate("/dashboard")}
         >
@@ -121,6 +123,14 @@ const HomeView = () => {
           onClick={() => navigate("/ranking")}
         >
           랭킹 보기
+        </Button>
+        <Link to="/login">
+          <Button size="large" display="block">
+            로그인 페이지로 이동
+          </Button>
+        </Link>
+        <Button size="large" display="block" onClick={handleLogout}>
+          로그아웃 (토큰 삭제)
         </Button>
       </div>
     </div>

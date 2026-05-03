@@ -48,7 +48,7 @@ export const useStrokeScoring = (): UseStrokeScoringResult => {
         strokes: targetStrokes,
       });
       const prev = similarityRef.current;
-      if (prev && result.similarity < prev.similarity) {
+      if (prev && result.score < prev.score) {
         generateHapticFeedback({ type: "error" });
         setShowPenalty(true);
         if (penaltyTimeoutRef.current) {

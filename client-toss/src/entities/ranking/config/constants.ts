@@ -1,0 +1,10 @@
+const NOT_SUBMITTED_MESSAGE = "아직 오늘 그림을 제출하지 않았어요.";
+
+const RANKING_LIST_EMPTY_MESSAGE_MAIN = "아직 아무도 그림을 제출하지 않았어요.";
+const RANKING_LIST_EMPTY_MESSAGE_SUB = "첫 번째 플레이어가 되어보세요!";
+
+export {
+  NOT_SUBMITTED_MESSAGE,
+  RANKING_LIST_EMPTY_MESSAGE_MAIN,
+  RANKING_LIST_EMPTY_MESSAGE_SUB,
+};

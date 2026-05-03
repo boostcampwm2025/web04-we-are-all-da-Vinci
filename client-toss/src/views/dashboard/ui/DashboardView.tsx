@@ -1,27 +1,27 @@
-import { getDeviceId } from "@apps-in-toss/web-framework";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Button, TextButton, Top } from "@toss/tds-mobile";
-import { colors } from "@toss/tds-colors";
-import { MyScoreCard } from "@/entities/myScoreCard";
-import { BannerAd } from "@/shared/ui/bannerAd";
-import { serverTossApi } from "@/shared/api";
-import { Link, useNavigate } from "react-router-dom";
+import { MyScoreCard, useMyDrawings } from "@/entities/myScoreCard";
 import { Podium } from "@/entities/podium";
-
-const CARD_COUNT = 3;
+import { serverTossApi } from "@/shared/api";
+import { BannerAd } from "@/shared/ui/bannerAd";
+import { getDeviceId } from "@apps-in-toss/web-framework";
+import { colors } from "@toss/tds-colors";
+import { Button, TextButton, Top } from "@toss/tds-mobile";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 const DashboardView = () => {
   const navigate = useNavigate();
   const [activeIndex, setActiveIndex] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
+  const { myDrawings, isLoading } = useMyDrawings();
+  const cardCount = Math.max(myDrawings.length, 1);
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isStartingGame, setIsStartingGame] = useState(true);
   const [anonymousHash, setAnonymousHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const startGame = useCallback(
     async (hash: string) => {
-      setIsLoading(true);
+      setIsStartingGame(true);
       setError(null);
       try {
         const { promptId, strokes } = await serverTossApi.getPrompt();
@@ -32,7 +32,7 @@ const DashboardView = () => {
       } catch (err) {
         console.error("프롬프트 로드 실패:", err);
         setError("서버에 연결할 수 없어요. 다시 시도해주세요.");
-        setIsLoading(false);
+        setIsStartingGame(false);
       }
     },
     [navigate],
@@ -53,7 +53,7 @@ const DashboardView = () => {
       const lastPlayed = localStorage.getItem(`lastPlayed_${hash}`);
 
       if (lastPlayed === today) {
-        setIsLoading(false);
+        setIsStartingGame(false);
         return;
       }
 
@@ -67,16 +67,10 @@ const DashboardView = () => {
     const slider = sliderRef.current;
     if (!slider) return;
     const index = Math.round(slider.scrollLeft / slider.clientWidth);
-    setActiveIndex(index);
+    setActiveIndex(Math.min(index, cardCount - 1));
   };
 
-  const entries = [
-    { userId: 1, name: "김동권", totalSimilarity: 80.33 },
-    { userId: 2, name: "아주아주긴긴이름", totalSimilarity: 75.33 },
-    { userId: 3, name: "조천산", totalSimilarity: 70.33 },
-  ];
-
-  if (isLoading && !error) {
+  if (isStartingGame && !error) {
     return (
       <div className="flex h-full items-center justify-center">
         <p className="text-(--color-grey)">준비 중...</p>
@@ -99,7 +93,7 @@ const DashboardView = () => {
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="min-h-0 flex-1 overflow-y-auto">
       {/* 랭킹 영역 */}
       <div>
         <Top
@@ -110,7 +104,7 @@ const DashboardView = () => {
         />
         <div className="flex w-full flex-col items-center gap-4 px-(--page-px)">
           {/* 랭킹 TOP3 */}
-          <Podium entries={entries} />
+          <Podium />
           <Link to="/ranking">
             <TextButton size="small" variant="arrow">
               TOP 100 랭킹 보러가기
@@ -124,7 +118,7 @@ const DashboardView = () => {
 
       {/* 인디케이터 */}
       <div className="flex justify-center gap-2 py-4">
-        {Array.from({ length: CARD_COUNT }).map((_, i) => (
+        {Array.from({ length: cardCount }).map((_, i) => (
           <div
             key={i}
             className="h-2 w-2 rounded-full transition-colors duration-200"
@@ -142,11 +136,35 @@ const DashboardView = () => {
         style={{ scrollbarWidth: "none" }}
         onScroll={handleScroll}
       >
-        {Array.from({ length: CARD_COUNT }).map((_, i) => (
-          <div key={i} className="w-full shrink-0 snap-start snap-always">
-            <MyScoreCard />
+        {isLoading ? (
+          <div className="w-full shrink-0 snap-start snap-always px-(--page-px)">
+            <div
+              className="h-96 w-full rounded-2xl"
+              style={{ backgroundColor: colors.grey100 }}
+            />
           </div>
-        ))}
+        ) : myDrawings.length > 0 ? (
+          myDrawings.map((drawing) => (
+            <div
+              key={drawing.drawingId}
+              className="w-full shrink-0 snap-start snap-always"
+            >
+              <MyScoreCard drawing={drawing} />
+            </div>
+          ))
+        ) : (
+          <div className="w-full shrink-0 snap-start snap-always px-(--page-px)">
+            <div
+              className="flex h-44 w-full items-center justify-center rounded-2xl text-sm"
+              style={{
+                backgroundColor: colors.grey100,
+                color: colors.grey600,
+              }}
+            >
+              아직 제출한 그림이 없어요
+            </div>
+          </div>
+        )}
       </div>
 
       <BannerAd adGroupId="ait-ad-test-banner-id" className="mt-3 mb-3" />

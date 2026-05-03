@@ -61,6 +61,20 @@ vi.mock("@toss/tds-mobile", () => ({
       "aria-valuenow": props.progress,
       ...props,
     }),
+  Paragraph: Object.assign(
+    ({
+      children,
+      ...props
+    }: Record<string, unknown> & { children?: ReactNode }) =>
+      createElement("p", props, children),
+    {
+      Text: ({
+        children,
+        ...props
+      }: Record<string, unknown> & { children?: ReactNode }) =>
+        createElement("span", props, children),
+    },
+  ),
   Button: ({
     children,
     ...props

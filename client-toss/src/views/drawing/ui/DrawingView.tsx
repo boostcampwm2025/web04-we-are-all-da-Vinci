@@ -84,7 +84,7 @@ const DrawingView = () => {
 
       <div onClick={() => setIsSubmitDialogOpen(true)}>
         <BottomCTA.Single
-          topAccessory={<Score value={scoring.similarity?.similarity ?? 0} />}
+          topAccessory={<Score value={scoring.similarity?.score ?? 0} />}
         >
           제출할래요
         </BottomCTA.Single>

@@ -23,10 +23,10 @@ const makeStroke = (): Stroke => ({
 });
 
 const makeSimilarity = (value: number): SimilarityResponse => ({
-  similarity: value,
-  strokeCountSimilarity: value,
-  strokeMatchSimilarity: value,
+  score: value,
   shapeSimilarity: value,
+  strokeMatchSimilarity: value,
+  penalty: 0,
 });
 
 describe("useStrokeScoring", () => {
@@ -59,7 +59,7 @@ describe("useStrokeScoring", () => {
     });
 
     expect(mockedScoreStrokes).toHaveBeenCalledOnce();
-    expect(result.current.similarity?.similarity).toBe(80);
+    expect(result.current.similarity?.score).toBe(80);
   });
 
   it("scheduleScore는 100ms 디바운스 후 한 번만 API를 호출한다", async () => {
