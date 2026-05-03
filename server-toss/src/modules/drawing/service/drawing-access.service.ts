@@ -1,10 +1,11 @@
 import { EntityManager } from "@mikro-orm/mysql";
-import { BadRequestException } from "@nestjs/common";
-import { User } from "src/modules/user/user.entity";
-import { Drawing } from "../drawing.entity";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { getSeoulDayRange } from "src/common/time.util";
 import { AdType, AdView } from "src/modules/ad/ad-view.entity";
+import { User } from "src/modules/user/user.entity";
+import { Drawing } from "../drawing.entity";
 
+@Injectable()
 export class DrawingAccessService {
   private readonly MAX_DRAWING_COUNT = 10;
   private readonly DEFAULT_DRAWING_COUNT = 1;
