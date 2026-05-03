@@ -84,6 +84,7 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
             user: {
               id: 11n,
               name: "가",
+              userKey: 11,
             },
           },
           {
@@ -96,6 +97,7 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
             user: {
               id: 22n,
               name: "나",
+              userKey: 22,
             },
           },
         ] as Drawing[];
@@ -155,7 +157,7 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
             name: "가",
             strokes: "strokes-1",
             score: drawings[0].score,
-            userId: 11n,
+            userKey: 11,
             drawingId: 1n,
             submittedAt: new Date("2026-04-18T00:00:00.000Z"),
           }),
@@ -165,7 +167,7 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
             name: "나",
             strokes: "strokes-2",
             score: drawings[1].score,
-            userId: 22n,
+            userKey: 22,
             drawingId: 2n,
             submittedAt: new Date("2026-04-18T00:01:00.000Z"),
           }),

@@ -45,7 +45,9 @@ describe("DrawingService", () => {
   beforeAll(() => {
     givenUser = { id: BigInt(1) } as User;
 
-    userService = { findUser: jest.fn().mockResolvedValue(givenUser) } as never;
+    userService = {
+      getUserInfo: jest.fn().mockResolvedValue(givenUser),
+    } as never;
     drawingAccessService = {
       validateAccess: jest.fn().mockResolvedValue(() => undefined),
     } as never;

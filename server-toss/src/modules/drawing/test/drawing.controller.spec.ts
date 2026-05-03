@@ -13,6 +13,13 @@ describe("DrawingController (e2e)", () => {
     scoreStrokes: jest.fn(),
     submitDrawing: jest.fn(),
   };
+  const mockAuthGaurd = {
+    canActivate: jest.fn((context) => {
+      const request = context.switchToHttp().getRequest();
+      request.user = { userKey: 1234 };
+      return true;
+    }),
+  };
 
   const validPayload = {
     strokes: [
@@ -36,17 +43,21 @@ describe("DrawingController (e2e)", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [DrawingController],
       providers: [{ provide: DrawingService, useValue: drawingService }],
-    }).compile();
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue(mockAuthGaurd)
+      .compile();
 
     app = module.createNestApplication();
     app.useGlobalFilters(new ZodExceptionFilter());
-    app.useGlobalGuards(JwtAuthGuard);
     await app.init();
   });
 
   afterEach(async () => {
     jest.clearAllMocks();
-    await app.close();
+    if (app) {
+      await app.close();
+    }
   });
 
   describe("POST /strokes", () => {
