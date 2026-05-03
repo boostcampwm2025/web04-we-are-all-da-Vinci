@@ -23,9 +23,8 @@ const DrawingView = () => {
   const { isCheckingSession } = useRequirePlaySession();
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [toastOpen, setToastOpen] = useState(false);
-  const [toastText, setToastText] = useState("");
-  const [isErrorToast, setIsErrorToast] = useState(false);
+  const [errorToastOpen, setErrorToastOpen] = useState(false);
+  const [errorToastText, setErrorToastText] = useState("");
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
@@ -36,25 +35,16 @@ const DrawingView = () => {
     try {
       const { promotionGranted } =
         await serverTossApi.submitDrawing(TEMP_STROKES);
-      setToastText(
-        promotionGranted
-          ? "포인트 지급이 완료됐어요"
-          : "그림 제출이 완료됐어요",
-      );
-      setIsErrorToast(false);
-      setToastOpen(true);
       await clearPlaySession();
-      window.setTimeout(() => navigate("/submitted"), 700);
+      navigate("/submitted", { state: { promotionGranted } });
     } catch (err) {
       console.error("[submit drawing error]", err);
-      setToastText(
+      setErrorToastText(
         err instanceof Error && err.message === "NO_DRAWING_CHANCE"
-          ? "플레이 기회가 없어요"
+          ? "플레이 기회를 모두 소진했어요"
           : "일시적 오류가 발생했어요",
       );
-      setIsErrorToast(true);
-      setToastOpen(true);
-    } finally {
+      setErrorToastOpen(true);
       setIsSubmitting(false);
     }
   };
@@ -65,19 +55,11 @@ const DrawingView = () => {
     <div className="flex h-full flex-col bg-white">
       <Toast
         position="top"
-        open={toastOpen}
-        text={toastText}
-        leftAddon={
-          <Toast.Icon
-            name={
-              isErrorToast
-                ? "icon-warning-circle-red-opacity"
-                : "icon-check-circle-blue-opacity"
-            }
-          />
-        }
+        open={errorToastOpen}
+        text={errorToastText}
+        leftAddon={<Toast.Icon name="icon-warning-circle-red-opacity" />}
         duration={3000}
-        onClose={() => setToastOpen(false)}
+        onClose={() => setErrorToastOpen(false)}
       />
       <PhaseHeader
         title="그려주세요!"

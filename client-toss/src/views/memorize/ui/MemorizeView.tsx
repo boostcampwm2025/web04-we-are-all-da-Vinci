@@ -15,6 +15,12 @@ const MemorizeView = () => {
         progress={0.5}
       />
 
+      <div className="px-(--page-px) text-center">
+        <p className="text-sm text-(--color-grey)">
+          중도 종료 시 기회를 잃어요
+        </p>
+      </div>
+
       {/* 스크롤 영역 */}
       <div className="min-h-0 flex-1 overflow-y-auto">
         {/* 제시 이미지 */}
