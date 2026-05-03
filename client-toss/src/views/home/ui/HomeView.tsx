@@ -19,11 +19,6 @@ const HomeView = () => {
       setError(null);
       try {
         const { promptId, strokes } = await serverTossApi.getPrompt();
-        console.log("[Home] prompt loaded:", {
-          promptId,
-          strokeCount: strokes.length,
-          sampleStroke: strokes[0],
-        });
         navigate("/memorize", {
           state: { promptId, promptStrokes: strokes, anonymousHash: hash },
           replace: true,

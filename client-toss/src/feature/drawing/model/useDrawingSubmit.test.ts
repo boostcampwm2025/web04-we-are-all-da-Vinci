@@ -27,10 +27,10 @@ const makeStroke = (): Stroke => ({
 });
 
 const makeSimilarity = (value: number): SimilarityResponse => ({
-  similarity: value,
-  strokeCountSimilarity: value,
+  score: value,
   strokeMatchSimilarity: value,
   shapeSimilarity: value,
+  penalty: 0,
 });
 
 const baseParams = {

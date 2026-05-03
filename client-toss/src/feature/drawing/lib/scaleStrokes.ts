@@ -25,6 +25,10 @@ export const calculateStrokeScale = (
     { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity },
   );
 
+  if (bounds.minX === Infinity || bounds.minY === Infinity) {
+    return { scale: 1, offsetX: 0, offsetY: 0 };
+  }
+
   const originalWidth = bounds.maxX - bounds.minX;
   const originalHeight = bounds.maxY - bounds.minY;
 

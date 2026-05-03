@@ -22,6 +22,7 @@ export const useDrawingStrokes = ({
   onResetScore,
 }: UseDrawingStrokesParams): UseDrawingStrokesResult => {
   const [strokes, setStrokes] = useState<Stroke[]>([]);
+  const suppressDebouncedScoreRef = useRef(false);
 
   const callbacksRef = useRef({
     onScoreImmediate,
@@ -37,6 +38,10 @@ export const useDrawingStrokes = ({
   };
 
   useEffect(() => {
+    if (suppressDebouncedScoreRef.current) {
+      suppressDebouncedScoreRef.current = false;
+      return;
+    }
     if (strokes.length === 0) return;
     callbacksRef.current.onScoreDebounced(strokes);
   }, [strokes]);
@@ -48,6 +53,7 @@ export const useDrawingStrokes = ({
   const handleUndo = useCallback(() => {
     setStrokes((prev) => {
       const next = prev.slice(0, -1);
+      suppressDebouncedScoreRef.current = true;
       callbacksRef.current.onCancelScore();
       callbacksRef.current.onScoreImmediate(next);
       return next;

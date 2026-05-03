@@ -3,7 +3,7 @@ import { generateHapticFeedback } from "@apps-in-toss/web-framework";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const SCORE_DEBOUNCE_MS = 100;
+const SCORE_DEBOUNCE_MS = 50;
 const PENALTY_DURATION_MS = 400;
 
 export interface UseStrokeScoringResult {
@@ -22,6 +22,7 @@ export const useStrokeScoring = (): UseStrokeScoringResult => {
   const similarityRef = useRef<SimilarityResponse | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const penaltyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     similarityRef.current = similarity;
@@ -35,10 +36,17 @@ export const useStrokeScoring = (): UseStrokeScoringResult => {
   }, []);
 
   const resetSimilarity = useCallback(() => {
+    requestIdRef.current++;
     setSimilarity(null);
+    setShowPenalty(false);
+    if (penaltyTimeoutRef.current) {
+      clearTimeout(penaltyTimeoutRef.current);
+      penaltyTimeoutRef.current = null;
+    }
   }, []);
 
   const scoreStrokes = useCallback(async (targetStrokes: Stroke[]) => {
+    const id = ++requestIdRef.current;
     if (targetStrokes.length === 0) {
       setSimilarity(null);
       return;
@@ -47,6 +55,7 @@ export const useStrokeScoring = (): UseStrokeScoringResult => {
       const result = await serverTossApi.scoreStrokes({
         strokes: targetStrokes,
       });
+      if (id !== requestIdRef.current) return;
       const prev = similarityRef.current;
       if (prev && result.score < prev.score) {
         generateHapticFeedback({ type: "error" });

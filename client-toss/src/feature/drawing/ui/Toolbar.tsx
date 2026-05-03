@@ -38,6 +38,7 @@ const Toolbar = ({
     <section className="flex items-center gap-3 px-4 py-3">
       {PALETTE_COLORS.map((color) => (
         <button
+          type="button"
           key={color.name}
           aria-label={`${color.name} 색상`}
           className={clsx(

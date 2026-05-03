@@ -27,39 +27,38 @@ export const drawStrokesOnCanvas = (
   for (const stroke of strokes) {
     const [xPoints, yPoints] = stroke.points;
     const [r, g, b] = stroke.color;
-
-    ctx.strokeStyle = `rgb(${r}, ${g}, ${b})`;
-    ctx.beginPath();
+    const color = `rgb(${r}, ${g}, ${b})`;
 
     if (xPoints.length === 0) continue;
 
-    if (shouldScale && scaleInfo) {
-      const { scale, offsetX, offsetY } = scaleInfo;
-      const start = transformPoint(
-        xPoints[0],
-        yPoints[0],
-        scale,
-        offsetX,
-        offsetY,
-      );
-      ctx.moveTo(start.x, start.y);
-      for (let i = 1; i < xPoints.length; i++) {
-        const pt = transformPoint(
-          xPoints[i],
-          yPoints[i],
-          scale,
-          offsetX,
-          offsetY,
-        );
-        ctx.lineTo(pt.x, pt.y);
-      }
-    } else {
-      ctx.moveTo(xPoints[0], yPoints[0]);
-      for (let i = 1; i < xPoints.length; i++) {
-        ctx.lineTo(xPoints[i], yPoints[i]);
-      }
+    const transform = (i: number) =>
+      shouldScale && scaleInfo
+        ? transformPoint(
+            xPoints[i],
+            yPoints[i],
+            scaleInfo.scale,
+            scaleInfo.offsetX,
+            scaleInfo.offsetY,
+          )
+        : { x: xPoints[i], y: yPoints[i] };
+
+    if (xPoints.length === 1) {
+      const { x, y } = transform(0);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, ctx.lineWidth / 2, 0, Math.PI * 2);
+      ctx.fill();
+      continue;
     }
 
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    const start = transform(0);
+    ctx.moveTo(start.x, start.y);
+    for (let i = 1; i < xPoints.length; i++) {
+      const pt = transform(i);
+      ctx.lineTo(pt.x, pt.y);
+    }
     ctx.stroke();
   }
 };

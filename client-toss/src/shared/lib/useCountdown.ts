@@ -6,6 +6,10 @@ const useCountdown = (seconds: number, onComplete: () => void) => {
   onCompleteRef.current = onComplete;
 
   useEffect(() => {
+    setTimeLeft(seconds);
+  }, [seconds]);
+
+  useEffect(() => {
     if (timeLeft <= 0) {
       onCompleteRef.current();
       return;

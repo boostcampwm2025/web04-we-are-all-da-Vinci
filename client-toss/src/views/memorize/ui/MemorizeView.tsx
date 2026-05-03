@@ -41,12 +41,6 @@ const MemorizeView = () => {
     const ctx = ctxRef.current;
     if (!canvas || !ctx || !routeState || canvasSize === 0) return;
 
-    console.log("[Memorize] drawing prompt:", {
-      canvasSize,
-      canvasWidth: canvas.width,
-      dpr: window.devicePixelRatio,
-      strokeCount: routeState.promptStrokes.length,
-    });
     drawPromptOnCanvas(canvas, ctx, routeState.promptStrokes);
   }, [canvasRef, ctxRef, routeState, canvasSize]);
 

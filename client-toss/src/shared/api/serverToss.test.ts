@@ -29,7 +29,7 @@ describe("serverTossApi", () => {
     );
 
     const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
-    expect((requestInit.headers as Headers).get("x-user-id")).toBe("1");
+    expect((requestInit.headers as Headers).get("x-user-id")).toBe("123");
   });
 
   it("랭킹 목록 조회 시 /api/rankings으로 요청하고 공통 헤더를 포함한다", async () => {
@@ -56,10 +56,10 @@ describe("serverTossApi", () => {
     );
 
     const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
-    expect((requestInit.headers as Headers).get("x-user-id")).toBe("1");
+    expect((requestInit.headers as Headers).get("x-user-id")).toBe("123");
   });
   it("내 그림 조회 시 /api/drawing/me로 요청하고 X-User-Id 헤더를 포함한다", async () => {
-    localStorage.setItem("userId", "7");
+    localStorage.setItem("userKey", "7");
     const body = { userId: "7", drawings: [] };
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

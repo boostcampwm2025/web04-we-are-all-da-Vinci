@@ -1,13 +1,16 @@
 import type { PodiumEntry } from "@/entities/podium";
 import type { MyRankingResponse, RankingListItem } from "@/entities/ranking";
 import { appLogin } from "@apps-in-toss/web-framework";
-import { LoginResponseSchema, UserInfoResponseSchema } from "@toss/shared";
+import {
+  LoginResponseSchema,
+  PromptResponseSchema,
+  SimilarityResponseSchema,
+  SubmitDrawingResponseSchema,
+  UserInfoResponseSchema,
+} from "@toss/shared";
 import type {
   MyDrawingResponse,
   MyDrawingsResponse,
-  PromptResponse,
-  SimilarityResponse,
-  SubmitDrawingResponse,
   SubmitStrokesRequest,
 } from "@toss/shared";
 
@@ -100,7 +103,7 @@ async function request<T>(
 const createHeaders = (headers?: HeadersInit): Headers => new Headers(headers);
 
 const getCurrentUserId = () => {
-  return localStorage.getItem("userId") ?? "1";
+  return localStorage.getItem("userKey") ?? "1";
 };
 
 const get = <T>(path: string, options: RequestOptions = {}): Promise<T> =>
@@ -118,15 +121,21 @@ export const serverTossApi = {
   getMe: async () =>
     UserInfoResponseSchema.parse(await request<unknown>("GET", "/user/me")),
 
-  getPrompt: () => request<PromptResponse>("GET", "/prompt"),
+  getPrompt: async () =>
+    PromptResponseSchema.parse(await request<unknown>("GET", "/prompt")),
 
-  scoreStrokes: (body: SubmitStrokesRequest) =>
-    request<SimilarityResponse>("POST", "/strokes", body),
+  scoreStrokes: async (body: SubmitStrokesRequest) =>
+    SimilarityResponseSchema.parse(
+      await request<unknown>("POST", "/strokes", body),
+    ),
 
-  submitDrawing: (body: {
+  submitDrawing: async (body: {
     userKey: string;
     strokes: SubmitStrokesRequest["strokes"];
-  }) => request<SubmitDrawingResponse>("POST", "/drawing", body),
+  }) =>
+    SubmitDrawingResponseSchema.parse(
+      await request<unknown>("POST", "/drawing", body),
+    ),
 
   getMyRanking: (options?: RequestOptions) => {
     const headers = createHeaders(options?.headers);

@@ -15,7 +15,7 @@ import {
 } from "@/shared/lib";
 import { Score } from "@/shared/ui/score";
 import type { Stroke } from "@toss/shared";
-import { BottomCTA, ConfirmDialog } from "@toss/tds-mobile";
+import { Button, ConfirmDialog } from "@toss/tds-mobile";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -82,12 +82,15 @@ const DrawingView = () => {
         />
       </div>
 
-      <div onClick={() => setIsSubmitDialogOpen(true)}>
-        <BottomCTA.Single
-          topAccessory={<Score value={scoring.similarity?.score ?? 0} />}
+      <div className="flex flex-col items-center gap-2 px-(--page-px) py-3">
+        <Score value={scoring.similarity?.score ?? 0} />
+        <Button
+          color="primary"
+          display="block"
+          onClick={() => setIsSubmitDialogOpen(true)}
         >
           제출할래요
-        </BottomCTA.Single>
+        </Button>
       </div>
 
       <ConfirmDialog

@@ -54,7 +54,37 @@ const ConfirmDialogMock = Object.assign(
   },
 );
 
+const TopMock = Object.assign(
+  ({
+    title,
+    subtitleBottom,
+    ...props
+  }: Record<string, unknown> & {
+    title?: ReactNode;
+    subtitleBottom?: ReactNode;
+  }) => createElement("div", props, title, subtitleBottom),
+  {
+    TitleParagraph: ({
+      children,
+      ...props
+    }: Record<string, unknown> & { children?: ReactNode }) =>
+      createElement("h2", props, children),
+    SubtitleParagraph: ({
+      children,
+      ...props
+    }: Record<string, unknown> & { children?: ReactNode }) =>
+      createElement("p", props, children),
+  },
+);
+
 vi.mock("@toss/tds-mobile", () => ({
+  Top: TopMock,
+  TextButton: ({
+    children,
+    ...props
+  }: Record<string, unknown> & { children?: ReactNode }) =>
+    createElement("button", props, children),
+  Border: () => createElement("hr"),
   ProgressBar: (props: Record<string, unknown>) =>
     createElement("div", {
       role: "progressbar",

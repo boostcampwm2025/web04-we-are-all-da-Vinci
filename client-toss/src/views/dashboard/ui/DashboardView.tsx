@@ -12,11 +12,11 @@ const DashboardView = () => {
   const navigate = useNavigate();
   const [activeIndex, setActiveIndex] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
+  const anonymousHashRef = useRef<string>("local");
   const { myDrawings, isLoading } = useMyDrawings();
   const cardCount = Math.max(myDrawings.length, 1);
 
   const [isStartingGame, setIsStartingGame] = useState(true);
-  const [anonymousHash, setAnonymousHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const startGame = useCallback(
@@ -47,9 +47,10 @@ const DashboardView = () => {
       } catch {
         hash = "local";
       }
-      setAnonymousHash(hash);
+      anonymousHashRef.current = hash;
 
-      const today = new Date().toISOString().slice(0, 10);
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
       const lastPlayed = localStorage.getItem(`lastPlayed_${hash}`);
 
       if (lastPlayed === today) {
@@ -84,7 +85,7 @@ const DashboardView = () => {
         <p className="text-center text-(--color-grey)">{error}</p>
         <Button
           size="large"
-          onClick={() => anonymousHash && startGame(anonymousHash)}
+          onClick={() => startGame(anonymousHashRef.current)}
         >
           다시 시도
         </Button>
@@ -170,16 +171,13 @@ const DashboardView = () => {
       <BannerAd adGroupId="ait-ad-test-banner-id" className="mt-3 mb-3" />
 
       {/* 하단 버튼 */}
-      <div className="flex flex-col gap-3 px-(--page-px) pb-4">
+      <div className="flex flex-col gap-3 px-(--page-px)">
         <Button
           color="primary"
           display="block"
-          onClick={() => anonymousHash && startGame(anonymousHash)}
+          onClick={() => startGame(anonymousHashRef.current)}
         >
-          한번 더 참여하고 포인트 받기
-        </Button>
-        <Button color="primary" display="block" variant="weak">
-          공유하고 포인트 받기
+          한번 더 그리기
         </Button>
       </div>
     </div>

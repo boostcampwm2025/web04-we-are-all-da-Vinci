@@ -9,7 +9,7 @@ import {
   showFullScreenAd,
 } from "@apps-in-toss/web-framework";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
-import { BottomCTA } from "@toss/tds-mobile";
+import { Button } from "@toss/tds-mobile";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -120,7 +120,7 @@ const SubmittedView = () => {
         />
         <h1 className="text-[22px] font-bold">그림을 제출했어요</h1>
         <div className="mt-4">
-          <Score value={Math.round(score)} size="l" subtitle="유사도" />
+          <Score value={Math.round(score)} size="l" />
         </div>
         <p className="mt-4 text-sm text-(--color-grey)">
           결과를 저장하고 랭킹을 확인해보세요
@@ -131,9 +131,15 @@ const SubmittedView = () => {
         <BannerAd adGroupId="ait-ad-test-native-image-id" type="list" />
       </div>
 
-      {/* @ts-expect-error TDS BottomCTA.Single children 타입이 framer-motion/React 19 호환 문제로 에러 발생 */}
-      <div onClick={handleSaveResult}>
-        <BottomCTA.Single loading={isSaving}>결과 저장하기</BottomCTA.Single>
+      <div className="flex flex-col gap-3 px-(--page-px) pb-4">
+        <Button
+          color="primary"
+          display="block"
+          loading={isSaving}
+          onClick={handleSaveResult}
+        >
+          저장하고 결과확인하기
+        </Button>
       </div>
     </div>
   );
