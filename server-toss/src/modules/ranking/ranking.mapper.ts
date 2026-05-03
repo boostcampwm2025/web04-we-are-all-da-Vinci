@@ -17,7 +17,7 @@ export const mapRankingToRankingListItem = (
     name: ranking.name,
     score: ranking.score,
     userKey: ranking.userKey,
-    drawingId: ranking.drawingId,
+    drawingId: ranking.drawingId.toString(),
     rank: index + 1,
     isMe: userKey !== undefined && ranking.userKey === userKey,
   };

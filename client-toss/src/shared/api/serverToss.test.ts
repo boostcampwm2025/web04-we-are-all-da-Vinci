@@ -8,8 +8,7 @@ describe("serverTossApi", () => {
     localStorage.clear();
   });
 
-  it("내 랭킹 조회 시 /api/rankings/me로 요청하고 공통 헤더를 포함한다", async () => {
-    localStorage.setItem("userKey", "123");
+  it("내 랭킹 조회 시 /api/rankings/me로 요청하고 x-user-id를 보내지 않는다", async () => {
     const body = { state: "FOUND", ranking: { rank: 7, score: 88.5 } };
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -30,23 +29,33 @@ describe("serverTossApi", () => {
     );
 
     const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
-    expect((requestInit.headers as Headers).get("x-user-id")).toBe("1");
+    expect((requestInit.headers as Headers).get("x-user-id")).toBeNull();
   });
 
-  it("랭킹 목록 조회 시 /api/rankings으로 요청하고 공통 헤더를 포함한다", async () => {
-    localStorage.setItem("userKey", "123");
+  it("랭킹 목록 조회 시 /api/rankings로 요청하고 rankings만 반환한다", async () => {
+    const rankings = [
+      {
+        userKey: 123,
+        name: "김다빈치",
+        drawingId: "100",
+        rank: 1,
+        score: 99.9,
+        isMe: true,
+      },
+    ];
+    const body = {
+      updatedAt: "2026-05-02T00:00:00.000Z",
+      rankings,
+    };
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({
-        updatedAt: "2026-05-02T00:00:00.000Z",
-        rankings: [],
-      }),
-      text: async () => JSON.stringify([]),
+      json: async () => body,
+      text: async () => JSON.stringify(body),
     });
 
     vi.stubGlobal("fetch", fetchMock);
 
-    await serverTossApi.getRankingList();
+    await expect(serverTossApi.getRankingList()).resolves.toEqual(rankings);
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/rankings",
@@ -57,11 +66,11 @@ describe("serverTossApi", () => {
     );
 
     const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
-    expect((requestInit.headers as Headers).get("x-user-id")).toBe("1");
+    expect((requestInit.headers as Headers).get("x-user-id")).toBeNull();
   });
-  it("내 그림 조회 시 /api/drawing/me로 요청하고 X-User-Id 헤더를 포함한다", async () => {
-    localStorage.setItem("userId", "7");
-    const body = { userId: "7", drawings: [] };
+
+  it("내 그림 조회 시 /api/drawing/me로 요청하고 x-user-id를 보내지 않는다", async () => {
+    const body = { userKey: 7, drawings: [] };
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       text: async () => JSON.stringify(body),
@@ -81,7 +90,7 @@ describe("serverTossApi", () => {
     );
 
     const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
-    expect((requestInit.headers as Headers).get("x-user-id")).toBe("7");
+    expect((requestInit.headers as Headers).get("x-user-id")).toBeNull();
   });
 
   it("그림 상세 조회 시 /api/drawing/:drawingId로 요청한다", async () => {

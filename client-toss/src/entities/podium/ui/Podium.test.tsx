@@ -52,7 +52,7 @@ describe("Podium", () => {
 
   it("1명만 있으면 1등 데이터와 포디움 3칸을 렌더링한다", () => {
     mockUsePodium.mockReturnValue({
-      podium: [{ userId: 1, name: "김다빈치", score: 99 }],
+      podium: [{ name: "김다빈치", score: 99 }],
       isLoading: false,
     });
 
@@ -63,11 +63,11 @@ describe("Podium", () => {
     expect(screen.getAllByTestId("podium-slot")).toHaveLength(3);
   });
 
-  it("2명만 있으면 1등과 2등 데이터, 3등 placeholder를 렌더링한다", () => {
+  it("2명만 있으면 1위와 2위 데이터, 3위 placeholder를 렌더링한다", () => {
     mockUsePodium.mockReturnValue({
       podium: [
-        { userId: 1, name: "김다빈치", score: 99 },
-        { userId: 2, name: "레오", score: 88 },
+        { name: "김다빈치", score: 99 },
+        { name: "레오", score: 88 },
       ],
       isLoading: false,
     });
@@ -82,12 +82,12 @@ describe("Podium", () => {
     expect(screen.getByText("3")).toBeInTheDocument();
   });
 
-  it("3명이 있으면 2등, 1등, 3등 순서로 데이터를 렌더링한다", () => {
+  it("3명이 있으면 2위, 1위, 3위 순서로 데이터를 렌더링한다", () => {
     mockUsePodium.mockReturnValue({
       podium: [
-        { userId: 1, name: "김다빈치", score: 99 },
-        { userId: 2, name: "레오", score: 88 },
-        { userId: 3, name: "모나", score: 77 },
+        { name: "김다빈치", score: 99 },
+        { name: "레오", score: 88 },
+        { name: "모나", score: 77 },
       ],
       isLoading: false,
     });

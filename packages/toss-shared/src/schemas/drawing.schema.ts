@@ -53,7 +53,7 @@ export const MyDrawingResponseSchema = z.object({
 export type MyDrawingResponse = z.infer<typeof MyDrawingResponseSchema>;
 
 export const MyDrawingsResponseSchema = z.object({
-  userId: z.string().regex(/^\d+$/),
+  userKey: z.number(),
   drawings: z.array(MyDrawingResponseSchema),
 });
 export type MyDrawingsResponse = z.infer<typeof MyDrawingsResponseSchema>;

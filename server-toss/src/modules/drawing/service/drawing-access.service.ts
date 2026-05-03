@@ -31,7 +31,6 @@ export class DrawingAccessService {
       },
     });
 
-    // TODO: 친구 공유 횟수
     return (
       drawingCount < this.MAX_DRAWING_COUNT &&
       drawingCount < this.DEFAULT_DRAWING_COUNT + adViewCount
@@ -39,6 +38,9 @@ export class DrawingAccessService {
   }
 
   async validateAccess(user: User) {
+    // 기회는 프론트 네이티브 스토리지에서 관리
+    // 이후 최대 그리기 횟수가 지정되면 변경
+    return true;
     if (!(await this.canAccess(user))) {
       throw new BadRequestException("그림 제출 기회가 없습니다.");
     }

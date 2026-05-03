@@ -100,12 +100,6 @@ async function request<T>(
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
-const createHeaders = (headers?: HeadersInit): Headers => new Headers(headers);
-
-const getCurrentUserId = () => {
-  return localStorage.getItem("userId") ?? "1";
-};
-
 const getCurrentUserKey = async () => {
   const storedUserKey = localStorage.getItem("userKey");
   if (storedUserKey) return storedUserKey;
@@ -133,30 +127,22 @@ export const serverTossApi = {
   getMe: async () =>
     UserInfoResponseSchema.parse(await request<unknown>("GET", "/user/me")),
 
-  getMyRanking: (options?: RequestOptions) => {
-    const headers = createHeaders(options?.headers);
-    headers.set("x-user-id", getCurrentUserId());
-    return get<MyRankingResponse>("/rankings/me", { ...options, headers });
-  },
+  getMyRanking: (options?: RequestOptions) =>
+    get<MyRankingResponse>("/rankings/me", options),
 
-  getRankingList: (options?: RequestOptions) => {
-    const headers = createHeaders(options?.headers);
-    // TODO: 서버 확정 후 x-user-id에 전달할 식별자로 교체한다.
-    headers.set("x-user-id", getCurrentUserId());
-    return get<RankingListServerResponse>("/rankings", {
-      ...options,
-      headers,
-    }).then(({ rankings }) => rankings);
+  getRankingList: async (options?: RequestOptions) => {
+    const { rankings } = await get<RankingListServerResponse>(
+      "/rankings",
+      options,
+    );
+    return rankings;
   },
 
   getPodium: (options?: RequestOptions) =>
     get<PodiumEntry[]>("/rankings/podium", options),
 
-  getMyDrawings: (options?: RequestOptions) => {
-    const headers = createHeaders(options?.headers);
-    headers.set("x-user-id", getCurrentUserId());
-    return get<MyDrawingsResponse>("/drawing/me", { ...options, headers });
-  },
+  getMyDrawings: (options?: RequestOptions) =>
+    get<MyDrawingsResponse>("/drawing/me", options),
 
   getDrawing: (drawingId: string, options?: RequestOptions) =>
     get<DrawingDetailResponse>(`/drawing/${drawingId}`, options),
