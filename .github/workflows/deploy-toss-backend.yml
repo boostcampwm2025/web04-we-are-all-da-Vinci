@@ -33,10 +33,21 @@ jobs:
 
           echo ".env file copied."
 
+      - name: Build image
+        working_directory: ./deploy-toss
+        run: |
+          docker buildx build -f Dockerfile -t davinci-toss-migration --target migration ..
+          docker buildx build -f Dockerfile -t davinci-toss --target runner ..
+
+      - name: Run migration
+        working_directory: ./deploy-toss
+        run: |
+          IMAGE_TAG=davinci-toss-migration docker compose -f compose.yml run --rm migration
+
       - name: Deploy
         working-directory: ./deploy-toss
         run: |
-          docker compose -f compose.yml up -d --build
+          IMAGE_TAG=davinci-toss docker compose -f compose.yml up -d app
 
       - name: Health check
         run: |

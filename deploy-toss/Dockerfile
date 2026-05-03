@@ -25,8 +25,25 @@ RUN pnpm --filter ./packages/toss-shared build
 RUN pnpm --filter ./packages/similarity build
 RUN pnpm --filter server-toss build
   
+
+FROM builder AS migration
+WORKDIR /app/server-toss
+
+RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
+
+ENV NODE_ENV=production
+CMD ["pnpm", "run", "migration:up", "--config", "mikro-orm.migration.config.cjs"]
+
+FROM base AS deploy
+
+WORKDIR /app 
+
+COPY --from=builder /app/packages ./packages 
+COPY --from=builder /app/server-toss ./server-toss
+
 RUN pnpm deploy --filter server-toss --prod /prod/server-toss --legacy --ignore-scripts
-  
+
+
 FROM node:22-alpine AS runner
 
 WORKDIR /app
@@ -38,7 +55,7 @@ ENV PORT=3000
 RUN addgroup --system --gid 1001 nodejs && \
 adduser --system --uid 1001 nestjs
 
-COPY --from=builder --chown=nestjs:nodejs /prod/server-toss ./
+COPY --from=deploy --chown=nestjs:nodejs /prod/server-toss ./
 COPY --chown=nestjs:nodejs server-toss/certs ./certs
 COPY --chown=nestjs:nodejs server-toss/data ./data
   
@@ -49,4 +66,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 CMD node -e "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
 
-CMD ["node", "-r", "tsconfig-paths/register", "dist/main.js"]
+CMD ["node", "dist/main.js"]

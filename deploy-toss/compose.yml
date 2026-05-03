@@ -2,9 +2,7 @@ name: daVinci-toss-deploy
 
 services:
   app:
-    build:
-      context: ..
-      dockerfile: deploy-toss/Dockerfile
+    image: ${IMAGE_TAG}
     container_name: daVinci-toss-server
     ports:
       - "3000:3000"
@@ -22,3 +20,16 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  migration:
+    image: ${IMAGE_TAG}
+    env_file:
+      - .env
+    command:
+      [
+        "pnpm",
+        "run",
+        "migration:up",
+        "--config",
+        "mikro-orm.migration.config.cjs",
+      ]
