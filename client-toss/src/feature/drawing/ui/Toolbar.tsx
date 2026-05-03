@@ -1,23 +1,38 @@
+import { MaskedIcon } from "@/shared/ui/maskedIcon";
 import { ConfirmDialog } from "@toss/tds-mobile";
 import clsx from "clsx";
 import { useState } from "react";
-import { MaskedIcon } from "@/shared/ui/maskedIcon";
-import { ICON_URL } from "../config/icons";
+import type { RGB } from "../config/colors";
 import { PALETTE_COLORS } from "../config/colors";
+import { ICON_URL } from "../config/icons";
 
 const toolBtnBase =
   "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors active:scale-95";
 
-const Toolbar = () => {
-  const [selectedColor, setSelectedColor] = useState<string>(
-    PALETTE_COLORS[0].hex,
-  );
+interface ToolbarProps {
+  selectedColor: RGB;
+  onColorChange: (color: RGB) => void;
+  onUndo: () => void;
+  onClear: () => void;
+}
+
+const Toolbar = ({
+  selectedColor,
+  onColorChange,
+  onUndo,
+  onClear,
+}: ToolbarProps) => {
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
 
   const handleReset = () => {
-    // TODO: 캔버스 초기화 로직
+    onClear();
     setIsResetDialogOpen(false);
   };
+
+  const isSelected = (rgb: readonly [number, number, number]) =>
+    selectedColor[0] === rgb[0] &&
+    selectedColor[1] === rgb[1] &&
+    selectedColor[2] === rgb[2];
 
   return (
     <section className="flex items-center gap-3 px-4 py-3">
@@ -27,16 +42,17 @@ const Toolbar = () => {
           aria-label={`${color.name} 색상`}
           className={clsx(
             "appearance-none! h-7 w-7 shrink-0 rounded-full! transition-transform active:scale-95",
-            selectedColor === color.hex && `ring-2 ring-offset-2 ${color.ring}`,
+            isSelected(color.rgb) && `ring-2 ring-offset-2 ${color.ring}`,
           )}
           style={{ backgroundColor: color.hex }}
-          onClick={() => setSelectedColor(color.hex)}
+          onClick={() => onColorChange([...color.rgb])}
         />
       ))}
       <button
         type="button"
         aria-label="한획 취소"
         className={clsx(toolBtnBase, "active:bg-gray-200")}
+        onClick={onUndo}
       >
         <MaskedIcon src={ICON_URL.refresh} color="var(--color-grey)" />
       </button>
