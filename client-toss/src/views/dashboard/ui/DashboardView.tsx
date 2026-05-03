@@ -31,7 +31,7 @@ const DashboardView = () => {
         });
       } catch (err) {
         console.error("프롬프트 로드 실패:", err);
-        setError("서버에 연결할 수 없어요. 다시 시도해주세요.");
+        setError("서버 응답이 늦어지고 있어요. 다시 시도해주세요.");
         setIsStartingGame(false);
       }
     },
