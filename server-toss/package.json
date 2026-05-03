@@ -16,9 +16,14 @@
     "start:prod": "cross-env TS_NODE_PROJECT=tsconfig.paths.json node -r tsconfig-paths/register dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
+    "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config ./jest-integration.json --runInBand",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "seed:down": "npx mikro-orm migration:fresh",
+    "seed:drawing:small": "npx mikro-orm seeder:run --class=SmallUserDrawingSeeder",
+    "seed:drawing:small:fresh": "npx mikro-orm migration:fresh --seed SmallUserDrawingSeeder",
+    "seed:ranking": "npx mikro-orm seeder:run --class=RankingSeeder"
   },
   "dependencies": {
     "@davinci/similarity": "workspace:*",
@@ -27,6 +32,7 @@
     "@mikro-orm/migrations": "^7.0.8",
     "@mikro-orm/mysql": "^7.0.8",
     "@mikro-orm/nestjs": "^7.0.1",
+    "@mikro-orm/seeder": "7.0.10",
     "@nestjs/common": "^11.1.17",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.17",

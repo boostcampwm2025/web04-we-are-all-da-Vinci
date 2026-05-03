@@ -8,6 +8,7 @@ import { DailyPrompt } from "./modules/prompt/daily-prompt.entity";
 import { Prompt } from "./modules/prompt/prompt.entity";
 import { Ranking } from "./modules/ranking/ranking.entity";
 import { User } from "./modules/user/user.entity";
+import { SeedManager } from "@mikro-orm/seeder";
 
 export default defineConfig({
   dbName: process.env.MYSQL_DATABASE ?? "daVinci_toss",
@@ -19,10 +20,17 @@ export default defineConfig({
   debug: process.env.NODE_ENV !== "production",
   forceUtcTimezone: true, // UTC로 시간 설정 고정
   allowGlobalContext: process.env.NODE_ENV === "test", // 테스트환경의 전역 em 사용을 위한 설정
-  extensions: [Migrator],
+  extensions: [Migrator, SeedManager],
   migrations: {
     snapshot: process.env.NODE_ENV !== "production",
     path: "dist/migrations",
     pathTs: "src/migrations",
+  },
+  seeder: {
+    path: "dist/seeders",
+    pathTs: "src/seeders",
+    emit: "ts",
+    glob: "!(*.d).{js,ts}",
+    fileName: (className: string) => className,
   },
 });
