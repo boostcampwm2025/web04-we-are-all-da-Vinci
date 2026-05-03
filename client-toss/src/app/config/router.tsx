@@ -1,5 +1,4 @@
 import { Drawing } from "@/views/drawing";
-import { HomeView } from "@/views/home";
 import { LoginView } from "@/views/login";
 import { Memorize } from "@/views/memorize";
 import { SubmittedView } from "@/views/submitted";
@@ -14,7 +13,7 @@ export const router = createBrowserRouter([
   },
   {
     path: "/",
-    element: <HomeView />,
+    element: <DashboardView />,
   },
   {
     path: "/memorize",
@@ -27,10 +26,6 @@ export const router = createBrowserRouter([
   {
     path: "/submitted",
     element: <SubmittedView />,
-  },
-  {
-    path: "/dashboard",
-    element: <DashboardView />,
   },
   {
     path: "/ranking",

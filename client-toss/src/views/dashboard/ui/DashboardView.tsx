@@ -1,16 +1,67 @@
-import { useRef, useState } from "react";
+import { getDeviceId } from "@apps-in-toss/web-framework";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, TextButton, Top } from "@toss/tds-mobile";
 import { colors } from "@toss/tds-colors";
 import { MyScoreCard } from "@/entities/myScoreCard";
 import { BannerAd } from "@/shared/ui/bannerAd";
-import { Link } from "react-router-dom";
+import { serverTossApi } from "@/shared/api";
+import { Link, useNavigate } from "react-router-dom";
 import { Podium } from "@/entities/podium";
 
 const CARD_COUNT = 3;
 
 const DashboardView = () => {
+  const navigate = useNavigate();
   const [activeIndex, setActiveIndex] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [anonymousHash, setAnonymousHash] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const startGame = useCallback(
+    async (hash: string) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const { promptId, strokes } = await serverTossApi.getPrompt();
+        navigate("/memorize", {
+          state: { promptId, promptStrokes: strokes, anonymousHash: hash },
+          replace: true,
+        });
+      } catch (err) {
+        console.error("프롬프트 로드 실패:", err);
+        setError("서버에 연결할 수 없어요. 다시 시도해주세요.");
+        setIsLoading(false);
+      }
+    },
+    [navigate],
+  );
+
+  useEffect(() => {
+    const init = async () => {
+      let hash: string;
+      try {
+        const { deviceId } = await getDeviceId();
+        hash = deviceId;
+      } catch {
+        hash = "local";
+      }
+      setAnonymousHash(hash);
+
+      const today = new Date().toISOString().slice(0, 10);
+      const lastPlayed = localStorage.getItem(`lastPlayed_${hash}`);
+
+      if (lastPlayed === today) {
+        setIsLoading(false);
+        return;
+      }
+
+      await startGame(hash);
+    };
+
+    init();
+  }, [startGame]);
 
   const handleScroll = () => {
     const slider = sliderRef.current;
@@ -25,8 +76,30 @@ const DashboardView = () => {
     { userId: 3, name: "조천산", totalSimilarity: 70.33 },
   ];
 
+  if (isLoading && !error) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <p className="text-(--color-grey)">준비 중...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-4 px-(--page-px)">
+        <p className="text-center text-(--color-grey)">{error}</p>
+        <Button
+          size="large"
+          onClick={() => anonymousHash && startGame(anonymousHash)}
+        >
+          다시 시도
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto">
+    <div className="flex flex-col">
       {/* 랭킹 영역 */}
       <div>
         <Top
@@ -79,8 +152,12 @@ const DashboardView = () => {
       <BannerAd adGroupId="ait-ad-test-banner-id" className="mt-3 mb-3" />
 
       {/* 하단 버튼 */}
-      <div className="px-(--page-px) flex flex-col gap-3">
-        <Button color="primary" display="block">
+      <div className="flex flex-col gap-3 px-(--page-px) pb-4">
+        <Button
+          color="primary"
+          display="block"
+          onClick={() => anonymousHash && startGame(anonymousHash)}
+        >
           한번 더 참여하고 포인트 받기
         </Button>
         <Button color="primary" display="block" variant="weak">
