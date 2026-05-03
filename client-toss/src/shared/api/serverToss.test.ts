@@ -60,12 +60,11 @@ describe("serverTossApi", () => {
   });
   it("내 그림 조회 시 /api/drawing/me로 요청하고 X-User-Id 헤더를 포함한다", async () => {
     localStorage.setItem("userId", "7");
+    const body = { userId: "7", drawings: [] };
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({
-        userId: "7",
-        drawings: [],
-      }),
+      text: async () => JSON.stringify(body),
+      json: async () => body,
     });
 
     vi.stubGlobal("fetch", fetchMock);
@@ -85,20 +84,22 @@ describe("serverTossApi", () => {
   });
 
   it("그림 상세 조회 시 /api/drawing/:drawingId로 요청한다", async () => {
+    const body = {
+      drawingId: 42,
+      name: "SeedA",
+      drawRanking: 1,
+      strokes: [],
+      similarity: {
+        score: 90,
+        shapeSimilarity: 45,
+        strokeMatchSimilarity: 45,
+        penalty: 0,
+      },
+    };
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({
-        drawingId: 42,
-        name: "SeedA",
-        drawRanking: 1,
-        strokes: [],
-        similarity: {
-          score: 90,
-          shapeSimilarity: 45,
-          strokeMatchSimilarity: 45,
-          penalty: 0,
-        },
-      }),
+      text: async () => JSON.stringify(body),
+      json: async () => body,
     });
 
     vi.stubGlobal("fetch", fetchMock);
