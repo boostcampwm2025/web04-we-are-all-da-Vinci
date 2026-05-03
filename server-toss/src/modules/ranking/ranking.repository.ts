@@ -19,9 +19,10 @@ export class RankingRepository extends EntityRepository<Ranking> {
   }
 
   async findLatestUpdatedAt(): Promise<Date | null> {
-    const ranking = await this.findOne(
+    const [ranking] = await this.find(
       {},
       {
+        limit: 1,
         orderBy: {
           updatedAt: QueryOrder.DESC,
         },

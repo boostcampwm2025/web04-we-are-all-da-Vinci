@@ -1,22 +1,22 @@
 import { useRef, useState } from "react";
 import { Button, TextButton, Top } from "@toss/tds-mobile";
 import { colors } from "@toss/tds-colors";
-import { MyScoreCard } from "@/entities/myScoreCard";
+import { MyScoreCard, useMyDrawings } from "@/entities/myScoreCard";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Link } from "react-router-dom";
 import { Podium } from "@/entities/podium";
 
-const CARD_COUNT = 3;
-
 const DashboardView = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
+  const { myDrawings, isLoading } = useMyDrawings();
+  const cardCount = Math.max(myDrawings.length, 1);
 
   const handleScroll = () => {
     const slider = sliderRef.current;
     if (!slider) return;
     const index = Math.round(slider.scrollLeft / slider.clientWidth);
-    setActiveIndex(index);
+    setActiveIndex(Math.min(index, cardCount - 1));
   };
 
   return (
@@ -45,7 +45,7 @@ const DashboardView = () => {
 
       {/* 인디케이터 */}
       <div className="flex justify-center gap-2 py-4">
-        {Array.from({ length: CARD_COUNT }).map((_, i) => (
+        {Array.from({ length: cardCount }).map((_, i) => (
           <div
             key={i}
             className="h-2 w-2 rounded-full transition-colors duration-200"
@@ -63,11 +63,35 @@ const DashboardView = () => {
         style={{ scrollbarWidth: "none" }}
         onScroll={handleScroll}
       >
-        {Array.from({ length: CARD_COUNT }).map((_, i) => (
-          <div key={i} className="w-full shrink-0 snap-start snap-always">
-            <MyScoreCard />
+        {isLoading ? (
+          <div className="w-full shrink-0 snap-start snap-always px-(--page-px)">
+            <div
+              className="h-96 w-full rounded-2xl"
+              style={{ backgroundColor: colors.grey100 }}
+            />
           </div>
-        ))}
+        ) : myDrawings.length > 0 ? (
+          myDrawings.map((drawing) => (
+            <div
+              key={drawing.drawingId}
+              className="w-full shrink-0 snap-start snap-always"
+            >
+              <MyScoreCard drawing={drawing} />
+            </div>
+          ))
+        ) : (
+          <div className="w-full shrink-0 snap-start snap-always px-(--page-px)">
+            <div
+              className="flex h-44 w-full items-center justify-center rounded-2xl text-sm"
+              style={{
+                backgroundColor: colors.grey100,
+                color: colors.grey600,
+              }}
+            >
+              아직 제출한 그림이 없어요
+            </div>
+          </div>
+        )}
       </div>
 
       <BannerAd adGroupId="ait-ad-test-banner-id" className="mt-3 mb-3" />

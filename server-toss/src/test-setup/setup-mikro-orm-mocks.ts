@@ -5,6 +5,7 @@ jest.mock("@mikro-orm/core", () => ({
   EntityManager: class {},
   EntityRepository: class {},
   EntityRepositoryType: Symbol("EntityRepositoryType"),
+  QueryOrder: { ASC: "asc", DESC: "desc" },
 }));
 jest.mock("@mikro-orm/mysql", () => ({
   EntityRepository: class {},

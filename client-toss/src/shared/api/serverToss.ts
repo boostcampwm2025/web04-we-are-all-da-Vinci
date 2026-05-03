@@ -2,6 +2,7 @@ import { appLogin } from "@apps-in-toss/web-framework";
 import { LoginResponseSchema, UserInfoResponseSchema } from "@toss/shared";
 import type { PodiumEntry } from "@/entities/podium";
 import type { MyRankingResponse, RankingListItem } from "@/entities/ranking";
+import type { MyDrawingResponse, MyDrawingsResponse } from "@toss/shared";
 
 const BASE_URL = "/api";
 const LOGIN_PATH = "/oauth/toss/login";
@@ -40,6 +41,15 @@ interface RequestOptions {
   signal?: AbortSignal;
   headers?: HeadersInit;
 }
+
+interface RankingListServerResponse {
+  updatedAt: string;
+  rankings: RankingListItem[];
+}
+
+type DrawingDetailResponse = MyDrawingResponse & {
+  name: string;
+};
 
 async function request<T>(
   method: string,
@@ -82,6 +92,10 @@ async function request<T>(
 
 const createHeaders = (headers?: HeadersInit): Headers => new Headers(headers);
 
+const getCurrentUserId = () => {
+  return localStorage.getItem("userId") ?? "1";
+};
+
 const get = <T>(path: string, options: RequestOptions = {}): Promise<T> =>
   request<T>("GET", path, undefined, options);
 
@@ -99,17 +113,29 @@ export const serverTossApi = {
 
   getMyRanking: (options?: RequestOptions) => {
     const headers = createHeaders(options?.headers);
-    headers.set("x-user-id", `1`);
+    headers.set("x-user-id", getCurrentUserId());
     return get<MyRankingResponse>("/rankings/me", { ...options, headers });
   },
 
   getRankingList: (options?: RequestOptions) => {
     const headers = createHeaders(options?.headers);
     // TODO: 서버 확정 후 x-user-id에 전달할 식별자로 교체한다.
-    headers.set("x-user-id", `1`);
-    return get<RankingListItem[]>("/rankings", { ...options, headers });
+    headers.set("x-user-id", getCurrentUserId());
+    return get<RankingListServerResponse>("/rankings", {
+      ...options,
+      headers,
+    }).then(({ rankings }) => rankings);
   },
 
   getPodium: (options?: RequestOptions) =>
     get<PodiumEntry[]>("/rankings/podium", options),
+
+  getMyDrawings: (options?: RequestOptions) => {
+    const headers = createHeaders(options?.headers);
+    headers.set("x-user-id", getCurrentUserId());
+    return get<MyDrawingsResponse>("/drawing/me", { ...options, headers });
+  },
+
+  getDrawing: (drawingId: string, options?: RequestOptions) =>
+    get<DrawingDetailResponse>(`/drawing/${drawingId}`, options),
 };
