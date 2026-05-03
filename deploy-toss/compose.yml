@@ -8,6 +8,12 @@ services:
       - "3000:3000"
     env_file: .env
     restart: unless-stopped
+    volumes:
+      - ~/deploy/certs/davinci_private.key:/run/certs/davinci_private.key:ro
+      - ~/deploy/certs/davinci_public.cert:/run/certs/davinci_public.cert:ro
+    environment:
+      - TOSS_CLIENT_CERT_PATH=/run/certs/davinci_private.key
+      - TOSS_CLIENT_KEY_PATH=/run/certs/davinci_public.cert
     healthcheck:
       test:
         [

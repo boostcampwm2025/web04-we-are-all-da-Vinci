@@ -33,6 +33,18 @@ jobs:
 
           echo ".env file copied."
 
+      - name: Copy secret file
+        run: |
+          mkdir -p ~/deploy/certs
+          printf '%s' "$PRIVATE_KEY" | base64 --decode > ~/deploy/certs/davinci_private.key 
+          printf '%s' "$PUBLIC_CERT" | base64 --decode > ~/deploy/certs/davinci_public.cert
+
+          chmod 600 ~/deploy/certs/davinci_private.key 
+          chmod 644 ~/deploy/certs/davinci_public.cert
+        env:
+          PRIVATE_KEY: ${{ secrets.DAVINCI_PRIVATE_KEY }}
+          PUBLIC_CERT: ${{ secrets.DAVINCI_PUBLIC_CERT }}
+
       - name: Build image
         working_directory: ./deploy-toss
         run: |
