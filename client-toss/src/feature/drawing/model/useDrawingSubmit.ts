@@ -37,9 +37,10 @@ export const useDrawingSubmit = ({
     const canvasEl = document.querySelector<HTMLCanvasElement>(
       '[data-testid="drawing-canvas"]',
     );
-    const canvasSize = canvasEl
-      ? canvasEl.width / (window.devicePixelRatio || 1)
-      : DEFAULT_CANVAS_SIZE;
+    const canvasSize =
+      canvasEl && canvasEl.width > 0
+        ? canvasEl.width / (window.devicePixelRatio || 1)
+        : DEFAULT_CANVAS_SIZE;
     const normalizedStrokes = normalizeStrokes(current.strokes, canvasSize);
 
     navigate("/submitted", {

@@ -1,5 +1,5 @@
-import type { SimilarityResponse, Stroke } from "@toss/shared";
 import { act, renderHook } from "@testing-library/react";
+import type { SimilarityResponse, Stroke } from "@toss/shared";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useDrawingSubmit } from "./useDrawingSubmit";
 
@@ -116,5 +116,21 @@ describe("useDrawingSubmit", () => {
 
     const [, options] = navigateMock.mock.calls[0];
     expect(options.state.strokes[0]).toMatchObject({ _normalizedWith: 400 });
+  });
+
+  it("canvas는 있지만 width가 0이면 기본 size 500으로 정규화한다", () => {
+    const canvas = document.createElement("canvas");
+    canvas.setAttribute("data-testid", "drawing-canvas");
+    canvas.width = 0;
+    document.body.appendChild(canvas);
+
+    const { result } = renderHook(() => useDrawingSubmit(baseParams));
+
+    act(() => {
+      result.current.handleSubmit();
+    });
+
+    const [, options] = navigateMock.mock.calls[0];
+    expect(options.state.strokes[0]).toMatchObject({ _normalizedWith: 500 });
   });
 });
