@@ -105,7 +105,7 @@ const DrawingView = () => {
           display="block"
           onClick={() => setIsSubmitDialogOpen(true)}
         >
-          제출할래요
+          제출하기
         </Button>
       </div>
 

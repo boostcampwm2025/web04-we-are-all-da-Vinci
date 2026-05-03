@@ -72,7 +72,7 @@ describe("DashboardView", () => {
     renderDashboard();
 
     // 초기에는 "준비 중..." 로딩 표시
-    expect(screen.getByText("준비 중...")).toBeInTheDocument();
+    expect(screen.getByText("준비 중이에요")).toBeInTheDocument();
 
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith("/memorize", {
@@ -99,7 +99,7 @@ describe("DashboardView", () => {
       ).toBeInTheDocument();
     });
 
-    expect(screen.getByText("다시 시도")).toBeInTheDocument();
+    expect(screen.getByText("다시 시도해요")).toBeInTheDocument();
   });
 
   it("다시 시도 클릭 시 getPrompt를 재호출한다", async () => {
@@ -114,10 +114,10 @@ describe("DashboardView", () => {
     renderDashboard();
 
     await waitFor(() => {
-      expect(screen.getByText("다시 시도")).toBeInTheDocument();
+      expect(screen.getByText("다시 시도해요")).toBeInTheDocument();
     });
 
-    await user.click(screen.getByText("다시 시도"));
+    await user.click(screen.getByText("다시 시도해요"));
 
     await waitFor(() => {
       expect(serverTossApi.getPrompt).toHaveBeenCalledTimes(2);
@@ -157,7 +157,7 @@ describe("DashboardView", () => {
     });
   });
 
-  it("한번 더 그리기 버튼이 startGame을 호출한다", async () => {
+  it("한 번 더 그리기 버튼이 startGame을 호출한다", async () => {
     const today = formatLocalDate();
     localStorage.setItem("lastPlayed_test-device", today);
     const user = userEvent.setup();
@@ -174,7 +174,7 @@ describe("DashboardView", () => {
       expect(screen.getByTestId("podium")).toBeInTheDocument();
     });
 
-    await user.click(screen.getByText("한번 더 그리기"));
+    await user.click(screen.getByText("한 번 더 그리기"));
 
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith("/memorize", expect.anything());

@@ -59,9 +59,9 @@ describe("DrawingView", () => {
     expect(screen.getByText(/점$/)).toBeInTheDocument();
   });
 
-  it('"제출할래요" 버튼이 렌더링된다', () => {
+  it('"제출하기" 버튼이 렌더링된다', () => {
     renderWithState();
-    expect(screen.getByText("제출할래요")).toBeInTheDocument();
+    expect(screen.getByText("제출하기")).toBeInTheDocument();
   });
 
   it("route state 없이 접근하면 홈으로 리다이렉트된다", () => {
