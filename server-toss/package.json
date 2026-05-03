@@ -24,7 +24,13 @@
     "seed:down": "npx mikro-orm migration:fresh",
     "seed:drawing:small": "npx mikro-orm seeder:run --class=SmallUserDrawingSeeder",
     "seed:drawing:small:fresh": "npx mikro-orm migration:fresh --seed SmallUserDrawingSeeder",
-    "seed:ranking": "npx mikro-orm seeder:run --class=RankingSeeder"
+    "seed:ranking": "npx mikro-orm seeder:run --class=RankingSeeder",
+    "migration:check": "mikro-orm migration:check",
+    "migration:list": "mikro-orm migration:list",
+    "migration:up": "mikro-orm migration:up",
+    "migration:pending": "mikro-orm migration:pending",
+    "migration:down": "mikro-orm migration:down",
+    "migration:fresh": "mikro-orm migration:fresh"
   },
   "dependencies": {
     "@davinci/similarity": "workspace:*",
