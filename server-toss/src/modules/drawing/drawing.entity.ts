@@ -23,7 +23,7 @@ export class Drawing extends BaseEntity {
   @Property({ fieldName: "score", type: "double" })
   score!: number;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { joinColumn: "user_key" })
   user!: Rel<User>;
 
   @ManyToOne(() => Prompt)

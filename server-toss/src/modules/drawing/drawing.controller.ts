@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Param, Post } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import type {
   SimilarityResponse,
@@ -12,11 +12,17 @@ import {
 } from "@toss/shared";
 import { getTodayKst } from "src/common/today";
 import { ZodValidationPipe } from "src/common/zod-validation.pipe";
-import { parseUserIdHeader } from "src/modules/ranking/ranking.util";
-import { DrawingService } from "./drawing.service";
+import { DrawingService } from "./service/drawing.service";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import {
+  CurrentUser,
+  type CurrentUserPayload,
+} from "../auth/decorators/current-user.decorator";
+
 import { DrawingDetailDto } from "./dto/drawing.dto";
 
 @ApiTags("Drawing")
+@UseGuards(JwtAuthGuard)
 @Controller()
 export class DrawingController {
   constructor(private readonly drawingService: DrawingService) {}
@@ -100,19 +106,18 @@ export class DrawingController {
   async submitDrawing(
     @Body(new ZodValidationPipe(SubmitDrawingRequestSchema))
     body: SubmitDrawingRequest,
+    @CurrentUser() user: CurrentUserPayload,
   ): Promise<SubmitDrawingResponse> {
     return this.drawingService.submitDrawing(
-      body.userKey,
+      user.userKey,
       body.strokes,
       getTodayKst(),
     );
   }
 
   @Get("drawing/me")
-  getMyDrawings(@Headers("x-user-id") userIdHeader?: string | string[]) {
-    const userId = parseUserIdHeader(userIdHeader);
-
-    return this.drawingService.getMyDrawings(userId);
+  getMyDrawings(@CurrentUser() user: CurrentUserPayload) {
+    return this.drawingService.getMyDrawings(user.userKey);
   }
 
   @Get("drawing/:drawingId")

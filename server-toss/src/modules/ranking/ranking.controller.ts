@@ -1,4 +1,4 @@
-import { Controller, Get, Headers } from "@nestjs/common";
+import { Controller, Get, UseGuards } from "@nestjs/common";
 import {
   ApiBadRequestResponse,
   ApiHeader,
@@ -7,12 +7,16 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { RankingService } from "./ranking.service";
-import { parseOptionalUserIdHeader, parseUserIdHeader } from "./ranking.util";
 import {
   type MyRankingResponse,
   type RankingListResponse,
   type PodiumResponse,
 } from "./types/ranking.type";
+import {
+  CurrentUser,
+  type CurrentUserPayload,
+} from "../auth/decorators/current-user.decorator";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 
 const podiumResponseSchema = {
   type: "array",
@@ -81,6 +85,7 @@ const myRankingResponseSchema = {
 };
 
 @ApiTags("Rankings")
+@UseGuards(JwtAuthGuard)
 @Controller("rankings")
 export class RankingController {
   constructor(private readonly rankingService: RankingService) {}
@@ -118,11 +123,9 @@ export class RankingController {
     description: "X-User-Id 헤더가 숫자 문자열이 아닌 경우",
   })
   async findRankingList(
-    @Headers("x-user-id") userIdHeader?: string | string[],
+    @CurrentUser() user: CurrentUserPayload,
   ): Promise<RankingListResponse> {
-    const userId = parseOptionalUserIdHeader(userIdHeader);
-
-    return await this.rankingService.findRankingList(userId);
+    return await this.rankingService.findRankingList(user.userKey);
   }
 
   @Get("me")
@@ -144,10 +147,8 @@ export class RankingController {
     description: "X-User-Id 헤더가 없거나 숫자 문자열이 아닌 경우",
   })
   async findMyRanking(
-    @Headers("x-user-id") userIdHeader?: string | string[],
+    @CurrentUser() user: CurrentUserPayload,
   ): Promise<MyRankingResponse> {
-    const userId = parseUserIdHeader(userIdHeader);
-
-    return await this.rankingService.findMyRanking(userId);
+    return await this.rankingService.findMyRanking(user.userKey);
   }
 }

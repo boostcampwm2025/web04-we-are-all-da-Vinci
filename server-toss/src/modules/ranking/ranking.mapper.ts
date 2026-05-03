@@ -1,10 +1,6 @@
 import { Ranking } from "./ranking.entity";
 import type { PodiumItem, RankingListItem } from "./types/ranking.type";
 
-const toStringId = (value: bigint) => {
-  return value.toString();
-};
-
 export const mapRankingToPodiumItem = (ranking: Ranking): PodiumItem => {
   return {
     name: ranking.name,
@@ -15,14 +11,14 @@ export const mapRankingToPodiumItem = (ranking: Ranking): PodiumItem => {
 export const mapRankingToRankingListItem = (
   ranking: Ranking,
   index: number,
-  userId?: bigint,
+  userKey?: number,
 ): RankingListItem => {
   return {
     name: ranking.name,
     score: ranking.score,
-    userId: toStringId(ranking.userId),
-    drawingId: toStringId(ranking.drawingId),
+    userKey: ranking.userKey,
+    drawingId: ranking.drawingId,
     rank: index + 1,
-    isMe: userId !== undefined && ranking.userId === userId,
+    isMe: userKey !== undefined && ranking.userKey === userKey,
   };
 };

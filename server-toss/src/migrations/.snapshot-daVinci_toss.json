@@ -66,16 +66,16 @@
             "drawing"
           ]
         },
-        "user_id": {
-          "name": "user_id",
-          "type": "bigint",
+        "user_key": {
+          "name": "user_key",
+          "type": "int",
           "unsigned": true,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
           "unique": false,
           "length": null,
-          "precision": 20,
+          "precision": 10,
           "scale": 0,
           "default": null,
           "comment": null,
@@ -85,9 +85,9 @@
       "indexes": [
         {
           "columnNames": [
-            "user_id"
+            "user_key"
           ],
-          "keyName": "ad_views_user_id_index",
+          "keyName": "ad_views_user_key_index",
           "unique": false,
           "primary": false,
           "constraint": false
@@ -104,15 +104,15 @@
       ],
       "checks": [],
       "foreignKeys": {
-        "ad_views_user_id_foreign": {
+        "ad_views_user_key_foreign": {
           "columnNames": [
-            "user_id"
+            "user_key"
           ],
-          "constraintName": "ad_views_user_id_foreign",
+          "constraintName": "ad_views_user_key_foreign",
           "localTableName": "ad_views",
           "referencedTableName": "users",
           "referencedColumnNames": [
-            "id"
+            "user_key"
           ],
           "updateRule": "no action",
           "deleteRule": "no action"
@@ -296,21 +296,6 @@
           "comment": null,
           "enumItems": []
         },
-        "user_id": {
-          "name": "user_id",
-          "type": "bigint",
-          "unsigned": true,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": null,
-          "precision": 20,
-          "scale": 0,
-          "default": null,
-          "comment": null,
-          "enumItems": []
-        },
         "prompt_id": {
           "name": "prompt_id",
           "type": "bigint",
@@ -340,6 +325,21 @@
           "default": null,
           "comment": null,
           "enumItems": []
+        },
+        "user_key": {
+          "name": "user_key",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": 10,
+          "scale": 0,
+          "default": null,
+          "comment": null,
+          "enumItems": []
         }
       },
       "indexes": [
@@ -354,9 +354,9 @@
         },
         {
           "columnNames": [
-            "user_id"
+            "user_key"
           ],
-          "keyName": "drawings_user_id_index",
+          "keyName": "drawings_user_key_index",
           "unique": false,
           "primary": false,
           "constraint": false
@@ -386,15 +386,15 @@
           "updateRule": "no action",
           "deleteRule": "no action"
         },
-        "drawings_user_id_foreign": {
+        "drawings_user_key_foreign": {
           "columnNames": [
-            "user_id"
+            "user_key"
           ],
-          "constraintName": "drawings_user_id_foreign",
+          "constraintName": "drawings_user_key_foreign",
           "localTableName": "drawings",
           "referencedTableName": "users",
           "referencedColumnNames": [
-            "id"
+            "user_key"
           ],
           "updateRule": "no action",
           "deleteRule": "no action"
@@ -485,16 +485,16 @@
           "comment": null,
           "enumItems": []
         },
-        "user_id": {
-          "name": "user_id",
-          "type": "bigint",
+        "user_key": {
+          "name": "user_key",
+          "type": "int",
           "unsigned": true,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
           "unique": false,
           "length": null,
-          "precision": 20,
+          "precision": 10,
           "scale": 0,
           "default": null,
           "comment": null,
@@ -504,9 +504,9 @@
       "indexes": [
         {
           "columnNames": [
-            "user_id"
+            "user_key"
           ],
-          "keyName": "point_logs_user_id_index",
+          "keyName": "point_logs_user_key_index",
           "unique": false,
           "primary": false,
           "constraint": false
@@ -523,15 +523,15 @@
       ],
       "checks": [],
       "foreignKeys": {
-        "point_logs_user_id_foreign": {
+        "point_logs_user_key_foreign": {
           "columnNames": [
-            "user_id"
+            "user_key"
           ],
-          "constraintName": "point_logs_user_id_foreign",
+          "constraintName": "point_logs_user_key_foreign",
           "localTableName": "point_logs",
           "referencedTableName": "users",
           "referencedColumnNames": [
-            "id"
+            "user_key"
           ],
           "updateRule": "no action",
           "deleteRule": "no action"
@@ -668,21 +668,6 @@
           "comment": null,
           "enumItems": []
         },
-        "user_id": {
-          "name": "user_id",
-          "type": "bigint",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": null,
-          "precision": 19,
-          "scale": 0,
-          "default": null,
-          "comment": null,
-          "enumItems": []
-        },
         "drawing_id": {
           "name": "drawing_id",
           "type": "bigint",
@@ -727,6 +712,21 @@
           "default": null,
           "comment": null,
           "enumItems": []
+        },
+        "user_key": {
+          "name": "user_key",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": 10,
+          "scale": 0,
+          "default": null,
+          "comment": null,
+          "enumItems": []
         }
       },
       "indexes": [
@@ -766,21 +766,6 @@
     {
       "name": "users",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigint",
-          "unsigned": true,
-          "autoincrement": true,
-          "primary": true,
-          "nullable": false,
-          "unique": false,
-          "length": null,
-          "precision": 20,
-          "scale": 0,
-          "default": null,
-          "comment": null,
-          "enumItems": []
-        },
         "created_at": {
           "name": "created_at",
           "type": "datetime",
@@ -814,11 +799,11 @@
         "user_key": {
           "name": "user_key",
           "type": "int",
-          "unsigned": false,
+          "unsigned": true,
           "autoincrement": false,
-          "primary": false,
+          "primary": true,
           "nullable": false,
-          "unique": true,
+          "unique": false,
           "length": null,
           "precision": 10,
           "scale": 0,
@@ -875,20 +860,11 @@
       "indexes": [
         {
           "columnNames": [
-            "id"
+            "user_key"
           ],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
-          "constraint": true
-        },
-        {
-          "columnNames": [
-            "user_key"
-          ],
-          "keyName": "users_user_key_unique",
-          "unique": true,
-          "primary": false,
           "constraint": true
         }
       ],

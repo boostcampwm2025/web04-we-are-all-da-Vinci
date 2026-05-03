@@ -16,7 +16,7 @@ export class AdView extends BaseEntity {
   @Enum({ items: () => AdType, fieldName: "ad_type" })
   type!: AdType;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { joinColumn: "user_key" })
   user!: Rel<User>;
 }
 
