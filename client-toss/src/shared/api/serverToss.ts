@@ -138,4 +138,6 @@ export const serverTossApi = {
 
   getDrawing: (drawingId: string, options?: RequestOptions) =>
     get<DrawingDetailResponse>(`/drawing/${drawingId}`, options),
+
+  recordAdView: () => request<void>("POST", "/adviews"),
 };
