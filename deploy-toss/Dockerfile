@@ -56,7 +56,6 @@ RUN addgroup --system --gid 1001 nodejs && \
 adduser --system --uid 1001 nestjs
 
 COPY --from=deploy --chown=nestjs:nodejs /prod/server-toss ./
-COPY --chown=nestjs:nodejs server-toss/certs ./certs
 COPY --chown=nestjs:nodejs server-toss/data ./data
   
 USER nestjs
