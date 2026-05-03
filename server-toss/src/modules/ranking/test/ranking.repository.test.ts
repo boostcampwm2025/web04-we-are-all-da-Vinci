@@ -58,13 +58,13 @@ describe("RankingRepository", () => {
               name: QueryOrder.ASC,
             },
           })
-        ).findIndex((r) => r.userId === givenUser.id);
+        ).findIndex((r) => r.userKey === givenUser.userKey);
 
         givenRank += 1;
       });
 
       it("It: 순위와 점수를 응답한다.", async () => {
-        const result = await repository.findMyRanking(givenUser.id);
+        const result = await repository.findMyRanking(givenUser.userKey);
 
         expect(result).not.toBeNull();
         expect(result?.rank).toEqual(givenRank);
@@ -73,7 +73,7 @@ describe("RankingRepository", () => {
 
     describe("Context: 제출한 기록이 없으면", () => {
       it("It: null을 응답한다.", async () => {
-        const result = await repository.findMyRanking(BigInt(0));
+        const result = await repository.findMyRanking(0);
 
         expect(result).toBeNull();
       });

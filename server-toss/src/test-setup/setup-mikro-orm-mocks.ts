@@ -8,8 +8,11 @@ jest.mock("@mikro-orm/core", () => ({
   QueryOrder: { ASC: "asc", DESC: "desc" },
 }));
 jest.mock("@mikro-orm/mysql", () => ({
+  EntityManager: class {},
   EntityRepository: class {},
+  QueryOrder: { ASC: "asc", DESC: "desc" },
 }));
+
 jest.mock("@mikro-orm/decorators/legacy", () => ({
   Entity: () => (target: unknown) => target,
   PrimaryKey: () => () => undefined,
@@ -17,4 +20,6 @@ jest.mock("@mikro-orm/decorators/legacy", () => ({
   ManyToOne: () => () => undefined,
   ManyToMany: () => () => undefined,
   OneToMany: () => () => undefined,
+  Enum: () => () => undefined,
+  Index: () => () => undefined,
 }));

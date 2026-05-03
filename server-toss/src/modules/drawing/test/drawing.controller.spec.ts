@@ -2,9 +2,10 @@ import { INestApplication, NotFoundException } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import request from "supertest";
 import type { App } from "supertest/types";
-import { ZodExceptionFilter } from "../../common/zod-exception.filter";
-import { DrawingController } from "./drawing.controller";
-import { DrawingService } from "./drawing.service";
+import { ZodExceptionFilter } from "../../../common/zod-exception.filter";
+import { DrawingController } from "../drawing.controller";
+import { DrawingService } from "../service/drawing.service";
+import { JwtAuthGuard } from "src/modules/auth/guards/jwt-auth.guard";
 
 describe("DrawingController (e2e)", () => {
   let app: INestApplication<App>;
@@ -13,6 +14,13 @@ describe("DrawingController (e2e)", () => {
     submitDrawing: jest.fn(),
     getMyDrawings: jest.fn(),
     getDrawing: jest.fn(),
+  };
+  const mockAuthGaurd = {
+    canActivate: jest.fn((context) => {
+      const request = context.switchToHttp().getRequest();
+      request.user = { userKey: 1234 };
+      return true;
+    }),
   };
 
   const validPayload = {
@@ -37,7 +45,10 @@ describe("DrawingController (e2e)", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [DrawingController],
       providers: [{ provide: DrawingService, useValue: drawingService }],
-    }).compile();
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue(mockAuthGaurd)
+      .compile();
 
     app = module.createNestApplication();
     app.useGlobalFilters(new ZodExceptionFilter());
@@ -46,7 +57,9 @@ describe("DrawingController (e2e)", () => {
 
   afterEach(async () => {
     jest.clearAllMocks();
-    await app.close();
+    if (app) {
+      await app.close();
+    }
   });
 
   describe("POST /strokes", () => {
@@ -99,29 +112,6 @@ describe("DrawingController (e2e)", () => {
         .post("/drawing")
         .send({ userKey: "9999", ...validPayload })
         .expect(404);
-    });
-  });
-
-  describe("GET /drawing/me", () => {
-    it("X-User-Id 헤더로 내 그림 목록을 조회한다", async () => {
-      drawingService.getMyDrawings.mockResolvedValue({
-        userId: "1",
-        drawings: [],
-      });
-
-      const res = await request(app.getHttpServer())
-        .get("/drawing/me")
-        .set("X-User-Id", "1")
-        .expect(200);
-
-      expect(res.body).toEqual({ userId: "1", drawings: [] });
-      expect(drawingService.getMyDrawings).toHaveBeenCalledWith(1n);
-    });
-
-    it("X-User-Id 헤더가 없으면 400을 반환한다", async () => {
-      await request(app.getHttpServer()).get("/drawing/me").expect(400);
-
-      expect(drawingService.getMyDrawings).not.toHaveBeenCalled();
     });
   });
 

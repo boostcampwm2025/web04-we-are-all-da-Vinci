@@ -16,7 +16,7 @@ type DrawingWithUser = {
   createdAt: Date;
   strokes: string;
   user: {
-    id: bigint;
+    userKey: number;
     name: string;
   };
 };
@@ -25,7 +25,7 @@ type RankingSnapshotRow = {
   name: string;
   strokes: string;
   score: number;
-  userId: bigint;
+  userKey: number;
   drawingId: bigint;
   submittedAt: Date;
 };
@@ -69,17 +69,17 @@ const compareSnapshots = (
 };
 
 const groupDrawingsByUser = (drawings: DrawingWithUser[]) => {
-  const grouped = new Map<bigint, DrawingWithUser[]>();
+  const grouped = new Map<number, DrawingWithUser[]>();
 
   for (const drawing of drawings) {
-    const drawingsByUser = grouped.get(drawing.user.id);
+    const drawingsByUser = grouped.get(drawing.user.userKey);
 
     if (drawingsByUser) {
       drawingsByUser.push(drawing);
       continue;
     }
 
-    grouped.set(drawing.user.id, [drawing]);
+    grouped.set(drawing.user.userKey, [drawing]);
   }
 
   return grouped;
@@ -87,11 +87,11 @@ const groupDrawingsByUser = (drawings: DrawingWithUser[]) => {
 
 const pickBestDrawingByUser = (drawings: DrawingWithUser[]) => {
   const grouped = groupDrawingsByUser(drawings);
-  const bestByUser = new Map<bigint, DrawingWithUser>();
+  const bestByUser = new Map<number, DrawingWithUser>();
 
-  for (const [userId, userDrawings] of grouped.entries()) {
+  for (const [userKey, userDrawings] of grouped.entries()) {
     const [best] = [...userDrawings].sort(compareDrawings);
-    bestByUser.set(userId, best);
+    bestByUser.set(userKey, best);
   }
 
   return bestByUser;
@@ -105,7 +105,7 @@ const buildExpectedSnapshots = (drawings: DrawingWithUser[]) => {
       name: drawing.user.name,
       strokes: drawing.strokes,
       score: drawing.score,
-      userId: drawing.user.id,
+      userKey: drawing.user.userKey,
       drawingId: drawing.id,
       submittedAt: drawing.createdAt,
     }))
@@ -186,7 +186,7 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
           name: ranking.name,
           strokes: ranking.strokes,
           score: ranking.score,
-          userId: ranking.userId,
+          userKey: ranking.userKey,
           drawingId: ranking.drawingId,
           submittedAt: ranking.submittedAt,
         }));
@@ -196,11 +196,11 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
 
         expect(actualSnapshots).toHaveLength(bestByUser.size);
         expect(
-          new Set(actualSnapshots.map((ranking) => ranking.userId)).size,
+          new Set(actualSnapshots.map((ranking) => ranking.userKey)).size,
         ).toBe(actualSnapshots.length);
 
         for (const ranking of actualSnapshots) {
-          const bestDrawing = bestByUser.get(ranking.userId);
+          const bestDrawing = bestByUser.get(ranking.userKey);
 
           expect(bestDrawing).toBeDefined();
           expect(ranking.score).toBe(bestDrawing!.score);
@@ -214,15 +214,19 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
     });
 
     describe("이미 갱신 중이면", () => {
-      it("중복 갱신을 건너뛴다", async () => {
-        const beforeCount = await orm.em.fork().count(Ranking, {});
-        (service as unknown as { isRefreshing: boolean }).isRefreshing = true;
-
+      it("중복 갱신을 건너뛰고 랭킹 스냅샷을 중복 생성하지 않는다", async () => {
         await service.refreshRankingSnapshot();
 
-        const afterCount = await orm.em.fork().count(Ranking, {});
+        const beforeRankings = await orm.em.fork().find(Ranking, {});
 
-        expect(afterCount).toBe(beforeCount);
+        await Promise.all([
+          service.refreshRankingSnapshot(),
+          service.refreshRankingSnapshot(),
+        ]);
+
+        const afterRankings = await orm.em.fork().find(Ranking, {});
+
+        expect(afterRankings).toHaveLength(beforeRankings.length);
       });
     });
   });

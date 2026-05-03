@@ -7,23 +7,6 @@ import {
   afterEach,
 } from "@jest/globals";
 
-jest.mock("@mikro-orm/core", () => ({
-  EntityRepositoryType: Symbol("EntityRepositoryType"),
-}));
-jest.mock("@mikro-orm/decorators/legacy", () => ({
-  Entity: () => () => undefined,
-  ManyToOne: () => () => undefined,
-  PrimaryKey: () => () => undefined,
-  Property: () => () => undefined,
-  Index: () => () => undefined,
-}));
-jest.mock("@mikro-orm/nestjs", () => ({
-  InjectRepository: () => () => undefined,
-}));
-jest.mock("@mikro-orm/mysql", () => ({
-  EntityRepository: class {},
-}));
-
 import { Ranking } from "../ranking.entity";
 import { RankingRepository } from "../ranking.repository";
 import { RankingService } from "../ranking.service";
@@ -32,8 +15,8 @@ describe("랭킹 서비스", () => {
   const ranking = {
     name: "홍길동",
     score: 91.25,
-    userId: 123n,
-    drawingId: 456n,
+    userKey: 123,
+    drawingId: 456,
   } as Ranking;
 
   describe("findTop3 메소드는", () => {
@@ -73,8 +56,8 @@ describe("랭킹 서비스", () => {
           {
             name: "홍길동",
             score: 91.25,
-            userId: "123",
-            drawingId: "456",
+            userKey: 123,
+            drawingId: 456,
             rank: 1,
             isMe: false,
           },
@@ -91,8 +74,8 @@ describe("랭킹 서비스", () => {
         {
           name: "임꺽정",
           score: 88.5,
-          userId: 999n,
-          drawingId: 777n,
+          userKey: 999,
+          drawingId: 777,
         } as Ranking,
       ]);
       const findLatestUpdatedAt = jest
@@ -105,22 +88,22 @@ describe("랭킹 서비스", () => {
 
       const rankingService = new RankingService(repository);
 
-      await expect(rankingService.findRankingList(123n)).resolves.toEqual({
+      await expect(rankingService.findRankingList(123)).resolves.toEqual({
         updatedAt: "2026-04-18T00:00:00.000Z",
         rankings: [
           {
             name: "홍길동",
             score: 91.25,
-            userId: "123",
-            drawingId: "456",
+            userKey: 123,
+            drawingId: 456,
             rank: 1,
             isMe: true,
           },
           {
             name: "임꺽정",
             score: 88.5,
-            userId: "999",
-            drawingId: "777",
+            userKey: 999,
+            drawingId: 777,
             rank: 2,
             isMe: false,
           },
@@ -148,7 +131,7 @@ describe("랭킹 서비스", () => {
         } as unknown as RankingRepository;
         const service = new RankingService(repository);
 
-        await expect(service.findMyRanking(11n)).resolves.toEqual({
+        await expect(service.findMyRanking(11)).resolves.toEqual({
           state: "FOUND",
           ranking: {
             score: 87.54,
@@ -156,7 +139,7 @@ describe("랭킹 서비스", () => {
           },
         });
 
-        expect(findMyRanking.mock.calls[0][0]).toEqual(11n);
+        expect(findMyRanking.mock.calls[0][0]).toEqual(11);
       });
     });
 
@@ -167,7 +150,7 @@ describe("랭킹 서비스", () => {
 
         const service = new RankingService(repository);
 
-        await expect(service.findMyRanking(11n)).resolves.toEqual({
+        await expect(service.findMyRanking(11)).resolves.toEqual({
           state: "NOT_SUBMITTED",
           message: "NOT_SUBMITTED",
         });

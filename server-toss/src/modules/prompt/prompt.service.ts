@@ -4,6 +4,8 @@ import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable, NotFoundException } from "@nestjs/common";
 import type { Stroke } from "@toss/shared";
 import { DailyPrompt } from "./daily-prompt.entity";
+import { DrawingAccessService } from "../drawing/service/drawing-access.service";
+import { UserService } from "../user/user.service";
 
 type Preprocessed = ReturnType<typeof preprocessStrokes>;
 
@@ -13,10 +15,18 @@ export class PromptService {
   private readonly cacheDisabled = process.env.DISABLE_PROMPT_CACHE === "true";
 
   constructor(
-    // MikroORM의 DailyPrompt 저장소(Repository)를 DI로 주입
     @InjectRepository(DailyPrompt)
     private readonly dailyRepo: EntityRepository<DailyPrompt>,
+    private readonly userService: UserService,
+    private readonly drawingAccessService: DrawingAccessService,
   ) {}
+
+  async getDailyPrompt(userKey: number, date: Date) {
+    const user = await this.userService.getUserInfo(userKey);
+    await this.drawingAccessService.validateAccess(user);
+
+    return await this.getPromptByDate(date);
+  }
 
   async getPromptByDate(
     date: Date,

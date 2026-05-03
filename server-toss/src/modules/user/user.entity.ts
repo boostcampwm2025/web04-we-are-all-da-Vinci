@@ -8,10 +8,12 @@ import type { Opt } from "@mikro-orm/core";
 export class User extends BaseEntity {
   [EntityRepositoryType]?: UserRepository;
 
-  @PrimaryKey({ type: "bigint" })
-  id!: bigint;
-
-  @Property({ fieldName: "user_key", type: "int", unique: true })
+  @PrimaryKey({
+    fieldName: "user_key",
+    type: "integer",
+    unsigned: true,
+    autoincrement: false,
+  })
   userKey!: number;
 
   @Property({ length: 10, type: "string" })
