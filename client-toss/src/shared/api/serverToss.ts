@@ -1,8 +1,16 @@
 import { appLogin } from "@apps-in-toss/web-framework";
-import { LoginResponseSchema, UserInfoResponseSchema } from "@toss/shared";
+import {
+  LoginResponseSchema,
+  SubmitDrawingResponseSchema,
+  UserInfoResponseSchema,
+} from "@toss/shared";
 import type { PodiumEntry } from "@/entities/podium";
 import type { MyRankingResponse, RankingListItem } from "@/entities/ranking";
-import type { MyDrawingResponse, MyDrawingsResponse } from "@toss/shared";
+import type {
+  MyDrawingResponse,
+  MyDrawingsResponse,
+  Stroke,
+} from "@toss/shared";
 
 const BASE_URL = "/api";
 const LOGIN_PATH = "/oauth/toss/login";
@@ -60,6 +68,7 @@ async function request<T>(
   const makeHeaders = (token: string | null) => {
     const headers = new Headers(options.headers);
     headers.set("Content-Type", "application/json");
+    headers.set("Cache-Control", "no-cache");
     if (token) headers.set("Authorization", `Bearer ${token}`);
     return headers;
   };
@@ -70,6 +79,7 @@ async function request<T>(
       headers: makeHeaders(token),
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: options.signal,
+      cache: "no-store",
     });
 
   let response = await fetchOnce(getToken());
@@ -94,6 +104,18 @@ const createHeaders = (headers?: HeadersInit): Headers => new Headers(headers);
 
 const getCurrentUserId = () => {
   return localStorage.getItem("userId") ?? "1";
+};
+
+const getCurrentUserKey = async () => {
+  const storedUserKey = localStorage.getItem("userKey");
+  if (storedUserKey) return storedUserKey;
+
+  const userInfo = UserInfoResponseSchema.parse(
+    await request<unknown>("GET", "/user/me"),
+  );
+  const userKey = String(userInfo.userKey);
+  localStorage.setItem("userKey", userKey);
+  return userKey;
 };
 
 const get = <T>(path: string, options: RequestOptions = {}): Promise<T> =>
@@ -138,6 +160,13 @@ export const serverTossApi = {
 
   getDrawing: (drawingId: string, options?: RequestOptions) =>
     get<DrawingDetailResponse>(`/drawing/${drawingId}`, options),
+
+  submitDrawing: async (strokes: Stroke[]) => {
+    const userKey = await getCurrentUserKey();
+    return SubmitDrawingResponseSchema.parse(
+      await request<unknown>("POST", "/drawing", { userKey, strokes }),
+    );
+  },
 
   recordAdView: () => request<void>("POST", "/adviews"),
 };

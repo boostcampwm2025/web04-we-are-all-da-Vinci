@@ -40,6 +40,7 @@ export type SubmitDrawingRequest = z.infer<typeof SubmitDrawingRequestSchema>;
 export const SubmitDrawingResponseSchema = z.object({
   drawingId: z.number().int().positive(),
   similarity: SimilarityResponseSchema,
+  promotionGranted: z.boolean(),
 });
 export type SubmitDrawingResponse = z.infer<typeof SubmitDrawingResponseSchema>;
 

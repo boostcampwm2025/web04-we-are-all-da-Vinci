@@ -67,6 +67,24 @@ const DashboardView = () => {
     }
   };
 
+  const handleDevCharge = async () => {
+    if (isStartingGame) return;
+
+    setIsStartingGame(true);
+
+    try {
+      await charge();
+      const started = await startPlay();
+      if (!started) return;
+
+      navigate("/memorize");
+    } catch {
+      setToastOpen(true);
+    } finally {
+      setIsStartingGame(false);
+    }
+  };
+
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       <Toast
@@ -169,11 +187,25 @@ const DashboardView = () => {
             플레이하기
           </Button>
         ) : (
-          <RewardAd
-            adGroupId="ait-ad-test-rewarded-id"
-            onReward={handleReward}
-            text="광고 보고 기회 충전하기"
-          />
+          <>
+            <RewardAd
+              adGroupId="ait-ad-test-rewarded-id"
+              onReward={handleReward}
+              text="광고 보고 기회 충전하기"
+            />
+            {import.meta.env.DEV && (
+              <Button
+                color="primary"
+                display="block"
+                variant="weak"
+                loading={isStartingGame}
+                disabled={isStartingGame}
+                onClick={handleDevCharge}
+              >
+                개발용: 기회 충전하고 시작
+              </Button>
+            )}
+          </>
         )}
         <Button color="primary" display="block" variant="weak">
           공유하고 포인트 받기

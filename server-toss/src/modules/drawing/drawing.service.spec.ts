@@ -78,6 +78,14 @@ const buildTossApiClient = () => ({
   executePromotion: jest.fn(async () => undefined),
 });
 
+const buildConfigService = (nodeEnv = "test") => ({
+  get: jest.fn((key: string) => (key === "NODE_ENV" ? nodeEnv : undefined)),
+  getOrThrow: jest.fn((key: string) => {
+    if (key === "PROMOTION_CODE") return "TEMP_PROMOTION_CODE";
+    throw new Error(`Missing config: ${key}`);
+  }),
+});
+
 describe("DrawingService", () => {
   beforeEach(() => {
     mockPreprocessStrokes.mockClear();
@@ -99,6 +107,7 @@ describe("DrawingService", () => {
         promptService as never,
         buildPointService() as never,
         buildTossApiClient() as never,
+        buildConfigService() as never,
       );
 
       const result = await service.scoreStrokes(
@@ -138,6 +147,7 @@ describe("DrawingService", () => {
         promptService as never,
         buildPointService(false) as never,
         buildTossApiClient() as never,
+        buildConfigService() as never,
       );
 
       const result = await service.submitDrawing(
@@ -172,6 +182,7 @@ describe("DrawingService", () => {
         promptService as never,
         buildPointService() as never,
         buildTossApiClient() as never,
+        buildConfigService() as never,
       );
 
       await expect(
@@ -208,6 +219,7 @@ describe("DrawingService", () => {
         basePromptService() as never,
         pointService as never,
         tossApiClient as never,
+        buildConfigService() as never,
       );
 
       await service.submitDrawing("1234", sampleStrokes as never, new Date());
@@ -225,6 +237,7 @@ describe("DrawingService", () => {
         basePromptService() as never,
         pointService as never,
         tossApiClient as never,
+        buildConfigService() as never,
       );
 
       await service.submitDrawing("1234", sampleStrokes as never, new Date());
@@ -233,7 +246,7 @@ describe("DrawingService", () => {
       expect(tossApiClient.executePromotion).toHaveBeenCalledWith(
         1234,
         "test-key",
-        "TEMP_PROMOTION_CODE",
+        "TEST_TEMP_PROMOTION_CODE",
         2,
       );
       expect(pointService.saveDrawingPointLog).toHaveBeenCalledWith(BigInt(1));
@@ -251,6 +264,7 @@ describe("DrawingService", () => {
         basePromptService() as never,
         pointService as never,
         tossApiClient as never,
+        buildConfigService() as never,
       );
 
       await service.submitDrawing("1234", sampleStrokes as never, new Date());
@@ -271,6 +285,7 @@ describe("DrawingService", () => {
         basePromptService() as never,
         pointService as never,
         tossApiClient as never,
+        buildConfigService() as never,
       );
 
       await service.submitDrawing("1234", sampleStrokes as never, new Date());
@@ -292,6 +307,7 @@ describe("DrawingService", () => {
         basePromptService() as never,
         pointService as never,
         tossApiClient as never,
+        buildConfigService() as never,
       );
 
       const result = await service.submitDrawing(
@@ -318,6 +334,7 @@ describe("DrawingService", () => {
         basePromptService() as never,
         pointService as never,
         tossApiClient as never,
+        buildConfigService() as never,
       );
 
       const result = await service.submitDrawing(
@@ -344,6 +361,7 @@ describe("DrawingService", () => {
         {} as never,
         {} as never,
         {} as never,
+        buildConfigService() as never,
       );
     });
 
@@ -435,6 +453,7 @@ describe("DrawingService", () => {
         {} as never,
         {} as never,
         {} as never,
+        buildConfigService() as never,
       );
     });
 

@@ -1,5 +1,6 @@
 import { preprocessStrokes, scoreFinalSimilarity } from "@davinci/similarity";
 import { EntityManager, QueryOrder } from "@mikro-orm/core";
+import { ConfigService } from "@nestjs/config";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
 import { getSeoulDayRange } from "src/common/time.util";
@@ -14,8 +15,6 @@ import { PromptService } from "../prompt/prompt.service";
 import { UserRepository } from "../user/user.repository";
 import { Drawing } from "./drawing.entity";
 
-// TODO: 프로모션 승인 후 코드 변경 (테스트 시 TEST_ 접두사 사용)
-const TEMP_PROMOTION_CODE = "TEMP_PROMOTION_CODE";
 const PROMOTION_AMOUNT = 2;
 const PROMOTION_MAX_RETRIES = 2;
 
@@ -24,6 +23,7 @@ type Similarity = ReturnType<typeof scoreFinalSimilarity>;
 @Injectable()
 export class DrawingService {
   private readonly logger = new Logger(DrawingService.name);
+  private readonly promotionCode: string;
 
   constructor(
     private readonly em: EntityManager,
@@ -31,7 +31,15 @@ export class DrawingService {
     private readonly promptService: PromptService,
     private readonly pointService: PointService,
     private readonly tossApiClient: TossApiClient,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    const promotionCode =
+      this.configService.getOrThrow<string>("PROMOTION_CODE");
+    const isProduction =
+      this.configService.get<string>("NODE_ENV") === "production";
+
+    this.promotionCode = isProduction ? promotionCode : `TEST_${promotionCode}`;
+  }
 
   // 획 단위 실시간 호출 엔드포인트. 클라 값 신뢰 X → 서버가 매번 유사도 재계산
   async scoreStrokes(playerStrokes: Stroke[], date: Date): Promise<Similarity> {
@@ -46,7 +54,11 @@ export class DrawingService {
     userKey: string,
     playerStrokes: Stroke[],
     date: Date,
-  ): Promise<{ drawingId: number; similarity: Similarity }> {
+  ): Promise<{
+    drawingId: number;
+    similarity: Similarity;
+    promotionGranted: boolean;
+  }> {
     const { promptId, preprocessed } =
       await this.promptService.getPreprocessedByDate(date);
     const playerPreprocessed = preprocessStrokes(playerStrokes);
@@ -70,17 +82,20 @@ export class DrawingService {
     this.em.persist(drawing);
     await this.em.flush();
 
-    await this.grantPromotionIfEligible(user.id, user.userKey);
+    const promotionGranted = await this.grantPromotionIfEligible(
+      user.id,
+      user.userKey,
+    );
 
-    return { drawingId: Number(drawing.id), similarity };
+    return { drawingId: Number(drawing.id), similarity, promotionGranted };
   }
 
   private async grantPromotionIfEligible(
     userId: bigint,
     userKey: number,
-  ): Promise<void> {
+  ): Promise<boolean> {
     const canGrant = await this.pointService.canGrantTodayPromotion(userId);
-    if (!canGrant) return;
+    if (!canGrant) return false;
 
     let lastError: unknown;
 
@@ -90,11 +105,11 @@ export class DrawingService {
         await this.tossApiClient.executePromotion(
           userKey,
           key,
-          TEMP_PROMOTION_CODE,
+          this.promotionCode,
           PROMOTION_AMOUNT,
         );
         await this.pointService.saveDrawingPointLog(userId);
-        return;
+        return true;
       } catch (err) {
         if (
           err instanceof TossTransportError ||
@@ -104,11 +119,12 @@ export class DrawingService {
           continue;
         }
         this.logger.warn({ err }, "프로모션 지급 실패 (재시도 불필요)");
-        return;
+        return false;
       }
     }
 
     this.logger.warn({ err: lastError }, "프로모션 지급 최대 재시도 초과");
+    return false;
   }
 
   private async findTodayByUser(userId: bigint | string): Promise<Drawing[]> {
