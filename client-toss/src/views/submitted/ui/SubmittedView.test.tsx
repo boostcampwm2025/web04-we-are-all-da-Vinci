@@ -94,7 +94,7 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("결과 저장하기"));
+    await user.click(screen.getByText("저장하고 결과확인하기"));
 
     await waitFor(() => {
       expect(serverTossApi.submitDrawing).toHaveBeenCalled();
@@ -123,7 +123,7 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("결과 저장하기"));
+    await user.click(screen.getByText("저장하고 결과확인하기"));
 
     await waitFor(() => {
       expect(callOrder).toEqual(["appLogin", "login", "getMe"]);
@@ -136,7 +136,7 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("결과 저장하기"));
+    await user.click(screen.getByText("저장하고 결과확인하기"));
 
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith("/", { replace: true });
@@ -152,7 +152,7 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("결과 저장하기"));
+    await user.click(screen.getByText("저장하고 결과확인하기"));
 
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith("/", { replace: true });
@@ -166,7 +166,7 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("결과 저장하기"));
+    await user.click(screen.getByText("저장하고 결과확인하기"));
 
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalled();
@@ -212,7 +212,7 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("결과 저장하기"));
+    await user.click(screen.getByText("저장하고 결과확인하기"));
 
     await waitFor(() => {
       expect(showFullScreenAd).not.toHaveBeenCalled();
