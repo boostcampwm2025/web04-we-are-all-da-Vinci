@@ -144,7 +144,7 @@ export class TossApiClient {
       JSON.stringify({ promotionCode, key, amount }),
     );
 
-    if (data.resultType !== "SUCCESS") {
+    if (data.resultType !== "SUCCESS" || !data.success) {
       throw new TossPromotionError(
         data.error?.errorCode ?? "UNKNOWN",
         data.error?.reason ?? "프로모션 지급에 실패했어요.",

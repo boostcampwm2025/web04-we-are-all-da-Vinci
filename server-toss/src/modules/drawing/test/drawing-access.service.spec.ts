@@ -59,8 +59,9 @@ describe("DrawingAccessService", () => {
   it("접근 권한이 없으면 NO_DRAWING_CHANCE 예외를 던진다", async () => {
     const { service } = buildService(1, 0);
 
-    await expect(service.validateAccess(user)).rejects.toThrow(
-      BadRequestException,
-    );
+    const result = service.validateAccess(user);
+
+    await expect(result).rejects.toThrow(BadRequestException);
+    await expect(result).rejects.toThrow("NO_DRAWING_CHANCE");
   });
 });
