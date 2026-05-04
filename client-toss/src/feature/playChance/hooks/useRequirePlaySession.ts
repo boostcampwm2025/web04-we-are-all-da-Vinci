@@ -8,20 +8,26 @@ export const useRequirePlaySession = () => {
 
   useEffect(() => {
     let isMounted = true;
+
+    if (import.meta.env.DEV) {
+      setIsCheckingSession(false);
+      return;
+    }
+
     const checkSession = async () => {
       try {
         const session = await loadActivePlaySession();
         if (!isMounted) return;
 
         if (session == null) {
-          navigate("/dashboard", { replace: true });
+          navigate("/", { replace: true });
           return;
         }
 
         setIsCheckingSession(false);
       } catch {
         if (!isMounted) return;
-        navigate("/dashboard", { replace: true });
+        navigate("/", { replace: true });
       }
     };
 

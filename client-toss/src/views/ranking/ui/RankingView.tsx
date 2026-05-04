@@ -4,7 +4,10 @@ import { Border, Top } from "@toss/tds-mobile";
 
 const RankingView = () => {
   return (
-    <div data-no-safe-area-bottom className="flex min-h-full flex-col items-center pb-[env(safe-area-inset-bottom)]">
+    <div
+      data-no-safe-area-bottom
+      className="flex min-h-full flex-col items-center pb-[env(safe-area-inset-bottom)]"
+    >
       <main className="w-full">
         <Top
           title={

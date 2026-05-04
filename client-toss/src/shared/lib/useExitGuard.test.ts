@@ -1,9 +1,10 @@
-import { renderHook, act } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach } from "vitest";
 import {
-  setIosSwipeGestureEnabled,
+  closeView,
   graniteEvent,
+  setIosSwipeGestureEnabled,
 } from "@apps-in-toss/web-framework";
+import { act, renderHook } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useExitGuard } from "./useExitGuard";
 
 describe("useExitGuard", () => {
@@ -46,5 +47,19 @@ describe("useExitGuard", () => {
     });
 
     expect(result.current.showDialog).toBe(true);
+  });
+
+  it("exit 호출 시 listener를 해제하고 closeView()를 호출한다", () => {
+    const mockUnsub = vi.fn();
+    vi.mocked(graniteEvent.addEventListener).mockReturnValue(mockUnsub);
+
+    const { result } = renderHook(() => useExitGuard());
+
+    act(() => {
+      result.current.exit();
+    });
+
+    expect(mockUnsub).toHaveBeenCalledTimes(1);
+    expect(closeView).toHaveBeenCalledTimes(1);
   });
 });

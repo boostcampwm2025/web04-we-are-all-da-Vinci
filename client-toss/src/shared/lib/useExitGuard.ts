@@ -1,11 +1,13 @@
 import {
+  closeView,
   graniteEvent,
   setIosSwipeGestureEnabled,
 } from "@apps-in-toss/web-framework";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const useExitGuard = () => {
   const [showDialog, setShowDialog] = useState(false);
+  const unsubRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     setIosSwipeGestureEnabled({ isEnabled: false });
@@ -14,14 +16,22 @@ const useExitGuard = () => {
       onEvent: () => setShowDialog(true),
       onError: console.error,
     });
+    unsubRef.current = unsub;
 
     return () => {
-      unsub();
+      unsubRef.current?.();
+      unsubRef.current = null;
       setIosSwipeGestureEnabled({ isEnabled: true });
     };
   }, []);
 
-  return { showDialog, setShowDialog };
+  const exit = useCallback(() => {
+    unsubRef.current?.();
+    unsubRef.current = null;
+    closeView().catch((err) => console.error("미니앱 종료 실패:", err));
+  }, []);
+
+  return { showDialog, setShowDialog, exit };
 };
 
 export { useExitGuard };
