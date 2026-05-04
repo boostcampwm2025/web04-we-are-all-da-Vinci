@@ -10,6 +10,7 @@ export const useRequirePlaySession = () => {
     let isMounted = true;
 
     if (import.meta.env.DEV) {
+      console.warn("[useRequirePlaySession] DEV 모드: 세션 체크 바이패스");
       setIsCheckingSession(false);
       return;
     }

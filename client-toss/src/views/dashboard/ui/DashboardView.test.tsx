@@ -193,6 +193,19 @@ describe("DashboardView", () => {
     expect(screen.getByText("그림이 저장됐어요")).toBeInTheDocument();
   });
 
+  it("fromSubmitted 처리 후 history state를 초기화한다", async () => {
+    const replaceStateSpy = vi.spyOn(window.history, "replaceState");
+
+    renderDashboard({ fromSubmitted: true, promotionGranted: true });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("podium")).toBeInTheDocument();
+    });
+
+    expect(replaceStateSpy).toHaveBeenCalledWith({}, "");
+    replaceStateSpy.mockRestore();
+  });
+
   it("플레이하기 버튼이 startGame을 호출한다", async () => {
     const today = formatLocalDate();
     localStorage.setItem("lastPlayed_test-device", today);

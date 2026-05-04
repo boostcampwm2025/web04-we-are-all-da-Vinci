@@ -64,8 +64,8 @@ const SubmittedView = () => {
     try {
       try {
         await serverTossApi.recordAdView();
-      } catch {
-        // best-effort
+      } catch (err) {
+        console.error("[recordAdView 실패, 무시]", err);
       }
       await charge();
       const started = await startPlay();

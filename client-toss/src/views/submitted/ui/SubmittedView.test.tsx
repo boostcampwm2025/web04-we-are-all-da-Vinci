@@ -195,4 +195,50 @@ describe("SubmittedView", () => {
 
     expect(screen.getByText("저장하면 랭킹에 등록돼요")).toBeInTheDocument();
   });
+
+  it("다시하기 시 charge 실패하면 에러 토스트를 표시한다", async () => {
+    vi.useRealTimers();
+    const user = userEvent.setup();
+    mockCharge.mockRejectedValueOnce(new Error("charge 실패"));
+
+    renderWithState();
+
+    await user.click(screen.getByText("다시하기"));
+
+    await waitFor(() => {
+      expect(screen.getByText("다시 시도해주세요.")).toBeInTheDocument();
+    });
+  });
+
+  it("다시하기 시 startPlay가 false 반환하면 네비게이션하지 않는다", async () => {
+    vi.useRealTimers();
+    const user = userEvent.setup();
+    mockStartPlay.mockResolvedValueOnce(false);
+
+    renderWithState();
+
+    await user.click(screen.getByText("다시하기"));
+
+    await waitFor(() => {
+      expect(mockStartPlay).toHaveBeenCalled();
+    });
+
+    expect(navigateMock).not.toHaveBeenCalled();
+  });
+
+  it("다시하기 시 getPrompt 실패하면 에러 토스트를 표시한다", async () => {
+    vi.useRealTimers();
+    const user = userEvent.setup();
+    vi.mocked(serverTossApi.getPrompt).mockRejectedValueOnce(
+      new Error("프롬프트 실패"),
+    );
+
+    renderWithState();
+
+    await user.click(screen.getByText("다시하기"));
+
+    await waitFor(() => {
+      expect(screen.getByText("다시 시도해주세요.")).toBeInTheDocument();
+    });
+  });
 });
