@@ -1,4 +1,4 @@
-jest.mock("src/common/time.util", () => ({
+jest.mock("src/common/util/time.util", () => ({
   getSeoulDayRange: () => ({
     start: new Date("2026-05-03T15:00:00.000Z"),
     end: new Date("2026-05-04T15:00:00.000Z"),
