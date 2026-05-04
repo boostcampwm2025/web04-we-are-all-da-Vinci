@@ -4,8 +4,11 @@ import { usePlayChance } from "@/feature/playChance";
 import { serverTossApi } from "@/shared/api";
 import { formatLocalDate, trackClick, useExitGuard } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
-import { RewardAd } from "@/shared/ui/rewardAd";
-import { getDeviceId } from "@apps-in-toss/web-framework";
+import {
+  getDeviceId,
+  loadFullScreenAd,
+  showFullScreenAd,
+} from "@apps-in-toss/web-framework";
 import { colors } from "@toss/tds-colors";
 import {
   Button,
@@ -20,13 +23,15 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 const DashboardView = () => {
   const navigate = useNavigate();
   const { state: locationState } = useLocation();
-  const { showDialog, setShowDialog } = useExitGuard();
+  const { showDialog, setShowDialog, exit } = useExitGuard();
   const [activeIndex, setActiveIndex] = useState(0);
   const [isStartingGame, setIsStartingGame] = useState(false);
   const [toastOpen, setToastOpen] = useState(false);
+  const [toastText, setToastText] = useState("일시적 오류가 발생했어요");
   const sliderRef = useRef<HTMLDivElement>(null);
+  const myResultRef = useRef<HTMLDivElement>(null);
   const anonymousHashRef = useRef<string>("local");
-  const { myDrawings, isLoading } = useMyDrawings();
+  const { myDrawings, isLoading, refetch: refetchDrawings } = useMyDrawings();
   const {
     hasChance,
     isLoading: isChanceLoading,
@@ -80,7 +85,22 @@ const DashboardView = () => {
       anonymousHashRef.current = hash;
 
       if (fromSubmitted) {
+        // state를 즉시 제거하여 재마운트 시 토스트 재표시 방지
+        window.history.replaceState({}, "");
+
         localStorage.setItem(`lastPlayed_${hash}`, formatLocalDate());
+        refetchDrawings();
+
+        const promotionGranted = (
+          locationState as { promotionGranted?: boolean }
+        )?.promotionGranted;
+        if (promotionGranted != null) {
+          setToastText(
+            promotionGranted ? "포인트 지급이 완료됐어요" : "그림이 저장됐어요",
+          );
+          setToastOpen(true);
+        }
+
         setInitialLoading(false);
         return;
       }
@@ -93,13 +113,26 @@ const DashboardView = () => {
         return;
       }
 
-      setInitialLoading(false);
-      await startGame();
+      // 첫 방문: initialLoading=true 상태로 게임 시작 (로딩 화면 유지)
+      try {
+        await startGame();
+      } finally {
+        setInitialLoading(false);
+      }
     };
 
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locationState]);
+
+  // fromSubmitted일 때 나의 결과 영역으로 자동 스크롤
+  useEffect(() => {
+    const fromSubmitted = (locationState as { fromSubmitted?: boolean })
+      ?.fromSubmitted;
+    if (!fromSubmitted || isLoading || !myResultRef.current) return;
+
+    myResultRef.current.scrollIntoView({ behavior: "smooth" });
+  }, [locationState, isLoading]);
 
   // 광고 시청 기록 전송은 best-effort
   const recordAdViewBestEffort = async () => {
@@ -110,10 +143,43 @@ const DashboardView = () => {
     }
   };
 
-  const handleReward = async () => {
+  const showAdAndCharge = () =>
+    new Promise<void>((resolve, reject) => {
+      if (!loadFullScreenAd.isSupported()) {
+        // 광고 미지원 환경(로컬 등)에서는 광고 없이 바로 충전
+        resolve();
+        return;
+      }
+
+      const AD_GROUP_ID = "ait-ad-test-rewarded-id";
+      let rewarded = false;
+
+      loadFullScreenAd({
+        options: { adGroupId: AD_GROUP_ID },
+        onEvent: (event) => {
+          if (event.type === "loaded") {
+            showFullScreenAd({
+              options: { adGroupId: AD_GROUP_ID },
+              onEvent: (showEvent) => {
+                if (showEvent.type === "userEarnedReward") rewarded = true;
+                if (showEvent.type === "dismissed") {
+                  if (rewarded) resolve();
+                  else reject(new Error("closed"));
+                }
+              },
+              onError: reject,
+            });
+          }
+        },
+        onError: reject,
+      });
+    });
+
+  const handleRetry = async () => {
     if (isStartingGame) return;
     setIsStartingGame(true);
     try {
+      await showAdAndCharge();
       await recordAdViewBestEffort();
       await charge();
       const started = await startPlay();
@@ -129,31 +195,7 @@ const DashboardView = () => {
         replace: true,
       });
     } catch {
-      setToastOpen(true);
-    } finally {
-      setIsStartingGame(false);
-    }
-  };
-
-  const handleDevCharge = async () => {
-    if (isStartingGame) return;
-    setIsStartingGame(true);
-    try {
-      await recordAdViewBestEffort();
-      await charge();
-      const started = await startPlay();
-      if (!started) return;
-
-      const { promptId, strokes } = await serverTossApi.getPrompt();
-      navigate("/memorize", {
-        state: {
-          promptId,
-          promptStrokes: strokes,
-          anonymousHash: anonymousHashRef.current,
-        },
-        replace: true,
-      });
-    } catch {
+      setToastText("일시적 오류가 발생했어요");
       setToastOpen(true);
     } finally {
       setIsStartingGame(false);
@@ -187,12 +229,15 @@ const DashboardView = () => {
   }
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto">
+    <div
+      data-no-safe-area-bottom
+      className="min-h-0 flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)]"
+    >
       <Toast
         position="top"
         open={toastOpen}
-        text="일시적 오류가 발생했어요"
-        leftAddon={<Toast.Icon name="icon-warning-circle-red-opacity-small" />}
+        text={toastText}
+        leftAddon={<Toast.Icon name="icon-check-circle-blue-opacity" />}
         duration={3000}
         onClose={() => setToastOpen(false)}
       />
@@ -219,7 +264,9 @@ const DashboardView = () => {
       </div>
 
       {/* 나의 결과 영역 */}
-      <Top title={<Top.TitleParagraph>나의 결과</Top.TitleParagraph>} />
+      <div ref={myResultRef}>
+        <Top title={<Top.TitleParagraph>나의 결과</Top.TitleParagraph>} />
+      </div>
 
       {/* 인디케이터 */}
       <div className="flex justify-center gap-2 py-4">
@@ -291,29 +338,16 @@ const DashboardView = () => {
             플레이하기
           </Button>
         ) : (
-          <>
-            <RewardAd
-              adGroupId="ait-ad-test-rewarded-id"
-              onReward={handleReward}
-              text="광고 보고 기회 충전하기"
-            />
-            {import.meta.env.DEV && (
-              <Button
-                color="primary"
-                display="block"
-                variant="weak"
-                loading={isStartingGame}
-                disabled={isStartingGame}
-                onClick={handleDevCharge}
-              >
-                개발용: 기회 충전하고 시작
-              </Button>
-            )}
-          </>
+          <Button
+            color="primary"
+            display="block"
+            loading={isStartingGame}
+            disabled={isStartingGame}
+            onClick={handleRetry}
+          >
+            다시 도전하기
+          </Button>
         )}
-        <Button color="primary" display="block" variant="weak">
-          공유하고 포인트 받기
-        </Button>
       </div>
 
       <ConfirmDialog
@@ -321,7 +355,7 @@ const DashboardView = () => {
         onClose={() => setShowDialog(false)}
         title="우리 모두 다빈치를 종료할까요?"
         confirmButton={
-          <ConfirmDialog.ConfirmButton onClick={() => setShowDialog(false)}>
+          <ConfirmDialog.ConfirmButton onClick={exit}>
             종료하기
           </ConfirmDialog.ConfirmButton>
         }

@@ -23,12 +23,28 @@ vi.mock("react-router-dom", async () => {
 vi.mock("@/shared/api", () => ({
   serverTossApi: {
     getPrompt: vi.fn(),
+    recordAdView: vi.fn().mockResolvedValue(undefined),
   },
+}));
+
+const mockStartPlay = vi.fn().mockResolvedValue(true);
+const mockCharge = vi.fn().mockResolvedValue(undefined);
+vi.mock("@/feature/playChance", () => ({
+  usePlayChance: () => ({
+    hasChance: true,
+    isLoading: false,
+    charge: mockCharge,
+    startPlay: mockStartPlay,
+  }),
+}));
+
+vi.mock("@/shared/ui/rewardAd", () => ({
+  RewardAd: () => <div data-testid="reward-ad" />,
 }));
 
 vi.mock("@/entities/myScoreCard", () => ({
   MyScoreCard: () => <div data-testid="score-card" />,
-  useMyDrawings: () => ({ myDrawings: [], isLoading: false }),
+  useMyDrawings: () => ({ myDrawings: [], isLoading: false, refetch: vi.fn() }),
 }));
 
 vi.mock("@/entities/podium", () => ({
@@ -47,9 +63,9 @@ vi.mock("@toss/tds-colors", () => ({
   },
 }));
 
-const renderDashboard = () =>
+const renderDashboard = (state?: unknown) =>
   render(
-    <MemoryRouter initialEntries={["/"]}>
+    <MemoryRouter initialEntries={[{ pathname: "/", state }]}>
       <Routes>
         <Route path="/" element={<DashboardView />} />
       </Routes>
@@ -157,7 +173,27 @@ describe("DashboardView", () => {
     });
   });
 
-  it("한 번 더 그리기 버튼이 startGame을 호출한다", async () => {
+  it("fromSubmitted + promotionGranted=true일 때 포인트 토스트를 표시한다", async () => {
+    renderDashboard({ fromSubmitted: true, promotionGranted: true });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("podium")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("포인트 지급이 완료됐어요")).toBeInTheDocument();
+  });
+
+  it("fromSubmitted + promotionGranted=false일 때 제출 완료 토스트를 표시한다", async () => {
+    renderDashboard({ fromSubmitted: true, promotionGranted: false });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("podium")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("그림이 저장됐어요")).toBeInTheDocument();
+  });
+
+  it("플레이하기 버튼이 startGame을 호출한다", async () => {
     const today = formatLocalDate();
     localStorage.setItem("lastPlayed_test-device", today);
     const user = userEvent.setup();
@@ -174,23 +210,10 @@ describe("DashboardView", () => {
       expect(screen.getByTestId("podium")).toBeInTheDocument();
     });
 
-    await user.click(screen.getByText("한 번 더 그리기"));
+    await user.click(screen.getByText("플레이하기"));
 
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith("/memorize", expect.anything());
     });
-  });
-
-  it("공유하고 포인트 받기 버튼이 렌더링되지 않는다", async () => {
-    const today = formatLocalDate();
-    localStorage.setItem("lastPlayed_test-device", today);
-
-    renderDashboard();
-
-    await waitFor(() => {
-      expect(screen.getByTestId("podium")).toBeInTheDocument();
-    });
-
-    expect(screen.queryByText("공유하고 포인트 받기")).not.toBeInTheDocument();
   });
 });
