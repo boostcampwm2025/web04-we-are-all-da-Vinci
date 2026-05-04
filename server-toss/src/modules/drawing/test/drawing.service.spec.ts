@@ -13,7 +13,7 @@ jest.mock("@davinci/similarity", () => ({
   scoreFinalSimilarity: mockScoreFinalSimilarity,
 }));
 
-jest.mock("src/common/time.util", () => ({
+jest.mock("src/common/util/time.util", () => ({
   getSeoulDayRange: () => ({
     start: new Date("2026-04-26T15:00:00.000Z"),
     end: new Date("2026-04-27T15:00:00.000Z"),

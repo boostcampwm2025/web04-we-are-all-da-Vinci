@@ -12,7 +12,8 @@ import { PointModule } from "./modules/point/point.module";
 import { PromptModule } from "./modules/prompt/prompt.module";
 import { RankingModule } from "./modules/ranking/ranking.module";
 import { UserModule } from "./modules/user/user.module";
-import { RequestContextHelper } from "./common/middlewares/request-context-helper.middleware";
+import { RequestContextHelper } from "./common/middleware/request-context-helper.middleware";
+import { createLoggerParams } from "./common/logging/logger.config";
 
 @Module({
   imports: [
@@ -25,21 +26,10 @@ import { RequestContextHelper } from "./common/middlewares/request-context-helpe
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const isProduction = configService.get("NODE_ENV") === "production";
-        return {
-          pinoHttp: {
-            level: isProduction ? "info" : "debug",
-            transport: isProduction
-              ? undefined
-              : {
-                  target: "pino-pretty",
-                  options: {
-                    singleLine: true,
-                    translateTime: "SYS:standard",
-                  },
-                },
-          },
-        };
+        return createLoggerParams({
+          nodeEnv: configService.get<string>("NODE_ENV"),
+          logLevel: configService.get<string>("LOG_LEVEL"),
+        });
       },
     }),
     ScheduleModule.forRoot(),

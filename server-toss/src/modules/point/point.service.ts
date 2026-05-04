@@ -1,7 +1,7 @@
 import { EntityManager } from "@mikro-orm/core";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { getSeoulDayRange } from "src/common/time.util";
+import { getSeoulDayRange } from "src/common/util/time.util";
 import { TossApiClient } from "src/modules/auth/toss-api.client";
 import {
   TossPromotionError,
