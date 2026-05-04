@@ -1,9 +1,10 @@
+import { painterMan1Img } from "@/shared/assets/images";
+import { trackClick } from "@/shared/lib";
+import { BannerAd } from "@/shared/ui/bannerAd";
 import {
   loadFullScreenAd,
   showFullScreenAd,
 } from "@apps-in-toss/web-framework";
-import { painterMan1Img } from "@/shared/assets/images";
-import { BannerAd } from "@/shared/ui/bannerAd";
 import { BottomCTA, Toast } from "@toss/tds-mobile";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -49,6 +50,8 @@ const SubmittedView = () => {
   }, [isAdSupported]);
 
   const handleNavigateHome = () => {
+    trackClick("submitted_to_dashboard_click");
+
     if (!isAdSupported || !isAdLoaded) {
       navigate("/");
       return;
