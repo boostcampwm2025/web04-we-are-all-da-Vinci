@@ -2,7 +2,7 @@ import { EntityManager } from "@mikro-orm/mysql";
 import { BadRequestException, Logger } from "@nestjs/common";
 import { User } from "src/modules/user/user.entity";
 import { Drawing } from "../drawing.entity";
-import { getSeoulDayRange } from "src/common/time.util";
+import { getSeoulDayRange } from "src/common/utils/time.util";
 import { AdType, AdView } from "src/modules/ad/ad-view.entity";
 
 export class DrawingAccessService {

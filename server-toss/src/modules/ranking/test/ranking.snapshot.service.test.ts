@@ -5,7 +5,7 @@ import config from "../../../mikro-orm.config";
 import { Drawing } from "../../drawing/drawing.entity";
 import { Ranking } from "../ranking.entity";
 import { RankingSnapshotService } from "../ranking.snapshot.service";
-import { getSeoulDayRange } from "src/common/time.util";
+import { getSeoulDayRange } from "src/common/utils/time.util";
 import { SmallUserDrawingSeeder } from "src/seeders/small-user-drawing.seeder";
 import { Test, TestingModule } from "@nestjs/testing";
 import { MikroOrmModule } from "@mikro-orm/nestjs";

@@ -10,7 +10,7 @@ import {
   SubmitDrawingRequestSchema,
   SubmitStrokesRequestSchema,
 } from "@toss/shared";
-import { getTodayKst } from "src/common/today";
+import { getTodayKst } from "src/common/utils/today";
 import { ZodValidationPipe } from "src/common/zod-validation.pipe";
 import { DrawingService } from "./service/drawing.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
