@@ -12,7 +12,7 @@ import { PointModule } from "./modules/point/point.module";
 import { PromptModule } from "./modules/prompt/prompt.module";
 import { RankingModule } from "./modules/ranking/ranking.module";
 import { UserModule } from "./modules/user/user.module";
-import { RequestContextHelper } from "./common/middlewares/request-context-helper.middleware";
+import { RequestContextHelper } from "./common/middleware/request-context-helper.middleware";
 import { createLoggerParams } from "./common/logging/logger.config";
 
 @Module({
