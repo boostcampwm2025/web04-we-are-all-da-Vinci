@@ -1,3 +1,4 @@
+import { trackClick } from "@/shared/lib";
 import { MaskedIcon } from "@/shared/ui/maskedIcon";
 import { ConfirmDialog } from "@toss/tds-mobile";
 import clsx from "clsx";
@@ -25,6 +26,7 @@ const Toolbar = ({
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
 
   const handleReset = () => {
+    trackClick("drawing_reset_click");
     onClear();
     setIsResetDialogOpen(false);
   };
@@ -53,7 +55,10 @@ const Toolbar = ({
         type="button"
         aria-label="한획 취소"
         className={clsx(toolBtnBase, "active:bg-gray-200")}
-        onClick={onUndo}
+        onClick={() => {
+          trackClick("drawing_undo_click");
+          onUndo();
+        }}
       >
         <MaskedIcon src={ICON_URL.refresh} color="var(--color-grey)" />
       </button>

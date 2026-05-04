@@ -1,25 +1,21 @@
-import { serverTossApi } from "@/shared/api";
 import { painterMan1Img } from "@/shared/assets/images";
-import { formatLocalDate, useRequiredState } from "@/shared/lib";
+import { trackClick } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";
 import {
-  appLogin,
   loadFullScreenAd,
   showFullScreenAd,
 } from "@apps-in-toss/web-framework";
-import type { SimilarityResponse, Stroke } from "@toss/shared";
-import { Button } from "@toss/tds-mobile";
+import type { SimilarityResponse } from "@toss/shared";
+import { BottomCTA, Toast } from "@toss/tds-mobile";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const REWARDED_AD_GROUP_ID = "ait-ad-test-rewarded-id";
 
 interface SubmittedRouteState {
-  promptId: number;
-  strokes: Stroke[];
+  promotionGranted: boolean;
   similarity: SimilarityResponse | null;
-  anonymousHash: string;
 }
 
 const getAdSupported = () => {
@@ -32,10 +28,15 @@ const getAdSupported = () => {
 
 const SubmittedView = () => {
   const navigate = useNavigate();
-  const routeState = useRequiredState<SubmittedRouteState>();
+  const { state } = useLocation() as {
+    state: SubmittedRouteState | null;
+  };
   const [isAdLoaded, setIsAdLoaded] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const isAdSupported = getAdSupported();
+  const [toastOpen, setToastOpen] = useState(!!state);
+  const toastText = state?.promotionGranted
+    ? "포인트 지급이 완료됐어요"
+    : "그림 제출이 완료됐어요";
 
   useEffect(() => {
     if (!isAdSupported) return;
@@ -53,67 +54,38 @@ const SubmittedView = () => {
     return () => unregister();
   }, [isAdSupported]);
 
-  const handleSaveResult = async () => {
-    if (!routeState || isSaving) return;
-    setIsSaving(true);
+  const handleNavigateHome = () => {
+    trackClick("submitted_to_dashboard_click");
 
-    // 게임은 이미 플레이했으므로 API 성공/실패 관계없이 기록
-    localStorage.setItem(
-      `lastPlayed_${routeState.anonymousHash}`,
-      formatLocalDate(),
-    );
-
-    try {
-      let userKey = localStorage.getItem("userKey");
-
-      // 비로그인이면 appLogin → accessToken 저장 → getMe로 userKey 획득
-      if (!userKey) {
-        const { authorizationCode, referrer } = await appLogin();
-        const { accessToken } = await serverTossApi.login({
-          authorizationCode,
-          referrer,
-        });
-        localStorage.setItem("access_token", accessToken);
-        const { userKey: numericKey } = await serverTossApi.getMe();
-        userKey = String(numericKey);
-        localStorage.setItem("userKey", userKey);
-      }
-
-      // 결과 제출
-      await serverTossApi.submitDrawing({
-        userKey,
-        strokes: routeState.strokes,
-      });
-
-      const goHome = () => {
-        navigate("/", { replace: true, state: { fromSubmitted: true } });
-      };
-
-      // 보상형 광고 표시 후 홈 이동
-      if (isAdSupported && isAdLoaded) {
-        showFullScreenAd({
-          options: { adGroupId: REWARDED_AD_GROUP_ID },
-          onEvent: (event) => {
-            if (event.type === "dismissed") goHome();
-          },
-          onError: () => goHome(),
-        });
-      } else {
-        goHome();
-      }
-    } catch (error) {
-      console.error("결과 저장 실패:", error);
-      setIsSaving(false);
+    const goHome = () => {
       navigate("/", { replace: true, state: { fromSubmitted: true } });
+    };
+
+    if (isAdSupported && isAdLoaded) {
+      showFullScreenAd({
+        options: { adGroupId: REWARDED_AD_GROUP_ID },
+        onEvent: (event) => {
+          if (event.type === "dismissed") goHome();
+        },
+        onError: () => goHome(),
+      });
+    } else {
+      goHome();
     }
   };
 
-  if (!routeState) return null;
-
-  const score = routeState.similarity?.score ?? 0;
+  const score = state?.similarity?.score ?? 0;
 
   return (
     <div className="flex h-full flex-col bg-white">
+      <Toast
+        position="top"
+        open={toastOpen}
+        text={toastText}
+        leftAddon={<Toast.Icon name="icon-check-circle-blue-opacity" />}
+        duration={3000}
+        onClose={() => setToastOpen(false)}
+      />
       <div className="flex flex-1 flex-col items-center px-(--page-px) pt-[20%]">
         <img
           src={painterMan1Img}
@@ -133,15 +105,8 @@ const SubmittedView = () => {
         <BannerAd adGroupId="ait-ad-test-native-image-id" type="list" />
       </div>
 
-      <div className="flex flex-col gap-3 px-(--page-px) pb-4">
-        <Button
-          color="primary"
-          display="block"
-          loading={isSaving}
-          onClick={handleSaveResult}
-        >
-          저장하고 결과확인하기
-        </Button>
+      <div onClick={handleNavigateHome}>
+        <BottomCTA.Single>결과 확인하러 가기</BottomCTA.Single>
       </div>
     </div>
   );

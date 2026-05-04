@@ -7,15 +7,15 @@ import { Drawing } from "../drawing.entity";
 
 @Injectable()
 export class DrawingAccessService {
-  private readonly MAX_DRAWING_COUNT = 10;
   private readonly DEFAULT_DRAWING_COUNT = 1;
+
   constructor(private readonly em: EntityManager) {}
 
-  async canAccess(user: User) {
+  async canAccess(user: User): Promise<boolean> {
     const { start, end } = getSeoulDayRange();
-    // TODO: 그림 제출 횟수 < 기본 1회 + 광고 조회 횟수 + 공유 횟수 등등
+
     const drawingCount = await this.em.count(Drawing, {
-      user: user,
+      user,
       createdAt: {
         $gte: start,
         $lt: end,
@@ -23,7 +23,7 @@ export class DrawingAccessService {
     });
 
     const adViewCount = await this.em.count(AdView, {
-      user: user,
+      user,
       type: AdType.DRAWING,
       createdAt: {
         $gte: start,
@@ -31,16 +31,12 @@ export class DrawingAccessService {
       },
     });
 
-    // TODO: 친구 공유 횟수
-    return (
-      drawingCount < this.MAX_DRAWING_COUNT &&
-      drawingCount < this.DEFAULT_DRAWING_COUNT + adViewCount
-    );
+    return drawingCount < this.DEFAULT_DRAWING_COUNT + adViewCount;
   }
 
-  async validateAccess(user: User) {
+  async validateAccess(user: User): Promise<void> {
     if (!(await this.canAccess(user))) {
-      throw new BadRequestException("그림 제출 기회가 없습니다.");
+      throw new BadRequestException("NO_DRAWING_CHANCE");
     }
   }
 }

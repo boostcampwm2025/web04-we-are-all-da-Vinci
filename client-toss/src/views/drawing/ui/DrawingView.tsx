@@ -7,6 +7,7 @@ import {
   useDrawingSubmit,
   useStrokeScoring,
 } from "@/feature/drawing";
+import { clearPlaySession, useRequirePlaySession } from "@/feature/playChance";
 import {
   DRAWING_SECONDS,
   useCountdown,
@@ -27,6 +28,7 @@ interface DrawingRouteState {
 
 const DrawingView = () => {
   const navigate = useNavigate();
+  const { isCheckingSession } = useRequirePlaySession();
   const routeState = useRequiredState<DrawingRouteState>();
   const { showDialog, setShowDialog } = useExitGuard();
 
@@ -54,8 +56,14 @@ const DrawingView = () => {
     strokes,
     similarity: scoring.similarity,
   });
-  const submitAndCleanup = () => {
+
+  const submitAndCleanup = async () => {
     sessionStorage.removeItem("drawingEndTime");
+    try {
+      await clearPlaySession();
+    } catch {
+      // 세션 정리 실패해도 제출은 진행
+    }
     handleSubmit();
   };
 
@@ -70,7 +78,7 @@ const DrawingView = () => {
     submitAndCleanup();
   };
 
-  if (!routeState) return null;
+  if (isCheckingSession || !routeState) return null;
 
   return (
     <div className="relative flex h-full flex-col bg-white">

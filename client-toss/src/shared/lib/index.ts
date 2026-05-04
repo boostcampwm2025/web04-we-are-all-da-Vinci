@@ -1,3 +1,4 @@
+export { trackClick, trackImpression, trackScreen } from "./analytics";
 export { formatLocalDate } from "./formatLocalDate";
 export { initTossAdsOnce } from "./tossAds";
 export {

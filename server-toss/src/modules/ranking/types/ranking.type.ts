@@ -24,7 +24,7 @@ export const RankingListItemSchema = z.object({
   name: z.string().max(10),
   score: z.number().min(0).max(100),
   userKey: z.number(),
-  drawingId: z.bigint(),
+  drawingId: z.string(),
   rank: z.number().min(1),
   isMe: z.boolean(),
 });

@@ -1,3 +1,4 @@
+import type { Stroke } from "@toss/shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { serverTossApi } from "./serverToss";
 
@@ -7,8 +8,7 @@ describe("serverTossApi", () => {
     localStorage.clear();
   });
 
-  it("내 랭킹 조회 시 /api/rankings/me로 요청하고 공통 헤더를 포함한다", async () => {
-    localStorage.setItem("userKey", "123");
+  it("내 랭킹 조회 시 /api/rankings/me로 요청하고 x-user-id를 보내지 않는다", async () => {
     const body = { state: "FOUND", ranking: { rank: 7, score: 88.5 } };
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -29,23 +29,33 @@ describe("serverTossApi", () => {
     );
 
     const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
-    expect((requestInit.headers as Headers).get("x-user-id")).toBe("123");
+    expect((requestInit.headers as Headers).get("x-user-id")).toBeNull();
   });
 
-  it("랭킹 목록 조회 시 /api/rankings으로 요청하고 공통 헤더를 포함한다", async () => {
-    localStorage.setItem("userKey", "123");
+  it("랭킹 목록 조회 시 /api/rankings로 요청하고 rankings만 반환한다", async () => {
+    const rankings = [
+      {
+        userKey: 123,
+        name: "김다빈치",
+        drawingId: "100",
+        rank: 1,
+        score: 99.9,
+        isMe: true,
+      },
+    ];
+    const body = {
+      updatedAt: "2026-05-02T00:00:00.000Z",
+      rankings,
+    };
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({
-        updatedAt: "2026-05-02T00:00:00.000Z",
-        rankings: [],
-      }),
-      text: async () => JSON.stringify([]),
+      json: async () => body,
+      text: async () => JSON.stringify(body),
     });
 
     vi.stubGlobal("fetch", fetchMock);
 
-    await serverTossApi.getRankingList();
+    await expect(serverTossApi.getRankingList()).resolves.toEqual(rankings);
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/rankings",
@@ -56,11 +66,11 @@ describe("serverTossApi", () => {
     );
 
     const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
-    expect((requestInit.headers as Headers).get("x-user-id")).toBe("123");
+    expect((requestInit.headers as Headers).get("x-user-id")).toBeNull();
   });
-  it("내 그림 조회 시 /api/drawing/me로 요청하고 X-User-Id 헤더를 포함한다", async () => {
-    localStorage.setItem("userKey", "7");
-    const body = { userId: "7", drawings: [] };
+
+  it("내 그림 조회 시 /api/drawing/me로 요청하고 x-user-id를 보내지 않는다", async () => {
+    const body = { userKey: 7, drawings: [] };
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       text: async () => JSON.stringify(body),
@@ -80,7 +90,7 @@ describe("serverTossApi", () => {
     );
 
     const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
-    expect((requestInit.headers as Headers).get("x-user-id")).toBe("7");
+    expect((requestInit.headers as Headers).get("x-user-id")).toBeNull();
   });
 
   it("그림 상세 조회 시 /api/drawing/:drawingId로 요청한다", async () => {
@@ -113,5 +123,104 @@ describe("serverTossApi", () => {
         headers: expect.any(Headers),
       }),
     );
+  });
+
+  it("그림 제출 시 /api/drawing으로 userKey와 strokes를 전송한다", async () => {
+    localStorage.setItem("userKey", "1234");
+    const body = {
+      drawingId: 42,
+      promotionGranted: true,
+      similarity: {
+        score: 90,
+        shapeSimilarity: 45,
+        strokeMatchSimilarity: 45,
+        penalty: 0,
+      },
+    };
+    const strokes: Stroke[] = [
+      {
+        points: [
+          [0, 1],
+          [0, 1],
+        ],
+        color: [0, 0, 0],
+      },
+    ];
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => JSON.stringify(body),
+      json: async () => body,
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await serverTossApi.submitDrawing(strokes);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/drawing",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ userKey: "1234", strokes }),
+      }),
+    );
+  });
+
+  it("저장된 userKey가 없으면 /user/me에서 null 생일을 허용하고 userKey를 가져와 제출한다", async () => {
+    const userInfo = {
+      userKey: 760442640,
+      name: "Tester",
+      gender: null,
+      birthday: null,
+    };
+    const submitBody = {
+      drawingId: 42,
+      promotionGranted: false,
+      similarity: {
+        score: 90,
+        shapeSimilarity: 45,
+        strokeMatchSimilarity: 45,
+        penalty: 0,
+      },
+    };
+    const strokes: Stroke[] = [
+      {
+        points: [
+          [0, 1],
+          [0, 1],
+        ],
+        color: [0, 0, 0],
+      },
+    ];
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        text: async () => JSON.stringify(userInfo),
+        json: async () => userInfo,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        text: async () => JSON.stringify(submitBody),
+        json: async () => submitBody,
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await serverTossApi.submitDrawing(strokes);
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "/api/user/me",
+      expect.objectContaining({ method: "GET" }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/api/drawing",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ userKey: "760442640", strokes }),
+      }),
+    );
+    expect(localStorage.getItem("userKey")).toBe("760442640");
   });
 });

@@ -1,5 +1,6 @@
 import { PhaseHeader } from "@/entities/phaseHeader";
 import { drawPromptOnCanvas, useCanvasSetup } from "@/feature/drawing";
+import { useRequirePlaySession } from "@/feature/playChance";
 import {
   MEMORIZE_SECONDS,
   useCountdown,
@@ -20,6 +21,7 @@ interface MemorizeRouteState {
 
 const MemorizeView = () => {
   const navigate = useNavigate();
+  const { isCheckingSession } = useRequirePlaySession();
   const routeState = useRequiredState<MemorizeRouteState>();
   const { showDialog, setShowDialog } = useExitGuard();
   const { containerRef, canvasRef, ctxRef, canvasSize } = useCanvasSetup();
@@ -58,7 +60,7 @@ const MemorizeView = () => {
     drawPromptOnCanvas(canvas, ctx, routeState.promptStrokes);
   }, [canvasRef, ctxRef, routeState, canvasSize]);
 
-  if (!routeState) return null;
+  if (isCheckingSession || !routeState) return null;
 
   return (
     <div
@@ -70,6 +72,12 @@ const MemorizeView = () => {
         description={`${timeLeft}초 동안 그림을 기억하세요`}
         progress={progress}
       />
+
+      <div className="px-(--page-px) text-center">
+        <p className="text-sm text-(--color-grey)">
+          중도 종료 시 기회를 잃어요
+        </p>
+      </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-(--card-mx) mt-2 rounded-2xl bg-gray-100 p-3">

@@ -40,6 +40,7 @@ export type SubmitDrawingRequest = z.infer<typeof SubmitDrawingRequestSchema>;
 export const SubmitDrawingResponseSchema = z.object({
   drawingId: z.number().int().positive(),
   similarity: SimilarityResponseSchema,
+  promotionGranted: z.boolean(),
 });
 export type SubmitDrawingResponse = z.infer<typeof SubmitDrawingResponseSchema>;
 
@@ -52,7 +53,7 @@ export const MyDrawingResponseSchema = z.object({
 export type MyDrawingResponse = z.infer<typeof MyDrawingResponseSchema>;
 
 export const MyDrawingsResponseSchema = z.object({
-  userId: z.string().regex(/^\d+$/),
+  userKey: z.number(),
   drawings: z.array(MyDrawingResponseSchema),
 });
 export type MyDrawingsResponse = z.infer<typeof MyDrawingsResponseSchema>;
