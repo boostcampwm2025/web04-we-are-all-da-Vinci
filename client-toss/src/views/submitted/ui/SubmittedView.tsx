@@ -4,6 +4,7 @@ import {
 } from "@apps-in-toss/web-framework";
 import { painterMan1Img } from "@/shared/assets/images";
 import { BannerAd } from "@/shared/ui/bannerAd";
+import { trackClick } from "@/shared/lib";
 import { BottomCTA } from "@toss/tds-mobile";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -42,6 +43,8 @@ const SubmittedView = () => {
   }, [isAdSupported]);
 
   const handleNavigateHome = () => {
+    trackClick("submitted_to_dashboard_click");
+
     if (!isAdSupported || !isAdLoaded) {
       navigate("/");
       return;
@@ -80,7 +83,6 @@ const SubmittedView = () => {
         <BannerAd adGroupId="ait-ad-test-native-image-id" type="feed" />
       </div>
 
-      {/* @ts-expect-error TDS BottomCTA.Single children 타입이 framer-motion/React 19 호환 문제로 에러 발생 */}
       <div onClick={handleNavigateHome}>
         <BottomCTA.Single>결과 확인하러 가기</BottomCTA.Single>
       </div>

@@ -3,6 +3,7 @@ import { Button, TextButton, Top } from "@toss/tds-mobile";
 import { colors } from "@toss/tds-colors";
 import { MyScoreCard, useMyDrawings } from "@/entities/myScoreCard";
 import { BannerAd } from "@/shared/ui/bannerAd";
+import { trackClick } from "@/shared/lib";
 import { Link } from "react-router-dom";
 import { Podium } from "@/entities/podium";
 
@@ -32,7 +33,10 @@ const DashboardView = () => {
         <div className="flex w-full flex-col items-center gap-4 px-(--page-px)">
           {/* 랭킹 TOP3 */}
           <Podium />
-          <Link to="/ranking">
+          <Link
+            to="/ranking"
+            onClick={() => trackClick("dashboard_to_ranking_click")}
+          >
             <TextButton size="small" variant="arrow">
               TOP 100 랭킹 보러가기
             </TextButton>

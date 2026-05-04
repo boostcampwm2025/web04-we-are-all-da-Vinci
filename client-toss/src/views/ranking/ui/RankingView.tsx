@@ -1,5 +1,6 @@
 import { MyRankingSection, RankingList } from "@/entities/ranking";
 import { BannerAd } from "@/shared/ui/bannerAd";
+import { trackClick } from "@/shared/lib";
 import { Border, Button, Top } from "@toss/tds-mobile";
 import { Link } from "react-router-dom";
 
@@ -26,7 +27,10 @@ const RankingView = () => {
       </main>
 
       <footer className="sticky bottom-2 w-[90%] rounded-2xl bg-white">
-        <Link to="/dashboard">
+        <Link
+          to="/dashboard"
+          onClick={() => trackClick("ranking_back_to_dashboard_click")}
+        >
           <Button
             size="xlarge"
             variant="weak"
