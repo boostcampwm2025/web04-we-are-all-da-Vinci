@@ -27,8 +27,13 @@ const MemorizeView = () => {
   const { containerRef, canvasRef, ctxRef, canvasSize } = useCanvasSetup();
   const [endTime] = useState(() => {
     const stored = sessionStorage.getItem("memorizeEndTime");
-    if (stored) return Number(stored);
-    const et = Date.now() + MEMORIZE_SECONDS * 1000;
+    const now = Date.now();
+    if (stored) {
+      const parsed = Number(stored);
+      // 유효한 미래 시간만 사용, 과거면 새로 생성
+      if (parsed > now) return parsed;
+    }
+    const et = now + MEMORIZE_SECONDS * 1000;
     sessionStorage.setItem("memorizeEndTime", String(et));
     return et;
   });
@@ -65,7 +70,7 @@ const MemorizeView = () => {
   return (
     <div
       data-no-safe-area-bottom
-      className="flex h-full flex-col bg-white pb-0!"
+      className="flex h-full flex-col bg-white"
     >
       <PhaseHeader
         title="기억하세요!"

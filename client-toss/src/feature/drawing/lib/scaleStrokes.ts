@@ -40,14 +40,11 @@ export const calculateStrokeScale = (
     };
   }
 
-  const scaleX =
-    originalWidth === 0
-      ? Infinity
-      : (canvasWidth - padding * 2) / originalWidth;
-  const scaleY =
-    originalHeight === 0
-      ? Infinity
-      : (canvasHeight - padding * 2) / originalHeight;
+  const availableWidth = canvasWidth - padding * 2;
+  const availableHeight = canvasHeight - padding * 2;
+
+  const scaleX = originalWidth === 0 ? availableHeight / 1 : availableWidth / originalWidth;
+  const scaleY = originalHeight === 0 ? availableWidth / 1 : availableHeight / originalHeight;
   const scale = Math.min(scaleX, scaleY);
 
   const scaledWidth = originalWidth * scale;

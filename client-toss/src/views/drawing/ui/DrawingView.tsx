@@ -34,8 +34,12 @@ const DrawingView = () => {
 
   const [endTime] = useState(() => {
     const stored = sessionStorage.getItem("drawingEndTime");
-    if (stored) return Number(stored);
-    const et = Date.now() + DRAWING_SECONDS * 1000;
+    const now = Date.now();
+    if (stored) {
+      const parsed = Number(stored);
+      if (parsed > now) return parsed;
+    }
+    const et = now + DRAWING_SECONDS * 1000;
     sessionStorage.setItem("drawingEndTime", String(et));
     return et;
   });
