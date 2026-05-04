@@ -28,7 +28,7 @@ describe("랭킹 매퍼", () => {
         name: "홍길동",
         score: 91.25,
         userKey: 123,
-        drawingId: 456,
+        drawingId: "456",
         rank: 3,
         isMe: true,
       });
@@ -39,7 +39,7 @@ describe("랭킹 매퍼", () => {
         name: "홍길동",
         score: 91.25,
         userKey: 123,
-        drawingId: 456,
+        drawingId: "456",
         rank: 1,
         isMe: false,
       });
@@ -47,7 +47,7 @@ describe("랭킹 매퍼", () => {
         name: "홍길동",
         score: 91.25,
         userKey: 123,
-        drawingId: 456,
+        drawingId: "456",
         rank: 1,
         isMe: false,
       });

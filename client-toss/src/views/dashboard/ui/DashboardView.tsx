@@ -1,15 +1,28 @@
-import { useRef, useState } from "react";
-import { Button, TextButton, Top } from "@toss/tds-mobile";
-import { colors } from "@toss/tds-colors";
 import { MyScoreCard, useMyDrawings } from "@/entities/myScoreCard";
-import { BannerAd } from "@/shared/ui/bannerAd";
-import { Link } from "react-router-dom";
 import { Podium } from "@/entities/podium";
+import { usePlayChance } from "@/feature/playChance";
+import { serverTossApi } from "@/shared/api/serverToss";
+import { trackClick } from "@/shared/lib";
+import { BannerAd } from "@/shared/ui/bannerAd";
+import { RewardAd } from "@/shared/ui/rewardAd";
+import { colors } from "@toss/tds-colors";
+import { Button, TextButton, Toast, Top } from "@toss/tds-mobile";
+import { useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 const DashboardView = () => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isStartingGame, setIsStartingGame] = useState(false);
+  const [toastOpen, setToastOpen] = useState(false);
   const sliderRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   const { myDrawings, isLoading } = useMyDrawings();
+  const {
+    hasChance,
+    isLoading: isChanceLoading,
+    charge,
+    startPlay,
+  } = usePlayChance();
   const cardCount = Math.max(myDrawings.length, 1);
 
   const handleScroll = () => {
@@ -19,8 +32,80 @@ const DashboardView = () => {
     setActiveIndex(Math.min(index, cardCount - 1));
   };
 
+  const startGame = async () => {
+    if (isStartingGame) return;
+
+    setIsStartingGame(true);
+
+    try {
+      const started = await startPlay();
+      if (!started) return;
+
+      navigate("/memorize");
+    } catch {
+      setToastOpen(true);
+    } finally {
+      setIsStartingGame(false);
+    }
+  };
+
+  // 광고 시청 기록 전송은 best-effort. 실패해도 보상 지급(charge)은 진행해야 사용자가 보상을 잃지 않는다.
+  const recordAdViewBestEffort = async () => {
+    try {
+      await serverTossApi.recordAdView();
+    } catch (err) {
+      console.error("[recordAdView 실패, 무시]", err);
+    }
+  };
+
+  const handleReward = async () => {
+    if (isStartingGame) return;
+
+    setIsStartingGame(true);
+
+    try {
+      await recordAdViewBestEffort();
+      await charge();
+      const started = await startPlay();
+      if (!started) return;
+
+      navigate("/memorize");
+    } catch {
+      setToastOpen(true);
+    } finally {
+      setIsStartingGame(false);
+    }
+  };
+
+  const handleDevCharge = async () => {
+    if (isStartingGame) return;
+
+    setIsStartingGame(true);
+
+    try {
+      await recordAdViewBestEffort();
+      await charge();
+      const started = await startPlay();
+      if (!started) return;
+
+      navigate("/memorize");
+    } catch {
+      setToastOpen(true);
+    } finally {
+      setIsStartingGame(false);
+    }
+  };
+
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
+      <Toast
+        position="top"
+        open={toastOpen}
+        text="일시적 오류가 발생했어요"
+        leftAddon={<Toast.Icon name="icon-warning-circle-red-opacity-small" />}
+        duration={3000}
+        onClose={() => setToastOpen(false)}
+      />
       {/* 랭킹 영역 */}
       <div>
         <Top
@@ -32,7 +117,10 @@ const DashboardView = () => {
         <div className="flex w-full flex-col items-center gap-4 px-(--page-px)">
           {/* 랭킹 TOP3 */}
           <Podium />
-          <Link to="/ranking">
+          <Link
+            to="/ranking"
+            onClick={() => trackClick("dashboard_to_ranking_click")}
+          >
             <TextButton size="small" variant="arrow">
               TOP 100 랭킹 보러가기
             </TextButton>
@@ -98,9 +186,41 @@ const DashboardView = () => {
 
       {/* 하단 버튼 */}
       <div className="px-(--page-px) flex flex-col gap-3">
-        <Button color="primary" display="block">
-          한번 더 참여하고 포인트 받기
-        </Button>
+        {isChanceLoading ? (
+          <Button color="primary" display="block" loading disabled>
+            플레이 기회 확인 중
+          </Button>
+        ) : hasChance ? (
+          <Button
+            color="primary"
+            display="block"
+            loading={isStartingGame}
+            disabled={isStartingGame}
+            onClick={startGame}
+          >
+            플레이하기
+          </Button>
+        ) : (
+          <>
+            <RewardAd
+              adGroupId="ait-ad-test-rewarded-id"
+              onReward={handleReward}
+              text="광고 보고 기회 충전하기"
+            />
+            {import.meta.env.DEV && (
+              <Button
+                color="primary"
+                display="block"
+                variant="weak"
+                loading={isStartingGame}
+                disabled={isStartingGame}
+                onClick={handleDevCharge}
+              >
+                개발용: 기회 충전하고 시작
+              </Button>
+            )}
+          </>
+        )}
         <Button color="primary" display="block" variant="weak">
           공유하고 포인트 받기
         </Button>

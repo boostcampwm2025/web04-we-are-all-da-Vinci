@@ -14,7 +14,7 @@ interface MyRankingNotSubmittedResponse {
 type MyRankingResponse = MyRankingFoundResponse | MyRankingNotSubmittedResponse;
 
 interface RankingListItem {
-  userId: string;
+  userKey: number;
   name: string;
   drawingId: string;
   rank: number;

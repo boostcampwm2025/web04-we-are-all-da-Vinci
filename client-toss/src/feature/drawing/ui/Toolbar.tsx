@@ -2,6 +2,7 @@ import { ConfirmDialog } from "@toss/tds-mobile";
 import clsx from "clsx";
 import { useState } from "react";
 import { MaskedIcon } from "@/shared/ui/maskedIcon";
+import { trackClick } from "@/shared/lib";
 import { ICON_URL } from "../config/icons";
 import { PALETTE_COLORS } from "../config/colors";
 
@@ -15,6 +16,7 @@ const Toolbar = () => {
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
 
   const handleReset = () => {
+    trackClick("drawing_reset_click");
     // TODO: 캔버스 초기화 로직
     setIsResetDialogOpen(false);
   };
@@ -37,6 +39,7 @@ const Toolbar = () => {
         type="button"
         aria-label="한획 취소"
         className={clsx(toolBtnBase, "active:bg-gray-200")}
+        onClick={() => trackClick("drawing_undo_click")}
       >
         <MaskedIcon src={ICON_URL.refresh} color="var(--color-grey)" />
       </button>

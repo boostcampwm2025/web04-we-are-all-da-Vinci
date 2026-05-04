@@ -1,7 +1,7 @@
 import { preprocessStrokes, scoreFinalSimilarity } from "@davinci/similarity";
 import { EntityManager, QueryOrder } from "@mikro-orm/mysql";
-
 import { HttpException, Injectable, Logger } from "@nestjs/common";
+import { PointService } from "src/modules/point/point.service";
 import { Prompt } from "../../prompt/prompt.entity";
 import { PromptService } from "../../prompt/prompt.service";
 import { Drawing } from "../drawing.entity";
@@ -36,6 +36,7 @@ export class DrawingService {
     private readonly em: EntityManager,
     private readonly userService: UserService,
     private readonly promptService: PromptService,
+    private readonly pointService: PointService,
     private readonly drawingAccessService: DrawingAccessService,
   ) {}
 
@@ -93,7 +94,11 @@ export class DrawingService {
     userKey: number,
     playerStrokes: Stroke[],
     date: Date,
-  ): Promise<{ drawingId: number; similarity: Similarity }> {
+  ): Promise<{
+    drawingId: number;
+    similarity: Similarity;
+    promotionGranted: boolean;
+  }> {
     const startedAt = Date.now();
     const strokeMetrics = getStrokeMetrics(playerStrokes);
     const user = await this.userService.getUserInfo(userKey);
@@ -130,7 +135,10 @@ export class DrawingService {
       "최종 드로잉 제출 성공",
     );
 
-    return { drawingId: Number(drawing.id), similarity };
+    const promotionGranted =
+      await this.pointService.grantDrawingPromotionIfEligible(user.userKey);
+
+    return { drawingId: Number(drawing.id), similarity, promotionGranted };
   }
 
   private async findTodayByUser(userKey: number): Promise<Drawing[]> {
