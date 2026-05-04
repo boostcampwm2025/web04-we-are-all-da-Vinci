@@ -1,7 +1,7 @@
 import { Controller, Get, UseGuards } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import type { PromptResponse } from "@toss/shared";
-import { getTodayKst } from "src/common/utils/today";
+import { getTodayKst } from "src/common/util/today";
 import { PromptService } from "./prompt.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import {

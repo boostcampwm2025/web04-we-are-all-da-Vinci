@@ -8,7 +8,7 @@ import { Drawing } from "../drawing.entity";
 import { DrawingAccessService } from "./drawing-access.service";
 import { UserService } from "src/modules/user/user.service";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
-import { getSeoulDayRange } from "src/common/utils/time.util";
+import { getSeoulDayRange } from "src/common/util/time.util";
 
 type Similarity = ReturnType<typeof scoreFinalSimilarity>;
 const SLOW_STROKES_DURATION_MS = 500;

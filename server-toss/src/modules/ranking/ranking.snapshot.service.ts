@@ -3,7 +3,7 @@ import { EntityManager, sql } from "@mikro-orm/mysql";
 import { Injectable, Logger } from "@nestjs/common";
 import { Drawing } from "src/modules/drawing/drawing.entity";
 import { Ranking } from "./ranking.entity";
-import { getSeoulDayRange } from "src/common/utils/time.util";
+import { getSeoulDayRange } from "src/common/util/time.util";
 import { CreateRequestContext } from "@mikro-orm/decorators/legacy";
 
 type RankingSnapshotInsert = RequiredEntityData<Ranking>;

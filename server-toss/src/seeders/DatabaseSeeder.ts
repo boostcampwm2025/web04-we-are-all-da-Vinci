@@ -7,7 +7,7 @@ import { DailyPrompt } from "src/modules/prompt/daily-prompt.entity";
 import { Prompt } from "src/modules/prompt/prompt.entity";
 import { Ranking } from "src/modules/ranking/ranking.entity";
 import { User } from "src/modules/user/user.entity";
-import { getTodayKst } from "src/common/utils/today";
+import { getTodayKst } from "src/common/util/today";
 
 type Stroke = {
   points: [number[], number[]];
