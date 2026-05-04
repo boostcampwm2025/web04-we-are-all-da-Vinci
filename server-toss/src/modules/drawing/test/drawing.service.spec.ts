@@ -20,10 +20,6 @@ jest.mock("src/common/time.util", () => ({
   }),
 }));
 
-import {
-  TossPromotionError,
-  TossTransportError,
-} from "src/modules/auth/errors/toss.errors";
 import type { User } from "../../user/user.entity";
 import type { Prompt } from "../../prompt/prompt.entity";
 import { Drawing } from "../drawing.entity";
@@ -67,22 +63,8 @@ const buildPromptService = () => ({
   })),
 });
 
-const buildPointService = (canGrant = true) => ({
-  canGrantTodayPromotion: jest.fn(async () => canGrant),
-  saveDrawingPointLog: jest.fn(async () => undefined),
-});
-
-const buildTossApiClient = () => ({
-  getPromotionKey: jest.fn(async () => "test-key"),
-  executePromotion: jest.fn(async () => undefined),
-});
-
-const buildConfigService = (nodeEnv = "test") => ({
-  get: jest.fn((key: string) => (key === "NODE_ENV" ? nodeEnv : undefined)),
-  getOrThrow: jest.fn((key: string) => {
-    if (key === "PROMOTION_CODE") return "TEMP_PROMOTION_CODE";
-    throw new Error(`Missing config: ${key}`);
-  }),
+const buildPointService = (granted = false) => ({
+  grantDrawingPromotionIfEligible: jest.fn(async () => granted),
 });
 
 const buildDrawingAccessService = () => ({
@@ -98,16 +80,12 @@ const buildService = ({
   userService = buildUserService(),
   promptService = buildPromptService(),
   pointService = buildPointService(),
-  tossApiClient = buildTossApiClient(),
-  configService = buildConfigService(),
   drawingAccessService = buildDrawingAccessService(),
 }: {
   em: unknown;
   userService?: ReturnType<typeof buildUserService>;
   promptService?: ReturnType<typeof buildPromptService>;
   pointService?: ReturnType<typeof buildPointService>;
-  tossApiClient?: ReturnType<typeof buildTossApiClient>;
-  configService?: ReturnType<typeof buildConfigService>;
   drawingAccessService?: ReturnType<typeof buildDrawingAccessService>;
 }) =>
   new DrawingService(
@@ -115,8 +93,6 @@ const buildService = ({
     userService as never,
     promptService as never,
     pointService as never,
-    tossApiClient as never,
-    configService as never,
     drawingAccessService as never,
   );
 
@@ -219,45 +195,17 @@ describe("DrawingService", () => {
       expect(em.persist).not.toHaveBeenCalled();
       expect(em.flush).not.toHaveBeenCalled();
     });
-  });
 
-  describe("프로모션 지급", () => {
-    const baseEm = () => ({
-      getReference: jest.fn(() => ({ id: BigInt(7) })),
-      persist: jest.fn((drawing: Drawing) => {
-        drawing.id = BigInt(1);
-      }),
-      flush: jest.fn(async () => undefined),
-    });
-
-    it("일일 한도에 도달하면 Toss API를 호출하지 않는다", async () => {
-      const pointService = buildPointService(false);
-      const tossApiClient = buildTossApiClient();
-      const service = buildService({
-        em: baseEm(),
-        pointService,
-        tossApiClient,
-      });
-
-      const result = await service.submitDrawing(
-        1234,
-        sampleStrokes as never,
-        new Date(),
-      );
-
-      expect(tossApiClient.getPromotionKey).not.toHaveBeenCalled();
-      expect(pointService.saveDrawingPointLog).not.toHaveBeenCalled();
-      expect(result.promotionGranted).toBe(false);
-    });
-
-    it("정상 지급 시 getPromotionKey, executePromotion, saveDrawingPointLog 순서로 호출한다", async () => {
+    it("프로모션 지급은 PointService에 위임하고 결과를 그대로 반환한다", async () => {
       const pointService = buildPointService(true);
-      const tossApiClient = buildTossApiClient();
-      const service = buildService({
-        em: baseEm(),
-        pointService,
-        tossApiClient,
-      });
+      const em = {
+        getReference: jest.fn(() => ({ id: BigInt(7) })),
+        persist: jest.fn((drawing: Drawing) => {
+          drawing.id = BigInt(1);
+        }),
+        flush: jest.fn(async () => undefined),
+      };
+      const service = buildService({ em, pointService });
 
       const result = await service.submitDrawing(
         1234,
@@ -265,113 +213,10 @@ describe("DrawingService", () => {
         new Date(),
       );
 
-      expect(tossApiClient.getPromotionKey).toHaveBeenCalledWith(1234);
-      expect(tossApiClient.executePromotion).toHaveBeenCalledWith(
+      expect(pointService.grantDrawingPromotionIfEligible).toHaveBeenCalledWith(
         1234,
-        "test-key",
-        "TEST_TEMP_PROMOTION_CODE",
-        2,
       );
-      expect(pointService.saveDrawingPointLog).toHaveBeenCalledWith(1234);
       expect(result.promotionGranted).toBe(true);
-    });
-
-    it("4110 오류 시 재시도하여 성공하면 saveDrawingPointLog를 호출한다", async () => {
-      const pointService = buildPointService(true);
-      const tossApiClient = buildTossApiClient();
-      tossApiClient.executePromotion
-        .mockRejectedValueOnce(new TossPromotionError("4110", "내부 오류"))
-        .mockResolvedValueOnce(undefined);
-      const service = buildService({
-        em: baseEm(),
-        pointService,
-        tossApiClient,
-      });
-
-      const result = await service.submitDrawing(
-        1234,
-        sampleStrokes as never,
-        new Date(),
-      );
-
-      expect(tossApiClient.getPromotionKey).toHaveBeenCalledTimes(2);
-      expect(pointService.saveDrawingPointLog).toHaveBeenCalledTimes(1);
-      expect(result.promotionGranted).toBe(true);
-    });
-
-    it("TossTransportError 발생 시 재시도하여 성공하면 saveDrawingPointLog를 호출한다", async () => {
-      const pointService = buildPointService(true);
-      const tossApiClient = buildTossApiClient();
-      tossApiClient.getPromotionKey
-        .mockRejectedValueOnce(new TossTransportError("타임아웃"))
-        .mockResolvedValueOnce("test-key");
-      const service = buildService({
-        em: baseEm(),
-        pointService,
-        tossApiClient,
-      });
-
-      const result = await service.submitDrawing(
-        1234,
-        sampleStrokes as never,
-        new Date(),
-      );
-
-      expect(tossApiClient.getPromotionKey).toHaveBeenCalledTimes(2);
-      expect(pointService.saveDrawingPointLog).toHaveBeenCalledTimes(1);
-      expect(result.promotionGranted).toBe(true);
-    });
-
-    it("최대 재시도 모두 실패해도 submitDrawing은 정상 결과를 반환한다", async () => {
-      const pointService = buildPointService(true);
-      const tossApiClient = buildTossApiClient();
-      tossApiClient.executePromotion.mockRejectedValue(
-        new TossPromotionError("4110", "내부 오류"),
-      );
-      const service = buildService({
-        em: baseEm(),
-        pointService,
-        tossApiClient,
-      });
-
-      const result = await service.submitDrawing(
-        1234,
-        sampleStrokes as never,
-        new Date(),
-      );
-
-      expect(tossApiClient.executePromotion).toHaveBeenCalledTimes(3);
-      expect(pointService.saveDrawingPointLog).not.toHaveBeenCalled();
-      expect(result).toMatchObject({
-        drawingId: 1,
-        promotionGranted: false,
-      });
-    });
-
-    it("재시도 불필요 에러가 발생해도 submitDrawing은 정상 결과를 반환한다", async () => {
-      const pointService = buildPointService(true);
-      const tossApiClient = buildTossApiClient();
-      tossApiClient.getPromotionKey.mockRejectedValue(
-        new TossPromotionError("4109", "프로모션이 실행중이 아니에요"),
-      );
-      const service = buildService({
-        em: baseEm(),
-        pointService,
-        tossApiClient,
-      });
-
-      const result = await service.submitDrawing(
-        1234,
-        sampleStrokes as never,
-        new Date(),
-      );
-
-      expect(tossApiClient.getPromotionKey).toHaveBeenCalledTimes(1);
-      expect(pointService.saveDrawingPointLog).not.toHaveBeenCalled();
-      expect(result).toMatchObject({
-        drawingId: 1,
-        promotionGranted: false,
-      });
     });
   });
 
