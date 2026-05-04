@@ -29,7 +29,7 @@ export class RankingRepository extends EntityRepository<Ranking> {
       },
     );
 
-    return ranking?.createdAt ?? null;
+    return ranking?.updatedAt ?? null;
   }
 
   async findMyRanking(userKey: number) {
