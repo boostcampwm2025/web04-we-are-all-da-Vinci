@@ -10,6 +10,11 @@ services:
       - "3000:3000"
     env_file: .env
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     healthcheck:
       test:
         [

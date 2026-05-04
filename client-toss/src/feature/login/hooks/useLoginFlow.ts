@@ -1,7 +1,7 @@
+import { clearAccessToken, serverTossApi, setAccessToken } from "@/shared/api";
 import { appLogin } from "@apps-in-toss/web-framework";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { serverTossApi } from "@/shared/api";
 
 const LOGIN_PENDING_KEY = "login_pending";
 
@@ -19,7 +19,7 @@ export const useLoginFlow = () => {
         authorizationCode,
         referrer,
       });
-      localStorage.setItem("access_token", accessToken);
+      setAccessToken(accessToken);
       navigate("/", { replace: true });
     } catch (err) {
       localStorage.removeItem(LOGIN_PENDING_KEY);
@@ -51,7 +51,7 @@ export const useLoginFlow = () => {
     } catch (err) {
       console.error("[logout error]", err);
     } finally {
-      localStorage.removeItem("access_token");
+      clearAccessToken();
       navigate("/login", { replace: true });
     }
   };

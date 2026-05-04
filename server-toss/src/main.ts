@@ -1,8 +1,8 @@
+import "reflect-metadata";
 import { MikroORM } from "@mikro-orm/mysql";
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-import { Logger } from "nestjs-pino";
-import "reflect-metadata";
+import { Logger, LoggerErrorInterceptor } from "nestjs-pino";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/http-exception.filter";
 import { ZodExceptionFilter } from "./common/zod-exception.filter";
@@ -13,6 +13,7 @@ async function bootstrap() {
   app.enableShutdownHooks();
   app.useLogger(app.get(Logger));
   app.useGlobalFilters(new ZodExceptionFilter(), new HttpExceptionFilter());
+  app.useGlobalInterceptors(new LoggerErrorInterceptor());
 
   app.enableCors({
     origin: process.env.CORS_ORIGIN?.split(",") ?? "*",

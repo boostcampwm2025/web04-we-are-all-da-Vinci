@@ -1,1 +1,1 @@
-export { serverTossApi } from "./serverToss";
+export { serverTossApi, setAccessToken, clearAccessToken } from "./serverToss";

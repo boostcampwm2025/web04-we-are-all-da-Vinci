@@ -84,6 +84,25 @@ vi.mock("@toss/tds-mobile", () => ({
   }: Record<string, unknown> & { children?: ReactNode }) =>
     createElement("button", props, children),
   ConfirmDialog: ConfirmDialogMock,
+  Toast: Object.assign(
+    ({
+      open,
+      text,
+      leftAddon,
+      ...props
+    }: Record<string, unknown> & {
+      open?: boolean;
+      text?: ReactNode;
+      leftAddon?: ReactNode;
+    }) => {
+      if (!open) return null;
+      return createElement("div", props, leftAddon, text);
+    },
+    {
+      Icon: (props: Record<string, unknown>) =>
+        createElement("span", { "aria-hidden": true, ...props }),
+    },
+  ),
 }));
 
 vi.mock("@toss/tds-mobile-ait", () => ({

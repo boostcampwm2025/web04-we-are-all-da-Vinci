@@ -1,3 +1,4 @@
+import { Logger } from "@nestjs/common";
 import { describe, expect, it, jest } from "@jest/globals";
 jest.mock("@nestjs/schedule", () => ({
   Cron: () => () => undefined,
@@ -23,9 +24,6 @@ jest.mock("@mikro-orm/decorators/legacy", () => ({
 jest.mock("@mikro-orm/mysql", () => ({
   EntityRepository: class {},
 }));
-jest.mock("nestjs-pino", () => ({
-  PinoLogger: class {},
-}));
 
 import { RankingSnapshotScheduler } from "../ranking.snapshot.scheduler";
 
@@ -37,13 +35,9 @@ describe("랭킹 스냅샷 스케줄러", () => {
         const rankingSnapshotService = {
           refreshRankingSnapshot,
         };
-        const logger = {
-          error: jest.fn().mockResolvedValue(undefined),
-          setContext: jest.fn().mockResolvedValue(undefined),
-        };
+
         const scheduler = new RankingSnapshotScheduler(
           rankingSnapshotService as never,
-          logger as never,
         );
         await scheduler.handleRankingSnapshotRefresh();
 
@@ -57,18 +51,17 @@ describe("랭킹 스냅샷 스케줄러", () => {
         const rankingSnapshotService = {
           refreshRankingSnapshot,
         };
-        const error = jest.fn().mockResolvedValue(undefined);
-        const logger = {
-          error,
-          setContext: jest.fn().mockResolvedValue(undefined),
-        };
+        const errorSpy = jest
+          .spyOn(Logger.prototype, "error")
+          .mockImplementation(() => undefined);
+
         const scheduler = new RankingSnapshotScheduler(
           rankingSnapshotService as never,
-          logger as never,
         );
         await scheduler.handleRankingSnapshotRefresh();
 
-        expect(error.mock.calls.length).toBe(1);
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        errorSpy.mockRestore();
       });
     });
   });
