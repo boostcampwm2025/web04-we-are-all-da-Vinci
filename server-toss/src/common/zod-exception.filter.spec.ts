@@ -6,16 +6,27 @@ const buildHost = () => {
   const json = jest.fn();
   const status = jest.fn(() => ({ json }));
   const response = { status };
+  const request = { url: "/strokes" };
   const host = {
     switchToHttp: () => ({
       getResponse: () => response,
+      getRequest: () => request,
     }),
   } as unknown as ArgumentsHost;
   return { host, status, json };
 };
 
 describe("ZodExceptionFilter", () => {
-  it("ZodError를 400 응답과 issue 배열로 변환한다", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date("2026-05-04T12:34:56.000Z"));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it("ZodError를 표준 응답으로 변환한다", () => {
     const filter = new ZodExceptionFilter();
     const { host, status, json } = buildHost();
     const schema = z.object({ age: z.number() });
@@ -25,13 +36,12 @@ describe("ZodExceptionFilter", () => {
     filter.catch(parsed.error as ZodError, host);
 
     expect(status).toHaveBeenCalledWith(400);
-    const payload = json.mock.calls[0][0] as {
-      message: string;
-      issues: unknown[];
-    };
-    expect(payload.message).toBe(
-      "요청 데이터가 올바르지 않아요 (Validation Failed)",
-    );
-    expect(Array.isArray(payload.issues)).toBe(true);
+    expect(json).toHaveBeenCalledWith({
+      timestamp: "2026-05-04T12:34:56.000Z",
+      statusCode: 400,
+      message: "요청 데이터가 올바르지 않아요 (Validation Failed)",
+      path: "/strokes",
+      issues: parsed.error.issues,
+    });
   });
 });

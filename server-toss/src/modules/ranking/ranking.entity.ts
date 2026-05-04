@@ -5,7 +5,7 @@ import {
   Property,
 } from "@mikro-orm/decorators/legacy";
 import { EntityRepositoryType } from "@mikro-orm/core";
-import { BaseEntity } from "src/common/base.entity";
+import { BaseEntity } from "src/common/entitiy/base.entity";
 import { RankingRepository } from "./ranking.repository";
 
 @Entity({ tableName: "rankings", repository: () => RankingRepository })

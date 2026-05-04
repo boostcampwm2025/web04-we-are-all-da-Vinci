@@ -16,3 +16,14 @@ export class TossApiError extends Error {
     this.name = "TossApiError";
   }
 }
+
+/** 프로모션 API가 resultType: FAIL 을 반환한 경우 */
+export class TossPromotionError extends Error {
+  constructor(
+    public readonly errorCode: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = "TossPromotionError";
+  }
+}

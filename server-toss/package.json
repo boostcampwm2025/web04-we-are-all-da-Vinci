@@ -101,7 +101,8 @@
     "testEnvironment": "node",
     "passWithNoTests": true,
     "setupFiles": [
-      "<rootDir>/test-setup/setup-mikro-orm-mocks.ts"
+      "<rootDir>/test-setup/setup-mikro-orm-mocks.ts",
+      "<rootDir>/test-setup/setup-logger.ts"
     ],
     "transformIgnorePatterns": [
       "node_modules/(?!(\\.pnpm/)?(@mikro-orm))"

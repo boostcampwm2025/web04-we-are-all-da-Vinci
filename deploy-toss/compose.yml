@@ -14,6 +14,11 @@ services:
     environment:
       - TOSS_CLIENT_KEY_PATH=/run/certs/davinci_private.key
       - TOSS_CLIENT_CERT_PATH=/run/certs/davinci_public.cert
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     healthcheck:
       test:
         [

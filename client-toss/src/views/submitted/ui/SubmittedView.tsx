@@ -1,12 +1,13 @@
+import { painterMan1Img } from "@/shared/assets/images";
+import { trackClick } from "@/shared/lib";
+import { BannerAd } from "@/shared/ui/bannerAd";
 import {
   loadFullScreenAd,
   showFullScreenAd,
 } from "@apps-in-toss/web-framework";
-import { painterMan1Img } from "@/shared/assets/images";
-import { BannerAd } from "@/shared/ui/bannerAd";
-import { BottomCTA } from "@toss/tds-mobile";
+import { BottomCTA, Toast } from "@toss/tds-mobile";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const REWARDED_AD_GROUP_ID = "ait-ad-test-rewarded-id";
 
@@ -20,8 +21,15 @@ const getAdSupported = () => {
 
 const SubmittedView = () => {
   const navigate = useNavigate();
+  const { state } = useLocation() as {
+    state: { promotionGranted: boolean } | null;
+  };
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const isAdSupported = getAdSupported();
+  const [toastOpen, setToastOpen] = useState(!!state);
+  const toastText = state?.promotionGranted
+    ? "포인트 지급이 완료됐어요"
+    : "그림 제출이 완료됐어요";
 
   useEffect(() => {
     if (!isAdSupported) return;
@@ -42,6 +50,8 @@ const SubmittedView = () => {
   }, [isAdSupported]);
 
   const handleNavigateHome = () => {
+    trackClick("submitted_to_dashboard_click");
+
     if (!isAdSupported || !isAdLoaded) {
       navigate("/");
       return;
@@ -62,6 +72,14 @@ const SubmittedView = () => {
 
   return (
     <div className="flex h-full flex-col bg-white">
+      <Toast
+        position="top"
+        open={toastOpen}
+        text={toastText}
+        leftAddon={<Toast.Icon name="icon-check-circle-blue-opacity" />}
+        duration={3000}
+        onClose={() => setToastOpen(false)}
+      />
       <div className="flex flex-1 flex-col items-center pt-[30%] px-(--page-px)">
         <img
           src={painterMan1Img}
@@ -71,7 +89,7 @@ const SubmittedView = () => {
         <h1 className="text-[22px] font-bold">그림을 제출했어요</h1>
         <div className="mt-2 text-center">
           <p className="text-sm text-(--color-grey)">
-            하루 최대 10번 도전할 수 있어요
+            광고 보고 다시 도전할 수 있어요
           </p>
         </div>
       </div>
@@ -80,7 +98,6 @@ const SubmittedView = () => {
         <BannerAd adGroupId="ait-ad-test-native-image-id" type="feed" />
       </div>
 
-      {/* @ts-expect-error TDS BottomCTA.Single children 타입이 framer-motion/React 19 호환 문제로 에러 발생 */}
       <div onClick={handleNavigateHome}>
         <BottomCTA.Single>결과 확인하러 가기</BottomCTA.Single>
       </div>
