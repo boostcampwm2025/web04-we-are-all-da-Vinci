@@ -1,6 +1,6 @@
 import { QueryOrder, type RequiredEntityData } from "@mikro-orm/core";
 import { EntityManager, sql } from "@mikro-orm/mysql";
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { Drawing } from "src/modules/drawing/drawing.entity";
 import { Ranking } from "./ranking.entity";
 import { getSeoulDayRange } from "src/common/time.util";
@@ -10,6 +10,7 @@ type RankingSnapshotInsert = RequiredEntityData<Ranking>;
 
 @Injectable()
 export class RankingSnapshotService {
+  private readonly logger = new Logger(RankingSnapshotService.name);
   private isRefreshing = false;
 
   constructor(private readonly em: EntityManager) {}
@@ -17,11 +18,26 @@ export class RankingSnapshotService {
   @CreateRequestContext()
   async refreshRankingSnapshot() {
     if (this.isRefreshing) {
+      this.logger.warn(
+        { event: "ranking.snapshot.refresh.skipped" },
+        "랭킹 스냅샷 갱신 중복 요청 스킵",
+      );
       return;
     }
 
     this.isRefreshing = true;
+    const startedAt = Date.now();
     const { start, end } = getSeoulDayRange();
+    let insertedCount = 0;
+
+    this.logger.log(
+      {
+        event: "ranking.snapshot.refresh.started",
+        rangeStart: start.toISOString(),
+        rangeEnd: end.toISOString(),
+      },
+      "랭킹 스냅샷 갱신 시작",
+    );
 
     try {
       await this.em.transactional(async (transactionalEm) => {
@@ -93,7 +109,28 @@ export class RankingSnapshotService {
         if (rankings.length > 0) {
           await rankingRepository.insertMany(rankings);
         }
+
+        insertedCount = rankings.length;
       });
+      this.logger.log(
+        {
+          event: "ranking.snapshot.refresh.succeeded",
+          insertedCount,
+          durationMs: Date.now() - startedAt,
+        },
+        "랭킹 스냅샷 갱신 성공",
+      );
+    } catch (err) {
+      this.logger.error(
+        {
+          event: "ranking.snapshot.refresh.failed",
+          insertedCount,
+          durationMs: Date.now() - startedAt,
+          err,
+        },
+        "랭킹 스냅샷 갱신 실패",
+      );
+      throw err;
     } finally {
       this.isRefreshing = false;
     }

@@ -32,26 +32,26 @@ Apps-in-Toss 미니앱용 NestJS REST API. 매 획 단위의 유사도 계산과
 
 요청/응답 스키마 단일 소스는 `packages/toss-shared/src/schemas/drawing.schema.ts` 이다.
 
-| Method | Path        | Request Body                       | Response (Success)                       | 에러                                   |
-| ------ | ----------- | ---------------------------------- | ---------------------------------------- | -------------------------------------- |
-| GET    | `/health`   | —                                  | `200 { status: "ok" }`                   | —                                      |
-| GET    | `/prompt`   | —                                  | `200 { promptId, strokes }`              | `404 PROMPT_NOT_FOUND`                 |
-| POST   | `/strokes`  | `{ strokes: Stroke[] }`            | `201 Similarity`                         | `400` (Zod), `404 PROMPT_NOT_FOUND`    |
-| POST   | `/drawing` | `{ userKey: string, strokes: … }`  | `201 { drawingId, similarity }`          | `400` (Zod), `404 USER_NOT_FOUND`      |
+| Method | Path       | Request Body                      | Response (Success)              | 에러                                |
+| ------ | ---------- | --------------------------------- | ------------------------------- | ----------------------------------- |
+| GET    | `/health`  | —                                 | `200 { status: "ok" }`          | —                                   |
+| GET    | `/prompt`  | —                                 | `200 { promptId, strokes }`     | `404 PROMPT_NOT_FOUND`              |
+| POST   | `/strokes` | `{ strokes: Stroke[] }`           | `201 Similarity`                | `400` (Zod), `404 PROMPT_NOT_FOUND` |
+| POST   | `/drawing` | `{ userKey: string, strokes: … }` | `201 { drawingId, similarity }` | `400` (Zod), `404 USER_NOT_FOUND`   |
 
 ### 타입
 
 ```ts
 type Stroke = {
-  points: [number[], number[]];          // [xs, ys]
-  color: [number, number, number];       // RGB 0-255
+  points: [number[], number[]]; // [xs, ys]
+  color: [number, number, number]; // RGB 0-255
 };
 
 type Similarity = {
-  similarity: number;                     // 0~100
-  strokeCountSimilarity: number;
+  score: number; // 0~100
   strokeMatchSimilarity: number;
   shapeSimilarity: number;
+  penalty: number;
 };
 ```
 
@@ -79,12 +79,19 @@ Swagger UI: `http://localhost:3001/docs`
 
 ## 환경변수
 
-| 변수 | 설명 | 기본값 |
-| --- | --- | --- |
-| `PORT` | 서버 포트 | `3001` |
-| `CORS_ORIGIN` | 허용 오리진 (쉼표 구분) | `*` |
-| `DB_HOST` / `DB_PORT` / `DB_USER` / `DB_PASSWORD` / `DB_NAME` | MySQL 접속 | `.env.example` 참조 |
-| `DISABLE_PROMPT_CACHE` | `true`면 `PromptService`의 preprocessed 메모리 캐시를 우회 (벤치마크용) | unset |
+| 변수                                                          | 설명                                                                    | 기본값              |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------- |
+| `PORT`                                                        | 서버 포트                                                               | `3001`              |
+| `LOG_LEVEL`                                                   | Pino 로그 레벨. 미설정 시 개발 `debug`, 배포 `info`                     | env별 기본값        |
+| `CORS_ORIGIN`                                                 | 허용 오리진 (쉼표 구분)                                                 | `*`                 |
+| `DB_HOST` / `DB_PORT` / `DB_USER` / `DB_PASSWORD` / `DB_NAME` | MySQL 접속                                                              | `.env.example` 참조 |
+| `DISABLE_PROMPT_CACHE`                                        | `true`면 `PromptService`의 preprocessed 메모리 캐시를 우회 (벤치마크용) | unset               |
+
+## 로깅
+
+- 모든 HTTP 응답은 `X-Request-Id`를 포함한다. 요청에 `X-Request-Id`가 있으면 재사용하고, 없으면 서버가 UUID를 생성한다.
+- 개발환경은 `pino-pretty`로 콘솔에 출력하고, 배포환경은 Docker `json-file` 로그 로테이션으로 JSON stdout을 파일 보관한다.
+- 인증 헤더, 쿠키, Toss access token, authorizationCode, raw strokes, 복호화된 개인정보는 로그에 남기지 않는다.
 
 ## 테스트 / 벤치마크
 
