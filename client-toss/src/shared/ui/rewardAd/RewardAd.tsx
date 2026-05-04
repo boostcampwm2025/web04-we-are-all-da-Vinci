@@ -3,7 +3,7 @@ import {
   showFullScreenAd,
 } from "@apps-in-toss/web-framework";
 import { Button } from "@toss/tds-mobile";
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface RewardAdProps {
   adGroupId: string;
@@ -18,6 +18,18 @@ const RewardAd = ({
 }: RewardAdProps) => {
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [isRewarding, setIsRewarding] = useState(false);
+  const unregisterRef = useRef<(() => void) | null>(null);
+
+  const registerAdLoader = (groupId: string) => {
+    unregisterRef.current?.();
+    unregisterRef.current = loadFullScreenAd({
+      options: { adGroupId: groupId },
+      onEvent: (event) => {
+        if (event.type === "loaded") setIsAdLoaded(true);
+      },
+      onError: (error) => console.error("광고 로드에 실패했어요:", error),
+    });
+  };
 
   useEffect(() => {
     if (!loadFullScreenAd.isSupported()) {
@@ -25,26 +37,13 @@ const RewardAd = ({
       return;
     }
 
-    const unregister = loadFullScreenAd({
-      options: { adGroupId },
-      onEvent: (event) => {
-        if (event.type === "loaded") setIsAdLoaded(true);
-      },
-      onError: (error) => console.error("광고 로드에 실패했어요:", error),
-    });
+    registerAdLoader(adGroupId);
 
-    return () => unregister();
-  }, []);
-
-  const loadNextAd = () => {
-    loadFullScreenAd({
-      options: { adGroupId },
-      onEvent: (event) => {
-        if (event.type === "loaded") setIsAdLoaded(true);
-      },
-      onError: console.error,
-    });
-  };
+    return () => {
+      unregisterRef.current?.();
+      unregisterRef.current = null;
+    };
+  }, [adGroupId]);
 
   const handleShowAd = () => {
     if (isRewarding) return;
@@ -62,7 +61,7 @@ const RewardAd = ({
         }
         if (event.type === "dismissed") {
           setIsAdLoaded(false);
-          loadNextAd();
+          registerAdLoader(adGroupId);
         }
       },
       onError: (error) => console.error("광고 표시에 실패했어요:", error),

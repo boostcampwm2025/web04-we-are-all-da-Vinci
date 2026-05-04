@@ -49,13 +49,22 @@ const DashboardView = () => {
     }
   };
 
+  // 광고 시청 기록 전송은 best-effort. 실패해도 보상 지급(charge)은 진행해야 사용자가 보상을 잃지 않는다.
+  const recordAdViewBestEffort = async () => {
+    try {
+      await serverTossApi.recordAdView();
+    } catch (err) {
+      console.error("[recordAdView 실패, 무시]", err);
+    }
+  };
+
   const handleReward = async () => {
     if (isStartingGame) return;
 
     setIsStartingGame(true);
 
     try {
-      await serverTossApi.recordAdView();
+      await recordAdViewBestEffort();
       await charge();
       const started = await startPlay();
       if (!started) return;
@@ -74,7 +83,7 @@ const DashboardView = () => {
     setIsStartingGame(true);
 
     try {
-      await serverTossApi.recordAdView();
+      await recordAdViewBestEffort();
       await charge();
       const started = await startPlay();
       if (!started) return;

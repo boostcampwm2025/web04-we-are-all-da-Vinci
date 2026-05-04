@@ -50,8 +50,15 @@ export const usePlayChance = () => {
 
     if (!result.consumed) return false;
 
-    await startPlaySession();
-    return true;
+    try {
+      await startPlaySession();
+      return true;
+    } catch (error) {
+      // 세션 시작이 실패하면 소비된 플레이 기회를 복구해 사용자가 손해보지 않도록 한다.
+      const restored = await chargePlayChance();
+      setState(restored);
+      throw error;
+    }
   }, []);
 
   useEffect(() => {
