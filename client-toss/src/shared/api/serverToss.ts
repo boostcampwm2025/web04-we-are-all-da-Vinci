@@ -1,21 +1,32 @@
-import { appLogin } from "@apps-in-toss/web-framework";
-import {
-  LoginResponseSchema,
-  SubmitDrawingResponseSchema,
-  UserInfoResponseSchema,
-} from "@toss/shared";
 import type { PodiumEntry } from "@/entities/podium";
 import type { MyRankingResponse, RankingListItem } from "@/entities/ranking";
+import { appLogin } from "@apps-in-toss/web-framework";
 import type {
   MyDrawingResponse,
   MyDrawingsResponse,
   Stroke,
+} from "@toss/shared";
+import {
+  LoginResponseSchema,
+  SubmitDrawingResponseSchema,
+  UserInfoResponseSchema,
 } from "@toss/shared";
 
 const BASE_URL = "/api";
 const LOGIN_PATH = "/oauth/toss/login";
 
 const getToken = () => localStorage.getItem("access_token");
+
+// 토큰이 바뀌면 다른 사용자일 수 있으므로 userKey 캐시도 함께 무효화한다.
+export const setAccessToken = (token: string) => {
+  localStorage.setItem("access_token", token);
+  localStorage.removeItem("userKey");
+};
+
+export const clearAccessToken = () => {
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("userKey");
+};
 
 let reissuePromise: Promise<string> | null = null;
 
@@ -29,15 +40,15 @@ async function reissueToken(): Promise<string> {
       body: JSON.stringify({ authorizationCode, referrer }),
     });
     if (!res.ok) {
-      localStorage.removeItem("access_token");
+      clearAccessToken();
       throw new Error("토큰 재발급 실패");
     }
     const parsed = LoginResponseSchema.safeParse(await res.json());
     if (!parsed.success) {
-      localStorage.removeItem("access_token");
+      clearAccessToken();
       throw new Error("토큰 재발급 응답이 올바르지 않아요");
     }
-    localStorage.setItem("access_token", parsed.data.accessToken);
+    setAccessToken(parsed.data.accessToken);
     return parsed.data.accessToken;
   })().finally(() => {
     reissuePromise = null;
