@@ -166,6 +166,7 @@ vi.mock("@apps-in-toss/web-framework", () => ({
     authorizationCode: "test-code",
     referrer: "SANDBOX" as const,
   }),
+  closeView: vi.fn().mockResolvedValue(undefined),
   getDeviceId: vi.fn().mockResolvedValue({
     deviceId: "test-device-id",
   }),

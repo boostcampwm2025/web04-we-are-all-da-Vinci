@@ -79,7 +79,7 @@ const MemorizeView = () => {
         </p>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)]">
         <div className="mx-(--card-mx) mt-2 rounded-2xl bg-gray-100 p-3">
           <div
             ref={containerRef}

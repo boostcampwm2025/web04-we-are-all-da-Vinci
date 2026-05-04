@@ -1,80 +1,98 @@
-import { painterMan1Img } from "@/shared/assets/images";
-import { trackClick } from "@/shared/lib";
+import { drawStrokesOnCanvas, useCanvasSetup } from "@/feature/drawing";
+import { usePlayChance } from "@/feature/playChance";
+import { serverTossApi } from "@/shared/api";
+import { trackClick, useExitGuard, useRequiredState } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";
-import {
-  loadFullScreenAd,
-  showFullScreenAd,
-} from "@apps-in-toss/web-framework";
-import type { SimilarityResponse } from "@toss/shared";
-import { BottomCTA, Toast } from "@toss/tds-mobile";
+import type { SimilarityResponse, Stroke } from "@toss/shared";
+import { Button, ConfirmDialog, Toast } from "@toss/tds-mobile";
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-
-const REWARDED_AD_GROUP_ID = "ait-ad-test-rewarded-id";
+import { useNavigate } from "react-router-dom";
 
 interface SubmittedRouteState {
-  promotionGranted: boolean;
+  promptId: number;
+  strokes: Stroke[];
   similarity: SimilarityResponse | null;
+  anonymousHash: string;
 }
-
-const getAdSupported = () => {
-  try {
-    return loadFullScreenAd.isSupported();
-  } catch {
-    return false;
-  }
-};
 
 const SubmittedView = () => {
   const navigate = useNavigate();
-  const { state } = useLocation() as {
-    state: SubmittedRouteState | null;
-  };
-  const [isAdLoaded, setIsAdLoaded] = useState(false);
-  const isAdSupported = getAdSupported();
-  const [toastOpen, setToastOpen] = useState(!!state);
-  const toastText = state?.promotionGranted
-    ? "포인트 지급이 완료됐어요"
-    : "그림 제출이 완료됐어요";
+  const routeState = useRequiredState<SubmittedRouteState>();
+  const { showDialog, setShowDialog } = useExitGuard();
+  const { containerRef, canvasRef, ctxRef, canvasSize } = useCanvasSetup();
+  const { charge, startPlay } = usePlayChance();
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isReplaying, setIsReplaying] = useState(false);
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastText, setToastText] = useState("");
 
   useEffect(() => {
-    if (!isAdSupported) return;
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+    if (!canvas || !ctx || !routeState || canvasSize === 0) return;
 
-    const unregister = loadFullScreenAd({
-      options: { adGroupId: REWARDED_AD_GROUP_ID },
-      onEvent: (event) => {
-        if (event.type === "loaded") setIsAdLoaded(true);
-      },
-      onError: (error) => {
-        console.warn("보상형 광고 로드 실패:", error);
-      },
-    });
+    drawStrokesOnCanvas(canvas, ctx, routeState.strokes, true);
+  }, [canvasRef, ctxRef, routeState, canvasSize]);
 
-    return () => unregister();
-  }, [isAdSupported]);
+  const handleSubmitAndView = async () => {
+    if (isSubmitting || !routeState) return;
+    setIsSubmitting(true);
 
-  const handleNavigateHome = () => {
-    trackClick("submitted_to_dashboard_click");
+    try {
+      trackClick("submitted_submit_click");
+      const { promotionGranted } = await serverTossApi.submitDrawing(
+        routeState.strokes,
+      );
 
-    const goHome = () => {
-      navigate("/", { replace: true, state: { fromSubmitted: true } });
-    };
-
-    if (isAdSupported && isAdLoaded) {
-      showFullScreenAd({
-        options: { adGroupId: REWARDED_AD_GROUP_ID },
-        onEvent: (event) => {
-          if (event.type === "dismissed") goHome();
-        },
-        onError: () => goHome(),
+      navigate("/", {
+        replace: true,
+        state: { fromSubmitted: true, promotionGranted },
       });
-    } else {
-      goHome();
+    } catch (err) {
+      console.error("제출 실패:", err);
+      setToastText("제출에 실패했어요. 다시 시도해주세요.");
+      setToastOpen(true);
+      setIsSubmitting(false);
     }
   };
 
-  const score = state?.similarity?.score ?? 0;
+  const handleReplay = async () => {
+    if (isReplaying) return;
+    setIsReplaying(true);
+    try {
+      try {
+        await serverTossApi.recordAdView();
+      } catch {
+        // best-effort
+      }
+      await charge();
+      const started = await startPlay();
+      if (!started) {
+        setIsReplaying(false);
+        return;
+      }
+
+      const { promptId, strokes } = await serverTossApi.getPrompt();
+      navigate("/memorize", {
+        state: {
+          promptId,
+          promptStrokes: strokes,
+          anonymousHash: routeState?.anonymousHash ?? "local",
+        },
+        replace: true,
+      });
+    } catch {
+      setToastText("다시 시도해주세요.");
+      setToastOpen(true);
+      setIsReplaying(false);
+    }
+  };
+
+  if (!routeState) return null;
+
+  const score = routeState.similarity?.score ?? 0;
 
   return (
     <div className="flex h-full flex-col bg-white">
@@ -86,28 +104,77 @@ const SubmittedView = () => {
         duration={3000}
         onClose={() => setToastOpen(false)}
       />
-      <div className="flex flex-1 flex-col items-center px-(--page-px) pt-[20%]">
-        <img
-          src={painterMan1Img}
-          alt=""
-          className="mb-6 h-40 w-40 object-contain"
-        />
-        <h1 className="text-[22px] font-bold">그림을 제출했어요</h1>
-        <div className="mt-4">
-          <Score value={Math.round(score)} size="l" />
+
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="flex flex-col items-center px-(--page-px) pt-4">
+          <h1 className="mb-3 text-[22px] font-bold">그림을 완성했어요</h1>
         </div>
-        <p className="mt-4 text-sm text-(--color-grey)">
-          결과를 저장하고 랭킹을 확인해보세요
-        </p>
+
+        <div className="mx-(--card-mx) rounded-2xl bg-gray-100 p-3">
+          <div
+            ref={containerRef}
+            className="flex w-full items-center justify-center rounded-xl bg-white shadow-sm"
+          >
+            <canvas ref={canvasRef} className="rounded-xl" />
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center py-4">
+          <Score value={Math.round(score)} size="l" />
+          <p className="mt-2 text-sm text-(--color-grey)">
+            저장하면 랭킹에 등록돼요
+          </p>
+        </div>
+
+        <div className="pb-3">
+          <BannerAd adGroupId="ait-ad-test-native-image-id" type="list" />
+        </div>
       </div>
 
-      <div className="px-(--page-px)">
-        <BannerAd adGroupId="ait-ad-test-native-image-id" type="list" />
+      <div className="flex gap-3 px-(--page-px) py-3">
+        <div className="flex-1">
+          <Button
+            color="primary"
+            variant="weak"
+            display="block"
+            loading={isReplaying}
+            disabled={isReplaying || isSubmitting}
+            onClick={handleReplay}
+          >
+            다시하기
+          </Button>
+        </div>
+        <div className="flex-1">
+          <Button
+            color="primary"
+            display="block"
+            loading={isSubmitting}
+            disabled={isSubmitting || isReplaying}
+            onClick={handleSubmitAndView}
+          >
+            저장하기
+          </Button>
+        </div>
       </div>
 
-      <div onClick={handleNavigateHome}>
-        <BottomCTA.Single>결과 확인하러 가기</BottomCTA.Single>
-      </div>
+      <ConfirmDialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        title="게임에서 나가시겠어요?"
+        description="저장하지 않은 그림은 사라져요"
+        confirmButton={
+          <ConfirmDialog.ConfirmButton
+            onClick={() => navigate("/", { replace: true })}
+          >
+            나가기
+          </ConfirmDialog.ConfirmButton>
+        }
+        cancelButton={
+          <ConfirmDialog.CancelButton onClick={() => setShowDialog(false)}>
+            계속 보기
+          </ConfirmDialog.CancelButton>
+        }
+      />
     </div>
   );
 };

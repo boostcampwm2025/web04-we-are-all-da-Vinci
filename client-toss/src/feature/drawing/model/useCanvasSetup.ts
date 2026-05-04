@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 export const useCanvasSetup = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [canvasSize, setCanvasSize] = useState(0);
+  const observerRef = useRef<ResizeObserver | null>(null);
 
   const initCanvas = useCallback((size: number) => {
     const canvas = canvasRef.current;
@@ -38,21 +38,29 @@ export const useCanvasSetup = () => {
     setCanvasSize(size);
   }, []);
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+  // ref callback: container div가 마운트/언마운트될 때마다 ResizeObserver 연결
+  const containerRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
 
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) return;
-      const width = entry.contentRect.width;
-      const size = Math.floor(width);
-      if (size > 0) initCanvas(size);
-    });
+      if (!node) return;
 
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, [initCanvas]);
+      const observer = new ResizeObserver((entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        const width = entry.contentRect.width;
+        const size = Math.floor(width);
+        if (size > 0) initCanvas(size);
+      });
+
+      observer.observe(node);
+      observerRef.current = observer;
+    },
+    [initCanvas],
+  );
 
   return { containerRef, canvasRef, ctxRef, canvasSize };
 };
