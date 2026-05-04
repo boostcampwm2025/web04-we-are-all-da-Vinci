@@ -1,5 +1,5 @@
 import { Entity, PrimaryKey, Property } from "@mikro-orm/decorators/legacy";
-import { BaseEntity } from "src/common/base.entity";
+import { BaseEntity } from "src/common/entitiy/base.entity";
 import { UserRepository } from "./user.repository";
 import { EntityRepositoryType } from "@mikro-orm/core";
 import type { Opt } from "@mikro-orm/core";
