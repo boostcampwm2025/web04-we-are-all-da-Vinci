@@ -1,7 +1,8 @@
 import { preprocessStrokes, scoreFinalSimilarity } from "@davinci/similarity";
-import { EntityManager, QueryOrder } from "@mikro-orm/mysql";
-
 import { Injectable } from "@nestjs/common";
+import { EntityManager, QueryOrder } from "@mikro-orm/mysql";
+import { PointService } from "src/modules/point/point.service";
+
 import { Prompt } from "../../prompt/prompt.entity";
 import { PromptService } from "../../prompt/prompt.service";
 import { Drawing } from "../drawing.entity";
@@ -18,6 +19,7 @@ export class DrawingService {
     private readonly em: EntityManager,
     private readonly userService: UserService,
     private readonly promptService: PromptService,
+    private readonly pointService: PointService,
     private readonly drawingAccessService: DrawingAccessService,
   ) {}
 
@@ -34,7 +36,11 @@ export class DrawingService {
     userKey: number,
     playerStrokes: Stroke[],
     date: Date,
-  ): Promise<{ drawingId: number; similarity: Similarity }> {
+  ): Promise<{
+    drawingId: number;
+    similarity: Similarity;
+    promotionGranted: boolean;
+  }> {
     const user = await this.userService.getUserInfo(userKey);
     await this.drawingAccessService.validateAccess(user);
 
@@ -56,7 +62,10 @@ export class DrawingService {
     this.em.persist(drawing);
     await this.em.flush();
 
-    return { drawingId: Number(drawing.id), similarity };
+    const promotionGranted =
+      await this.pointService.grantDrawingPromotionIfEligible(user.userKey);
+
+    return { drawingId: Number(drawing.id), similarity, promotionGranted };
   }
 
   private async findTodayByUser(userKey: number): Promise<Drawing[]> {

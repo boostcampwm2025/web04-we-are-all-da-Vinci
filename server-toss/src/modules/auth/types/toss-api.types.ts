@@ -33,3 +33,11 @@ export interface TossUserResponse extends TossBaseResponse {
 }
 
 export type TossUserInfo = NonNullable<TossUserResponse["success"]>;
+
+export interface TossPromotionKeyResponse extends TossBaseResponse {
+  success?: { key: string };
+}
+
+export interface TossPromotionExecuteResponse extends TossBaseResponse {
+  success?: { key: string };
+}

@@ -18,7 +18,7 @@ const RankingList = () => {
     <List>
       {rankingList.map((ranking) => (
         <RankingEntry
-          key={`${ranking.userId}-${ranking.drawingId}`}
+          key={`${ranking.userKey}-${ranking.drawingId}`}
           name={ranking.name}
           rank={ranking.rank}
           score={ranking.score}

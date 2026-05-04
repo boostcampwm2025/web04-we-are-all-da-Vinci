@@ -1,8 +1,13 @@
 /// <reference types="@testing-library/jest-dom/vitest" />
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import DrawingView from "./DrawingView";
+
+vi.mock("@/feature/playChance", () => ({
+  clearPlaySession: vi.fn(async () => undefined),
+  useRequirePlaySession: () => ({ isCheckingSession: false }),
+}));
 
 describe("DrawingView", () => {
   it('페이지 타이틀 "그려주세요!"가 렌더링된다', () => {

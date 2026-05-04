@@ -1,7 +1,12 @@
 import { PhaseHeader } from "@/entities/phaseHeader";
+import { useRequirePlaySession } from "@/feature/playChance";
 import { BannerAd } from "@/shared/ui/bannerAd";
 
 const MemorizeView = () => {
+  const { isCheckingSession } = useRequirePlaySession();
+
+  if (isCheckingSession) return null;
+
   return (
     <div className="flex h-full flex-col bg-white pb-0!">
       <PhaseHeader
@@ -9,6 +14,12 @@ const MemorizeView = () => {
         description="10초 동안 그림을 기억하세요"
         progress={0.5}
       />
+
+      <div className="px-(--page-px) text-center">
+        <p className="text-sm text-(--color-grey)">
+          중도 종료 시 기회를 잃어요
+        </p>
+      </div>
 
       {/* 스크롤 영역 */}
       <div className="min-h-0 flex-1 overflow-y-auto">

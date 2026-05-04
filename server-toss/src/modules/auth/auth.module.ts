@@ -23,6 +23,6 @@ import { JwtAuthGuard } from "./guards/jwt-auth.guard";
   ],
   controllers: [AuthController],
   providers: [AuthService, TossApiClient, JwtAuthGuard],
-  exports: [JwtAuthGuard],
+  exports: [JwtAuthGuard, TossApiClient],
 })
 export class AuthModule {}

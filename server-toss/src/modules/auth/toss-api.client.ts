@@ -7,10 +7,13 @@ import type {
   TossTokenResponse,
   TossUserResponse,
   TossUserInfo,
+  TossPromotionKeyResponse,
+  TossPromotionExecuteResponse,
 } from "src/modules/auth/types/toss-api.types";
 import { TOSS_API_ENDPOINTS } from "src/modules/auth/constants/toss-api.constants";
 import {
   TossApiError,
+  TossPromotionError,
   TossTransportError,
 } from "src/modules/auth/errors/toss.errors";
 
@@ -101,6 +104,52 @@ export class TossApiClient {
     }
 
     return data.success;
+  }
+
+  async getPromotionKey(userKey: number): Promise<string> {
+    const data = await this.request<TossPromotionKeyResponse>(
+      "POST",
+      TOSS_API_ENDPOINTS.PROMOTION_GET_KEY,
+      {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+        "x-toss-user-key": String(userKey),
+      },
+    );
+
+    if (data.resultType !== "SUCCESS" || !data.success) {
+      throw new TossPromotionError(
+        data.error?.errorCode ?? "UNKNOWN",
+        data.error?.reason ?? "프로모션 키 발급에 실패했어요.",
+      );
+    }
+
+    return data.success.key;
+  }
+
+  async executePromotion(
+    userKey: number,
+    key: string,
+    promotionCode: string,
+    amount: number,
+  ): Promise<void> {
+    const data = await this.request<TossPromotionExecuteResponse>(
+      "POST",
+      TOSS_API_ENDPOINTS.EXECUTE_PROMOTION,
+      {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+        "x-toss-user-key": String(userKey),
+      },
+      JSON.stringify({ promotionCode, key, amount }),
+    );
+
+    if (data.resultType !== "SUCCESS" || !data.success) {
+      throw new TossPromotionError(
+        data.error?.errorCode ?? "UNKNOWN",
+        data.error?.reason ?? "프로모션 지급에 실패했어요.",
+      );
+    }
   }
 
   private request<T>(
