@@ -1,14 +1,10 @@
 import { MyScoreCard, useMyDrawings } from "@/entities/myScoreCard";
 import { Podium } from "@/entities/podium";
-import { usePlayChance } from "@/feature/playChance";
+import { usePlayChance, useRewardAd } from "@/feature/playChance";
 import { serverTossApi } from "@/shared/api";
 import { formatLocalDate, trackClick, useExitGuard } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
-import {
-  getDeviceId,
-  loadFullScreenAd,
-  showFullScreenAd,
-} from "@apps-in-toss/web-framework";
+import { getDeviceId } from "@apps-in-toss/web-framework";
 import { colors } from "@toss/tds-colors";
 import {
   Button,
@@ -38,6 +34,7 @@ const DashboardView = () => {
     charge,
     startPlay,
   } = usePlayChance();
+  const { isAdLoaded, showAd } = useRewardAd();
   const cardCount = Math.max(myDrawings.length, 1);
 
   const [initialLoading, setInitialLoading] = useState(true);
@@ -134,7 +131,6 @@ const DashboardView = () => {
     myResultRef.current.scrollIntoView({ behavior: "smooth" });
   }, [locationState, isLoading]);
 
-  // 광고 시청 기록 전송은 best-effort
   const recordAdViewBestEffort = async () => {
     try {
       await serverTossApi.recordAdView();
@@ -143,44 +139,14 @@ const DashboardView = () => {
     }
   };
 
-  const showAdAndCharge = () =>
-    new Promise<void>((resolve, reject) => {
-      if (!loadFullScreenAd.isSupported()) {
-        // 광고 미지원 환경(로컬 등)에서는 광고 없이 바로 충전
-        resolve();
-        return;
-      }
-
-      const AD_GROUP_ID = "ait-ad-test-rewarded-id";
-      let rewarded = false;
-
-      loadFullScreenAd({
-        options: { adGroupId: AD_GROUP_ID },
-        onEvent: (event) => {
-          if (event.type === "loaded") {
-            showFullScreenAd({
-              options: { adGroupId: AD_GROUP_ID },
-              onEvent: (showEvent) => {
-                if (showEvent.type === "userEarnedReward") rewarded = true;
-                if (showEvent.type === "dismissed") {
-                  if (rewarded) resolve();
-                  else reject(new Error("closed"));
-                }
-              },
-              onError: reject,
-            });
-          }
-        },
-        onError: reject,
-      });
-    });
-
   const handleRetry = async () => {
     if (isStartingGame) return;
     setIsStartingGame(true);
     try {
-      await showAdAndCharge();
-      await recordAdViewBestEffort();
+      if (isAdLoaded) {
+        await showAd();
+        await recordAdViewBestEffort();
+      }
       await charge();
       const started = await startPlay();
       if (!started) return;
@@ -194,7 +160,8 @@ const DashboardView = () => {
         },
         replace: true,
       });
-    } catch {
+    } catch (err) {
+      console.error("[handleRetry 실패]", err);
       setToastText("일시적 오류가 발생했어요");
       setToastOpen(true);
     } finally {

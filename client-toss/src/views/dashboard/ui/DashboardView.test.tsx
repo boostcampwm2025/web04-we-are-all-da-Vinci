@@ -36,6 +36,10 @@ vi.mock("@/feature/playChance", () => ({
     charge: mockCharge,
     startPlay: mockStartPlay,
   }),
+  useRewardAd: () => ({
+    isAdLoaded: false,
+    showAd: vi.fn().mockResolvedValue(undefined),
+  }),
 }));
 
 vi.mock("@/shared/ui/rewardAd", () => ({

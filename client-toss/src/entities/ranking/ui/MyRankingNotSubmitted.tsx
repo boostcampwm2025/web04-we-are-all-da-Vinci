@@ -1,3 +1,4 @@
+import { usePlayChance, useRewardAd } from "@/feature/playChance";
 import { serverTossApi } from "@/shared/api";
 import { getDeviceId } from "@apps-in-toss/web-framework";
 import { Button } from "@toss/tds-mobile";
@@ -7,12 +8,26 @@ import { NOT_SUBMITTED_MESSAGE } from "../config/constants";
 
 const MyRankingNotSubmitted = () => {
   const navigate = useNavigate();
+  const { charge, startPlay } = usePlayChance();
+  const { isAdLoaded, showAd } = useRewardAd();
   const [isStarting, setIsStarting] = useState(false);
 
   const handleStart = async () => {
     if (isStarting) return;
     setIsStarting(true);
     try {
+      if (isAdLoaded) {
+        await showAd();
+        try {
+          await serverTossApi.recordAdView();
+        } catch (err) {
+          console.error("[recordAdView 실패, 무시]", err);
+        }
+      }
+      await charge();
+      const started = await startPlay();
+      if (!started) return;
+
       let hash: string;
       try {
         const { deviceId } = await getDeviceId();
@@ -27,6 +42,7 @@ const MyRankingNotSubmitted = () => {
       });
     } catch (err) {
       console.error("프롬프트 로드 실패:", err);
+    } finally {
       setIsStarting(false);
     }
   };
