@@ -2,20 +2,20 @@ import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { readFileSync } from "fs";
 import https from "https";
-import type { LoginDto } from "src/modules/auth/dto/login.dto";
-import type {
-  TossTokenResponse,
-  TossUserResponse,
-  TossUserInfo,
-  TossPromotionKeyResponse,
-  TossPromotionExecuteResponse,
-} from "src/modules/auth/types/toss-api.types";
 import { TOSS_API_ENDPOINTS } from "src/modules/auth/constants/toss-api.constants";
+import type { LoginDto } from "src/modules/auth/dto/login.dto";
 import {
   TossApiError,
   TossPromotionError,
   TossTransportError,
 } from "src/modules/auth/errors/toss.errors";
+import type {
+  TossPromotionExecuteResponse,
+  TossPromotionKeyResponse,
+  TossTokenResponse,
+  TossUserInfo,
+  TossUserResponse,
+} from "src/modules/auth/types/toss-api.types";
 
 export type { TossUserInfo };
 

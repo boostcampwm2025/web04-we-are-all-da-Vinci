@@ -1,55 +1,136 @@
 import { MyScoreCard, useMyDrawings } from "@/entities/myScoreCard";
 import { Podium } from "@/entities/podium";
-import { usePlayChance } from "@/feature/playChance";
-import { serverTossApi } from "@/shared/api/serverToss";
-import { trackClick } from "@/shared/lib";
+import { usePlayChance, useRewardAd } from "@/feature/playChance";
+import { serverTossApi } from "@/shared/api";
+import { formatLocalDate, trackClick, useExitGuard } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
-import { RewardAd } from "@/shared/ui/rewardAd";
+import { getDeviceId } from "@apps-in-toss/web-framework";
 import { colors } from "@toss/tds-colors";
-import { Button, TextButton, Toast, Top } from "@toss/tds-mobile";
-import { useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Button,
+  ConfirmDialog,
+  TextButton,
+  Toast,
+  Top,
+} from "@toss/tds-mobile";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const DashboardView = () => {
+  const navigate = useNavigate();
+  const { state: locationState } = useLocation();
+  const { showDialog, setShowDialog, exit } = useExitGuard();
   const [activeIndex, setActiveIndex] = useState(0);
   const [isStartingGame, setIsStartingGame] = useState(false);
   const [toastOpen, setToastOpen] = useState(false);
+  const [toastText, setToastText] = useState("일시적 오류가 발생했어요");
   const sliderRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
-  const { myDrawings, isLoading } = useMyDrawings();
+  const myResultRef = useRef<HTMLDivElement>(null);
+  const anonymousHashRef = useRef<string>("local");
+  const { myDrawings, isLoading, refetch: refetchDrawings } = useMyDrawings();
   const {
     hasChance,
     isLoading: isChanceLoading,
     charge,
     startPlay,
   } = usePlayChance();
+  const { isAdLoaded, showAd } = useRewardAd();
   const cardCount = Math.max(myDrawings.length, 1);
 
-  const handleScroll = () => {
-    const slider = sliderRef.current;
-    if (!slider) return;
-    const index = Math.round(slider.scrollLeft / slider.clientWidth);
-    setActiveIndex(Math.min(index, cardCount - 1));
-  };
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const startGame = async () => {
+  const startGame = useCallback(async () => {
     if (isStartingGame) return;
-
     setIsStartingGame(true);
-
+    setError(null);
     try {
       const started = await startPlay();
-      if (!started) return;
+      if (!started) {
+        setIsStartingGame(false);
+        return;
+      }
 
-      navigate("/memorize");
-    } catch {
-      setToastOpen(true);
-    } finally {
+      const { promptId, strokes } = await serverTossApi.getPrompt();
+      navigate("/memorize", {
+        state: {
+          promptId,
+          promptStrokes: strokes,
+          anonymousHash: anonymousHashRef.current,
+        },
+        replace: true,
+      });
+    } catch (err) {
+      console.error("프롬프트 로드 실패:", err);
+      setError("서버 응답이 늦어지고 있어요. 다시 시도해주세요.");
       setIsStartingGame(false);
     }
-  };
+  }, [navigate, startPlay, isStartingGame]);
 
-  // 광고 시청 기록 전송은 best-effort. 실패해도 보상 지급(charge)은 진행해야 사용자가 보상을 잃지 않는다.
+  useEffect(() => {
+    const fromSubmitted = (locationState as { fromSubmitted?: boolean })
+      ?.fromSubmitted;
+
+    const init = async () => {
+      let hash: string;
+      try {
+        const { deviceId } = await getDeviceId();
+        hash = deviceId;
+      } catch {
+        hash = "local";
+      }
+      anonymousHashRef.current = hash;
+
+      if (fromSubmitted) {
+        // state를 즉시 제거하여 재마운트 시 토스트 재표시 방지
+        window.history.replaceState({}, "");
+
+        localStorage.setItem(`lastPlayed_${hash}`, formatLocalDate());
+        refetchDrawings();
+
+        const promotionGranted = (
+          locationState as { promotionGranted?: boolean }
+        )?.promotionGranted;
+        if (promotionGranted != null) {
+          setToastText(
+            promotionGranted ? "포인트 지급이 완료됐어요" : "그림이 저장됐어요",
+          );
+          setToastOpen(true);
+        }
+
+        setInitialLoading(false);
+        return;
+      }
+
+      const today = formatLocalDate();
+      const lastPlayed = localStorage.getItem(`lastPlayed_${hash}`);
+
+      if (lastPlayed === today) {
+        setInitialLoading(false);
+        return;
+      }
+
+      // 첫 방문: initialLoading=true 상태로 게임 시작 (로딩 화면 유지)
+      try {
+        await startGame();
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locationState]);
+
+  // fromSubmitted일 때 나의 결과 영역으로 자동 스크롤
+  useEffect(() => {
+    const fromSubmitted = (locationState as { fromSubmitted?: boolean })
+      ?.fromSubmitted;
+    if (!fromSubmitted || isLoading || !myResultRef.current) return;
+
+    myResultRef.current.scrollIntoView({ behavior: "smooth" });
+  }, [locationState, isLoading]);
+
   const recordAdViewBestEffort = async () => {
     try {
       await serverTossApi.recordAdView();
@@ -58,51 +139,72 @@ const DashboardView = () => {
     }
   };
 
-  const handleReward = async () => {
+  const handleRetry = async () => {
     if (isStartingGame) return;
-
     setIsStartingGame(true);
-
     try {
-      await recordAdViewBestEffort();
+      if (isAdLoaded) {
+        await showAd();
+        await recordAdViewBestEffort();
+      }
       await charge();
       const started = await startPlay();
       if (!started) return;
 
-      navigate("/memorize");
-    } catch {
+      const { promptId, strokes } = await serverTossApi.getPrompt();
+      navigate("/memorize", {
+        state: {
+          promptId,
+          promptStrokes: strokes,
+          anonymousHash: anonymousHashRef.current,
+        },
+        replace: true,
+      });
+    } catch (err) {
+      console.error("[handleRetry 실패]", err);
+      setToastText("일시적 오류가 발생했어요");
       setToastOpen(true);
     } finally {
       setIsStartingGame(false);
     }
   };
 
-  const handleDevCharge = async () => {
-    if (isStartingGame) return;
-
-    setIsStartingGame(true);
-
-    try {
-      await recordAdViewBestEffort();
-      await charge();
-      const started = await startPlay();
-      if (!started) return;
-
-      navigate("/memorize");
-    } catch {
-      setToastOpen(true);
-    } finally {
-      setIsStartingGame(false);
-    }
+  const handleScroll = () => {
+    const slider = sliderRef.current;
+    if (!slider) return;
+    const index = Math.round(slider.scrollLeft / slider.clientWidth);
+    setActiveIndex(Math.min(index, cardCount - 1));
   };
+
+  if (initialLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <p className="text-(--color-grey)">준비 중이에요</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-4 px-(--page-px)">
+        <p className="text-center text-(--color-grey)">{error}</p>
+        <Button size="large" onClick={startGame}>
+          다시 시도해요
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto">
+    <div
+      data-no-safe-area-bottom
+      className="min-h-0 flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)]"
+    >
       <Toast
         position="top"
         open={toastOpen}
-        text="일시적 오류가 발생했어요"
-        leftAddon={<Toast.Icon name="icon-warning-circle-red-opacity-small" />}
+        text={toastText}
+        leftAddon={<Toast.Icon name="icon-check-circle-blue-opacity" />}
         duration={3000}
         onClose={() => setToastOpen(false)}
       />
@@ -129,7 +231,9 @@ const DashboardView = () => {
       </div>
 
       {/* 나의 결과 영역 */}
-      <Top title={<Top.TitleParagraph>나의 결과</Top.TitleParagraph>} />
+      <div ref={myResultRef}>
+        <Top title={<Top.TitleParagraph>나의 결과</Top.TitleParagraph>} />
+      </div>
 
       {/* 인디케이터 */}
       <div className="flex justify-center gap-2 py-4">
@@ -185,7 +289,7 @@ const DashboardView = () => {
       <BannerAd adGroupId="ait-ad-test-banner-id" className="mt-3 mb-3" />
 
       {/* 하단 버튼 */}
-      <div className="px-(--page-px) flex flex-col gap-3">
+      <div className="flex flex-col gap-3 px-(--page-px)">
         {isChanceLoading ? (
           <Button color="primary" display="block" loading disabled>
             플레이 기회 확인 중
@@ -201,30 +305,33 @@ const DashboardView = () => {
             플레이하기
           </Button>
         ) : (
-          <>
-            <RewardAd
-              adGroupId="ait-ad-test-rewarded-id"
-              onReward={handleReward}
-              text="광고 보고 기회 충전하기"
-            />
-            {import.meta.env.DEV && (
-              <Button
-                color="primary"
-                display="block"
-                variant="weak"
-                loading={isStartingGame}
-                disabled={isStartingGame}
-                onClick={handleDevCharge}
-              >
-                개발용: 기회 충전하고 시작
-              </Button>
-            )}
-          </>
+          <Button
+            color="primary"
+            display="block"
+            loading={isStartingGame}
+            disabled={isStartingGame}
+            onClick={handleRetry}
+          >
+            다시 도전하기
+          </Button>
         )}
-        <Button color="primary" display="block" variant="weak">
-          공유하고 포인트 받기
-        </Button>
       </div>
+
+      <ConfirmDialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        title="우리 모두 다빈치를 종료할까요?"
+        confirmButton={
+          <ConfirmDialog.ConfirmButton onClick={exit}>
+            종료하기
+          </ConfirmDialog.ConfirmButton>
+        }
+        cancelButton={
+          <ConfirmDialog.CancelButton onClick={() => setShowDialog(false)}>
+            계속 둘러보기
+          </ConfirmDialog.CancelButton>
+        }
+      />
     </div>
   );
 };

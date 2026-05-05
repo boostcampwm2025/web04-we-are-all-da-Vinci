@@ -5,9 +5,12 @@ import type {
   MyDrawingResponse,
   MyDrawingsResponse,
   Stroke,
+  SubmitStrokesRequest,
 } from "@toss/shared";
 import {
   LoginResponseSchema,
+  PromptResponseSchema,
+  SimilarityResponseSchema,
   SubmitDrawingResponseSchema,
   UserInfoResponseSchema,
 } from "@toss/shared";
@@ -137,6 +140,14 @@ export const serverTossApi = {
 
   getMe: async () =>
     UserInfoResponseSchema.parse(await request<unknown>("GET", "/user/me")),
+
+  getPrompt: async () =>
+    PromptResponseSchema.parse(await request<unknown>("GET", "/prompt")),
+
+  scoreStrokes: async (body: SubmitStrokesRequest) =>
+    SimilarityResponseSchema.parse(
+      await request<unknown>("POST", "/strokes", body),
+    ),
 
   getMyRanking: (options?: RequestOptions) =>
     get<MyRankingResponse>("/rankings/me", options),
