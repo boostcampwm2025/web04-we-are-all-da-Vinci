@@ -53,7 +53,7 @@ describe("RankingList", () => {
     mockUseRankingList.mockReturnValue({
       rankingList: [
         {
-          userId: "10",
+          userKey: 10,
           name: "김동권",
           drawingId: "100",
           rank: 1,

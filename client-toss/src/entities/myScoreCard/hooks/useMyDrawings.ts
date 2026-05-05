@@ -10,11 +10,13 @@ const useMyDrawings = () => {
     [],
   );
 
-  const { data, isLoading } = useAbortableQuery<MyDrawingsResponse>(queryFn);
+  const { data, isLoading, refetch } =
+    useAbortableQuery<MyDrawingsResponse>(queryFn);
 
   return {
     myDrawings: data?.drawings ?? [],
     isLoading,
+    refetch,
   };
 };
 

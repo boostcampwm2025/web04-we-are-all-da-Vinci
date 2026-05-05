@@ -10,6 +10,7 @@ import { NotFoundException } from "@nestjs/common";
 import type { DailyPrompt } from "./daily-prompt.entity";
 import type { Prompt } from "./prompt.entity";
 import { PromptService } from "./prompt.service";
+import { User } from "../user/user.entity";
 
 const sampleStrokes = [
   {
@@ -29,6 +30,19 @@ const buildDaily = (id: number, strokes: unknown): Partial<DailyPrompt> => ({
 });
 
 describe("PromptService", () => {
+  let userService: never;
+  let drawingAccessService: never;
+  let givenUser: User;
+
+  beforeAll(() => {
+    givenUser = { userKey: 1 } as User;
+
+    userService = { findUser: jest.fn().mockResolvedValue(givenUser) } as never;
+    drawingAccessService = {
+      validateAccess: jest.fn().mockResolvedValue(() => undefined),
+    } as never;
+  });
+
   beforeEach(() => {
     preprocessStrokesMock.mockClear();
   });
@@ -38,7 +52,11 @@ describe("PromptService", () => {
       const dailyRepo = {
         findOne: jest.fn(async () => buildDaily(7, sampleStrokes)),
       };
-      const service = new PromptService(dailyRepo as never);
+      const service = new PromptService(
+        dailyRepo as never,
+        userService,
+        drawingAccessService,
+      );
 
       const result = await service.getPromptByDate(
         new Date(Date.UTC(2026, 3, 15)),
@@ -51,7 +69,11 @@ describe("PromptService", () => {
 
     it("해당 날짜 daily_prompt이 없으면 NotFoundException을 던진다", async () => {
       const dailyRepo = { findOne: jest.fn(async () => null) };
-      const service = new PromptService(dailyRepo as never);
+      const service = new PromptService(
+        dailyRepo as never,
+        userService,
+        drawingAccessService,
+      );
 
       await expect(
         service.getPromptByDate(new Date(Date.UTC(2026, 3, 15))),
@@ -63,8 +85,12 @@ describe("PromptService", () => {
     it("첫 호출에는 preprocessStrokes를 실행하고 결과를 캐싱한다", async () => {
       const dailyRepo = {
         findOne: jest.fn(async () => buildDaily(3, sampleStrokes)),
-      };
-      const service = new PromptService(dailyRepo as never);
+      } as never;
+      const service = new PromptService(
+        dailyRepo,
+        userService,
+        drawingAccessService,
+      );
       const date = new Date(Date.UTC(2026, 3, 15));
 
       const first = await service.getPreprocessedByDate(date);
@@ -83,7 +109,12 @@ describe("PromptService", () => {
           .mockResolvedValueOnce(buildDaily(1, sampleStrokes))
           .mockResolvedValueOnce(buildDaily(2, sampleStrokes)),
       };
-      const service = new PromptService(dailyRepo as never);
+
+      const service = new PromptService(
+        dailyRepo as never,
+        userService,
+        drawingAccessService,
+      );
 
       await service.getPreprocessedByDate(new Date(Date.UTC(2026, 3, 15)));
       await service.getPreprocessedByDate(new Date(Date.UTC(2026, 3, 16)));

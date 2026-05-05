@@ -9,7 +9,10 @@ const RankingDetailView = () => {
   const { drawing, isLoading } = useDrawing(drawingId);
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-white">
+    <div
+      data-no-safe-area-bottom
+      className="min-h-0 flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)] bg-white"
+    >
       <Top
         title={
           <Top.TitleParagraph>

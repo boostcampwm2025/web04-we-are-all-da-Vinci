@@ -5,7 +5,7 @@ import {
   Property,
 } from "@mikro-orm/decorators/legacy";
 import { EntityRepositoryType } from "@mikro-orm/core";
-import { BaseEntity } from "src/common/base.entity";
+import { BaseEntity } from "src/common/entitiy/base.entity";
 import { RankingRepository } from "./ranking.repository";
 
 @Entity({ tableName: "rankings", repository: () => RankingRepository })
@@ -33,8 +33,8 @@ export class Ranking extends BaseEntity {
   @Property({ fieldName: "score", type: "double" })
   score!: number;
 
-  @Property({ fieldName: "user_id", type: "bigint" })
-  userId!: bigint;
+  @Property({ fieldName: "user_key", type: "integer" })
+  userKey!: number;
 
   @Property({ fieldName: "drawing_id", type: "bigint" })
   drawingId!: bigint;

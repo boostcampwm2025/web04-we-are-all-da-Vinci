@@ -1,17 +1,21 @@
 import { Entity, PrimaryKey, Property } from "@mikro-orm/decorators/legacy";
-import { BaseEntity } from "src/common/base.entity";
+import { BaseEntity } from "src/common/entitiy/base.entity";
 import { UserRepository } from "./user.repository";
-import { EntityRepositoryType } from "@mikro-orm/core";
+import { EntityRepositoryType, PrimaryKeyProp } from "@mikro-orm/core";
 import type { Opt } from "@mikro-orm/core";
 
 @Entity({ tableName: "users", repository: () => UserRepository })
 export class User extends BaseEntity {
   [EntityRepositoryType]?: UserRepository;
+  // PK 이름이 id/_id/uuid가 아니므로 Primary<User> 추론을 위해 명시한다.
+  [PrimaryKeyProp]?: "userKey";
 
-  @PrimaryKey({ type: "bigint" })
-  id!: bigint;
-
-  @Property({ fieldName: "user_key", type: "int", unique: true })
+  @PrimaryKey({
+    fieldName: "user_key",
+    type: "integer",
+    unsigned: true,
+    autoincrement: false,
+  })
   userKey!: number;
 
   @Property({ length: 10, type: "string" })

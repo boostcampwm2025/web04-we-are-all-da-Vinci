@@ -1,13 +1,35 @@
-import { appLogin } from "@apps-in-toss/web-framework";
-import { LoginResponseSchema, UserInfoResponseSchema } from "@toss/shared";
 import type { PodiumEntry } from "@/entities/podium";
 import type { MyRankingResponse, RankingListItem } from "@/entities/ranking";
-import type { MyDrawingResponse, MyDrawingsResponse } from "@toss/shared";
+import { appLogin } from "@apps-in-toss/web-framework";
+import type {
+  MyDrawingResponse,
+  MyDrawingsResponse,
+  Stroke,
+  SubmitStrokesRequest,
+} from "@toss/shared";
+import {
+  LoginResponseSchema,
+  PromptResponseSchema,
+  SimilarityResponseSchema,
+  SubmitDrawingResponseSchema,
+  UserInfoResponseSchema,
+} from "@toss/shared";
 
 const BASE_URL = "/api";
 const LOGIN_PATH = "/oauth/toss/login";
 
 const getToken = () => localStorage.getItem("access_token");
+
+// 토큰이 바뀌면 다른 사용자일 수 있으므로 userKey 캐시도 함께 무효화한다.
+export const setAccessToken = (token: string) => {
+  localStorage.setItem("access_token", token);
+  localStorage.removeItem("userKey");
+};
+
+export const clearAccessToken = () => {
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("userKey");
+};
 
 let reissuePromise: Promise<string> | null = null;
 
@@ -21,15 +43,15 @@ async function reissueToken(): Promise<string> {
       body: JSON.stringify({ authorizationCode, referrer }),
     });
     if (!res.ok) {
-      localStorage.removeItem("access_token");
+      clearAccessToken();
       throw new Error("토큰 재발급 실패");
     }
     const parsed = LoginResponseSchema.safeParse(await res.json());
     if (!parsed.success) {
-      localStorage.removeItem("access_token");
+      clearAccessToken();
       throw new Error("토큰 재발급 응답이 올바르지 않아요");
     }
-    localStorage.setItem("access_token", parsed.data.accessToken);
+    setAccessToken(parsed.data.accessToken);
     return parsed.data.accessToken;
   })().finally(() => {
     reissuePromise = null;
@@ -60,6 +82,7 @@ async function request<T>(
   const makeHeaders = (token: string | null) => {
     const headers = new Headers(options.headers);
     headers.set("Content-Type", "application/json");
+    headers.set("Cache-Control", "no-cache");
     if (token) headers.set("Authorization", `Bearer ${token}`);
     return headers;
   };
@@ -70,6 +93,7 @@ async function request<T>(
       headers: makeHeaders(token),
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: options.signal,
+      cache: "no-store",
     });
 
   let response = await fetchOnce(getToken());
@@ -90,10 +114,16 @@ async function request<T>(
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
-const createHeaders = (headers?: HeadersInit): Headers => new Headers(headers);
+const getCurrentUserKey = async () => {
+  const storedUserKey = localStorage.getItem("userKey");
+  if (storedUserKey) return storedUserKey;
 
-const getCurrentUserId = () => {
-  return localStorage.getItem("userId") ?? "1";
+  const userInfo = UserInfoResponseSchema.parse(
+    await request<unknown>("GET", "/user/me"),
+  );
+  const userKey = String(userInfo.userKey);
+  localStorage.setItem("userKey", userKey);
+  return userKey;
 };
 
 const get = <T>(path: string, options: RequestOptions = {}): Promise<T> =>
@@ -111,31 +141,40 @@ export const serverTossApi = {
   getMe: async () =>
     UserInfoResponseSchema.parse(await request<unknown>("GET", "/user/me")),
 
-  getMyRanking: (options?: RequestOptions) => {
-    const headers = createHeaders(options?.headers);
-    headers.set("x-user-id", getCurrentUserId());
-    return get<MyRankingResponse>("/rankings/me", { ...options, headers });
-  },
+  getPrompt: async () =>
+    PromptResponseSchema.parse(await request<unknown>("GET", "/prompt")),
 
-  getRankingList: (options?: RequestOptions) => {
-    const headers = createHeaders(options?.headers);
-    // TODO: 서버 확정 후 x-user-id에 전달할 식별자로 교체한다.
-    headers.set("x-user-id", getCurrentUserId());
-    return get<RankingListServerResponse>("/rankings", {
-      ...options,
-      headers,
-    }).then(({ rankings }) => rankings);
+  scoreStrokes: async (body: SubmitStrokesRequest) =>
+    SimilarityResponseSchema.parse(
+      await request<unknown>("POST", "/strokes", body),
+    ),
+
+  getMyRanking: (options?: RequestOptions) =>
+    get<MyRankingResponse>("/rankings/me", options),
+
+  getRankingList: async (options?: RequestOptions) => {
+    const { rankings } = await get<RankingListServerResponse>(
+      "/rankings",
+      options,
+    );
+    return rankings;
   },
 
   getPodium: (options?: RequestOptions) =>
     get<PodiumEntry[]>("/rankings/podium", options),
 
-  getMyDrawings: (options?: RequestOptions) => {
-    const headers = createHeaders(options?.headers);
-    headers.set("x-user-id", getCurrentUserId());
-    return get<MyDrawingsResponse>("/drawing/me", { ...options, headers });
-  },
+  getMyDrawings: (options?: RequestOptions) =>
+    get<MyDrawingsResponse>("/drawing/me", options),
 
   getDrawing: (drawingId: string, options?: RequestOptions) =>
     get<DrawingDetailResponse>(`/drawing/${drawingId}`, options),
+
+  submitDrawing: async (strokes: Stroke[]) => {
+    const userKey = await getCurrentUserKey();
+    return SubmitDrawingResponseSchema.parse(
+      await request<unknown>("POST", "/drawing", { userKey, strokes }),
+    );
+  },
+
+  recordAdView: () => request<void>("POST", "/adviews"),
 };

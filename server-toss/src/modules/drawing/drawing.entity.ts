@@ -5,7 +5,7 @@ import {
   PrimaryKey,
   Property,
 } from "@mikro-orm/decorators/legacy";
-import { BaseEntity } from "src/common/base.entity";
+import { BaseEntity } from "src/common/entitiy/base.entity";
 import { Prompt } from "src/modules/prompt/prompt.entity";
 import { User } from "src/modules/user/user.entity";
 
@@ -23,7 +23,7 @@ export class Drawing extends BaseEntity {
   @Property({ fieldName: "score", type: "double" })
   score!: number;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { joinColumn: "user_key" })
   user!: Rel<User>;
 
   @ManyToOne(() => Prompt)

@@ -45,7 +45,7 @@ const useAbortableQuery = <T>(query: QueryFn<T>) => {
     };
   }, [loadData]);
 
-  return { data, isLoading };
+  return { data, isLoading, refetch: loadData };
 };
 
 export { useAbortableQuery };

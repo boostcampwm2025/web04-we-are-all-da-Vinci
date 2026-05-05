@@ -1,4 +1,4 @@
-import { Controller, Get, Headers } from "@nestjs/common";
+import { Controller, Get, UseGuards } from "@nestjs/common";
 import {
   ApiBadRequestResponse,
   ApiHeader,
@@ -7,12 +7,16 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { RankingService } from "./ranking.service";
-import { parseOptionalUserIdHeader, parseUserIdHeader } from "./ranking.util";
 import {
   type MyRankingResponse,
   type RankingListResponse,
   type PodiumResponse,
 } from "./types/ranking.type";
+import {
+  CurrentUser,
+  type CurrentUserPayload,
+} from "../auth/decorators/current-user.decorator";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 
 const podiumResponseSchema = {
   type: "array",
@@ -40,12 +44,12 @@ const rankingListResponseSchema = {
         properties: {
           name: { type: "string", example: "홍길동" },
           score: { type: "number", example: 91.25 },
-          userId: { type: "string", example: "123" },
+          userKey: { type: "number", example: 123 },
           drawingId: { type: "string", example: "456" },
           rank: { type: "integer", example: 1 },
           isMe: { type: "boolean", example: true },
         },
-        required: ["name", "score", "userId", "drawingId", "rank", "isMe"],
+        required: ["name", "score", "userKey", "drawingId", "rank", "isMe"],
       },
     },
   },
@@ -81,6 +85,7 @@ const myRankingResponseSchema = {
 };
 
 @ApiTags("Rankings")
+@UseGuards(JwtAuthGuard)
 @Controller("rankings")
 export class RankingController {
   constructor(private readonly rankingService: RankingService) {}
@@ -101,33 +106,31 @@ export class RankingController {
 
   @Get("")
   @ApiHeader({
-    name: "X-User-Id",
-    required: false,
+    name: "Authorization",
+    required: true,
     description: "현재 사용자의 식별자. 전달하면 isMe가 계산됩니다.",
   })
   @ApiOperation({
     summary: "TOP100 랭킹 조회",
     description:
-      "시스템이 미리 계산해 저장한 랭킹 순서대로 상위 100개를 반환합니다. X-User-Id를 전달하면 현재 사용자 항목의 isMe를 true로 표시합니다.",
+      "시스템이 미리 계산해 저장한 랭킹 순서대로 상위 100개를 반환합니다. JWT의 userKey로 현재 사용자 항목의 isMe를 true로 표시합니다.",
   })
   @ApiOkResponse({
     description: "상위 100개 랭킹 목록",
     schema: rankingListResponseSchema,
   })
   @ApiBadRequestResponse({
-    description: "X-User-Id 헤더가 숫자 문자열이 아닌 경우",
+    description: "JWT 사용자 정보가 올바르지 않은 경우",
   })
   async findRankingList(
-    @Headers("x-user-id") userIdHeader?: string | string[],
+    @CurrentUser() user: CurrentUserPayload,
   ): Promise<RankingListResponse> {
-    const userId = parseOptionalUserIdHeader(userIdHeader);
-
-    return await this.rankingService.findRankingList(userId);
+    return await this.rankingService.findRankingList(user.userKey);
   }
 
   @Get("me")
   @ApiHeader({
-    name: "X-User-Id",
+    name: "Authorization",
     required: true,
     description: "현재 사용자의 식별자",
   })
@@ -141,13 +144,11 @@ export class RankingController {
     schema: myRankingResponseSchema,
   })
   @ApiBadRequestResponse({
-    description: "X-User-Id 헤더가 없거나 숫자 문자열이 아닌 경우",
+    description: "JWT 사용자 정보가 올바르지 않은 경우",
   })
   async findMyRanking(
-    @Headers("x-user-id") userIdHeader?: string | string[],
+    @CurrentUser() user: CurrentUserPayload,
   ): Promise<MyRankingResponse> {
-    const userId = parseUserIdHeader(userIdHeader);
-
-    return await this.rankingService.findMyRanking(userId);
+    return await this.rankingService.findMyRanking(user.userKey);
   }
 }

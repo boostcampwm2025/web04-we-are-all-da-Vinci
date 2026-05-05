@@ -6,7 +6,7 @@ import {
   PrimaryKey,
   Property,
 } from "@mikro-orm/decorators/legacy";
-import { BaseEntity } from "src/common/base.entity";
+import { BaseEntity } from "src/common/entitiy/base.entity";
 import { User } from "src/modules/user/user.entity";
 
 @Entity({ tableName: "point_logs" })
@@ -20,7 +20,7 @@ export class PointLog extends BaseEntity {
   @Property({ fieldName: "point_amount", type: "int" })
   pointAmount!: number;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { joinColumn: "user_key" })
   user!: Rel<User>;
 }
 

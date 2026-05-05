@@ -1,7 +1,7 @@
 import { TossAds } from "@apps-in-toss/web-framework";
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
-import { initTossAdsOnce } from "@/shared/lib";
+import { initTossAdsOnce, trackImpression } from "@/shared/lib";
 
 type BannerType = "list" | "feed";
 
@@ -41,6 +41,24 @@ const BannerAd = ({ adGroupId, type = "list", className }: BannerAdProps) => {
   const bannerRef = useRef<HTMLDivElement>(null);
   const [isFailed, setIsFailed] = useState(false);
   const height = BANNER_HEIGHTS[type];
+
+  useEffect(() => {
+    const el = bannerRef.current;
+    if (!el) return;
+
+    const adId = adGroupId;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          trackImpression("banner_ad_impression", { ad_group_id: adId });
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     let attached: ReturnType<typeof TossAds.attachBanner> | undefined;

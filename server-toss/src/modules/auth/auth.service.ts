@@ -43,11 +43,21 @@ export class AuthService {
       userInfo = await this.tossApiClient.getUserInfo(accessToken);
     } catch (err) {
       if (err instanceof TossTransportError) {
-        this.logger.error(err, "Toss API 통신 오류");
+        this.logger.error(
+          { event: "auth.login.toss_transport_failed", err },
+          "Toss API 통신 오류",
+        );
         throw new ServiceUnavailableException("Toss API에 연결할 수 없어요.");
       }
       if (err instanceof TossApiError) {
-        this.logger.error(err, `Toss API 오류 (HTTP ${err.statusCode})`);
+        this.logger.error(
+          {
+            event: "auth.login.toss_api_failed",
+            statusCode: err.statusCode,
+            err,
+          },
+          `Toss API 오류 (HTTP ${err.statusCode})`,
+        );
         throw new BadGatewayException("Toss API 오류가 발생했어요.");
       }
       throw err;
@@ -64,7 +74,10 @@ export class AuthService {
         ? this.parseBirthday(this.decrypt(userInfo.birthday))
         : undefined;
     } catch (err) {
-      this.logger.error(err, "사용자 정보 복호화 실패");
+      this.logger.error(
+        { event: "auth.login.decrypt_failed", userKey: userInfo.userKey, err },
+        "사용자 정보 복호화 실패",
+      );
       throw new InternalServerErrorException(
         "사용자 정보 복호화에 실패했어요.",
       );
@@ -78,9 +91,21 @@ export class AuthService {
         birthday,
       });
     } catch (err) {
-      this.logger.error(err, "사용자 정보 저장 실패");
+      this.logger.error(
+        {
+          event: "auth.login.user_save_failed",
+          userKey: userInfo.userKey,
+          err,
+        },
+        "사용자 정보 저장 실패",
+      );
       throw new InternalServerErrorException("사용자 정보 저장에 실패했어요.");
     }
+
+    this.logger.log(
+      { event: "auth.login.succeeded", userKey: userInfo.userKey },
+      "토스 로그인 성공",
+    );
 
     return { accessToken: this.jwtService.sign({ sub: userInfo.userKey }) };
   }
@@ -90,15 +115,31 @@ export class AuthService {
       await this.tossApiClient.removeAccessByUserKey(userKey);
     } catch (err) {
       if (err instanceof TossTransportError) {
-        this.logger.error(err, "Toss 로그아웃 통신 오류");
+        this.logger.error(
+          { event: "auth.logout.toss_transport_failed", userKey, err },
+          "Toss 로그아웃 통신 오류",
+        );
         throw new ServiceUnavailableException("Toss API에 연결할 수 없어요.");
       }
       if (err instanceof TossApiError) {
-        this.logger.error(err, `Toss 로그아웃 오류 (HTTP ${err.statusCode})`);
+        this.logger.error(
+          {
+            event: "auth.logout.toss_api_failed",
+            userKey,
+            statusCode: err.statusCode,
+            err,
+          },
+          `Toss 로그아웃 오류 (HTTP ${err.statusCode})`,
+        );
         throw new BadGatewayException("Toss API 오류가 발생했어요.");
       }
       throw err;
     }
+
+    this.logger.log(
+      { event: "auth.logout.succeeded", userKey },
+      "토스 로그아웃 성공",
+    );
   }
 
   private decrypt(encryptedText: string): string {
