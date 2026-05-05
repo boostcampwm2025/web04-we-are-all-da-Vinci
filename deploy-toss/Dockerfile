@@ -1,35 +1,68 @@
-FROM node:22-alpine AS builder
+FROM node:22-alpine AS base
+
 WORKDIR /app
-RUN npm install -g pnpm
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml .npmrc ./
+
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
+RUN corepack enable
+
+FROM base AS builder
+
+COPY pnpm-workspace.yaml package.json .npmrc pnpm-lock.yaml ./
 COPY server-toss/package.json ./server-toss/
-COPY packages/toss-shared ./packages/toss-shared/
-COPY packages/similarity ./packages/similarity/
-RUN pnpm install --frozen-lockfile --ignore-scripts
-RUN cd /app/packages/similarity && npx tsc
-RUN cd /app/packages/toss-shared && npx tsc
+COPY packages/toss-shared/package.json ./packages/toss-shared/
+COPY packages/similarity/package.json ./packages/similarity/
+
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+pnpm install --frozen-lockfile --ignore-scripts
+
+COPY packages/toss-shared ./packages/toss-shared
+COPY packages/similarity ./packages/similarity
 COPY server-toss ./server-toss
+
+RUN pnpm --filter ./packages/toss-shared build
+RUN pnpm --filter ./packages/similarity build
+RUN pnpm --filter server-toss build
+  
+
+FROM builder AS migration
 WORKDIR /app/server-toss
-RUN npx tsc -p tsconfig.build.json
+
+RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
+
+ENV NODE_ENV=production
+CMD ["pnpm", "run", "migration:up", "--config", "mikro-orm.migration.config.cjs"]
+
+FROM base AS deploy
+
+WORKDIR /app 
+
+COPY --from=builder /app/packages ./packages 
+COPY --from=builder /app/server-toss ./server-toss
+
+RUN pnpm deploy --filter server-toss --prod /prod/server-toss --legacy --ignore-scripts
+
 
 FROM node:22-alpine AS runner
+
 WORKDIR /app
+
 ENV NODE_ENV=production
-RUN npm install -g pnpm
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nestjs
-COPY --from=builder /app/pnpm-workspace.yaml /app/package.json /app/pnpm-lock.yaml /app/.npmrc ./
-COPY --from=builder /app/server-toss/package.json ./server-toss/
-COPY --from=builder /app/packages/toss-shared ./packages/toss-shared/
-COPY --from=builder /app/packages/similarity ./packages/similarity/
-RUN pnpm install --frozen-lockfile --ignore-scripts --prod
-COPY --from=builder --chown=nestjs:nodejs /app/server-toss/dist ./server-toss/dist
-COPY --from=builder --chown=nestjs:nodejs /app/server-toss/tsconfig.paths.json ./server-toss/tsconfig.paths.json
-USER nestjs
-EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
-WORKDIR /app/server-toss
-ENV PORT=3000
 ENV TS_NODE_PROJECT=tsconfig.paths.json
-CMD ["node", "-r", "tsconfig-paths/register", "dist/main.js"]
+ENV PORT=3000
+
+RUN addgroup --system --gid 1001 nodejs && \
+adduser --system --uid 1001 nestjs
+
+COPY --from=deploy --chown=nestjs:nodejs /prod/server-toss ./
+COPY --chown=nestjs:nodejs server-toss/data ./data
+  
+USER nestjs
+  
+EXPOSE 3000
+  
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+CMD node -e "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+
+CMD ["node", "dist/main.js"]

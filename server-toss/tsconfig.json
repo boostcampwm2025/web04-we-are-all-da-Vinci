@@ -25,6 +25,6 @@
       "@davinci/similarity/*": ["../packages/similarity/dist/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "mikro-orm.migration.config.cjs"],
   "exclude": ["dist", "node_modules"]
 }
