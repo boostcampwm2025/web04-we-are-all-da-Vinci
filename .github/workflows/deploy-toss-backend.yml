@@ -41,11 +41,11 @@ jobs:
           printf '%s' "$PRIVATE_KEY" | base64 --decode > ~/deploy/certs/davinci_private.key 
           printf '%s' "$PUBLIC_CERT" | base64 --decode > ~/deploy/certs/davinci_public.cert
 
-          chown 1001:1001 ~/deploy/certs/davinci_private.key
-          chown 1001:1001 ~/deploy/certs/davinci_public.cert
+          sudo chown 1001:1001 ~/deploy/certs/davinci_private.key
+          sudo chown 1001:1001 ~/deploy/certs/davinci_public.cert
 
-          chmod 400 ~/deploy/certs/davinci_private.key 
-          chmod 400 ~/deploy/certs/davinci_public.cert
+          sudo chmod 400 ~/deploy/certs/davinci_private.key 
+          sudo chmod 400 ~/deploy/certs/davinci_public.cert
 
           test -s ~/deploy/certs/davinci_private.key
           test -s ~/deploy/certs/davinci_public.cert
