@@ -35,12 +35,21 @@ jobs:
 
       - name: Copy secret file
         run: |
+          set -e 
+
           mkdir -p ~/deploy/certs
           printf '%s' "$PRIVATE_KEY" | base64 --decode > ~/deploy/certs/davinci_private.key 
           printf '%s' "$PUBLIC_CERT" | base64 --decode > ~/deploy/certs/davinci_public.cert
 
-          chmod 600 ~/deploy/certs/davinci_private.key 
-          chmod 644 ~/deploy/certs/davinci_public.cert
+          chown 1001:1001 ~/deploy/certs/davinci_private.key
+          chown 1001:1001 ~/deploy/certs/davinci_public.cert
+
+          chmod 400 ~/deploy/certs/davinci_private.key 
+          chmod 400 ~/deploy/certs/davinci_public.cert
+
+          test -s ~/deploy/certs/davinci_private.key
+          test -s ~/deploy/certs/davinci_public.cert
+
         env:
           PRIVATE_KEY: ${{ secrets.DAVINCI_PRIVATE_KEY }}
           PUBLIC_CERT: ${{ secrets.DAVINCI_PUBLIC_CERT }}
@@ -78,7 +87,7 @@ jobs:
         if: always()
         working-directory: ./deploy-toss
         run: |
-          docker compose -f compose.yml logs --tail=50
+          IMAGE_TAG=davinci-toss docker compose -f compose.yml logs --tail=50 app
 
       - name: Clean
         if: always()
