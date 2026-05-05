@@ -1,7 +1,6 @@
 import { Migrator } from "@mikro-orm/migrations";
 import { defineConfig } from "@mikro-orm/mysql";
 import { SeedManager } from "@mikro-orm/seeder";
-import "dotenv/config";
 import { AdView } from "./modules/ad/ad-view.entity";
 import { Drawing } from "./modules/drawing/drawing.entity";
 import { PointLog } from "./modules/point/point-log.entity";
