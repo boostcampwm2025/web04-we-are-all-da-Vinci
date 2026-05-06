@@ -1,4 +1,5 @@
 import { MyScoreCard, useDrawing } from "@/entities/myScoreCard";
+import { AD_GROUP_IDS } from "@/shared/config";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { colors } from "@toss/tds-colors";
 import { Button, Skeleton, Top } from "@toss/tds-mobile";
@@ -41,7 +42,7 @@ const RankingDetailView = () => {
         </div>
       )}
 
-      <BannerAd adGroupId="ait-ad-test-banner-id" className="mt-3 mb-3" />
+      <BannerAd adGroupId={AD_GROUP_IDS.BANNER_LIST} className="mt-3 mb-3" />
 
       <div className="mt-8 px-(--page-px)">
         <Link to="/ranking">

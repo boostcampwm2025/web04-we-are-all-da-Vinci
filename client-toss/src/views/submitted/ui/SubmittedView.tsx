@@ -1,6 +1,7 @@
 import { drawStrokesOnCanvas, useCanvasSetup } from "@/feature/drawing";
 import { usePlayChance } from "@/feature/playChance";
 import { serverTossApi } from "@/shared/api";
+import { AD_GROUP_IDS } from "@/shared/config";
 import { trackClick, useExitGuard, useRequiredState } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";
@@ -127,7 +128,7 @@ const SubmittedView = () => {
         </div>
 
         <div className="pb-3">
-          <BannerAd adGroupId="ait-ad-test-native-image-id" type="list" />
+          <BannerAd adGroupId={AD_GROUP_IDS.BANNER_LIST} type="list" />
         </div>
       </div>
 

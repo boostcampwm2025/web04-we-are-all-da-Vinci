@@ -1,6 +1,7 @@
 import { PhaseHeader } from "@/entities/phaseHeader";
 import { drawPromptOnCanvas, useCanvasSetup } from "@/feature/drawing";
 import { useRequirePlaySession } from "@/feature/playChance";
+import { AD_GROUP_IDS } from "@/shared/config";
 import {
   MEMORIZE_SECONDS,
   useCountdown,
@@ -91,7 +92,7 @@ const MemorizeView = () => {
           </div>
         </div>
 
-        <BannerAd type="feed" adGroupId="ait-ad-test-native-image-id" />
+        <BannerAd type="feed" adGroupId={AD_GROUP_IDS.BANNER_FEED} />
       </div>
 
       <ConfirmDialog
