@@ -5,7 +5,11 @@ import { User } from "src/modules/user/user.entity";
 export class UserFactory extends Factory<User> {
   model = User;
   definition(input?: EntityData<User>): EntityData<User> {
+    const userKey = input?.userKey;
+    const fallbackNickname =
+      typeof userKey === "number" ? `시드유저${userKey}` : undefined;
     return {
+      nickname: fallbackNickname,
       ...input,
     };
   }

@@ -15,21 +15,27 @@ import {
   UserInfoResponseSchema,
 } from "@toss/shared";
 
-const BASE_URL = "/api";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 const LOGIN_PATH = "/oauth/toss/login";
 
 const getToken = () => localStorage.getItem("access_token");
 
-// 토큰이 바뀌면 다른 사용자일 수 있으므로 userKey 캐시도 함께 무효화한다.
+// 토큰이 바뀌면 다른 사용자일 수 있으므로 userKey/nickname 캐시도 함께 무효화한다.
 export const setAccessToken = (token: string) => {
   localStorage.setItem("access_token", token);
   localStorage.removeItem("userKey");
+  localStorage.removeItem("nickname");
 };
 
 export const clearAccessToken = () => {
   localStorage.removeItem("access_token");
   localStorage.removeItem("userKey");
+  localStorage.removeItem("nickname");
 };
+
+export const getCachedNickname = () => localStorage.getItem("nickname");
+export const setCachedNickname = (nickname: string) =>
+  localStorage.setItem("nickname", nickname);
 
 let reissuePromise: Promise<string> | null = null;
 
@@ -52,6 +58,7 @@ async function reissueToken(): Promise<string> {
       throw new Error("토큰 재발급 응답이 올바르지 않아요");
     }
     setAccessToken(parsed.data.accessToken);
+    setCachedNickname(parsed.data.nickname);
     return parsed.data.accessToken;
   })().finally(() => {
     reissuePromise = null;
@@ -70,7 +77,7 @@ interface RankingListServerResponse {
 }
 
 type DrawingDetailResponse = MyDrawingResponse & {
-  name: string;
+  nickname: string;
 };
 
 async function request<T>(

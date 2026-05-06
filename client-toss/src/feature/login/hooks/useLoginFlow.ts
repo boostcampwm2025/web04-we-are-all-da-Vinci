@@ -1,4 +1,9 @@
-import { clearAccessToken, serverTossApi, setAccessToken } from "@/shared/api";
+import {
+  clearAccessToken,
+  serverTossApi,
+  setAccessToken,
+  setCachedNickname,
+} from "@/shared/api";
 import { appLogin } from "@apps-in-toss/web-framework";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -15,11 +20,12 @@ export const useLoginFlow = () => {
     try {
       const { authorizationCode, referrer } = await appLogin();
       localStorage.removeItem(LOGIN_PENDING_KEY);
-      const { accessToken } = await serverTossApi.login({
+      const { accessToken, nickname } = await serverTossApi.login({
         authorizationCode,
         referrer,
       });
       setAccessToken(accessToken);
+      setCachedNickname(nickname);
       navigate("/", { replace: true });
     } catch (err) {
       localStorage.removeItem(LOGIN_PENDING_KEY);

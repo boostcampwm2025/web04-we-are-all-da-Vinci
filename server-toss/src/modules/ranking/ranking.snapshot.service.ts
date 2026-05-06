@@ -1,10 +1,10 @@
 import { QueryOrder, type RequiredEntityData } from "@mikro-orm/core";
+import { CreateRequestContext } from "@mikro-orm/decorators/legacy";
 import { EntityManager, sql } from "@mikro-orm/mysql";
 import { Injectable, Logger } from "@nestjs/common";
+import { getSeoulDayRange } from "src/common/util/time.util";
 import { Drawing } from "src/modules/drawing/drawing.entity";
 import { Ranking } from "./ranking.entity";
-import { getSeoulDayRange } from "src/common/util/time.util";
-import { CreateRequestContext } from "@mikro-orm/decorators/legacy";
 
 type RankingSnapshotInsert = RequiredEntityData<Ranking>;
 
@@ -48,7 +48,7 @@ export class RankingSnapshotService {
             "d.score",
             "d.createdAt",
             "d.user",
-            sql`u.name`.as("user_name"),
+            sql`u.nickname`.as("user_nickname"),
             sql`
       row_number() over (
         partition by d.user_key
@@ -73,7 +73,7 @@ export class RankingSnapshotService {
           .orderBy({
             [sql`rd.score`]: QueryOrder.DESC,
             [sql`rd.created_at`]: QueryOrder.ASC,
-            [sql`rd.user_name`]: QueryOrder.ASC,
+            [sql`rd.user_nickname`]: QueryOrder.ASC,
           })
           .execute<{ id: bigint }[]>();
 
@@ -92,7 +92,7 @@ export class RankingSnapshotService {
         const snapshotTime = new Date();
         const rankings = drawings.map<RankingSnapshotInsert>((drawing) => {
           return {
-            name: drawing.user.name,
+            nickname: drawing.user.nickname,
             strokes: drawing.strokes,
             score: drawing.score,
             userKey: drawing.user.userKey,

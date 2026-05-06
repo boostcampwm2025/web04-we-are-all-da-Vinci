@@ -3,7 +3,7 @@ import type { PodiumItem, RankingListItem } from "./types/ranking.type";
 
 export const mapRankingToPodiumItem = (ranking: Ranking): PodiumItem => {
   return {
-    name: ranking.name,
+    nickname: ranking.nickname,
     score: ranking.score,
   };
 };
@@ -14,7 +14,7 @@ export const mapRankingToRankingListItem = (
   userKey?: number,
 ): RankingListItem => {
   return {
-    name: ranking.name,
+    nickname: ranking.nickname,
     score: ranking.score,
     userKey: ranking.userKey,
     drawingId: ranking.drawingId.toString(),

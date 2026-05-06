@@ -1,14 +1,14 @@
 import { afterAll, beforeAll, describe, expect, it } from "@jest/globals";
 import { QueryOrder } from "@mikro-orm/core";
 import { MikroORM } from "@mikro-orm/mysql";
+import { MikroOrmModule } from "@mikro-orm/nestjs";
+import { Test, TestingModule } from "@nestjs/testing";
+import { getSeoulDayRange } from "src/common/util/time.util";
+import { SmallUserDrawingSeeder } from "src/seeders/small-user-drawing.seeder";
 import config from "../../../mikro-orm.config";
 import { Drawing } from "../../drawing/drawing.entity";
 import { Ranking } from "../ranking.entity";
 import { RankingSnapshotService } from "../ranking.snapshot.service";
-import { getSeoulDayRange } from "src/common/util/time.util";
-import { SmallUserDrawingSeeder } from "src/seeders/small-user-drawing.seeder";
-import { Test, TestingModule } from "@nestjs/testing";
-import { MikroOrmModule } from "@mikro-orm/nestjs";
 
 type DrawingWithUser = {
   id: bigint;
@@ -17,12 +17,12 @@ type DrawingWithUser = {
   strokes: string;
   user: {
     userKey: number;
-    name: string;
+    nickname: string;
   };
 };
 
 type RankingSnapshotRow = {
-  name: string;
+  nickname: string;
   strokes: string;
   score: number;
   userKey: number;
@@ -61,11 +61,11 @@ const compareSnapshots = (
     return submittedAtDiff;
   }
 
-  if (left.name === right.name) {
+  if (left.nickname === right.nickname) {
     return 0;
   }
 
-  return left.name < right.name ? -1 : 1;
+  return left.nickname < right.nickname ? -1 : 1;
 };
 
 const groupDrawingsByUser = (drawings: DrawingWithUser[]) => {
@@ -102,7 +102,7 @@ const buildExpectedSnapshots = (drawings: DrawingWithUser[]) => {
 
   return [...bestByUser.values()]
     .map<RankingSnapshotRow>((drawing) => ({
-      name: drawing.user.name,
+      nickname: drawing.user.nickname,
       strokes: drawing.strokes,
       score: drawing.score,
       userKey: drawing.user.userKey,
@@ -177,13 +177,13 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
             orderBy: {
               score: QueryOrder.DESC,
               submittedAt: QueryOrder.ASC,
-              name: QueryOrder.ASC,
+              nickname: QueryOrder.ASC,
             },
           },
         );
 
         const actualSnapshots = rankings.map<RankingSnapshotRow>((ranking) => ({
-          name: ranking.name,
+          nickname: ranking.nickname,
           strokes: ranking.strokes,
           score: ranking.score,
           userKey: ranking.userKey,

@@ -1,10 +1,10 @@
 import {
+  afterEach,
+  beforeEach,
   describe,
   expect,
   it,
   jest,
-  beforeEach,
-  afterEach,
 } from "@jest/globals";
 
 import { Ranking } from "../ranking.entity";
@@ -13,7 +13,7 @@ import { RankingService } from "../ranking.service";
 
 describe("랭킹 서비스", () => {
   const ranking = {
-    name: "홍길동",
+    nickname: "홍길동닉",
     score: 91.25,
     userKey: 123,
     drawingId: 456,
@@ -28,7 +28,7 @@ describe("랭킹 서비스", () => {
 
       await expect(rankingService.findPodium()).resolves.toEqual([
         {
-          name: "홍길동",
+          nickname: "홍길동닉",
           score: 91.25,
         },
       ]);
@@ -54,7 +54,7 @@ describe("랭킹 서비스", () => {
         updatedAt: "2026-04-18T00:00:00.000Z",
         rankings: [
           {
-            name: "홍길동",
+            nickname: "홍길동닉",
             score: 91.25,
             userKey: 123,
             drawingId: "456",
@@ -72,7 +72,7 @@ describe("랭킹 서비스", () => {
       const findTop = jest.fn().mockResolvedValue([
         ranking,
         {
-          name: "임꺽정",
+          nickname: "임꺽정닉",
           score: 88.5,
           userKey: 999,
           drawingId: 777,
@@ -92,7 +92,7 @@ describe("랭킹 서비스", () => {
         updatedAt: "2026-04-18T00:00:00.000Z",
         rankings: [
           {
-            name: "홍길동",
+            nickname: "홍길동닉",
             score: 91.25,
             userKey: 123,
             drawingId: "456",
@@ -100,7 +100,7 @@ describe("랭킹 서비스", () => {
             isMe: true,
           },
           {
-            name: "임꺽정",
+            nickname: "임꺽정닉",
             score: 88.5,
             userKey: 999,
             drawingId: "777",

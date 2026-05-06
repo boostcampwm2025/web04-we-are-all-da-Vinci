@@ -7,7 +7,7 @@ import {
 } from "../config/rankingStyles";
 
 interface RankingEntryProps {
-  name: string;
+  nickname: string;
   drawingId: string;
   score: number;
   rank: number;
@@ -37,7 +37,7 @@ const RankingIcon = ({ rank, isMe }: { rank: number; isMe: boolean }) => {
 };
 
 export const RankingEntry = ({
-  name,
+  nickname,
   drawingId,
   score,
   rank,
@@ -66,7 +66,7 @@ export const RankingEntry = ({
         contents={
           <ListRow.Texts
             type="2RowTypeA"
-            top={name}
+            top={isMe ? `${nickname} (나)` : nickname}
             bottom={`${score.toFixed(2)}점`}
           />
         }

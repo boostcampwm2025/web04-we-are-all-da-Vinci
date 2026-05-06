@@ -36,7 +36,7 @@ describe("serverTossApi", () => {
     const rankings = [
       {
         userKey: 123,
-        name: "김다빈치",
+        nickname: "김다빈치",
         drawingId: "100",
         rank: 1,
         score: 99.9,
@@ -96,7 +96,7 @@ describe("serverTossApi", () => {
   it("그림 상세 조회 시 /api/drawing/:drawingId로 요청한다", async () => {
     const body = {
       drawingId: 42,
-      name: "SeedA",
+      nickname: "시드유저A",
       drawRanking: 1,
       strokes: [],
       similarity: {
@@ -169,6 +169,7 @@ describe("serverTossApi", () => {
     const userInfo = {
       userKey: 760442640,
       name: "Tester",
+      nickname: "테스터닉",
       gender: null,
       birthday: null,
     };
