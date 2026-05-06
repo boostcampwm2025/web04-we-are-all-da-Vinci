@@ -82,7 +82,7 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
             createdAt: new Date("2026-04-18T00:00:00.000Z"),
             updatedAt: new Date("2026-04-18T00:00:00.000Z"),
             user: {
-              name: "가",
+              nickname: "가닉네임",
               userKey: 11,
             },
           },
@@ -94,7 +94,7 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
             createdAt: new Date("2026-04-18T00:01:00.000Z"),
             updatedAt: new Date("2026-04-18T00:01:00.000Z"),
             user: {
-              name: "나",
+              nickname: "나닉네임",
               userKey: 22,
             },
           },
@@ -152,7 +152,7 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
         expect(insertedRankings).toHaveLength(2);
         expect(insertedRankings[0]).toEqual(
           expect.objectContaining({
-            name: "가",
+            nickname: "가닉네임",
             strokes: "strokes-1",
             score: drawings[0].score,
             userKey: 11,
@@ -162,7 +162,7 @@ describe("랭킹 스냅샷 갱신 서비스", () => {
         );
         expect(insertedRankings[1]).toEqual(
           expect.objectContaining({
-            name: "나",
+            nickname: "나닉네임",
             strokes: "strokes-2",
             score: drawings[1].score,
             userKey: 22,

@@ -20,8 +20,8 @@ jest.mock("src/common/util/time.util", () => ({
   }),
 }));
 
-import type { User } from "../../user/user.entity";
 import type { Prompt } from "../../prompt/prompt.entity";
+import type { User } from "../../user/user.entity";
 import { Drawing } from "../drawing.entity";
 import { DrawingService } from "../service/drawing.service";
 
@@ -41,7 +41,7 @@ const makeDrawing = (
   id: bigint,
   score: number,
   promptId: bigint,
-  userName = "테스트유저",
+  userNickname = "테스트닉네임",
 ) => ({
   id,
   score,
@@ -53,7 +53,7 @@ const makeDrawing = (
     penalty: 10.0,
   }),
   prompt: { id: promptId },
-  user: { userKey: 1234, name: userName },
+  user: { userKey: 1234, name: "테스트유저", nickname: userNickname },
 });
 
 const buildPromptService = () => ({
@@ -298,7 +298,7 @@ describe("DrawingService", () => {
     });
 
     it("그림 상세를 올바른 형식으로 반환한다", async () => {
-      const drawing = makeDrawing(BigInt(1), 78.5, BigInt(10), "홍길동");
+      const drawing = makeDrawing(BigInt(1), 78.5, BigInt(10), "홍길동닉");
       em.findOne.mockResolvedValueOnce(drawing);
       em.find.mockResolvedValueOnce([drawing]);
 
@@ -306,7 +306,7 @@ describe("DrawingService", () => {
 
       expect(result).toMatchObject({
         drawingId: 1,
-        name: "홍길동",
+        nickname: "홍길동닉",
         drawRanking: 1,
       });
       expect(result!.strokes).toEqual([

@@ -1,13 +1,13 @@
 import { afterAll, beforeAll, describe, it } from "@jest/globals";
 import { MikroORM, QueryOrder } from "@mikro-orm/mysql";
+import { MikroOrmModule } from "@mikro-orm/nestjs";
+import { Test, TestingModule } from "@nestjs/testing";
+import { User } from "src/modules/user/user.entity";
+import { RankingSeeder } from "src/seeders/ranking.seeder";
+import { SmallUserDrawingSeeder } from "src/seeders/small-user-drawing.seeder";
 import config from "../../../mikro-orm.config";
 import { Ranking } from "../ranking.entity";
-import { Test, TestingModule } from "@nestjs/testing";
-import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { RankingRepository } from "../ranking.repository";
-import { SmallUserDrawingSeeder } from "src/seeders/small-user-drawing.seeder";
-import { RankingSeeder } from "src/seeders/ranking.seeder";
-import { User } from "src/modules/user/user.entity";
 
 describe("RankingRepository", () => {
   let orm: MikroORM;
@@ -55,7 +55,7 @@ describe("RankingRepository", () => {
             orderBy: {
               score: QueryOrder.DESC,
               submittedAt: QueryOrder.ASC,
-              name: QueryOrder.ASC,
+              nickname: QueryOrder.ASC,
             },
           })
         ).findIndex((r) => r.userKey === givenUser.userKey);

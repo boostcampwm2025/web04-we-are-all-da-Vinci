@@ -1,5 +1,6 @@
 import type { EntityManager } from "@mikro-orm/core";
 import { Seeder } from "@mikro-orm/seeder";
+import { getTodayKst } from "src/common/util/today";
 import { AdType, AdView } from "src/modules/ad/ad-view.entity";
 import { Drawing } from "src/modules/drawing/drawing.entity";
 import { PointLog, PointReason } from "src/modules/point/point-log.entity";
@@ -7,7 +8,6 @@ import { DailyPrompt } from "src/modules/prompt/daily-prompt.entity";
 import { Prompt } from "src/modules/prompt/prompt.entity";
 import { Ranking } from "src/modules/ranking/ranking.entity";
 import { User } from "src/modules/user/user.entity";
-import { getTodayKst } from "src/common/util/today";
 
 type Stroke = {
   points: [number[], number[]];
@@ -25,30 +25,35 @@ const TEST_USERS = [
   {
     userKey: 900001,
     name: "SeedA",
+    nickname: "시드유저900001",
     gender: "female",
     birthday: new Date("1998-01-12T00:00:00.000Z"),
   },
   {
     userKey: 900002,
     name: "SeedB",
+    nickname: "시드유저900002",
     gender: "male",
     birthday: new Date("1996-04-03T00:00:00.000Z"),
   },
   {
     userKey: 900003,
     name: "SeedC",
+    nickname: "시드유저900003",
     gender: "female",
     birthday: new Date("2000-09-27T00:00:00.000Z"),
   },
   {
     userKey: 900004,
     name: "SeedD",
+    nickname: "시드유저900004",
     gender: "male",
     birthday: new Date("1994-12-08T00:00:00.000Z"),
   },
   {
     userKey: 900005,
     name: "SeedE",
+    nickname: "시드유저900005",
     gender: undefined,
     birthday: new Date("2001-06-19T00:00:00.000Z"),
   },
@@ -311,6 +316,7 @@ export class DatabaseSeeder extends Seeder {
         const user = txEm.create(User, {
           userKey: seedUser.userKey,
           name: seedUser.name,
+          nickname: seedUser.nickname,
           gender: seedUser.gender,
           birthday: seedUser.birthday,
         });
@@ -338,7 +344,7 @@ export class DatabaseSeeder extends Seeder {
 
       drawings.forEach((drawing, index) => {
         const ranking = txEm.create(Ranking, {
-          name: users[index].name,
+          nickname: users[index].nickname,
           strokes: drawing.strokes,
           score: drawing.score,
           userKey: users[index].userKey,

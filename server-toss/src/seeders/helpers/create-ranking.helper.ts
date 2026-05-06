@@ -52,7 +52,7 @@ export const createRanking = (drawings: Drawing[]) => {
   const bestByUser = pickBestDrawingByUser(drawings);
 
   return [...bestByUser.values()].map<EntityData<Ranking>>((drawing) => ({
-    name: drawing.user.name,
+    nickname: drawing.user.nickname,
     strokes: drawing.strokes,
     score: drawing.score,
     userKey: drawing.user.userKey,

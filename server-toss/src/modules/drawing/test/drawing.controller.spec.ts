@@ -119,7 +119,7 @@ describe("DrawingController (e2e)", () => {
     it("drawingId로 그림 상세를 조회한다", async () => {
       drawingService.getDrawing.mockResolvedValue({
         drawingId: 42,
-        name: "SeedA",
+        nickname: "시드유저A",
         drawRanking: 3,
         strokes: validPayload.strokes,
         similarity,
@@ -131,7 +131,7 @@ describe("DrawingController (e2e)", () => {
 
       expect(res.body).toEqual({
         drawingId: 42,
-        name: "SeedA",
+        nickname: "시드유저A",
         drawRanking: 3,
         strokes: validPayload.strokes,
         similarity,

@@ -1,10 +1,10 @@
 import { Controller, Get, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { JwtAuthGuard } from "src/modules/auth/guards/jwt-auth.guard";
-import { CurrentUser } from "src/modules/auth/decorators/current-user.decorator";
 import type { CurrentUserPayload } from "src/modules/auth/decorators/current-user.decorator";
-import { UserService } from "./user.service";
+import { CurrentUser } from "src/modules/auth/decorators/current-user.decorator";
+import { JwtAuthGuard } from "src/modules/auth/guards/jwt-auth.guard";
 import { UserInfoResponseDto } from "./dto/user-info-response.dto";
+import { UserService } from "./user.service";
 
 @ApiTags("user")
 @Controller("user")
@@ -21,8 +21,8 @@ export class UserController {
   async getMe(
     @CurrentUser() user: CurrentUserPayload,
   ): Promise<UserInfoResponseDto> {
-    const { userKey, name, gender, birthday } =
+    const { userKey, name, nickname, gender, birthday } =
       await this.userService.getUserInfo(user.userKey);
-    return { userKey, name, gender, birthday };
+    return { userKey, name, nickname, gender, birthday };
   }
 }
