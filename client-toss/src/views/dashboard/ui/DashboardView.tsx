@@ -260,7 +260,7 @@ const DashboardView = () => {
         <Top
           title={
             <Top.TitleParagraph>
-              {nickname ? `오늘 ${nickname}의 결과` : "오늘 나의 결과"}
+              {nickname ? `${nickname}의 결과` : "오늘 나의 결과"}
             </Top.TitleParagraph>
           }
         />
