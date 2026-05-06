@@ -665,15 +665,15 @@
           "enumItems": [],
           "mappedType": "datetime"
         },
-        "name": {
-          "name": "name",
-          "type": "varchar(10)",
+        "nickname": {
+          "name": "nickname",
+          "type": "varchar(20)",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
           "unique": false,
-          "length": 10,
+          "length": 20,
           "precision": null,
           "scale": null,
           "default": null,
@@ -748,7 +748,7 @@
         "user_key": {
           "name": "user_key",
           "type": "int",
-          "unsigned": true,
+          "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
@@ -767,9 +767,9 @@
           "columnNames": [
             "score",
             "submitted_at",
-            "name"
+            "nickname"
           ],
-          "keyName": "idx_ranking_score_submit_name",
+          "keyName": "idx_ranking_score_submit_nickname",
           "unique": false,
           "primary": false,
           "constraint": false,
@@ -894,6 +894,22 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "date"
+        },
+        "nickname": {
+          "name": "nickname",
+          "type": "varchar(20)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": 20,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
         }
       },
       "indexes": [
@@ -904,6 +920,15 @@
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
+          "constraint": true
+        },
+        {
+          "columnNames": [
+            "nickname"
+          ],
+          "keyName": "users_nickname_unique",
+          "unique": true,
+          "primary": false,
           "constraint": true
         }
       ],

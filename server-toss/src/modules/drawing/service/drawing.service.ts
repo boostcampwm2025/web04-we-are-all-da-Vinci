@@ -1,14 +1,14 @@
 import { preprocessStrokes, scoreFinalSimilarity } from "@davinci/similarity";
 import { EntityManager, QueryOrder } from "@mikro-orm/mysql";
 import { HttpException, Injectable, Logger } from "@nestjs/common";
+import type { SimilarityResponse, Stroke } from "@toss/shared";
+import { getSeoulDayRange } from "src/common/util/time.util";
 import { PointService } from "src/modules/point/point.service";
+import { UserService } from "src/modules/user/user.service";
 import { Prompt } from "../../prompt/prompt.entity";
 import { PromptService } from "../../prompt/prompt.service";
 import { Drawing } from "../drawing.entity";
 import { DrawingAccessService } from "./drawing-access.service";
-import { UserService } from "src/modules/user/user.service";
-import type { SimilarityResponse, Stroke } from "@toss/shared";
-import { getSeoulDayRange } from "src/common/util/time.util";
 
 type Similarity = ReturnType<typeof scoreFinalSimilarity>;
 const SLOW_STROKES_DURATION_MS = 500;
@@ -210,7 +210,7 @@ export class DrawingService {
 
     return {
       drawingId: Number(drawing.id),
-      name: drawing.user.name,
+      nickname: drawing.user.nickname,
       drawRanking,
       strokes: JSON.parse(drawing.strokes) as Stroke[],
       similarity: JSON.parse(drawing.similarity) as SimilarityResponse,

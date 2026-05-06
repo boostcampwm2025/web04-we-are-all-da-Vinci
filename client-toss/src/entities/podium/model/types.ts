@@ -1,5 +1,5 @@
 interface PodiumEntry {
-  name: string;
+  nickname: string;
   score: number;
 }
 

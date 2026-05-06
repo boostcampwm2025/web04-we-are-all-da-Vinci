@@ -10,7 +10,7 @@ export const RankingSimilaritySchema = z.object({
 export type RankingSimilarity = z.infer<typeof RankingSimilaritySchema>;
 
 export const PodiumItemSchema = z.object({
-  name: z.string().max(10),
+  nickname: z.string().max(20),
   score: z.number().min(0).max(100),
 });
 
@@ -21,7 +21,7 @@ export const PodiumResponseSchema = z.array(PodiumItemSchema);
 export type PodiumResponse = z.infer<typeof PodiumResponseSchema>;
 
 export const RankingListItemSchema = z.object({
-  name: z.string().max(10),
+  nickname: z.string().max(20),
   score: z.number().min(0).max(100),
   userKey: z.number(),
   drawingId: z.string(),

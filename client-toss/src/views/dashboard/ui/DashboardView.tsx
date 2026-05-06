@@ -1,7 +1,11 @@
 import { MyScoreCard, useMyDrawings } from "@/entities/myScoreCard";
 import { Podium } from "@/entities/podium";
 import { usePlayChance, useRewardAd } from "@/feature/playChance";
-import { serverTossApi } from "@/shared/api";
+import {
+  getCachedNickname,
+  serverTossApi,
+  setCachedNickname,
+} from "@/shared/api";
 import { formatLocalDate, trackClick, useExitGuard } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { getDeviceId } from "@apps-in-toss/web-framework";
@@ -39,6 +43,27 @@ const DashboardView = () => {
 
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [nickname, setNickname] = useState<string>(
+    () => getCachedNickname() ?? "",
+  );
+
+  useEffect(() => {
+    if (nickname) return;
+    let cancelled = false;
+    serverTossApi
+      .getMe()
+      .then((info) => {
+        if (cancelled) return;
+        setCachedNickname(info.nickname);
+        setNickname(info.nickname);
+      })
+      .catch((err) => {
+        console.error("[닉네임 조회 실패, 무시]", err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [nickname]);
 
   const startGame = useCallback(async () => {
     if (isStartingGame) return;
@@ -232,7 +257,13 @@ const DashboardView = () => {
 
       {/* 나의 결과 영역 */}
       <div ref={myResultRef}>
-        <Top title={<Top.TitleParagraph>나의 결과</Top.TitleParagraph>} />
+        <Top
+          title={
+            <Top.TitleParagraph>
+              {nickname ? `${nickname}의 결과` : "오늘 나의 결과"}
+            </Top.TitleParagraph>
+          }
+        />
       </div>
 
       {/* 인디케이터 */}

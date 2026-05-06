@@ -1,6 +1,6 @@
 import { List, Skeleton } from "@toss/tds-mobile";
-import { RankingEntry } from "./RankingEntry";
 import { useRankingList } from "../hooks/useRankingList";
+import { RankingEntry } from "./RankingEntry";
 import RankingListEmpty from "./RankingListEmpty";
 
 const RankingList = () => {
@@ -19,7 +19,7 @@ const RankingList = () => {
       {rankingList.map((ranking) => (
         <RankingEntry
           key={`${ranking.userKey}-${ranking.drawingId}`}
-          name={ranking.name}
+          nickname={ranking.nickname}
           rank={ranking.rank}
           score={ranking.score}
           drawingId={ranking.drawingId}

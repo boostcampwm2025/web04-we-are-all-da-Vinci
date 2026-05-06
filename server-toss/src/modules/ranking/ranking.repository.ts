@@ -11,7 +11,7 @@ export class RankingRepository extends EntityRepository<Ranking> {
           {
             score: QueryOrder.DESC,
             submittedAt: QueryOrder.ASC,
-            name: QueryOrder.ASC,
+            nickname: QueryOrder.ASC,
           },
         ],
       },
@@ -37,7 +37,7 @@ export class RankingRepository extends EntityRepository<Ranking> {
       .select([
         "r.score",
         "r.userKey",
-        sql`row_number() over(order by score DESC, submitted_at ASC, name ASC)`.as(
+        sql`row_number() over(order by score DESC, submitted_at ASC, nickname ASC)`.as(
           "rank",
         ),
       ])

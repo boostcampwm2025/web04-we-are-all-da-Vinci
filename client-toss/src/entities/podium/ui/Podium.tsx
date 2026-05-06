@@ -9,11 +9,11 @@ type PodiumSlot = {
   entry?: PodiumEntry;
 };
 
-const clipName = (name: string): string => {
-  if (name.length > 4) {
-    name = name.substring(0, 4) + "...";
+const clipNickname = (nickname: string): string => {
+  if (nickname.length > 7) {
+    return nickname.substring(0, 7) + "...";
   }
-  return name;
+  return nickname;
 };
 
 const Podium = () => {
@@ -47,7 +47,7 @@ const Podium = () => {
           >
             <div className="flex flex-col text-center">
               <div className="w-[75px] truncate text-[16px] font-bold leading-tight text-black">
-                {entry ? clipName(entry.name) : ""}
+                {entry ? clipNickname(entry.nickname) : ""}
               </div>
               <div className="mt-1 text-[14px] leading-none text-[#8f97a3]">
                 {entry ? `${entry.score}점` : ""}

@@ -5,17 +5,17 @@ import {
   Logger,
   ServiceUnavailableException,
 } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { createDecipheriv } from "crypto";
-import { UserService } from "src/modules/user/user.service";
-import { TossApiClient } from "src/modules/auth/toss-api.client";
-import type { LoginDto } from "src/modules/auth/dto/login.dto";
 import type { LoginResponseDto } from "src/modules/auth/dto/login-response.dto";
+import type { LoginDto } from "src/modules/auth/dto/login.dto";
 import {
   TossApiError,
   TossTransportError,
 } from "src/modules/auth/errors/toss.errors";
-import { ConfigService } from "@nestjs/config";
+import { TossApiClient } from "src/modules/auth/toss-api.client";
+import { UserService } from "src/modules/user/user.service";
 
 @Injectable()
 export class AuthService {
@@ -83,8 +83,9 @@ export class AuthService {
       );
     }
 
+    let user;
     try {
-      await this.userService.upsert({
+      user = await this.userService.upsert({
         userKey: userInfo.userKey,
         name,
         gender,
@@ -107,7 +108,10 @@ export class AuthService {
       "토스 로그인 성공",
     );
 
-    return { accessToken: this.jwtService.sign({ sub: userInfo.userKey }) };
+    return {
+      accessToken: this.jwtService.sign({ sub: userInfo.userKey }),
+      nickname: user.nickname,
+    };
   }
 
   async logout(userKey: number): Promise<void> {

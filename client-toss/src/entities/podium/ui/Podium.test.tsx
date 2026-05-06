@@ -52,7 +52,7 @@ describe("Podium", () => {
 
   it("1명만 있으면 1등 데이터와 포디움 3칸을 렌더링한다", () => {
     mockUsePodium.mockReturnValue({
-      podium: [{ name: "김다빈치", score: 99 }],
+      podium: [{ nickname: "김다빈치", score: 99 }],
       isLoading: false,
     });
 
@@ -66,8 +66,8 @@ describe("Podium", () => {
   it("2명만 있으면 1위와 2위 데이터, 3위 placeholder를 렌더링한다", () => {
     mockUsePodium.mockReturnValue({
       podium: [
-        { name: "김다빈치", score: 99 },
-        { name: "레오", score: 88 },
+        { nickname: "김다빈치", score: 99 },
+        { nickname: "레오", score: 88 },
       ],
       isLoading: false,
     });
@@ -85,9 +85,9 @@ describe("Podium", () => {
   it("3명이 있으면 2위, 1위, 3위 순서로 데이터를 렌더링한다", () => {
     mockUsePodium.mockReturnValue({
       podium: [
-        { name: "김다빈치", score: 99 },
-        { name: "레오", score: 88 },
-        { name: "모나", score: 77 },
+        { nickname: "김다빈치", score: 99 },
+        { nickname: "레오", score: 88 },
+        { nickname: "모나", score: 77 },
       ],
       isLoading: false,
     });

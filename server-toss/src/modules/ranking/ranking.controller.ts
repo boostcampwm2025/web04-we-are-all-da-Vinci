@@ -6,27 +6,27 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { RankingService } from "./ranking.service";
-import {
-  type MyRankingResponse,
-  type RankingListResponse,
-  type PodiumResponse,
-} from "./types/ranking.type";
 import {
   CurrentUser,
   type CurrentUserPayload,
 } from "../auth/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RankingService } from "./ranking.service";
+import {
+  type MyRankingResponse,
+  type PodiumResponse,
+  type RankingListResponse,
+} from "./types/ranking.type";
 
 const podiumResponseSchema = {
   type: "array",
   items: {
     type: "object",
     properties: {
-      name: { type: "string", example: "홍길동" },
+      nickname: { type: "string", example: "용감한고양이123" },
       score: { type: "number", example: 91.25 },
     },
-    required: ["name", "score"],
+    required: ["nickname", "score"],
   },
 };
 
@@ -42,14 +42,14 @@ const rankingListResponseSchema = {
       items: {
         type: "object",
         properties: {
-          name: { type: "string", example: "홍길동" },
+          nickname: { type: "string", example: "용감한고양이123" },
           score: { type: "number", example: 91.25 },
           userKey: { type: "number", example: 123 },
           drawingId: { type: "string", example: "456" },
           rank: { type: "integer", example: 1 },
           isMe: { type: "boolean", example: true },
         },
-        required: ["name", "score", "userKey", "drawingId", "rank", "isMe"],
+        required: ["nickname", "score", "userKey", "drawingId", "rank", "isMe"],
       },
     },
   },
