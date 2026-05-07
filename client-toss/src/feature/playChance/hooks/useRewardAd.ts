@@ -3,8 +3,8 @@ import {
   showFullScreenAd,
 } from "@apps-in-toss/web-framework";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AD_GROUP_IDS } from "@/shared/config";
 
-const AD_GROUP_ID = "ait-ad-test-rewarded-id";
 const AD_TIMEOUT_MS = 10_000;
 
 export const useRewardAd = () => {
@@ -17,7 +17,7 @@ export const useRewardAd = () => {
     adUnregisterRef.current?.();
     if (!isSupported) return;
     adUnregisterRef.current = loadFullScreenAd({
-      options: { adGroupId: AD_GROUP_ID },
+      options: { adGroupId: AD_GROUP_IDS.REWARDED },
       onEvent: (event) => {
         if (event.type === "loaded") setIsAdLoaded(true);
       },
@@ -58,7 +58,7 @@ export const useRewardAd = () => {
         }, AD_TIMEOUT_MS);
 
         showFullScreenAd({
-          options: { adGroupId: AD_GROUP_ID },
+          options: { adGroupId: AD_GROUP_IDS.REWARDED },
           onEvent: (event) => {
             if (event.type === "userEarnedReward") rewarded = true;
             if (event.type === "dismissed") {

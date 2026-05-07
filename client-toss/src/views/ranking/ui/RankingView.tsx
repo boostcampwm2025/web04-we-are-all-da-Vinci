@@ -1,4 +1,5 @@
 import { MyRankingSection, RankingList } from "@/entities/ranking";
+import { AD_GROUP_IDS } from "@/shared/config";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Border, Top } from "@toss/tds-mobile";
 
@@ -23,7 +24,7 @@ const RankingView = () => {
         />
         <Border />
         <MyRankingSection />
-        <BannerAd adGroupId="ait-ad-test-banner-id" className="mb-6" />
+        <BannerAd adGroupId={AD_GROUP_IDS.BANNER_LIST} className="mb-6" />
         <RankingList />
       </main>
     </div>

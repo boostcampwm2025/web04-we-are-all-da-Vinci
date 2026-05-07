@@ -6,6 +6,7 @@ import {
   serverTossApi,
   setCachedNickname,
 } from "@/shared/api";
+import { AD_GROUP_IDS } from "@/shared/config";
 import { formatLocalDate, trackClick, useExitGuard } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { getDeviceId } from "@apps-in-toss/web-framework";
@@ -317,7 +318,7 @@ const DashboardView = () => {
         )}
       </div>
 
-      <BannerAd adGroupId="ait-ad-test-banner-id" className="mt-3 mb-3" />
+      <BannerAd adGroupId={AD_GROUP_IDS.BANNER_LIST} className="mt-3 mb-3" />
 
       {/* 하단 버튼 */}
       <div className="flex flex-col gap-3 px-(--page-px)">
