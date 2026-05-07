@@ -9,7 +9,7 @@ const RankingView = () => {
       data-no-safe-area-bottom
       className="flex min-h-full flex-col items-center pb-[env(safe-area-inset-bottom)]"
     >
-      <main className="w-full">
+      <main className="w-full pb-8">
         <Top
           title={
             <Top.TitleParagraph role="heading" aria-level={1}>
