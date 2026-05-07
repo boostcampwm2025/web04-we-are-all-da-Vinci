@@ -1,5 +1,5 @@
 import { drawStrokesOnCanvas, useCanvasSetup } from "@/feature/drawing";
-import { usePlayChance } from "@/feature/playChance";
+import { usePlayChance, useRewardAd } from "@/feature/playChance";
 import { serverTossApi } from "@/shared/api";
 import { AD_GROUP_IDS } from "@/shared/config";
 import { trackClick, useExitGuard, useRequiredState } from "@/shared/lib";
@@ -23,6 +23,7 @@ const SubmittedView = () => {
   const { showDialog, setShowDialog } = useExitGuard();
   const { containerRef, canvasRef, ctxRef, canvasSize } = useCanvasSetup();
   const { charge, startPlay } = usePlayChance();
+  const { isAdLoaded, showAd } = useRewardAd();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isReplaying, setIsReplaying] = useState(false);
@@ -63,10 +64,13 @@ const SubmittedView = () => {
     if (isReplaying) return;
     setIsReplaying(true);
     try {
-      try {
-        await serverTossApi.recordAdView();
-      } catch (err) {
-        console.error("[recordAdView 실패, 무시]", err);
+      if (isAdLoaded) {
+        await showAd();
+        try {
+          await serverTossApi.recordAdView();
+        } catch (err) {
+          console.error("[recordAdView 실패, 무시]", err);
+        }
       }
       await charge();
       const started = await startPlay();

@@ -46,6 +46,11 @@ vi.mock("@/shared/ui/bannerAd", () => ({
 
 const mockCharge = vi.fn().mockResolvedValue(undefined);
 const mockStartPlay = vi.fn().mockResolvedValue(true);
+const mockShowAd = vi.fn().mockResolvedValue(undefined);
+const mockUseRewardAd = vi.fn(() => ({
+  isAdLoaded: false as boolean,
+  showAd: mockShowAd,
+}));
 vi.mock("@/feature/playChance", () => ({
   usePlayChance: () => ({
     hasChance: true,
@@ -53,6 +58,7 @@ vi.mock("@/feature/playChance", () => ({
     charge: mockCharge,
     startPlay: mockStartPlay,
   }),
+  useRewardAd: () => mockUseRewardAd(),
 }));
 
 const mockRouteState = {
@@ -85,6 +91,10 @@ describe("SubmittedView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
+    mockUseRewardAd.mockImplementation(() => ({
+      isAdLoaded: false,
+      showAd: mockShowAd,
+    }));
   });
 
   it("점수와 완성 텍스트가 렌더링된다", () => {
@@ -240,5 +250,52 @@ describe("SubmittedView", () => {
     await waitFor(() => {
       expect(screen.getByText("다시 시도해주세요.")).toBeInTheDocument();
     });
+  });
+
+  it("광고가 로드된 경우 다시하기 시 광고 시청 후 recordAdView를 호출한다", async () => {
+    vi.useRealTimers();
+    mockUseRewardAd.mockImplementation(() => ({
+      isAdLoaded: true,
+      showAd: mockShowAd,
+    }));
+    const user = userEvent.setup();
+    vi.mocked(serverTossApi.getPrompt).mockResolvedValue({
+      promptId: 7,
+      strokes: [],
+    });
+
+    renderWithState();
+
+    await user.click(screen.getByText("다시하기"));
+
+    await waitFor(() => {
+      expect(mockShowAd).toHaveBeenCalled();
+    });
+    expect(serverTossApi.recordAdView).toHaveBeenCalled();
+    expect(navigateMock).toHaveBeenCalledWith(
+      "/memorize",
+      expect.objectContaining({
+        state: expect.objectContaining({ promptId: 7 }),
+      }),
+    );
+  });
+
+  it("광고가 로드되지 않은 경우 다시하기 시 광고/recordAdView 호출 없이 진행한다", async () => {
+    vi.useRealTimers();
+    const user = userEvent.setup();
+    vi.mocked(serverTossApi.getPrompt).mockResolvedValue({
+      promptId: 8,
+      strokes: [],
+    });
+
+    renderWithState();
+
+    await user.click(screen.getByText("다시하기"));
+
+    await waitFor(() => {
+      expect(mockCharge).toHaveBeenCalled();
+    });
+    expect(mockShowAd).not.toHaveBeenCalled();
+    expect(serverTossApi.recordAdView).not.toHaveBeenCalled();
   });
 });
