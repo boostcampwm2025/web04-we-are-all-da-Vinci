@@ -1,5 +1,5 @@
 import { preprocessStrokes, scoreFinalSimilarity } from "@davinci/similarity";
-import { EntityManager, QueryOrder } from "@mikro-orm/mysql";
+import { EntityManager } from "@mikro-orm/mysql";
 import { HttpException, Injectable, Logger } from "@nestjs/common";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
 import { getSeoulDayRange } from "src/common/util/time.util";
@@ -9,6 +9,8 @@ import { Prompt } from "../../prompt/prompt.entity";
 import { PromptService } from "../../prompt/prompt.service";
 import { Drawing } from "../drawing.entity";
 import { DrawingAccessService } from "./drawing-access.service";
+import { DrawingRepository } from "../drawing.repository";
+import { InjectRepository } from "@mikro-orm/nestjs";
 
 type Similarity = ReturnType<typeof scoreFinalSimilarity>;
 const SLOW_STROKES_DURATION_MS = 500;
@@ -38,6 +40,8 @@ export class DrawingService {
     private readonly promptService: PromptService,
     private readonly pointService: PointService,
     private readonly drawingAccessService: DrawingAccessService,
+    @InjectRepository(Drawing)
+    private readonly drawingRepository: DrawingRepository,
   ) {}
 
   // 획 단위 실시간 호출 엔드포인트. 클라 값 신뢰 X → 서버가 매번 유사도 재계산
@@ -141,47 +145,22 @@ export class DrawingService {
     return { drawingId: Number(drawing.id), similarity, promotionGranted };
   }
 
-  private async findTodayByUser(userKey: number): Promise<Drawing[]> {
-    const { start, end } = getSeoulDayRange();
-    return this.em.find(
-      Drawing,
-      { user: { userKey: userKey }, createdAt: { $gte: start, $lt: end } },
-      {
-        populate: ["user", "prompt"],
-        orderBy: [{ score: QueryOrder.DESC }],
-      },
-    );
-  }
-
   async getMyDrawings(userKey: number) {
-    const { start, end } = getSeoulDayRange();
-    const myDrawings = await this.findTodayByUser(userKey);
+    const myDrawings = await this.drawingRepository.findTodayByUser(userKey);
 
     if (myDrawings.length === 0) {
       return { userKey, drawings: [] };
     }
 
-    // 그림의 등수 정보를 가져오기 위해 같은 prompt의 그림들을 모두 가져와서 순위 계산
-    const promptIds = myDrawings.map((d) => d.prompt.id);
-    const allDrawings = await this.em.find(Drawing, {
-      prompt: { $in: promptIds },
-      createdAt: { $gte: start, $lt: end },
-    });
-
-    const drawings = myDrawings.map((drawing) => {
-      const rank =
-        allDrawings.filter(
-          (d) => d.prompt.id === drawing.prompt.id && d.score > drawing.score,
-        ).length + 1;
-
-      return {
-        drawingId: Number(drawing.id),
-        drawRanking: rank,
-        strokes: JSON.parse(drawing.strokes) as Stroke[],
-        score: drawing.score,
-        similarity: JSON.parse(drawing.similarity) as SimilarityResponse,
-      };
-    });
+    const myRankedDrawings =
+      await this.drawingRepository.findMyDrawingsWithRank(userKey);
+    const drawings = myRankedDrawings.map((d) => ({
+      drawingId: Number(d.id),
+      drawingRanking: d.rank,
+      strokes: JSON.stringify(d.strokes),
+      similarity: JSON.stringify(d.similarity),
+      nickname: d.nickname,
+    }));
 
     return { userKey, drawings };
   }
