@@ -1,14 +1,17 @@
-import { usePlayChance, useRewardAd } from "@/feature/playChance";
+import type { PlayChanceLayoutContext } from "@/app/layouts/PlayChanceLayout";
+import { useRewardAd } from "@/feature/playChance";
 import { serverTossApi } from "@/shared/api";
-import { getDeviceId } from "@apps-in-toss/web-framework";
+import { AD_GROUP_IDS } from "@/shared/config";
+import { getAnonymousHash } from "@/shared/lib";
 import { Button } from "@toss/tds-mobile";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { NOT_SUBMITTED_MESSAGE } from "../config/constants";
 
 const MyRankingNotSubmitted = () => {
   const navigate = useNavigate();
-  const { charge, startPlay } = usePlayChance();
+  const { chanceCount, hasChance, chargeByAd, startPlay } =
+    useOutletContext<PlayChanceLayoutContext>();
   const { isAdLoaded, showAd } = useRewardAd();
   const [isStarting, setIsStarting] = useState(false);
 
@@ -18,23 +21,12 @@ const MyRankingNotSubmitted = () => {
     try {
       if (isAdLoaded) {
         await showAd();
-        try {
-          await serverTossApi.recordAdView();
-        } catch (err) {
-          console.error("[recordAdView 실패, 무시]", err);
-        }
+        await chargeByAd({ adGroupId: AD_GROUP_IDS.REWARDED });
       }
-      await charge();
       const started = await startPlay();
       if (!started) return;
 
-      let hash: string;
-      try {
-        const { deviceId } = await getDeviceId();
-        hash = deviceId;
-      } catch {
-        hash = "local";
-      }
+      const hash = await getAnonymousHash();
       const { promptId, strokes } = await serverTossApi.getPrompt();
       navigate("/memorize", {
         state: { promptId, promptStrokes: strokes, anonymousHash: hash },
@@ -64,7 +56,7 @@ const MyRankingNotSubmitted = () => {
           loading={isStarting}
           onClick={handleStart}
         >
-          그림 그리러 가기
+          {hasChance ? `광고 없이 ${chanceCount}번 도전` : "그림 그리러 가기"}
         </Button>
       </div>
     </div>

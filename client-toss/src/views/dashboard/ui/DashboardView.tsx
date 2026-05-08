@@ -1,15 +1,20 @@
+import type { PlayChanceLayoutContext } from "@/app/layouts/PlayChanceLayout";
 import { MyScoreCard, useMyDrawings } from "@/entities/myScoreCard";
 import { Podium } from "@/entities/podium";
-import { usePlayChance, useRewardAd } from "@/feature/playChance";
+import { useRewardAd } from "@/feature/playChance";
 import {
   getCachedNickname,
   serverTossApi,
   setCachedNickname,
 } from "@/shared/api";
 import { AD_GROUP_IDS } from "@/shared/config";
-import { formatLocalDate, trackClick, useExitGuard } from "@/shared/lib";
+import {
+  formatLocalDate,
+  getAnonymousHash,
+  trackClick,
+  useExitGuard,
+} from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
-import { getDeviceId } from "@apps-in-toss/web-framework";
 import { colors } from "@toss/tds-colors";
 import {
   Button,
@@ -19,7 +24,12 @@ import {
   Top,
 } from "@toss/tds-mobile";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useOutletContext,
+} from "react-router-dom";
 
 const DashboardView = () => {
   const navigate = useNavigate();
@@ -34,11 +44,13 @@ const DashboardView = () => {
   const anonymousHashRef = useRef<string>("local");
   const { myDrawings, isLoading, refetch: refetchDrawings } = useMyDrawings();
   const {
+    chanceCount,
     hasChance,
     isLoading: isChanceLoading,
-    charge,
+    chargeByAd,
     startPlay,
-  } = usePlayChance();
+    refresh: refreshChance,
+  } = useOutletContext<PlayChanceLayoutContext>();
   const { isAdLoaded, showAd } = useRewardAd();
   const cardCount = Math.max(myDrawings.length, 1);
 
@@ -98,13 +110,7 @@ const DashboardView = () => {
       ?.fromSubmitted;
 
     const init = async () => {
-      let hash: string;
-      try {
-        const { deviceId } = await getDeviceId();
-        hash = deviceId;
-      } catch {
-        hash = "local";
-      }
+      const hash = await getAnonymousHash();
       anonymousHashRef.current = hash;
 
       if (fromSubmitted) {
@@ -119,7 +125,7 @@ const DashboardView = () => {
         )?.promotionGranted;
         if (promotionGranted != null) {
           setToastText(
-            promotionGranted ? "포인트 지급이 완료됐어요" : "그림이 저장됐어요",
+            promotionGranted ? "포인트 지급이 완료됐어요" : "그림을 등록했어요",
           );
           setToastOpen(true);
         }
@@ -157,25 +163,19 @@ const DashboardView = () => {
     myResultRef.current.scrollIntoView({ behavior: "smooth" });
   }, [locationState, isLoading]);
 
-  const recordAdViewBestEffort = async () => {
-    try {
-      await serverTossApi.recordAdView();
-    } catch (err) {
-      console.error("[recordAdView 실패, 무시]", err);
-    }
-  };
-
   const handleRetry = async () => {
     if (isStartingGame) return;
     setIsStartingGame(true);
     try {
       if (isAdLoaded) {
         await showAd();
-        await recordAdViewBestEffort();
+        await chargeByAd({ adGroupId: AD_GROUP_IDS.REWARDED });
       }
-      await charge();
       const started = await startPlay();
-      if (!started) return;
+      if (!started) {
+        await refreshChance();
+        return;
+      }
 
       const { promptId, strokes } = await serverTossApi.getPrompt();
       navigate("/memorize", {
@@ -324,7 +324,7 @@ const DashboardView = () => {
       <div className="flex flex-col gap-3 px-(--page-px)">
         {isChanceLoading ? (
           <Button color="primary" display="block" loading disabled>
-            플레이 기회 확인 중
+            도전 기회 확인 중
           </Button>
         ) : hasChance ? (
           <Button
@@ -334,7 +334,7 @@ const DashboardView = () => {
             disabled={isStartingGame}
             onClick={startGame}
           >
-            플레이하기
+            광고 없이 {chanceCount}번 도전
           </Button>
         ) : (
           <Button
@@ -344,7 +344,7 @@ const DashboardView = () => {
             disabled={isStartingGame}
             onClick={handleRetry}
           >
-            다시 도전하기
+            광고 보고 도전하기
           </Button>
         )}
       </div>
