@@ -1,15 +1,17 @@
 import { MyRankingSection, RankingList } from "@/entities/ranking";
 import { AD_GROUP_IDS } from "@/shared/config";
+import { trackClick } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
-import { Border, Top } from "@toss/tds-mobile";
+import { Border, Button, Top } from "@toss/tds-mobile";
+import { Link } from "react-router-dom";
 
 const RankingView = () => {
   return (
     <div
       data-no-safe-area-bottom
-      className="flex min-h-full flex-col items-center pb-[env(safe-area-inset-bottom)]"
+      className="flex h-full min-h-0 flex-1 flex-col bg-white"
     >
-      <main className="w-full pb-8">
+      <section className="shrink-0">
         <Top
           title={
             <Top.TitleParagraph role="heading" aria-level={1}>
@@ -23,10 +25,29 @@ const RankingView = () => {
           }
         />
         <Border />
+      </section>
+
+      <main className="min-h-0 flex-1 overflow-y-auto">
         <MyRankingSection />
-        <BannerAd adGroupId={AD_GROUP_IDS.BANNER_LIST} className="mb-6" />
+        <BannerAd adGroupId={AD_GROUP_IDS.BANNER_FEED} className="mb-6" />
         <RankingList />
       </main>
+
+      <section className="shrink-0 bg-white px-(--page-px) pt-3 pb-[env(safe-area-inset-bottom)]">
+        <Link
+          to="/"
+          onClick={() => trackClick("ranking_back_to_dashboard_click")}
+        >
+          <Button
+            size="xlarge"
+            variant="weak"
+            display="block"
+            aria-label="대시보드로 돌아가기"
+          >
+            대시보드로 돌아가기
+          </Button>
+        </Link>
+      </section>
     </div>
   );
 };
