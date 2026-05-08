@@ -17,18 +17,13 @@ export const AdSdkPayloadSchema = z.object({
 });
 export type AdSdkPayload = z.infer<typeof AdSdkPayloadSchema>;
 
-// 공유 리워드: contactsViral은 SDK 콜백(sendViral), share는 일반 공유
-export const ShareSdkPayloadSchema = z.discriminatedUnion("channel", [
-  z.object({
-    channel: z.literal("contactsViral"),
-    moduleId: z.string().min(1), // 앱인토스 콘솔의 공유 리워드 모듈 ID
-    rewardAmount: z.number().optional(),
-    rewardUnit: z.string().optional(),
-  }),
-  z.object({
-    channel: z.literal("share"),
-  }),
-]);
+// 친구 공유 적립: 토스 SDK contactsViral 정식 경로만 인정
+export const ShareSdkPayloadSchema = z.object({
+  channel: z.literal("contactsViral"),
+  moduleId: z.string().min(1), // 앱인토스 콘솔의 공유 리워드 모듈 ID
+  rewardAmount: z.number().optional(),
+  rewardUnit: z.string().optional(),
+});
 export type ShareSdkPayload = z.infer<typeof ShareSdkPayloadSchema>;
 
 export const ChargeRequestSchema = z.discriminatedUnion("source", [
