@@ -2,13 +2,18 @@ import type { PodiumEntry } from "@/entities/podium";
 import type { MyRankingResponse, RankingListItem } from "@/entities/ranking";
 import { appLogin } from "@apps-in-toss/web-framework";
 import type {
+  AdSdkPayload,
   MyDrawingResponse,
   MyDrawingsResponse,
+  ShareSdkPayload,
   Stroke,
   SubmitStrokesRequest,
 } from "@toss/shared";
 import {
+  ChargeResponseSchema,
+  ConsumeResponseSchema,
   LoginResponseSchema,
+  MyChanceResponseSchema,
   PromptResponseSchema,
   SimilarityResponseSchema,
   SubmitDrawingResponseSchema,
@@ -184,4 +189,30 @@ export const serverTossApi = {
   },
 
   recordAdView: () => request<void>("POST", "/adviews"),
+
+  getMyChance: async (options?: RequestOptions) =>
+    MyChanceResponseSchema.parse(
+      await request<unknown>("GET", "/chances/me", undefined, options),
+    ),
+
+  chargeChanceByAd: async (sdkPayload: AdSdkPayload) =>
+    ChargeResponseSchema.parse(
+      await request<unknown>("POST", "/chances/charge", {
+        source: "ad",
+        sdkPayload,
+      }),
+    ),
+
+  chargeChanceByShare: async (sdkPayload: ShareSdkPayload) =>
+    ChargeResponseSchema.parse(
+      await request<unknown>("POST", "/chances/charge", {
+        source: "share",
+        sdkPayload,
+      }),
+    ),
+
+  consumeChance: async () =>
+    ConsumeResponseSchema.parse(
+      await request<unknown>("POST", "/chances/consume"),
+    ),
 };
