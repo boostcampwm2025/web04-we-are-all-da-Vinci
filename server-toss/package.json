@@ -24,13 +24,20 @@
     "seed:down": "npx mikro-orm migration:fresh",
     "seed:drawing:small": "npx mikro-orm seeder:run --class=SmallUserDrawingSeeder",
     "seed:drawing:small:fresh": "npx mikro-orm migration:fresh --seed SmallUserDrawingSeeder",
+    "seed:drawing:large": "npx mikro-orm seeder:run --class=LargeUserDrawingSeeder",
+    "seed:drawing:large:10k": "cross-env SEED_DRAWING_USER_COUNT=10000 pnpm seed:drawing:large",
+    "seed:drawing:large:20k": "cross-env SEED_DRAWING_USER_COUNT=20000 pnpm seed:drawing:large",
     "seed:ranking": "npx mikro-orm seeder:run --class=RankingSeeder",
     "migration:check": "mikro-orm migration:check",
     "migration:list": "mikro-orm migration:list",
     "migration:up": "mikro-orm migration:up",
     "migration:pending": "mikro-orm migration:pending",
     "migration:down": "mikro-orm migration:down",
-    "migration:fresh": "mikro-orm migration:fresh"
+    "migration:fresh": "mikro-orm migration:fresh",
+    "load-test:docker:build": "docker buildx build -f tests/load-test/docker/Dockerfile -t toss-local ..",
+    "load-test:docker:run": "docker run -d --name toss-local -p 3000:3000 --cpus='2' --memory='2g' --env-file .env toss-local",
+    "load-test:docker:logs": "docker logs -f toss-local",
+    "tokens:generate": "node ./scripts/generate-test-tokens.js"
   },
   "dependencies": {
     "@davinci/similarity": "workspace:*",

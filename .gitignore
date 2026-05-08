@@ -26,6 +26,8 @@ Thumbs.db
 *.log
 npm-debug.log*
 pnpm-debug.log*
+*.csv
+report*.json
 
 # Claude Code
 **/.claude/settings.local.json
@@ -51,3 +53,5 @@ we-are-all-da-vinci.ait
 
 **/.codex/
 AGENTS.md
+
+server-toss/tests/load-test/tokens.json
