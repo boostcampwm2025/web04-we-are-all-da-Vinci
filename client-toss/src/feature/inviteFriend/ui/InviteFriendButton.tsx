@@ -59,10 +59,7 @@ const InviteFriendButton = ({
   return (
     <>
       <div className="fixed top-3 right-3 z-50">
-        <div
-          className="rounded-2xl"
-          style={{ backgroundColor: colors.blue50 }}
-        >
+        <div className="rounded-2xl" style={{ backgroundColor: colors.blue50 }}>
           <IconButton
             src={SHARE_ICON_URL}
             aria-label="친구에게 공유하고 그리기 기회 받기"
