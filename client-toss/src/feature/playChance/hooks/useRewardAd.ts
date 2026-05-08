@@ -5,8 +5,6 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AD_GROUP_IDS } from "@/shared/config";
 
-const AD_TIMEOUT_MS = 10_000;
-
 export const useRewardAd = () => {
   const isSupported = loadFullScreenAd.isSupported();
   // 광고 SDK 미지원(로컬 dev 등)에서는 곧바로 "로드 완료" 상태로 간주해 흐름 차단을 막는다.
@@ -50,21 +48,20 @@ export const useRewardAd = () => {
         let rewarded = false;
         let done = false;
 
-        const timer = setTimeout(() => {
-          if (done) return;
-          done = true;
-          reloadAd();
-          reject(new Error("timeout"));
-        }, AD_TIMEOUT_MS);
-
         showFullScreenAd({
           options: { adGroupId: AD_GROUP_IDS.REWARDED },
           onEvent: (event) => {
+            if (event.type === "failedToShow") {
+              if (done) return;
+              done = true;
+              reloadAd();
+              reject(new Error("failedToShow"));
+              return;
+            }
             if (event.type === "userEarnedReward") rewarded = true;
             if (event.type === "dismissed") {
               if (done) return;
               done = true;
-              clearTimeout(timer);
               reloadAd();
               if (rewarded) resolve();
               else reject(new Error("closed"));
@@ -73,7 +70,6 @@ export const useRewardAd = () => {
           onError: (err) => {
             if (done) return;
             done = true;
-            clearTimeout(timer);
             reloadAd();
             reject(err);
           },
