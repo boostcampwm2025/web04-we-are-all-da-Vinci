@@ -87,9 +87,9 @@ describe("MemorizeView", () => {
   it("route state가 있으면 정상 렌더링된다", () => {
     renderWithState();
 
-    expect(screen.getByText("기억하세요!")).toBeInTheDocument();
+    expect(screen.getByText("이 그림을 외워주세요")).toBeInTheDocument();
     expect(
-      screen.getByText(/\d+초 동안 그림을 기억하세요/),
+      screen.getByText(/\d+초 뒤에 똑같이 그려야 해요/),
     ).toBeInTheDocument();
   });
 
