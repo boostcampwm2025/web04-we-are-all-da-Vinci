@@ -8,7 +8,7 @@ const { JwtService } = require("@nestjs/jwt");
 const DEFAULT_MIN_USER_KEY = 1_900_000;
 
 function loadEnv() {
-  const projectRoot = path.resolve(__dirname, "..");
+  const projectRoot = path.resolve(__dirname, "../../../");
   dotenv.config({ path: path.resolve(projectRoot, ".env") });
   dotenv.config({
     path: path.resolve(projectRoot, ".env.local"),

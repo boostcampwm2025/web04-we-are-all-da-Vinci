@@ -36,7 +36,7 @@ export const options = {
 };
 
 const users = new SharedArray("users", function () {
-  return JSON.parse(open("../tokens.json"));
+  return JSON.parse(open("../fixtures/tokens.json"));
 });
 
 const getUser = () => {
