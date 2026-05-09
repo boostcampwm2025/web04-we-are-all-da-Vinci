@@ -30,7 +30,7 @@ export class LargeUserDrawingSeeder extends Seeder {
         for (let i = start; i < end; ++i) {
           const user: User = new UserFactory(txEm).makeOne({
             userKey: SEED_USER_KEY_BASE + i,
-            nickname: `seed${String(i).padStart(5, "0")}`,
+            name: `seed${String(i).padStart(5, "0")}`,
           });
 
           new DrawingFactory(txEm)

@@ -54,4 +54,4 @@ we-are-all-da-vinci.ait
 **/.codex/
 AGENTS.md
 
-server-toss/tests/load-test/tokens.json
+**/tokens.json
