@@ -157,8 +157,8 @@ export class DrawingService {
     const drawings = myRankedDrawings.map((d) => ({
       drawingId: Number(d.id),
       drawingRanking: d.rank,
-      strokes: JSON.stringify(d.strokes),
-      similarity: JSON.stringify(d.similarity),
+      strokes: d.strokes,
+      similarity: d.similarity,
       nickname: d.nickname,
     }));
 

@@ -18,44 +18,27 @@ export class DrawingRepository extends EntityRepository<Drawing> {
   async findMyDrawingsWithRank(userKey: number) {
     const { start, end } = getSeoulDayRange();
 
-    const rankedQb = this.em
+    const myDrawingsWithRank = await this.em
       .createQueryBuilder(Drawing, "d")
       .select([
         "d.id",
-        sql`u.user_key`,
         "d.score",
-        "d.similarity",
         "d.strokes",
-        "d.createdAt",
+        "d.similarity",
         sql`u.nickname`,
-        sql`row_number() over (
-        order by d.score desc, d.created_at asc, u.nickname asc
-      )`.as("rank"),
+        sql`(
+          SELECT count(*) + 1 
+          FROM drawings AS d2 
+          WHERE d2.created_at >= ${start} AND d2.created_at < ${end}
+            AND (d2.score > d.score OR (d2.score = d.score AND d2.created_at < d.created_at))
+        )`.as("rank"),
       ])
-      .leftJoin("d.user", "u")
+      .innerJoin("d.user", "u")
       .where({
-        createdAt: {
-          $gte: start,
-          $lt: end,
-        },
-      });
-
-    const myDrawings = await this.em
-      .createQueryBuilder(Drawing, "d")
-      .with("ranked_drawings", rankedQb)
-      .select([
-        sql`rd.id`,
-        sql`rd.score`,
-        sql`rd.strokes`,
-        sql`rd.similarity`,
-        sql`rd.nickname`,
-        sql`rd.rank`,
-      ])
-      .from("ranked_drawings", "rd")
-      .where({ [sql`rd.user_key`]: userKey })
-      .orderBy({
-        [sql`rd.created_at`]: QueryOrder.DESC,
+        "d.user": userKey,
+        "d.createdAt": { $gte: start, $lt: end },
       })
+      .orderBy({ createdAt: QueryOrder.DESC })
       .execute<
         {
           id: bigint;
@@ -66,6 +49,6 @@ export class DrawingRepository extends EntityRepository<Drawing> {
         }[]
       >();
 
-    return myDrawings;
+    return myDrawingsWithRank;
   }
 }
