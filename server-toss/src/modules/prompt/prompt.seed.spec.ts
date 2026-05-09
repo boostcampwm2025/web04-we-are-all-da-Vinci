@@ -35,8 +35,9 @@ const setup = (
     findAll: jest.fn(async () => existingDailies),
   };
   const drawingRepo = {
-    count: jest.fn(async ({ prompt }: { prompt: Prompt }) =>
-      drawingCounts.get(prompt.id) ?? 0,
+    count: jest.fn(
+      async ({ prompt }: { prompt: Prompt }) =>
+        drawingCounts.get(prompt.id) ?? 0,
     ),
   };
 
@@ -56,8 +57,8 @@ const setup = (
 
   const em = {
     fork: jest.fn(() => ({
-      transactional: jest.fn(
-        async (cb: (em: typeof txEm) => Promise<void>) => cb(txEm),
+      transactional: jest.fn(async (cb: (em: typeof txEm) => Promise<void>) =>
+        cb(txEm),
       ),
     })),
   };
@@ -137,9 +138,7 @@ describe("PromptSeedService", () => {
 
       const result = await service.syncPrompts(data);
 
-      const dailies = persisted.filter(
-        (e) => e instanceof DailyPrompt,
-      ) as DailyPrompt[];
+      const dailies = persisted.filter((e) => e instanceof DailyPrompt);
       expect(dailies[0].promptDate.toISOString()).toBe(
         "2026-07-04T00:00:00.000Z",
       );
@@ -171,9 +170,7 @@ describe("PromptSeedService", () => {
 
       const result = await service.syncPrompts(data);
 
-      const dailies = persisted.filter(
-        (e) => e instanceof DailyPrompt,
-      ) as DailyPrompt[];
+      const dailies = persisted.filter((e) => e instanceof DailyPrompt);
       expect(dailies[0].promptDate.toISOString()).toBe(
         "2026-07-05T00:00:00.000Z",
       );
