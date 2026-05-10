@@ -1,14 +1,18 @@
 import { preprocessStrokes, scoreFinalSimilarity } from "@davinci/similarity";
-import { EntityManager, QueryOrder } from "@mikro-orm/mysql";
-import { HttpException, Injectable, Logger } from "@nestjs/common";
+import {
+  HttpException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from "@nestjs/common";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
-import { getSeoulDayRange } from "src/common/util/time.util";
 import { PointService } from "src/modules/point/point.service";
 import { UserService } from "src/modules/user/user.service";
-import { Prompt } from "../../prompt/prompt.entity";
 import { PromptService } from "../../prompt/prompt.service";
 import { Drawing } from "../drawing.entity";
 import { DrawingAccessService } from "./drawing-access.service";
+import { DrawingRepository } from "../drawing.repository";
+import { InjectRepository } from "@mikro-orm/nestjs";
 
 type Similarity = ReturnType<typeof scoreFinalSimilarity>;
 const SLOW_STROKES_DURATION_MS = 500;
@@ -33,11 +37,12 @@ export class DrawingService {
   private readonly logger = new Logger(DrawingService.name);
 
   constructor(
-    private readonly em: EntityManager,
     private readonly userService: UserService,
     private readonly promptService: PromptService,
     private readonly pointService: PointService,
     private readonly drawingAccessService: DrawingAccessService,
+    @InjectRepository(Drawing)
+    private readonly drawingRepository: DrawingRepository,
   ) {}
 
   // 획 단위 실시간 호출 엔드포인트. 클라 값 신뢰 X → 서버가 매번 유사도 재계산
@@ -108,19 +113,13 @@ export class DrawingService {
       await this.promptService.getPreprocessedByDate(date);
     const playerPreprocessed = preprocessStrokes(playerStrokes);
     const similarity = scoreFinalSimilarity(preprocessed, playerPreprocessed);
-
-    // FK만 필요 — DB 조회 없이 id만으로 참조 객체 생성 (findOne 대체 최적화)
-    const promptRef = this.em.getReference(Prompt, BigInt(promptId));
-    const drawing = new Drawing();
-    drawing.user = user;
-    drawing.prompt = promptRef;
-    drawing.strokes = JSON.stringify(playerStrokes);
-    drawing.similarity = JSON.stringify(similarity);
-    drawing.score = similarity.score;
-
-    // MikroORM v7: persist로 UoW 등록 후 flush로 일괄 커밋
-    this.em.persist(drawing);
-    await this.em.flush();
+    const drawing = await this.drawingRepository.saveDrawing(
+      user,
+      promptId,
+      JSON.stringify(playerStrokes),
+      JSON.stringify(similarity),
+      similarity.score,
+    );
 
     this.logger.log(
       {
@@ -141,77 +140,36 @@ export class DrawingService {
     return { drawingId: Number(drawing.id), similarity, promotionGranted };
   }
 
-  private async findTodayByUser(userKey: number): Promise<Drawing[]> {
-    const { start, end } = getSeoulDayRange();
-    return this.em.find(
-      Drawing,
-      { user: { userKey: userKey }, createdAt: { $gte: start, $lt: end } },
-      {
-        populate: ["user", "prompt"],
-        orderBy: [{ score: QueryOrder.DESC }],
-      },
-    );
-  }
-
   async getMyDrawings(userKey: number) {
-    const { start, end } = getSeoulDayRange();
-    const myDrawings = await this.findTodayByUser(userKey);
+    const myDrawings = await this.drawingRepository.findMyDrawings(userKey);
 
-    if (myDrawings.length === 0) {
-      return { userKey, drawings: [] };
-    }
-
-    // 그림의 등수 정보를 가져오기 위해 같은 prompt의 그림들을 모두 가져와서 순위 계산
-    const promptIds = myDrawings.map((d) => d.prompt.id);
-    const allDrawings = await this.em.find(Drawing, {
-      prompt: { $in: promptIds },
-      createdAt: { $gte: start, $lt: end },
-    });
-
-    const drawings = myDrawings.map((drawing) => {
-      const rank =
-        allDrawings.filter(
-          (d) => d.prompt.id === drawing.prompt.id && d.score > drawing.score,
-        ).length + 1;
-
-      return {
-        drawingId: Number(drawing.id),
-        drawRanking: rank,
-        strokes: JSON.parse(drawing.strokes) as Stroke[],
-        score: drawing.score,
-        similarity: JSON.parse(drawing.similarity) as SimilarityResponse,
-      };
-    });
+    const drawings = myDrawings.map((d) => ({
+      drawingId: Number(d.id),
+      strokes: JSON.parse(d.strokes) as Stroke[],
+      similarity: JSON.parse(d.similarity) as SimilarityResponse,
+    }));
 
     return { userKey, drawings };
   }
 
-  async getDrawing(drawingId: string) {
-    const drawing = await this.em.findOne(
-      Drawing,
-      { id: BigInt(drawingId) },
-      { populate: ["prompt", "user"] },
-    );
+  async getDrawing(drawingId: bigint) {
+    const drawing = await this.drawingRepository.findDrawingById(drawingId);
 
     if (!drawing) {
-      return null;
-    }
+      this.logger.error(
+        {
+          event: "drawing.submit.not_found",
+          drawingId,
+        },
+        "그림 기록이 존재하지 않음",
+      );
 
-    const { start, end } = getSeoulDayRange(drawing.createdAt);
-    const allDrawings = await this.em.find(Drawing, {
-      prompt: drawing.prompt.id,
-      createdAt: { $gte: start, $lt: end },
-    });
-    const drawRanking =
-      allDrawings.filter(
-        (other) =>
-          other.prompt.id === drawing.prompt.id && other.score > drawing.score,
-      ).length + 1;
+      throw new NotFoundException("NOT_FOUND_DRAWING");
+    }
 
     return {
       drawingId: Number(drawing.id),
       nickname: drawing.user.nickname,
-      drawRanking,
       strokes: JSON.parse(drawing.strokes) as Stroke[],
       similarity: JSON.parse(drawing.similarity) as SimilarityResponse,
     };
