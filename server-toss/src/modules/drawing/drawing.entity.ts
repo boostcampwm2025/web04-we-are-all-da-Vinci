@@ -1,4 +1,4 @@
-import type { Rel } from "@mikro-orm/core";
+import { EntityRepositoryType, type Rel } from "@mikro-orm/core";
 import {
   Entity,
   ManyToOne,
@@ -8,9 +8,12 @@ import {
 import { BaseEntity } from "src/common/entitiy/base.entity";
 import { Prompt } from "src/modules/prompt/prompt.entity";
 import { User } from "src/modules/user/user.entity";
+import { DrawingRepository } from "./drawing.repository";
 
-@Entity({ tableName: "drawings" })
+@Entity({ tableName: "drawings", repository: () => DrawingRepository })
 export class Drawing extends BaseEntity {
+  [EntityRepositoryType]?: DrawingRepository;
+
   @PrimaryKey({ type: "bigint" })
   id!: bigint;
 
