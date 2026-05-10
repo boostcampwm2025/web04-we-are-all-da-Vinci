@@ -1,5 +1,7 @@
 import { EntityRepository, QueryOrder, sql } from "@mikro-orm/mysql";
 import { Ranking } from "./ranking.entity";
+import { Drawing } from "../drawing/drawing.entity";
+import { User } from "../user/user.entity";
 
 export class RankingRepository extends EntityRepository<Ranking> {
   async findTop(limit: number): Promise<Ranking[]> {
@@ -54,5 +56,21 @@ export class RankingRepository extends EntityRepository<Ranking> {
 
     if (ranking.length < 1) return null;
     return ranking[0];
+  }
+
+  async findByUserKey(userKey: number): Promise<Ranking | null> {
+    return await this.em.findOne(Ranking, { userKey: userKey });
+  }
+
+  async saveOne(user: User, drawing: Drawing) {
+    this.em.create(Ranking, {
+      userKey: user.userKey,
+      nickname: user.nickname,
+      drawingId: drawing.id,
+      score: drawing.score,
+      strokes: drawing.strokes,
+      submittedAt: drawing.createdAt,
+    });
+    await this.em.flush();
   }
 }

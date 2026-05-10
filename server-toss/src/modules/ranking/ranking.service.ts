@@ -11,6 +11,8 @@ import {
   mapRankingToPodiumItem,
 } from "./ranking.mapper";
 import { Ranking } from "./ranking.entity";
+import { Drawing } from "../drawing/drawing.entity";
+import { User } from "../user/user.entity";
 
 @Injectable()
 export class RankingService {
@@ -18,6 +20,26 @@ export class RankingService {
     @InjectRepository(Ranking)
     private readonly rankingRepository: RankingRepository,
   ) {}
+
+  async updateRanking(user: User, drawing: Drawing) {
+    const existing = await this.rankingRepository.findByUserKey(user.userKey);
+
+    if (!existing) {
+      await this.rankingRepository.saveOne(user, drawing);
+      return;
+    }
+
+    if (!existing.isBetterThan(drawing.score)) {
+      return;
+    }
+    existing.update(
+      drawing.id,
+      drawing.strokes,
+      drawing.score,
+      drawing.createdAt,
+    );
+    await this.rankingRepository.getEntityManager().flush();
+  }
 
   async findPodium(): Promise<PodiumResponse> {
     const rankings = await this.rankingRepository.findTop(3);
