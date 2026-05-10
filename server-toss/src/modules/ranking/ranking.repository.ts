@@ -6,8 +6,14 @@ import { getSeoulDayRange } from "src/common/util/time.util";
 
 export class RankingRepository extends EntityRepository<Ranking> {
   async findTop(limit: number): Promise<Ranking[]> {
+    const { start, end } = getSeoulDayRange();
     return await this.find(
-      {},
+      {
+        submittedAt: {
+          $gte: start,
+          $lt: end,
+        },
+      },
       {
         limit,
         orderBy: [
