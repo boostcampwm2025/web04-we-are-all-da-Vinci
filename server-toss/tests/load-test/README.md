@@ -38,5 +38,5 @@ pnpm -F server-toss seed:drawing:large
 - [ ] mysql 시드 데이터 초기화 (`pnpm seed:down`)
 - [ ] 도커 컨테이너 실행 (`pnpm load-test:docker:run` 또는 `pnpm load-test:docker:run --network=desktop`)
 - [ ] 시드 데이터 생성 (`pnpm seed:drawing:large && pnpm seed:ranking`)
-- [ ] JWT 토큰 생성 (`pnpm tokens:generate`)
+- [ ] JWT 토큰 생성 (`pnpm tokens:generate --count 100`)
 - [ ] 테스트 실행 (`k6 run tests/load-test/k6/baseline.js`)
