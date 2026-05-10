@@ -13,7 +13,8 @@ const PlayChanceLayout = () => {
       <InviteFriendButton
         chanceCount={playChance.chanceCount}
         onCharged={() => {
-          void playChance.refresh();
+          // refresh가 throw해도 state.error로 이미 노출됨 — unhandled rejection만 방지
+          playChance.refresh().catch(() => {});
         }}
       />
     </>

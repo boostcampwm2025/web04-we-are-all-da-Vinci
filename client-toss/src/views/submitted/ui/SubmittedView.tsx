@@ -145,7 +145,7 @@ const SubmittedView = () => {
             disabled={isReplaying || isSubmitting}
             onClick={handleReplay}
           >
-            {hasChance ? "등록 없이 재도전" : "한 번 더 그리기"}
+            {hasChance ? "등록 없이 재도전해요" : "한 번 더 그려요"}
           </Button>
         </div>
         <div className="flex-1">
@@ -156,7 +156,7 @@ const SubmittedView = () => {
             disabled={isSubmitting || isReplaying}
             onClick={handleSubmitAndView}
           >
-            이 그림으로 등록
+            이 그림으로 등록해요
           </Button>
         </div>
       </div>

@@ -174,6 +174,10 @@ const DashboardView = () => {
       const started = await startPlay();
       if (!started) {
         await refreshChance();
+        setToastText(
+          "그리기 기회를 다시 확인했어요. 잠시 후 다시 시도해주세요.",
+        );
+        setToastOpen(true);
         return;
       }
 

@@ -44,8 +44,8 @@ const ScoreRow = ({
         <Paragraph.Text color={colors.grey400}> / {max}점</Paragraph.Text>
       </Paragraph>
     </div>
-    {description.map((line) => (
-      <Paragraph key={line} typography="t6">
+    {description.map((line, index) => (
+      <Paragraph key={`${index}-${line}`} typography="t6">
         <Paragraph.Text color={colors.grey500}>{line}</Paragraph.Text>
       </Paragraph>
     ))}

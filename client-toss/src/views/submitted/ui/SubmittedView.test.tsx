@@ -120,7 +120,7 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("이 그림으로 등록"));
+    await user.click(screen.getByText("이 그림으로 등록해요"));
 
     await waitFor(() => {
       expect(serverTossApi.submitDrawing).toHaveBeenCalledWith(
@@ -145,7 +145,7 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("이 그림으로 등록"));
+    await user.click(screen.getByText("이 그림으로 등록해요"));
 
     await waitFor(() => {
       expect(
@@ -165,7 +165,7 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("이 그림으로 등록"));
+    await user.click(screen.getByText("이 그림으로 등록해요"));
 
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith("/", {
@@ -185,7 +185,7 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("등록 없이 재도전"));
+    await user.click(screen.getByText("등록 없이 재도전해요"));
 
     await waitFor(() => {
       expect(mockStartPlay).toHaveBeenCalled();
@@ -219,7 +219,7 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("등록 없이 재도전"));
+    await user.click(screen.getByText("등록 없이 재도전해요"));
 
     await waitFor(() => {
       expect(screen.getByText("다시 시도해주세요.")).toBeInTheDocument();
@@ -233,7 +233,7 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("등록 없이 재도전"));
+    await user.click(screen.getByText("등록 없이 재도전해요"));
 
     await waitFor(() => {
       expect(mockStartPlay).toHaveBeenCalled();
@@ -252,7 +252,7 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("등록 없이 재도전"));
+    await user.click(screen.getByText("등록 없이 재도전해요"));
 
     await waitFor(() => {
       expect(screen.getByText("다시 시도해주세요.")).toBeInTheDocument();
@@ -273,7 +273,7 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("등록 없이 재도전"));
+    await user.click(screen.getByText("등록 없이 재도전해요"));
 
     await waitFor(() => {
       expect(mockShowAd).toHaveBeenCalled();
@@ -297,7 +297,7 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("등록 없이 재도전"));
+    await user.click(screen.getByText("등록 없이 재도전해요"));
 
     await waitFor(() => {
       expect(mockStartPlay).toHaveBeenCalled();

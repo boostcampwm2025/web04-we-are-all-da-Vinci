@@ -1,7 +1,7 @@
 import { trackClick } from "@/shared/lib";
 import { colors } from "@toss/tds-colors";
 import { IconButton, Toast } from "@toss/tds-mobile";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useInviteFriend } from "../model/useInviteFriend";
 import InviteFriendDialog from "./InviteFriendDialog";
 
@@ -21,11 +21,28 @@ const InviteFriendButton = ({
     open: false,
     message: "",
   });
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showToast = (message: string) => {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
     setToast({ open: true, message });
-    setTimeout(() => setToast({ open: false, message: "" }), 2500);
+    toastTimerRef.current = setTimeout(() => {
+      setToast({ open: false, message: "" });
+      toastTimerRef.current = null;
+    }, 2500);
   };
+
+  useEffect(
+    () => () => {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+        toastTimerRef.current = null;
+      }
+    },
+    [],
+  );
 
   const { start, isInviting } = useInviteFriend({
     onCharged: (count) => {

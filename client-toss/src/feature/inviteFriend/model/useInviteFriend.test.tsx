@@ -2,7 +2,7 @@
 import { serverTossApi } from "@/shared/api";
 import { contactsViral } from "@apps-in-toss/web-framework";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useInviteFriend } from "./useInviteFriend";
 
 vi.mock("@/shared/api", () => ({
@@ -55,6 +55,12 @@ describe("useInviteFriend", () => {
       mockedContactsViral.isSupported.mockReturnValue(true);
       // @ts-expect-error: 테스트에서 환경변수 주입
       import.meta.env.VITE_CONTACTS_VIRAL_MODULE_ID = "test-module";
+    });
+
+    afterEach(() => {
+      // 다른 워커/테스트로 환경변수가 새지 않도록 정리
+      // @ts-expect-error: 테스트 종료 후 환경변수 제거
+      delete import.meta.env.VITE_CONTACTS_VIRAL_MODULE_ID;
     });
 
     it("sendViral 이벤트 발생 시 chargeChanceByShare로 channel:'contactsViral' 적립", async () => {
