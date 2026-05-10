@@ -2,6 +2,7 @@
 import { serverTossApi } from "@/shared/api";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import SubmittedView from "./SubmittedView";
@@ -39,14 +40,11 @@ vi.mock("@/shared/api", () => ({
   },
 }));
 
-vi.mock("@/feature/drawing", () => ({
-  drawStrokesOnCanvas: vi.fn(),
-  useCanvasSetup: () => ({
-    containerRef: vi.fn(),
-    canvasRef: { current: null },
-    ctxRef: { current: null },
-    canvasSize: 300,
-  }),
+vi.mock("@/entities/drawingCanvas", () => ({
+  DrawingCanvasFrame: ({ children }: { children: ReactNode }) => (
+    <div data-testid="canvas-frame">{children}</div>
+  ),
+  StaticDrawingCanvas: () => <div data-testid="static-drawing-canvas" />,
 }));
 
 vi.mock("@/shared/ui/score", () => ({
@@ -185,7 +183,7 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("등록 없이 재도전"));
+    await user.click(screen.getByText("광고·등록 없이 재도전"));
 
     await waitFor(() => {
       expect(mockStartPlay).toHaveBeenCalled();
@@ -208,7 +206,10 @@ describe("SubmittedView", () => {
     renderWithState();
 
     expect(
-      screen.getByText("등록하면 다른 사람과 점수를 겨뤄요"),
+      screen.getByText(/등록하면 오늘 그린 최고 점수가 랭킹에 반영돼요/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/그림의 점수도 자세히 분석해드려요/),
     ).toBeInTheDocument();
   });
 
@@ -219,7 +220,7 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("등록 없이 재도전"));
+    await user.click(screen.getByText("광고·등록 없이 재도전"));
 
     await waitFor(() => {
       expect(screen.getByText("다시 시도해주세요.")).toBeInTheDocument();
@@ -233,7 +234,7 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("등록 없이 재도전"));
+    await user.click(screen.getByText("광고·등록 없이 재도전"));
 
     await waitFor(() => {
       expect(mockStartPlay).toHaveBeenCalled();
@@ -252,14 +253,14 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("등록 없이 재도전"));
+    await user.click(screen.getByText("광고·등록 없이 재도전"));
 
     await waitFor(() => {
       expect(screen.getByText("다시 시도해주세요.")).toBeInTheDocument();
     });
   });
 
-  it("광고가 로드된 경우 다시하기 시 광고 시청 후 chargeByAd를 호출한다", async () => {
+  it("hasChance가 있으면 광고가 로드되어도 광고/chargeByAd 없이 startPlay만 호출한다", async () => {
     vi.useRealTimers();
     mockUseRewardAd.mockImplementation(() => ({
       isAdLoaded: true,
@@ -273,12 +274,13 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("등록 없이 재도전"));
+    await user.click(screen.getByText("광고·등록 없이 재도전"));
 
     await waitFor(() => {
-      expect(mockShowAd).toHaveBeenCalled();
+      expect(mockStartPlay).toHaveBeenCalled();
     });
-    expect(mockChargeByAd).toHaveBeenCalled();
+    expect(mockShowAd).not.toHaveBeenCalled();
+    expect(mockChargeByAd).not.toHaveBeenCalled();
     expect(navigateMock).toHaveBeenCalledWith(
       "/memorize",
       expect.objectContaining({
@@ -297,7 +299,7 @@ describe("SubmittedView", () => {
 
     renderWithState();
 
-    await user.click(screen.getByText("등록 없이 재도전"));
+    await user.click(screen.getByText("광고·등록 없이 재도전"));
 
     await waitFor(() => {
       expect(mockStartPlay).toHaveBeenCalled();

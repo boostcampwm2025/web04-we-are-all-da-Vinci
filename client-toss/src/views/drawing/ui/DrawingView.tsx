@@ -1,8 +1,10 @@
+import { DrawingCanvasFrame } from "@/entities/drawingCanvas";
 import { PhaseHeader } from "@/entities/phaseHeader";
 import type { RGB } from "@/feature/drawing";
 import {
   Canvas,
   Toolbar,
+  getEncouragementText,
   useDrawingStrokes,
   useDrawingSubmit,
   useStrokeScoring,
@@ -96,22 +98,35 @@ const DrawingView = () => {
         description={`${timeLeft}초 남았어요`}
       />
 
-      <div className="mx-(--card-mx) mt-2 flex min-h-0 flex-1 flex-col rounded-2xl bg-gray-100">
-        <Toolbar
-          selectedColor={selectedColor}
-          onColorChange={setSelectedColor}
-          onUndo={handleUndo}
-          onClear={handleClear}
-        />
-        <Canvas
-          selectedColor={selectedColor}
-          strokes={strokes}
-          onAddStroke={handleAddStroke}
-        />
+      <div className="mt-2 mb-(--card-mx) px-(--card-mx)">
+        <DrawingCanvasFrame
+          topAccessory={
+            <Toolbar
+              selectedColor={selectedColor}
+              onColorChange={setSelectedColor}
+              onUndo={handleUndo}
+              onClear={handleClear}
+            />
+          }
+        >
+          <Canvas
+            selectedColor={selectedColor}
+            strokes={strokes}
+            onAddStroke={handleAddStroke}
+          />
+        </DrawingCanvasFrame>
       </div>
 
-      <div className="flex flex-col items-center gap-2 px-(--page-px) py-3">
-        <Score value={scoring.similarity?.score ?? 0} />
+      <div className="flex flex-1 flex-col items-center justify-between px-(--page-px) pb-(--card-mx)">
+        <Score
+          value={scoring.similarity?.score ?? 0}
+          size="l"
+          subtitle={getEncouragementText(
+            scoring.similarity?.score ?? 0,
+            scoring.trend,
+            strokes.length > 0,
+          )}
+        />
         <Button
           color="primary"
           display="block"
