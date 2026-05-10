@@ -9,5 +9,6 @@ import { RankingCleanupScheduler } from "./ranking.cleanup.scheduler";
   imports: [MikroOrmModule.forFeature([Ranking])],
   controllers: [RankingController],
   providers: [RankingService, RankingCleanupScheduler],
+  exports: [RankingService],
 })
 export class RankingModule {}
