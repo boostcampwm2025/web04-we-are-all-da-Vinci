@@ -80,12 +80,17 @@ const buildDrawingRepository = () => ({
   findDrawingById: jest.fn(),
 });
 
+const buildRankingService = () => ({
+  updateRanking: jest.fn(),
+});
+
 const buildService = ({
   userService = buildUserService(),
   promptService = buildPromptService(),
   pointService = buildPointService(),
   drawingAccessService = buildDrawingAccessService(),
   drawingRepository = buildDrawingRepository(),
+  rankingService = buildRankingService(),
 }: {
   userService?: ReturnType<typeof buildUserService>;
   promptService?: ReturnType<typeof buildPromptService>;
@@ -99,6 +104,7 @@ const buildService = ({
     pointService as never,
     drawingAccessService as never,
     drawingRepository as never,
+    rankingService as never,
   );
 
 describe("DrawingService", () => {

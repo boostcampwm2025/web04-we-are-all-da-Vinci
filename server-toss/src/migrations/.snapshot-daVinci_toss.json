@@ -62,9 +62,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [
-            "drawing"
-          ]
+          "enumItems": ["drawing"]
         },
         "user_key": {
           "name": "user_key",
@@ -498,11 +496,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [
-            "ad",
-            "share",
-            "drawing"
-          ]
+          "enumItems": ["ad", "share", "drawing"]
         },
         "point_amount": {
           "name": "point_amount",

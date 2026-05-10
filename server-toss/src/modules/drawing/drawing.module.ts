@@ -7,6 +7,7 @@ import { Drawing } from "./drawing.entity";
 import { DrawingService } from "./service/drawing.service";
 import { DrawingAccessService } from "./service/drawing-access.service";
 import { UserModule } from "../user/user.module";
+import { RankingModule } from "../ranking/ranking.module";
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { UserModule } from "../user/user.module";
     PromptModule,
     UserModule,
     PointModule,
+    RankingModule,
   ],
   controllers: [DrawingController],
   providers: [DrawingService, DrawingAccessService],

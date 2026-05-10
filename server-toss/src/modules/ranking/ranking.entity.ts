@@ -41,4 +41,20 @@ export class Ranking extends BaseEntity {
 
   @Property({ fieldName: "submitted_at", type: "datetime" })
   submittedAt!: Date;
+
+  isBetterThan(newScore: number) {
+    return newScore > this.score;
+  }
+
+  update(
+    newDrawingId: bigint,
+    newStrokes: string,
+    newScore: number,
+    submittedAt: Date,
+  ) {
+    this.drawingId = newDrawingId;
+    this.strokes = newStrokes;
+    this.score = newScore;
+    this.submittedAt = submittedAt;
+  }
 }

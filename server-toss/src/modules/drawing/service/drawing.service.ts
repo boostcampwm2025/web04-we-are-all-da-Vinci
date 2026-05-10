@@ -13,6 +13,7 @@ import { Drawing } from "../drawing.entity";
 import { DrawingAccessService } from "./drawing-access.service";
 import { DrawingRepository } from "../drawing.repository";
 import { InjectRepository } from "@mikro-orm/nestjs";
+import { RankingService } from "src/modules/ranking/ranking.service";
 
 type Similarity = ReturnType<typeof scoreFinalSimilarity>;
 const SLOW_STROKES_DURATION_MS = 500;
@@ -43,6 +44,7 @@ export class DrawingService {
     private readonly drawingAccessService: DrawingAccessService,
     @InjectRepository(Drawing)
     private readonly drawingRepository: DrawingRepository,
+    private readonly rankingService: RankingService,
   ) {}
 
   // 획 단위 실시간 호출 엔드포인트. 클라 값 신뢰 X → 서버가 매번 유사도 재계산
@@ -133,7 +135,7 @@ export class DrawingService {
       },
       "최종 드로잉 제출 성공",
     );
-
+    await this.rankingService.updateRanking(user, drawing);
     const promotionGranted =
       await this.pointService.grantDrawingPromotionIfEligible(user.userKey);
 
