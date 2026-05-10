@@ -9,6 +9,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import DashboardView from "./DashboardView";
 
 const navigateMock = vi.fn();
+const mockStartPlay = vi.fn().mockResolvedValue(true);
+const mockChargeByAd = vi.fn().mockResolvedValue(1);
+const mockRefresh = vi.fn().mockResolvedValue(1);
 vi.mock("react-router-dom", async () => {
   const actual =
     await vi.importActual<typeof import("react-router-dom")>(
@@ -17,6 +20,17 @@ vi.mock("react-router-dom", async () => {
   return {
     ...actual,
     useNavigate: () => navigateMock,
+    useOutletContext: () => ({
+      chanceCount: 1,
+      hasChance: true,
+      isLoading: false,
+      error: null,
+      refresh: mockRefresh,
+      chargeByAd: mockChargeByAd,
+      chargeByShare: vi.fn(),
+      consume: vi.fn(),
+      startPlay: mockStartPlay,
+    }),
   };
 });
 
@@ -32,15 +46,7 @@ vi.mock("@/shared/api", () => ({
   setCachedNickname: vi.fn(),
 }));
 
-const mockStartPlay = vi.fn().mockResolvedValue(true);
-const mockCharge = vi.fn().mockResolvedValue(undefined);
 vi.mock("@/feature/playChance", () => ({
-  usePlayChance: () => ({
-    hasChance: true,
-    isLoading: false,
-    charge: mockCharge,
-    startPlay: mockStartPlay,
-  }),
   useRewardAd: () => ({
     isAdLoaded: false,
     showAd: vi.fn().mockResolvedValue(undefined),
@@ -192,14 +198,14 @@ describe("DashboardView", () => {
     expect(screen.getByText("포인트 지급이 완료됐어요")).toBeInTheDocument();
   });
 
-  it("fromSubmitted + promotionGranted=false일 때 제출 완료 토스트를 표시한다", async () => {
+  it("fromSubmitted + promotionGranted=false일 때 등록 완료 토스트를 표시한다", async () => {
     renderDashboard({ fromSubmitted: true, promotionGranted: false });
 
     await waitFor(() => {
       expect(screen.getByTestId("podium")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("그림이 저장됐어요")).toBeInTheDocument();
+    expect(screen.getByText("그림을 등록했어요")).toBeInTheDocument();
   });
 
   it("fromSubmitted 처리 후 history state를 초기화한다", async () => {
@@ -232,7 +238,7 @@ describe("DashboardView", () => {
       expect(screen.getByTestId("podium")).toBeInTheDocument();
     });
 
-    await user.click(screen.getByText("플레이하기"));
+    await user.click(screen.getByText(/광고 없이.*번 도전/));
 
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith("/memorize", expect.anything());

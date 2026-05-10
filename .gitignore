@@ -17,6 +17,11 @@ coverage
 .env
 .env.local
 .env.*.local
+.env.production
+.env.staging
+.env.development
+!.env.example
+!.env.test
 
 # OS files
 .DS_Store

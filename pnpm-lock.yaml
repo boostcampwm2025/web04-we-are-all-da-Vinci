@@ -183,9 +183,6 @@ importers:
       zod:
         specifier: ^4.3.6
         version: 4.3.6
-      zustand:
-        specifier: ^5.0.9
-        version: 5.0.11(@types/react@19.2.3)(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3))
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.1
@@ -22591,9 +22588,3 @@ snapshots:
       '@types/react': 19.2.11
       react: 19.2.4
       use-sync-external-store: 1.6.0(react@19.2.4)
-
-  zustand@5.0.11(@types/react@19.2.3)(react@19.2.3)(use-sync-external-store@1.6.0(react@19.2.3)):
-    optionalDependencies:
-      '@types/react': 19.2.3
-      react: 19.2.3
-      use-sync-external-store: 1.6.0(react@19.2.3)

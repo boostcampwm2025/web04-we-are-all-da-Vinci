@@ -1,7 +1,8 @@
 export {
-  serverTossApi,
-  setAccessToken,
   clearAccessToken,
   getCachedNickname,
+  RequestError,
+  serverTossApi,
+  setAccessToken,
   setCachedNickname,
 } from "./serverToss";

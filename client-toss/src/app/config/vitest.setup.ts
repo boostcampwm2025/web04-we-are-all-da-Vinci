@@ -135,6 +135,32 @@ vi.mock("@toss/tds-mobile", () => ({
     ...props
   }: Record<string, unknown> & { children?: ReactNode }) =>
     createElement("button", props, children),
+  IconButton: ({
+    src,
+    name,
+    iconSize,
+    bgColor,
+    color,
+    variant,
+    ...props
+  }: Record<string, unknown> & {
+    src?: string;
+    name?: string;
+    iconSize?: number;
+    bgColor?: string;
+    color?: string;
+    variant?: string;
+  }) =>
+    createElement("button", {
+      type: "button",
+      "data-icon-src": src,
+      "data-icon-name": name,
+      "data-icon-size": iconSize,
+      "data-bg-color": bgColor,
+      "data-color": color,
+      "data-variant": variant,
+      ...props,
+    }),
   ConfirmDialog: ConfirmDialogMock,
   Toast: Object.assign(
     ({
@@ -179,6 +205,11 @@ vi.mock("@apps-in-toss/web-framework", () => ({
     isSupported: vi.fn().mockReturnValue(false),
   }),
   showFullScreenAd: vi.fn(),
+  share: vi.fn().mockResolvedValue(undefined),
+  getTossShareLink: vi.fn().mockResolvedValue("intoss://we-are-all-da-vinci"),
+  contactsViral: Object.assign(vi.fn().mockReturnValue(vi.fn()), {
+    isSupported: vi.fn().mockReturnValue(false),
+  }),
   TossAds: {
     init: vi.fn(),
     BannerAd: ({

@@ -4,13 +4,13 @@ export const STEPS = [
   {
     icon: brainImg,
     alt: "뇌 아이콘",
-    title: "제시 그림을 기억하세요!",
-    description: "15초 동안 그림을 보고 분석하세요",
+    title: "이 그림을 외워주세요",
+    description: "15초 뒤에 똑같이 그려야 해요",
   },
   {
     icon: painterMan1Img,
     alt: "화가 아이콘",
-    title: "비슷하게 그려주세요",
+    title: "외운 그림을 그려주세요",
     description: "기억력과 그림 솜씨를 보여주세요",
   },
   {

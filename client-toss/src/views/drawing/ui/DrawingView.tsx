@@ -91,7 +91,7 @@ const DrawingView = () => {
       )}
 
       <PhaseHeader
-        title="30초 동안 가장 비슷하게 그려요"
+        title="외운 그림을 그려주세요"
         progress={progress}
         description={`${timeLeft}초 남았어요`}
       />
@@ -117,25 +117,25 @@ const DrawingView = () => {
           display="block"
           onClick={() => setIsSubmitDialogOpen(true)}
         >
-          제출하기
+          다 그렸어요
         </Button>
       </div>
 
       <ConfirmDialog
         open={isSubmitDialogOpen}
         onClose={() => setIsSubmitDialogOpen(false)}
-        title="제출하시겠어요?"
-        description="제출하면 되돌릴 수 없어요"
+        title="이대로 끝낼까요?"
+        description="점수 확인 화면으로 넘어가요"
         confirmButton={
           <ConfirmDialog.ConfirmButton onClick={confirmSubmit}>
-            제출
+            완성
           </ConfirmDialog.ConfirmButton>
         }
         cancelButton={
           <ConfirmDialog.CancelButton
             onClick={() => setIsSubmitDialogOpen(false)}
           >
-            닫기
+            더 그리기
           </ConfirmDialog.CancelButton>
         }
       />
@@ -144,7 +144,7 @@ const DrawingView = () => {
         open={showDialog}
         onClose={() => setShowDialog(false)}
         title="나가시겠어요?"
-        description="그림이 저장되지 않아요"
+        description="지금 나가면 그림이 사라져요"
         confirmButton={
           <ConfirmDialog.ConfirmButton
             onClick={() => {
