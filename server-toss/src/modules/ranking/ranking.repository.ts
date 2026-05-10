@@ -2,6 +2,7 @@ import { EntityRepository, QueryOrder, sql } from "@mikro-orm/mysql";
 import { Ranking } from "./ranking.entity";
 import { Drawing } from "../drawing/drawing.entity";
 import { User } from "../user/user.entity";
+import { getSeoulDayRange } from "src/common/util/time.util";
 
 export class RankingRepository extends EntityRepository<Ranking> {
   async findTop(limit: number): Promise<Ranking[]> {
@@ -59,7 +60,14 @@ export class RankingRepository extends EntityRepository<Ranking> {
   }
 
   async findByUserKey(userKey: number): Promise<Ranking | null> {
-    return await this.em.findOne(Ranking, { userKey: userKey });
+    const { start, end } = getSeoulDayRange();
+    return await this.em.findOne(Ranking, {
+      userKey: userKey,
+      submittedAt: {
+        $gte: start,
+        $lt: end,
+      },
+    });
   }
 
   async saveOne(user: User, drawing: Drawing) {
@@ -72,5 +80,14 @@ export class RankingRepository extends EntityRepository<Ranking> {
       submittedAt: drawing.createdAt,
     });
     await this.em.flush();
+  }
+
+  async cleanupRanking() {
+    const { start } = getSeoulDayRange();
+    await this.nativeDelete({
+      submittedAt: {
+        $lt: start,
+      },
+    });
   }
 }

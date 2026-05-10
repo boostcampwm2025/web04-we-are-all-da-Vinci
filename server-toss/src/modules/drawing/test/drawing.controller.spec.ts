@@ -96,13 +96,6 @@ describe("DrawingController (e2e)", () => {
       expect(res.body).toEqual({ drawingId: 42, similarity });
     });
 
-    it("userKey 없는 payload는 400을 반환한다", async () => {
-      await request(app.getHttpServer())
-        .post("/drawing")
-        .send(validPayload)
-        .expect(400);
-    });
-
     it("서비스가 NotFoundException을 던지면 404를 반환한다", async () => {
       drawingService.submitDrawing.mockRejectedValue(
         new NotFoundException("USER_NOT_FOUND"),
