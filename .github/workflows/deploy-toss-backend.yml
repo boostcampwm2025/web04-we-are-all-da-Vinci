@@ -38,8 +38,8 @@ jobs:
           set -e 
 
           mkdir -p ~/deploy/certs
-          printf '%s' "$PRIVATE_KEY" | base64 --decode > ~/deploy/certs/davinci_private.key 
-          printf '%s' "$PUBLIC_CERT" | base64 --decode > ~/deploy/certs/davinci_public.cert
+          printf '%s' "$PRIVATE_KEY" | base64 --decode | sudo tee ~/deploy/certs/davinci_private.key > /dev/null
+          printf '%s' "$PUBLIC_CERT" | base64 --decode | sudo tee ~/deploy/certs/davinci_public.cert > /dev/null
 
           sudo chown 1001:1001 ~/deploy/certs/davinci_private.key
           sudo chown 1001:1001 ~/deploy/certs/davinci_public.cert
