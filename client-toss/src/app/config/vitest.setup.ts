@@ -1,5 +1,12 @@
 import "@testing-library/jest-dom/vitest";
-import { createElement, type ReactNode } from "react";
+import {
+  Children,
+  cloneElement,
+  createElement,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import { vi } from "vitest";
 
 // jsdom에 없는 API polyfill
@@ -135,7 +142,144 @@ vi.mock("@toss/tds-mobile", () => ({
     ...props
   }: Record<string, unknown> & { children?: ReactNode }) =>
     createElement("button", props, children),
+  IconButton: ({
+    src,
+    name,
+    iconSize,
+    bgColor,
+    color,
+    variant,
+    ...props
+  }: Record<string, unknown> & {
+    src?: string;
+    name?: string;
+    iconSize?: number;
+    bgColor?: string;
+    color?: string;
+    variant?: string;
+  }) =>
+    createElement("button", {
+      type: "button",
+      "data-icon-src": src,
+      "data-icon-name": name,
+      "data-icon-size": iconSize,
+      "data-bg-color": bgColor,
+      "data-color": color,
+      "data-variant": variant,
+      ...props,
+    }),
   ConfirmDialog: ConfirmDialogMock,
+  BottomSheet: Object.assign(
+    ({
+      open,
+      header,
+      children,
+      ...props
+    }: Record<string, unknown> & {
+      open?: boolean;
+      header?: ReactNode;
+      children?: ReactNode;
+    }) => {
+      if (!open) return null;
+      return createElement(
+        "div",
+        { role: "dialog", ...props },
+        header,
+        children,
+      );
+    },
+    {
+      Header: ({
+        children,
+        ...props
+      }: Record<string, unknown> & { children?: ReactNode }) =>
+        createElement("h2", props, children),
+      HeaderDescription: ({
+        children,
+        ...props
+      }: Record<string, unknown> & { children?: ReactNode }) =>
+        createElement("p", props, children),
+    },
+  ),
+  TableRow: ({
+    left,
+    right,
+    align,
+    ...props
+  }: Record<string, unknown> & {
+    left?: ReactNode;
+    right?: ReactNode;
+    align?: string;
+  }) =>
+    createElement(
+      "div",
+      { "data-align": align, ...props },
+      createElement("span", { "data-slot": "left" }, left),
+      createElement("span", { "data-slot": "right" }, right),
+    ),
+  ListHeader: Object.assign(
+    ({
+      title,
+      right,
+      description,
+      ...props
+    }: Record<string, unknown> & {
+      title?: ReactNode;
+      right?: ReactNode;
+      description?: ReactNode;
+    }) => createElement("div", props, title, description, right),
+    {
+      TitleParagraph: ({
+        children,
+        ...props
+      }: Record<string, unknown> & { children?: ReactNode }) =>
+        createElement("h3", props, children),
+      DescriptionParagraph: ({
+        children,
+        ...props
+      }: Record<string, unknown> & { children?: ReactNode }) =>
+        createElement("p", props, children),
+    },
+  ),
+  Tab: Object.assign(
+    ({
+      children,
+      onChange,
+      ...props
+    }: Record<string, unknown> & {
+      children?: ReactNode;
+      onChange?: (index: number, key?: string | number) => void;
+    }) => {
+      const items = Children.toArray(children).map((child, index) => {
+        if (!isValidElement(child)) return child;
+        const element = child as ReactElement<{ onClick?: () => void }>;
+        return cloneElement(element, {
+          onClick: () => onChange?.(index),
+        });
+      });
+      return createElement("div", { role: "tablist", ...props }, items);
+    },
+    {
+      Item: ({
+        children,
+        selected,
+        ...props
+      }: Record<string, unknown> & {
+        children?: ReactNode;
+        selected?: boolean;
+      }) =>
+        createElement(
+          "button",
+          {
+            type: "button",
+            role: "tab",
+            "aria-selected": selected,
+            ...props,
+          },
+          children,
+        ),
+    },
+  ),
   Toast: Object.assign(
     ({
       open,
@@ -179,6 +323,11 @@ vi.mock("@apps-in-toss/web-framework", () => ({
     isSupported: vi.fn().mockReturnValue(false),
   }),
   showFullScreenAd: vi.fn(),
+  share: vi.fn().mockResolvedValue(undefined),
+  getTossShareLink: vi.fn().mockResolvedValue("intoss://we-are-all-da-vinci"),
+  contactsViral: Object.assign(vi.fn().mockReturnValue(vi.fn()), {
+    isSupported: vi.fn().mockReturnValue(false),
+  }),
   TossAds: {
     init: vi.fn(),
     BannerAd: ({

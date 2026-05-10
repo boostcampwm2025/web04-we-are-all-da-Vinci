@@ -1,5 +1,12 @@
 import { colors } from "@toss/tds-colors";
 import { Border, Paragraph } from "@toss/tds-mobile";
+import { MAX_PENALTY, MAX_SHAPE, MAX_STROKE_MATCH } from "../config/constants";
+import {
+  formatScore,
+  getPenaltyText,
+  getShapeText,
+  getStrokeMatchText,
+} from "../lib/getScoreText";
 
 interface ScoreDetailCardProps {
   strokeMatchSimilarity: number;
@@ -7,85 +14,77 @@ interface ScoreDetailCardProps {
   penalty: number;
 }
 
-const formatScore = (score: number) => score.toFixed(2);
+interface ScoreRowProps {
+  label: string;
+  description: string[];
+  score: number;
+  max: number;
+  scoreColor: string;
+  sign: "+" | "-";
+}
+
+const ScoreRow = ({
+  label,
+  description,
+  score,
+  max,
+  scoreColor,
+  sign,
+}: ScoreRowProps) => (
+  <div className="flex flex-col gap-1">
+    <div className="flex items-baseline justify-between gap-3">
+      <Paragraph typography="t5">
+        <Paragraph.Text fontWeight="medium">{label}</Paragraph.Text>
+      </Paragraph>
+      <Paragraph typography="t5">
+        <Paragraph.Text fontWeight="medium" color={scoreColor}>
+          {sign}
+          {formatScore(score)}
+        </Paragraph.Text>
+        <Paragraph.Text color={colors.grey400}> / {max}점</Paragraph.Text>
+      </Paragraph>
+    </div>
+    {description.map((line, index) => (
+      <Paragraph key={`${index}-${line}`} typography="t6">
+        <Paragraph.Text color={colors.grey500}>{line}</Paragraph.Text>
+      </Paragraph>
+    ))}
+  </div>
+);
 
 const ScoreDetailCard = ({
   strokeMatchSimilarity,
   shapeSimilarity,
   penalty,
-}: ScoreDetailCardProps) => {
-  const strokeMatchText =
-    strokeMatchSimilarity >= 80
-      ? "제시 그림과 선 모양이 거의 같아요"
-      : strokeMatchSimilarity >= 50
-        ? "제시 그림과 선 모양이 비슷해요"
-        : "제시 그림과 선 모양에 차이가 있어요";
-
-  const shapeText =
-    shapeSimilarity >= 8
-      ? "제시 그림과 형태가 거의 같아요"
-      : shapeSimilarity >= 5
-        ? "제시 그림과 형태가 비슷해요"
-        : "제시 그림과 형태에 차이가 있어요";
-
-  const penaltyText =
-    penalty === 0 ? "실수 없이 깔끔하게 그렸어요" : "일부 감점이 적용됐어요";
-
-  return (
-    <div className="w-full flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col">
-          <Paragraph typography="t5">
-            <Paragraph.Text fontWeight="medium">선 유사도</Paragraph.Text>
-          </Paragraph>
-          <Paragraph typography="t6">
-            <Paragraph.Text color={colors.grey500}>
-              {strokeMatchText}
-            </Paragraph.Text>
-          </Paragraph>
-        </div>
-        <Paragraph typography="t5">
-          <Paragraph.Text fontWeight="medium" color={colors.blue500}>
-            +{formatScore(strokeMatchSimilarity)}점
-          </Paragraph.Text>
-        </Paragraph>
-      </div>
-      <Border variant="full" />
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col">
-          <Paragraph typography="t5">
-            <Paragraph.Text fontWeight="medium">형태 유사도</Paragraph.Text>
-          </Paragraph>
-          <Paragraph typography="t6">
-            <Paragraph.Text color={colors.grey500}>{shapeText}</Paragraph.Text>
-          </Paragraph>
-        </div>
-        <Paragraph typography="t5">
-          <Paragraph.Text fontWeight="medium" color={colors.blue500}>
-            +{formatScore(shapeSimilarity)}점
-          </Paragraph.Text>
-        </Paragraph>
-      </div>
-      <Border variant="full" />
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col">
-          <Paragraph typography="t5">
-            <Paragraph.Text fontWeight="medium">패널티</Paragraph.Text>
-          </Paragraph>
-          <Paragraph typography="t6">
-            <Paragraph.Text color={colors.grey500}>
-              {penaltyText}
-            </Paragraph.Text>
-          </Paragraph>
-        </div>
-        <Paragraph typography="t5">
-          <Paragraph.Text fontWeight="medium" color={colors.red500}>
-            -{formatScore(penalty)}점
-          </Paragraph.Text>
-        </Paragraph>
-      </div>
-    </div>
-  );
-};
+}: ScoreDetailCardProps) => (
+  <div className="w-full flex flex-col gap-2">
+    <ScoreRow
+      label="선 유사도"
+      description={getStrokeMatchText(strokeMatchSimilarity)}
+      score={strokeMatchSimilarity}
+      max={MAX_STROKE_MATCH}
+      scoreColor={colors.blue500}
+      sign="+"
+    />
+    <Border variant="full" />
+    <ScoreRow
+      label="형태 유사도"
+      description={getShapeText(shapeSimilarity)}
+      score={shapeSimilarity}
+      max={MAX_SHAPE}
+      scoreColor={colors.blue500}
+      sign="+"
+    />
+    <Border variant="full" />
+    <ScoreRow
+      label="감점"
+      description={getPenaltyText(penalty)}
+      score={penalty}
+      max={MAX_PENALTY}
+      scoreColor={colors.red500}
+      sign="-"
+    />
+  </div>
+);
 
 export default ScoreDetailCard;

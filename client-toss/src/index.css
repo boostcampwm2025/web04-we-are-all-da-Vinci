@@ -63,3 +63,16 @@
 .animate-penalty {
   animation: penalty-flash 400ms ease-out forwards;
 }
+
+@keyframes slide-up-canvas {
+  0% {
+    transform: translateY(100vh);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up-canvas {
+  animation: slide-up-canvas 280ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}

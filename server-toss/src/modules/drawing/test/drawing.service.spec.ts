@@ -20,9 +20,7 @@ jest.mock("src/common/util/time.util", () => ({
   }),
 }));
 
-import type { Prompt } from "../../prompt/prompt.entity";
 import type { User } from "../../user/user.entity";
-import { Drawing } from "../drawing.entity";
 import { DrawingService } from "../service/drawing.service";
 
 const sampleStrokes = [
@@ -44,6 +42,7 @@ const makeDrawing = (
   userNickname = "테스트닉네임",
 ) => ({
   id,
+  createdAt: new Date("2026-04-27T09:00:00.000Z"),
   score,
   strokes: JSON.stringify([{ points: [[0], [0]], color: [255, 0, 0] }]),
   similarity: JSON.stringify({
@@ -75,25 +74,37 @@ const buildUserService = (userKey = 1234) => ({
   getUserInfo: jest.fn(async () => ({ userKey, name: "테스트유저" }) as User),
 });
 
+const buildDrawingRepository = () => ({
+  findMyDrawings: jest.fn(),
+  saveDrawing: jest.fn(),
+  findDrawingById: jest.fn(),
+});
+
+const buildRankingService = () => ({
+  updateRanking: jest.fn(),
+});
+
 const buildService = ({
-  em,
   userService = buildUserService(),
   promptService = buildPromptService(),
   pointService = buildPointService(),
   drawingAccessService = buildDrawingAccessService(),
+  drawingRepository = buildDrawingRepository(),
+  rankingService = buildRankingService(),
 }: {
-  em: unknown;
   userService?: ReturnType<typeof buildUserService>;
   promptService?: ReturnType<typeof buildPromptService>;
   pointService?: ReturnType<typeof buildPointService>;
   drawingAccessService?: ReturnType<typeof buildDrawingAccessService>;
+  drawingRepository?: ReturnType<typeof buildDrawingRepository>;
 }) =>
   new DrawingService(
-    em as never,
     userService as never,
     promptService as never,
     pointService as never,
     drawingAccessService as never,
+    drawingRepository as never,
+    rankingService as never,
   );
 
 describe("DrawingService", () => {
@@ -105,12 +116,8 @@ describe("DrawingService", () => {
   describe("스트로크 점수 계산", () => {
     it("오늘 프롬프트 기반 Similarity를 계산해 반환한다", async () => {
       const promptService = buildPromptService();
-      const em = {
-        getReference: jest.fn(),
-        persist: jest.fn(),
-        flush: jest.fn(),
-      };
-      const service = buildService({ em, promptService });
+      const drawingRepository = buildDrawingRepository();
+      const service = buildService({ promptService, drawingRepository });
 
       const result = await service.scoreStrokes(
         sampleStrokes as never,
@@ -123,33 +130,27 @@ describe("DrawingService", () => {
         { player: sampleStrokes },
       );
       expect(result.score).toBe(87);
-      expect(em.persist).not.toHaveBeenCalled();
-      expect(em.flush).not.toHaveBeenCalled();
+      expect(drawingRepository.saveDrawing).not.toHaveBeenCalled();
     });
   });
 
   describe("드로잉 제출", () => {
     it("유효한 userKey와 strokes를 받으면 drawings를 저장하고 결과를 반환한다", async () => {
       const fakeUser = { userKey: 1234, name: "테스트유저" } as User;
-      const fakePromptRef = { id: BigInt(7) } as Prompt;
-      const persisted: Drawing[] = [];
       const userService = {
         getUserInfo: jest.fn(async () => fakeUser),
       };
       const drawingAccessService = buildDrawingAccessService();
-      const em = {
-        getReference: jest.fn(() => fakePromptRef),
-        persist: jest.fn((drawing: Drawing) => {
-          drawing.id = BigInt(42);
-          persisted.push(drawing);
-        }),
-        flush: jest.fn(async () => undefined),
-      };
+      const drawingRepository = buildDrawingRepository();
+      drawingRepository.saveDrawing.mockResolvedValue({
+        id: BigInt(42),
+      });
+
       const service = buildService({
-        em,
         userService,
         pointService: buildPointService(false),
         drawingAccessService,
+        drawingRepository,
       });
 
       const result = await service.submitDrawing(
@@ -162,13 +163,19 @@ describe("DrawingService", () => {
       expect(drawingAccessService.validateAccess).toHaveBeenCalledWith(
         fakeUser,
       );
-      expect(persisted).toHaveLength(1);
-      const saved = persisted[0];
-      expect(saved.user).toBe(fakeUser);
-      expect(saved.prompt).toBe(fakePromptRef);
-      expect(JSON.parse(saved.strokes)).toEqual(sampleStrokes);
-      expect(JSON.parse(saved.similarity).score).toBe(87);
-      expect(saved.score).toBe(87);
+      expect(drawingRepository.saveDrawing).toHaveBeenCalledTimes(1);
+      expect(drawingRepository.saveDrawing).toHaveBeenCalledWith(
+        fakeUser,
+        7,
+        JSON.stringify(sampleStrokes),
+        JSON.stringify({
+          score: 87,
+          strokeMatchSimilarity: 85,
+          shapeSimilarity: 88,
+          penalty: 5,
+        }),
+        87,
+      );
       expect(result).toMatchObject({
         drawingId: 42,
         promotionGranted: false,
@@ -177,35 +184,25 @@ describe("DrawingService", () => {
     });
 
     it("접근 권한 검증에 실패하면 그림을 저장하지 않는다", async () => {
-      const em = {
-        getReference: jest.fn(),
-        persist: jest.fn(),
-        flush: jest.fn(),
-      };
+      const drawingRepository = buildDrawingRepository();
       const drawingAccessService = {
         validateAccess: jest.fn(async () => {
           throw new Error("NO_CHANCE");
         }),
       };
-      const service = buildService({ em, drawingAccessService });
+      const service = buildService({ drawingAccessService, drawingRepository });
 
       await expect(
         service.submitDrawing(1234, sampleStrokes as never, new Date()),
       ).rejects.toThrow("NO_CHANCE");
-      expect(em.persist).not.toHaveBeenCalled();
-      expect(em.flush).not.toHaveBeenCalled();
+      expect(drawingRepository.saveDrawing).not.toHaveBeenCalled();
     });
 
     it("프로모션 지급은 PointService에 위임하고 결과를 그대로 반환한다", async () => {
       const pointService = buildPointService(true);
-      const em = {
-        getReference: jest.fn(() => ({ id: BigInt(7) })),
-        persist: jest.fn((drawing: Drawing) => {
-          drawing.id = BigInt(1);
-        }),
-        flush: jest.fn(async () => undefined),
-      };
-      const service = buildService({ em, pointService });
+      const drawingRepository = buildDrawingRepository();
+      drawingRepository.saveDrawing.mockResolvedValue({ id: BigInt(1) });
+      const service = buildService({ pointService, drawingRepository });
 
       const result = await service.submitDrawing(
         1234,
@@ -222,97 +219,93 @@ describe("DrawingService", () => {
 
   describe("getMyDrawings", () => {
     let service: DrawingService;
-    let em: { find: jest.Mock };
+    let drawingRepository: ReturnType<typeof buildDrawingRepository>;
 
     beforeEach(() => {
-      em = { find: jest.fn() };
-      service = buildService({ em });
+      drawingRepository = buildDrawingRepository();
+      service = buildService({
+        drawingRepository,
+      });
     });
 
     it("오늘 그린 그림이 없으면 빈 배열을 반환한다", async () => {
-      em.find.mockResolvedValueOnce([]);
+      drawingRepository.findMyDrawings.mockResolvedValueOnce([]);
 
       const result = await service.getMyDrawings(1234);
 
       expect(result).toEqual({ userKey: 1234, drawings: [] });
+      expect(drawingRepository.findMyDrawings).toHaveBeenCalledTimes(1);
+      expect(drawingRepository.findMyDrawings).toHaveBeenCalledWith(1234);
     });
 
     it("오늘 그린 그림이 있으면 올바른 형식으로 반환한다", async () => {
-      const drawing = makeDrawing(BigInt(1), 78.5, BigInt(10));
-      em.find.mockResolvedValueOnce([drawing]).mockResolvedValueOnce([drawing]);
+      const myDrawing = {
+        id: BigInt(1),
+        strokes: JSON.stringify([{ points: [[0], [0]], color: [255, 0, 0] }]),
+        similarity: JSON.stringify({
+          score: 78.5,
+          strokeMatchSimilarity: 30.5,
+          shapeSimilarity: 50.2,
+          penalty: 10.0,
+        }),
+      };
+      drawingRepository.findMyDrawings.mockResolvedValueOnce([myDrawing]);
 
       const result = await service.getMyDrawings(1234);
 
-      expect(result.userKey).toBe(1234);
-      expect(result.drawings[0]).toMatchObject({
-        drawingId: 1,
-        score: 78.5,
+      expect(result).toEqual({
+        userKey: 1234,
+        drawings: [
+          {
+            drawingId: 1,
+            strokes: [{ points: [[0], [0]], color: [255, 0, 0] }],
+            similarity: {
+              score: 78.5,
+              strokeMatchSimilarity: 30.5,
+              shapeSimilarity: 50.2,
+              penalty: 10,
+            },
+          },
+        ],
       });
-    });
-
-    it("나보다 score 높은 그림 수로 drawRanking을 계산한다", async () => {
-      const drawing = makeDrawing(BigInt(1), 50, BigInt(10));
-      const otherDrawing = makeDrawing(BigInt(2), 80, BigInt(10), "다른유저");
-      em.find
-        .mockResolvedValueOnce([drawing])
-        .mockResolvedValueOnce([drawing, otherDrawing]);
-
-      const result = await service.getMyDrawings(1234);
-
-      expect(result.drawings[0].drawRanking).toBe(2);
-    });
-
-    it("다른 프롬프트의 그림은 drawRanking 계산에 포함하지 않는다", async () => {
-      const drawing = makeDrawing(BigInt(1), 50, BigInt(10));
-      const otherPromptDrawing = makeDrawing(
-        BigInt(2),
-        90,
-        BigInt(99),
-        "다른유저",
-      );
-      em.find
-        .mockResolvedValueOnce([drawing])
-        .mockResolvedValueOnce([drawing, otherPromptDrawing]);
-
-      const result = await service.getMyDrawings(1234);
-
-      expect(result.drawings[0].drawRanking).toBe(1);
+      expect(drawingRepository.findMyDrawings).toHaveBeenCalledTimes(1);
+      expect(drawingRepository.findMyDrawings).toHaveBeenCalledWith(1234);
     });
   });
 
   describe("getDrawing", () => {
     let service: DrawingService;
-    let em: { findOne: jest.Mock; find: jest.Mock };
+    let drawingRepository: ReturnType<typeof buildDrawingRepository>;
 
     beforeEach(() => {
-      em = { findOne: jest.fn(), find: jest.fn() };
-      service = buildService({ em });
+      drawingRepository = buildDrawingRepository();
+      service = buildService({ drawingRepository });
     });
 
-    it("drawingId에 해당하는 그림이 없으면 null을 반환한다", async () => {
-      em.findOne.mockResolvedValueOnce(null);
+    it("drawingId에 해당하는 그림이 없으면 NotFoundException을 던진다", async () => {
+      drawingRepository.findDrawingById.mockResolvedValueOnce(null);
 
-      const result = await service.getDrawing("1");
-
-      expect(result).toBeNull();
+      await expect(service.getDrawing(BigInt(1))).rejects.toThrow(
+        "NOT_FOUND_DRAWING",
+      );
+      expect(drawingRepository.findDrawingById).toHaveBeenCalledWith(BigInt(1));
     });
 
     it("그림 상세를 올바른 형식으로 반환한다", async () => {
       const drawing = makeDrawing(BigInt(1), 78.5, BigInt(10), "홍길동닉");
-      em.findOne.mockResolvedValueOnce(drawing);
-      em.find.mockResolvedValueOnce([drawing]);
+      drawingRepository.findDrawingById.mockResolvedValueOnce(drawing);
 
-      const result = await service.getDrawing("1");
+      const result = await service.getDrawing(BigInt(1));
 
       expect(result).toMatchObject({
         drawingId: 1,
         nickname: "홍길동닉",
-        drawRanking: 1,
       });
-      expect(result!.strokes).toEqual([
+      expect(result.strokes).toEqual([
         { points: [[0], [0]], color: [255, 0, 0] },
       ]);
-      expect(result!.similarity).toMatchObject({ score: 78.5 });
+      expect(result.similarity).toMatchObject({ score: 78.5 });
+      expect(drawingRepository.findDrawingById).toHaveBeenCalledWith(BigInt(1));
     });
   });
 });

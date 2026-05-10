@@ -1,13 +1,19 @@
-import { drawStrokesOnCanvas, useCanvasSetup } from "@/feature/drawing";
-import { usePlayChance } from "@/feature/playChance";
+import type { PlayChanceLayoutContext } from "@/app/layouts/PlayChanceLayout";
+import {
+  DrawingCanvasFrame,
+  ReplayDrawingCanvas,
+} from "@/entities/drawingCanvas";
+import { PhaseHeader } from "@/entities/phaseHeader";
+import { useRewardAd } from "@/feature/playChance";
 import { serverTossApi } from "@/shared/api";
+import { AD_GROUP_IDS } from "@/shared/config";
 import { trackClick, useExitGuard, useRequiredState } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
 import { Button, ConfirmDialog, Toast } from "@toss/tds-mobile";
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, useOutletContext } from "react-router-dom";
 
 interface SubmittedRouteState {
   promptId: number;
@@ -20,21 +26,14 @@ const SubmittedView = () => {
   const navigate = useNavigate();
   const routeState = useRequiredState<SubmittedRouteState>();
   const { showDialog, setShowDialog } = useExitGuard();
-  const { containerRef, canvasRef, ctxRef, canvasSize } = useCanvasSetup();
-  const { charge, startPlay } = usePlayChance();
+  const { hasChance, chargeByAd, startPlay } =
+    useOutletContext<PlayChanceLayoutContext>();
+  const { isAdLoaded, showAd } = useRewardAd();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isReplaying, setIsReplaying] = useState(false);
   const [toastOpen, setToastOpen] = useState(false);
   const [toastText, setToastText] = useState("");
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = ctxRef.current;
-    if (!canvas || !ctx || !routeState || canvasSize === 0) return;
-
-    drawStrokesOnCanvas(canvas, ctx, routeState.strokes, true);
-  }, [canvasRef, ctxRef, routeState, canvasSize]);
 
   const handleSubmitAndView = async () => {
     if (isSubmitting || !routeState) return;
@@ -52,7 +51,7 @@ const SubmittedView = () => {
       });
     } catch (err) {
       console.error("제출 실패:", err);
-      setToastText("제출에 실패했어요. 다시 시도해주세요.");
+      setToastText("등록에 실패했어요. 다시 시도해주세요.");
       setToastOpen(true);
       setIsSubmitting(false);
     }
@@ -62,14 +61,15 @@ const SubmittedView = () => {
     if (isReplaying) return;
     setIsReplaying(true);
     try {
-      try {
-        await serverTossApi.recordAdView();
-      } catch (err) {
-        console.error("[recordAdView 실패, 무시]", err);
+      // chance가 있으면 광고 면제 (라벨 "광고·등록 없이 재도전"과 일치)
+      if (!hasChance && isAdLoaded) {
+        await showAd();
+        await chargeByAd({ adGroupId: AD_GROUP_IDS.REWARDED });
       }
-      await charge();
       const started = await startPlay();
       if (!started) {
+        setToastText("그리기 기회가 부족해요.");
+        setToastOpen(true);
         setIsReplaying(false);
         return;
       }
@@ -105,55 +105,55 @@ const SubmittedView = () => {
         onClose={() => setToastOpen(false)}
       />
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="flex flex-col items-center px-(--page-px) pt-4">
-          <h1 className="mb-3 text-[22px] font-bold">그림을 완성했어요</h1>
-        </div>
+      <PhaseHeader
+        title="완성한 그림이에요"
+        description={
+          "등록하면 오늘 그린 최고 점수가 랭킹에 반영돼요\n그림의 점수도 자세히 분석해드려요"
+        }
+      />
 
-        <div className="mx-(--card-mx) rounded-2xl bg-gray-100 p-3">
-          <div
-            ref={containerRef}
-            className="flex w-full items-center justify-center rounded-xl bg-white shadow-sm"
-          >
-            <canvas ref={canvasRef} className="rounded-xl" />
-          </div>
-        </div>
-
-        <div className="flex flex-col items-center py-4">
-          <Score value={Math.round(score)} size="l" />
-          <p className="mt-2 text-sm text-(--color-grey)">
-            저장하면 랭킹에 등록돼요
-          </p>
-        </div>
-
-        <div className="pb-3">
-          <BannerAd adGroupId="ait-ad-test-native-image-id" type="list" />
-        </div>
+      <div className="mt-2 mb-(--card-mx) px-(--card-mx)">
+        <DrawingCanvasFrame>
+          <ReplayDrawingCanvas
+            strokes={routeState.strokes}
+            loop
+            speed={0}
+            ariaLabel="완성한 그림 리플레이"
+          />
+        </DrawingCanvasFrame>
       </div>
 
-      <div className="flex gap-3 px-(--page-px) py-3">
-        <div className="flex-1">
-          <Button
-            color="primary"
-            variant="weak"
-            display="block"
-            loading={isReplaying}
-            disabled={isReplaying || isSubmitting}
-            onClick={handleReplay}
-          >
-            다시하기
-          </Button>
-        </div>
-        <div className="flex-1">
-          <Button
-            color="primary"
-            display="block"
-            loading={isSubmitting}
-            disabled={isSubmitting || isReplaying}
-            onClick={handleSubmitAndView}
-          >
-            저장하기
-          </Button>
+      <div className="flex flex-1 flex-col justify-between pb-(--card-mx)">
+        <Score value={Math.round(score)} size="l" />
+        <div className="flex w-full flex-col gap-3">
+          <div className="px-(--card-mx)">
+            <BannerAd adGroupId={AD_GROUP_IDS.BANNER_LIST} type="list" />
+          </div>
+          <div className="flex gap-3 px-(--page-px)">
+            <div className="flex-1">
+              <Button
+                color="primary"
+                variant="weak"
+                display="block"
+                loading={isReplaying}
+                disabled={isReplaying || isSubmitting}
+                onClick={handleReplay}
+              >
+                {hasChance ? "광고·등록 없이 재도전" : "등록 없이 재도전"}
+              </Button>
+            </div>
+            <div className="flex-1">
+              <Button
+                color="primary"
+                display="block"
+                loading={isSubmitting}
+                disabled={isSubmitting || isReplaying}
+                onClick={handleSubmitAndView}
+              >
+                이 그림으로 등록
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -161,7 +161,7 @@ const SubmittedView = () => {
         open={showDialog}
         onClose={() => setShowDialog(false)}
         title="게임에서 나가시겠어요?"
-        description="저장하지 않은 그림은 사라져요"
+        description="등록하지 않은 그림은 사라져요"
         confirmButton={
           <ConfirmDialog.ConfirmButton
             onClick={() => navigate("/", { replace: true })}

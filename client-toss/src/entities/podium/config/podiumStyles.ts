@@ -1,8 +1,8 @@
-const WIDTH: number = 75;
+const WIDTH: number = 98;
 const HEIGHTS: Record<number, number> = {
-  1: 80,
-  2: 50,
-  3: 30,
+  1: 104,
+  2: 65,
+  3: 39,
 };
 
 export { WIDTH, HEIGHTS };

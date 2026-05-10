@@ -3,17 +3,18 @@ import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
 import { LoggerModule } from "nestjs-pino";
+import { createLoggerParams } from "./common/logging/logger.config";
+import { RequestContextHelper } from "./common/middleware/request-context-helper.middleware";
 import { HealthModule } from "./health/health.module";
-import { AuthModule } from "./modules/auth/auth.module";
 import config from "./mikro-orm.config";
 import { AdModule } from "./modules/ad/ad.module";
+import { AuthModule } from "./modules/auth/auth.module";
+import { ChanceModule } from "./modules/chance/chance.module";
 import { DrawingModule } from "./modules/drawing/drawing.module";
 import { PointModule } from "./modules/point/point.module";
 import { PromptModule } from "./modules/prompt/prompt.module";
 import { RankingModule } from "./modules/ranking/ranking.module";
 import { UserModule } from "./modules/user/user.module";
-import { RequestContextHelper } from "./common/middleware/request-context-helper.middleware";
-import { createLoggerParams } from "./common/logging/logger.config";
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { createLoggerParams } from "./common/logging/logger.config";
     PromptModule,
     PointModule,
     AdModule,
+    ChanceModule,
     RankingModule,
   ],
 })

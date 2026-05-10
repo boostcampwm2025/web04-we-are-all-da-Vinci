@@ -2,6 +2,8 @@ import { Migrator } from "@mikro-orm/migrations";
 import { defineConfig } from "@mikro-orm/mysql";
 import { SeedManager } from "@mikro-orm/seeder";
 import { AdView } from "./modules/ad/ad-view.entity";
+import { PlayChance } from "./modules/chance/play-chance.entity";
+import { ShareLog } from "./modules/chance/share-log.entity";
 import { Drawing } from "./modules/drawing/drawing.entity";
 import { PointLog } from "./modules/point/point-log.entity";
 import { DailyPrompt } from "./modules/prompt/daily-prompt.entity";
@@ -15,7 +17,17 @@ export default defineConfig({
   port: parseInt(process.env.MYSQL_PORT ?? "3306"),
   user: process.env.MYSQL_USER ?? "root",
   password: process.env.MYSQL_PASSWORD ?? "",
-  entities: [User, Drawing, Prompt, DailyPrompt, PointLog, AdView, Ranking],
+  entities: [
+    User,
+    Drawing,
+    Prompt,
+    DailyPrompt,
+    PointLog,
+    AdView,
+    Ranking,
+    PlayChance,
+    ShareLog,
+  ],
   debug: process.env.NODE_ENV !== "production",
   forceUtcTimezone: true, // UTC로 시간 설정 고정
   allowGlobalContext: process.env.NODE_ENV === "test", // 테스트환경의 전역 em 사용을 위한 설정

@@ -7,8 +7,12 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import DashboardView from "./DashboardView";
+import MyDrawingsPanel from "./MyDrawingsPanel";
 
 const navigateMock = vi.fn();
+const mockStartPlay = vi.fn().mockResolvedValue(true);
+const mockChargeByAd = vi.fn().mockResolvedValue(1);
+const mockRefresh = vi.fn().mockResolvedValue(1);
 vi.mock("react-router-dom", async () => {
   const actual =
     await vi.importActual<typeof import("react-router-dom")>(
@@ -17,6 +21,17 @@ vi.mock("react-router-dom", async () => {
   return {
     ...actual,
     useNavigate: () => navigateMock,
+    useOutletContext: () => ({
+      chanceCount: 1,
+      hasChance: true,
+      isLoading: false,
+      error: null,
+      refresh: mockRefresh,
+      chargeByAd: mockChargeByAd,
+      chargeByShare: vi.fn(),
+      consume: vi.fn(),
+      startPlay: mockStartPlay,
+    }),
   };
 });
 
@@ -32,15 +47,7 @@ vi.mock("@/shared/api", () => ({
   setCachedNickname: vi.fn(),
 }));
 
-const mockStartPlay = vi.fn().mockResolvedValue(true);
-const mockCharge = vi.fn().mockResolvedValue(undefined);
 vi.mock("@/feature/playChance", () => ({
-  usePlayChance: () => ({
-    hasChance: true,
-    isLoading: false,
-    charge: mockCharge,
-    startPlay: mockStartPlay,
-  }),
   useRewardAd: () => ({
     isAdLoaded: false,
     showAd: vi.fn().mockResolvedValue(undefined),
@@ -60,6 +67,11 @@ vi.mock("@/entities/podium", () => ({
   Podium: () => <div data-testid="podium" />,
 }));
 
+vi.mock("@/entities/ranking", () => ({
+  MyRankingSection: () => <div data-testid="my-ranking-section" />,
+  RankingList: () => <div data-testid="ranking-list" />,
+}));
+
 vi.mock("@/shared/ui/bannerAd", () => ({
   BannerAd: () => <div data-testid="banner-ad" />,
 }));
@@ -72,11 +84,17 @@ vi.mock("@toss/tds-colors", () => ({
   },
 }));
 
+vi.mock("./MyDrawingsPanel", () => ({
+  default: () => <div data-testid="my-ranking-section" />,
+}));
+
 const renderDashboard = (state?: unknown) =>
   render(
     <MemoryRouter initialEntries={[{ pathname: "/", state }]}>
       <Routes>
-        <Route path="/" element={<DashboardView />} />
+        <Route element={<DashboardView />}>
+          <Route index element={<MyDrawingsPanel />} />
+        </Route>
       </Routes>
     </MemoryRouter>,
   );
@@ -156,11 +174,10 @@ describe("DashboardView", () => {
     renderDashboard();
 
     await waitFor(() => {
-      expect(screen.getByTestId("podium")).toBeInTheDocument();
+      expect(screen.getByTestId("my-ranking-section")).toBeInTheDocument();
     });
 
     expect(serverTossApi.getPrompt).not.toHaveBeenCalled();
-    expect(screen.getByText("아직 제출한 그림이 없어요")).toBeInTheDocument();
   });
 
   it("getDeviceId 실패 시 local 폴백으로 동작한다", async () => {
@@ -185,21 +202,15 @@ describe("DashboardView", () => {
   it("fromSubmitted + promotionGranted=true일 때 포인트 토스트를 표시한다", async () => {
     renderDashboard({ fromSubmitted: true, promotionGranted: true });
 
-    await waitFor(() => {
-      expect(screen.getByTestId("podium")).toBeInTheDocument();
-    });
-
-    expect(screen.getByText("포인트 지급이 완료됐어요")).toBeInTheDocument();
+    expect(
+      await screen.findByText("포인트 지급이 완료됐어요"),
+    ).toBeInTheDocument();
   });
 
-  it("fromSubmitted + promotionGranted=false일 때 제출 완료 토스트를 표시한다", async () => {
+  it("fromSubmitted + promotionGranted=false일 때 등록 완료 토스트를 표시한다", async () => {
     renderDashboard({ fromSubmitted: true, promotionGranted: false });
 
-    await waitFor(() => {
-      expect(screen.getByTestId("podium")).toBeInTheDocument();
-    });
-
-    expect(screen.getByText("그림이 저장됐어요")).toBeInTheDocument();
+    expect(await screen.findByText("그림을 등록했어요")).toBeInTheDocument();
   });
 
   it("fromSubmitted 처리 후 history state를 초기화한다", async () => {
@@ -207,9 +218,7 @@ describe("DashboardView", () => {
 
     renderDashboard({ fromSubmitted: true, promotionGranted: true });
 
-    await waitFor(() => {
-      expect(screen.getByTestId("podium")).toBeInTheDocument();
-    });
+    await screen.findByText("포인트 지급이 완료됐어요");
 
     expect(replaceStateSpy).toHaveBeenCalledWith({}, "");
     replaceStateSpy.mockRestore();
@@ -229,10 +238,10 @@ describe("DashboardView", () => {
 
     // lastPlayed=오늘이므로 결과 UI가 먼저 표시됨
     await waitFor(() => {
-      expect(screen.getByTestId("podium")).toBeInTheDocument();
+      expect(screen.getByTestId("my-ranking-section")).toBeInTheDocument();
     });
 
-    await user.click(screen.getByText("플레이하기"));
+    await user.click(screen.getByText(/광고 없이.*번 도전/));
 
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith("/memorize", expect.anything());

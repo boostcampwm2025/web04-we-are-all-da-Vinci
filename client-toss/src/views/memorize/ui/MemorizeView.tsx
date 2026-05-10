@@ -1,6 +1,10 @@
+import {
+  DrawingCanvasFrame,
+  StaticDrawingCanvas,
+} from "@/entities/drawingCanvas";
 import { PhaseHeader } from "@/entities/phaseHeader";
-import { drawPromptOnCanvas, useCanvasSetup } from "@/feature/drawing";
 import { useRequirePlaySession } from "@/feature/playChance";
+import { AD_GROUP_IDS } from "@/shared/config";
 import {
   MEMORIZE_SECONDS,
   useCountdown,
@@ -10,7 +14,7 @@ import {
 import { BannerAd } from "@/shared/ui/bannerAd";
 import type { Stroke } from "@toss/shared";
 import { ConfirmDialog } from "@toss/tds-mobile";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface MemorizeRouteState {
@@ -24,7 +28,6 @@ const MemorizeView = () => {
   const { isCheckingSession } = useRequirePlaySession();
   const routeState = useRequiredState<MemorizeRouteState>();
   const { showDialog, setShowDialog } = useExitGuard();
-  const { containerRef, canvasRef, ctxRef, canvasSize } = useCanvasSetup();
   const [endTime] = useState(() => {
     const stored = sessionStorage.getItem("memorizeEndTime");
     const now = Date.now();
@@ -57,48 +60,37 @@ const MemorizeView = () => {
     goToDrawing,
   );
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = ctxRef.current;
-    if (!canvas || !ctx || !routeState || canvasSize === 0) return;
-
-    drawPromptOnCanvas(canvas, ctx, routeState.promptStrokes);
-  }, [canvasRef, ctxRef, routeState, canvasSize]);
-
   if (isCheckingSession || !routeState) return null;
 
   return (
     <div data-no-safe-area-bottom className="flex h-full flex-col bg-white">
       <PhaseHeader
-        title="기억하세요!"
-        description={`${timeLeft}초 동안 그림을 기억하세요`}
+        title="이 그림을 외워주세요"
+        description={`${timeLeft}초 뒤에 똑같이 그려야 해요\n중간에 나가면 도전 기회가 사라져요`}
         progress={progress}
       />
 
-      <div className="px-(--page-px) text-center">
-        <p className="text-sm text-(--color-grey)">
-          중도 종료 시 기회를 잃어요
-        </p>
-      </div>
-
       <div className="min-h-0 flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-(--card-mx) mt-2 rounded-2xl bg-gray-100 p-3">
-          <div
-            ref={containerRef}
-            className="flex w-full items-center justify-center rounded-xl bg-white shadow-sm"
-          >
-            <canvas ref={canvasRef} className="rounded-xl" />
-          </div>
+        <div className="mt-2 px-(--card-mx)">
+          <DrawingCanvasFrame>
+            <StaticDrawingCanvas
+              strokes={routeState.promptStrokes}
+              isPrompt
+              ariaLabel="외워야 할 그림"
+            />
+          </DrawingCanvasFrame>
         </div>
 
-        <BannerAd type="feed" adGroupId="ait-ad-test-native-image-id" />
+        <div className="px-(--card-mx)">
+          <BannerAd type="feed" adGroupId={AD_GROUP_IDS.BANNER_FEED} />
+        </div>
       </div>
 
       <ConfirmDialog
         open={showDialog}
         onClose={() => setShowDialog(false)}
-        title="나가시겠어요?"
-        description="나가면 처음부터 다시 시작해야 해요"
+        title="지금 나가면 기회가 사라져요"
+        description="오늘 도전이 그대로 끝나요"
         confirmButton={
           <ConfirmDialog.ConfirmButton
             onClick={() => {

@@ -3,9 +3,7 @@ import {
   showFullScreenAd,
 } from "@apps-in-toss/web-framework";
 import { useCallback, useEffect, useRef, useState } from "react";
-
-const AD_GROUP_ID = "ait-ad-test-rewarded-id";
-const AD_TIMEOUT_MS = 10_000;
+import { AD_GROUP_IDS } from "@/shared/config";
 
 export const useRewardAd = () => {
   const isSupported = loadFullScreenAd.isSupported();
@@ -17,7 +15,7 @@ export const useRewardAd = () => {
     adUnregisterRef.current?.();
     if (!isSupported) return;
     adUnregisterRef.current = loadFullScreenAd({
-      options: { adGroupId: AD_GROUP_ID },
+      options: { adGroupId: AD_GROUP_IDS.REWARDED },
       onEvent: (event) => {
         if (event.type === "loaded") setIsAdLoaded(true);
       },
@@ -50,21 +48,20 @@ export const useRewardAd = () => {
         let rewarded = false;
         let done = false;
 
-        const timer = setTimeout(() => {
-          if (done) return;
-          done = true;
-          reloadAd();
-          reject(new Error("timeout"));
-        }, AD_TIMEOUT_MS);
-
         showFullScreenAd({
-          options: { adGroupId: AD_GROUP_ID },
+          options: { adGroupId: AD_GROUP_IDS.REWARDED },
           onEvent: (event) => {
+            if (event.type === "failedToShow") {
+              if (done) return;
+              done = true;
+              reloadAd();
+              reject(new Error("failedToShow"));
+              return;
+            }
             if (event.type === "userEarnedReward") rewarded = true;
             if (event.type === "dismissed") {
               if (done) return;
               done = true;
-              clearTimeout(timer);
               reloadAd();
               if (rewarded) resolve();
               else reject(new Error("closed"));
@@ -73,7 +70,6 @@ export const useRewardAd = () => {
           onError: (err) => {
             if (done) return;
             done = true;
-            clearTimeout(timer);
             reloadAd();
             reject(err);
           },

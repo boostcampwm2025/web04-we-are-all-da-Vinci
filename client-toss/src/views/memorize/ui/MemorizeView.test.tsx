@@ -1,5 +1,6 @@
 /// <reference types="@testing-library/jest-dom/vitest" />
 import { act, render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import MemorizeView from "./MemorizeView";
@@ -16,14 +17,11 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
-vi.mock("@/feature/drawing", () => ({
-  drawPromptOnCanvas: vi.fn(),
-  useCanvasSetup: () => ({
-    containerRef: { current: null },
-    canvasRef: { current: null },
-    ctxRef: { current: null },
-    canvasSize: 300,
-  }),
+vi.mock("@/entities/drawingCanvas", () => ({
+  DrawingCanvasFrame: ({ children }: { children: ReactNode }) => (
+    <div data-testid="canvas-frame">{children}</div>
+  ),
+  StaticDrawingCanvas: () => <div data-testid="static-drawing-canvas" />,
 }));
 
 vi.mock("@/feature/playChance", () => ({
@@ -87,9 +85,9 @@ describe("MemorizeView", () => {
   it("route state가 있으면 정상 렌더링된다", () => {
     renderWithState();
 
-    expect(screen.getByText("기억하세요!")).toBeInTheDocument();
+    expect(screen.getByText("이 그림을 외워주세요")).toBeInTheDocument();
     expect(
-      screen.getByText(/\d+초 동안 그림을 기억하세요/),
+      screen.getByText(/\d+초 뒤에 똑같이 그려야 해요/),
     ).toBeInTheDocument();
   });
 

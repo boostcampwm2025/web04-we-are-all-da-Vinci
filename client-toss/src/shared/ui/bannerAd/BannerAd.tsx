@@ -28,7 +28,8 @@ const MockBanner = ({
     <div
       style={{ height }}
       className={clsx(
-        "mx-(--card-mx) mt-2 flex items-center justify-center rounded-2xl bg-gray-100 text-sm text-(--color-grey)",
+        "flex w-full items-center justify-center rounded-2xl bg-gray-100 text-sm text-(--color-grey)",
+        type === "feed" && "mt-2",
         className,
       )}
     >

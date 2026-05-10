@@ -155,6 +155,100 @@ describe("useStrokeScoring", () => {
     });
   });
 
+  it("이전 점수보다 의미 있게 오르면 trend가 'up'이 된다", async () => {
+    mockedScoreStrokes
+      .mockResolvedValueOnce(makeSimilarity(50))
+      .mockResolvedValueOnce(makeSimilarity(70));
+
+    const { result } = renderHook(() => useStrokeScoring());
+
+    await act(async () => {
+      await result.current.scoreStrokes([makeStroke()]);
+    });
+    expect(result.current.trend).toBeNull();
+
+    await act(async () => {
+      await result.current.scoreStrokes([makeStroke(), makeStroke()]);
+    });
+    expect(result.current.trend).toBe("up");
+  });
+
+  it("이전 점수보다 의미 있게 떨어지면 trend가 'down'이 된다", async () => {
+    mockedScoreStrokes
+      .mockResolvedValueOnce(makeSimilarity(70))
+      .mockResolvedValueOnce(makeSimilarity(50));
+
+    const { result } = renderHook(() => useStrokeScoring());
+
+    await act(async () => {
+      await result.current.scoreStrokes([makeStroke()]);
+    });
+    await act(async () => {
+      await result.current.scoreStrokes([makeStroke(), makeStroke()]);
+    });
+    expect(result.current.trend).toBe("down");
+  });
+
+  it("점수 변동이 임계값 미만이면 trend가 갱신되지 않는다", async () => {
+    mockedScoreStrokes
+      .mockResolvedValueOnce(makeSimilarity(50))
+      .mockResolvedValueOnce(makeSimilarity(52));
+
+    const { result } = renderHook(() => useStrokeScoring());
+
+    await act(async () => {
+      await result.current.scoreStrokes([makeStroke()]);
+    });
+    await act(async () => {
+      await result.current.scoreStrokes([makeStroke(), makeStroke()]);
+    });
+    expect(result.current.trend).toBeNull();
+  });
+
+  it("trend가 설정된 후 일정 시간이 지나면 null로 돌아온다", async () => {
+    mockedScoreStrokes
+      .mockResolvedValueOnce(makeSimilarity(50))
+      .mockResolvedValueOnce(makeSimilarity(70));
+
+    const { result } = renderHook(() => useStrokeScoring());
+
+    await act(async () => {
+      await result.current.scoreStrokes([makeStroke()]);
+    });
+    await act(async () => {
+      await result.current.scoreStrokes([makeStroke(), makeStroke()]);
+    });
+    expect(result.current.trend).toBe("up");
+
+    await waitFor(
+      () => {
+        expect(result.current.trend).toBeNull();
+      },
+      { timeout: 2000 },
+    );
+  });
+
+  it("resetSimilarity를 호출하면 similarity와 trend가 모두 초기화된다", async () => {
+    mockedScoreStrokes
+      .mockResolvedValueOnce(makeSimilarity(50))
+      .mockResolvedValueOnce(makeSimilarity(70));
+
+    const { result } = renderHook(() => useStrokeScoring());
+
+    await act(async () => {
+      await result.current.scoreStrokes([makeStroke()]);
+    });
+    await act(async () => {
+      await result.current.scoreStrokes([makeStroke(), makeStroke()]);
+    });
+    expect(result.current.trend).toBe("up");
+
+    act(() => {
+      result.current.resetSimilarity();
+    });
+    expect(result.current.trend).toBeNull();
+  });
+
   it("resetSimilarity를 호출하면 similarity가 null이 된다", async () => {
     mockedScoreStrokes.mockResolvedValueOnce(makeSimilarity(80));
     const { result } = renderHook(() => useStrokeScoring());

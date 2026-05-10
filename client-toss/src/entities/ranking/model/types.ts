@@ -22,9 +22,4 @@ interface RankingListItem {
   isMe: boolean;
 }
 
-export type {
-  MyRankingFoundResponse,
-  MyRankingNotSubmittedResponse,
-  MyRankingResponse,
-  RankingListItem,
-};
+export type { MyRankingResponse, RankingListItem };

@@ -30,9 +30,7 @@ const renderWithState = () =>
 describe("DrawingView", () => {
   it("페이지 타이틀이 렌더링된다", () => {
     renderWithState();
-    expect(
-      screen.getByText("30초 동안 가장 비슷하게 그려요"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("외운 그림을 그려주세요")).toBeInTheDocument();
   });
 
   it("캔버스 영역이 렌더링된다", () => {
@@ -64,9 +62,9 @@ describe("DrawingView", () => {
     expect(screen.getByText(/점$/)).toBeInTheDocument();
   });
 
-  it('"제출하기" 버튼이 렌더링된다', () => {
+  it('"다 그렸어요" 버튼이 렌더링된다', () => {
     renderWithState();
-    expect(screen.getByText("제출하기")).toBeInTheDocument();
+    expect(screen.getByText("다 그렸어요")).toBeInTheDocument();
   });
 
   it("route state 없이 접근하면 홈으로 리다이렉트된다", () => {

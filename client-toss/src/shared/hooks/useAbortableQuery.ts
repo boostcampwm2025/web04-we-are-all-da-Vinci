@@ -4,7 +4,7 @@ type QueryFn<T> = (options: { signal: AbortSignal }) => Promise<T>;
 
 const useAbortableQuery = <T>(query: QueryFn<T>) => {
   const [data, setData] = useState<T | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const controllerRef = useRef<AbortController | null>(null);
 
