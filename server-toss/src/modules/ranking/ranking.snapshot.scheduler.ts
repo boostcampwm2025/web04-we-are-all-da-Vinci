@@ -10,7 +10,7 @@ export class RankingSnapshotScheduler {
     private readonly rankingSnapshotService: RankingSnapshotService,
   ) {}
 
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  @Cron(CronExpression.EVERY_30_MINUTES)
   async handleRankingSnapshotRefresh() {
     try {
       await this.rankingSnapshotService.refreshRankingSnapshot();
