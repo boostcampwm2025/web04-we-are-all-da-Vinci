@@ -16,8 +16,8 @@ const InviteFriendDialog = ({
   <ConfirmDialog
     open={open}
     onClose={onCancel}
-    title="친구에게 공유해요"
-    description="공유하면 한 번 더 도전할 수 있어요"
+    title="친구에게 공유하기"
+    description="공유하면 광고 없이 도전할 수 있어요"
     confirmButton={
       <ConfirmDialog.ConfirmButton
         onClick={onConfirm}

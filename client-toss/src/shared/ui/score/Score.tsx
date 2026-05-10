@@ -25,7 +25,7 @@ const Score = ({ value, size = "m", subtitle }: ScoreProps) => {
         <span className={`${style.unit} text-(--color-grey)`}>점</span>
       </p>
       {subtitle && (
-        <p className={`${style.subtitle} text-(--color-grey) mt-0.5`}>
+        <p className={`${style.subtitle} text-(--color-grey) mt-1.5`}>
           {subtitle}
         </p>
       )}

@@ -1,53 +1,33 @@
-import { MyRankingSection, RankingList } from "@/entities/ranking";
+import { Podium } from "@/entities/podium";
+import { RankingList } from "@/entities/ranking";
 import { AD_GROUP_IDS } from "@/shared/config";
-import { trackClick } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
-import { Border, Button, Top } from "@toss/tds-mobile";
-import { Link } from "react-router-dom";
+import { Border, ListHeader } from "@toss/tds-mobile";
 
 const RankingView = () => {
   return (
-    <div
-      data-no-safe-area-bottom
-      className="flex h-full min-h-0 flex-1 flex-col bg-white"
-    >
-      <section className="shrink-0">
-        <Top
-          title={
-            <Top.TitleParagraph role="heading" aria-level={1}>
-              오늘의 TOP100
-            </Top.TitleParagraph>
-          }
-          subtitleBottom={
-            <Top.SubtitleParagraph role="heading" aria-level={2}>
-              화살표를 눌러 리플레이를 확인할 수 있어요.
-            </Top.SubtitleParagraph>
-          }
-        />
-        <Border />
-      </section>
-
-      <main className="min-h-0 flex-1 overflow-y-auto">
-        <MyRankingSection />
-        <BannerAd adGroupId={AD_GROUP_IDS.BANNER_FEED} className="mb-6" />
-        <RankingList />
-      </main>
-
-      <section className="shrink-0 bg-white px-(--page-px) pt-3 pb-[env(safe-area-inset-bottom)]">
-        <Link
-          to="/"
-          onClick={() => trackClick("ranking_back_to_dashboard_click")}
-        >
-          <Button
-            size="xlarge"
-            variant="weak"
-            display="block"
-            aria-label="대시보드로 돌아가기"
-          >
-            대시보드로 돌아가기
-          </Button>
-        </Link>
-      </section>
+    <div className="pt-4 pb-2">
+      <div className="flex w-full flex-col items-center gap-4 px-(--page-px) pb-4">
+        <Podium />
+      </div>
+      <Border variant="full" />
+      <div className="px-(--card-mx)">
+        <BannerAd adGroupId={AD_GROUP_IDS.BANNER_LIST} className="mt-2 mb-2" />
+      </div>
+      <ListHeader
+        title={
+          <ListHeader.TitleParagraph typography="t5" fontWeight="bold">
+            TOP 100
+          </ListHeader.TitleParagraph>
+        }
+        description={
+          <ListHeader.DescriptionParagraph>
+            눌러서 상세 정보를 볼 수 있어요
+          </ListHeader.DescriptionParagraph>
+        }
+        descriptionPosition="bottom"
+      />
+      <RankingList />
     </div>
   );
 };

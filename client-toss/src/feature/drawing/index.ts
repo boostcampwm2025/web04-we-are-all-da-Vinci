@@ -1,10 +1,7 @@
 export { PALETTE_COLORS } from "./config/colors";
 export type { RGB } from "./config/colors";
-export { drawPromptOnCanvas } from "./lib/drawPromptOnCanvas";
-export { drawStrokesOnCanvas } from "./lib/drawStrokesOnCanvas";
+export { getEncouragementText } from "./lib/getEncouragementText";
 export { normalizeStrokes } from "./lib/normalizeStrokes";
-export { calculateStrokeScale, transformPoint } from "./lib/scaleStrokes";
-export { useCanvasSetup } from "./model/useCanvasSetup";
 export { useDrawingStrokes } from "./model/useDrawingStrokes";
 export { useDrawingSubmit } from "./model/useDrawingSubmit";
 export { useStrokeScoring } from "./model/useStrokeScoring";

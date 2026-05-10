@@ -9,9 +9,15 @@ type PodiumSlot = {
   entry?: PodiumEntry;
 };
 
+const RANK_COLOR_CLASS: Record<number, string> = {
+  1: "bg-(--color-gold) text-white",
+  2: "bg-(--color-silver) text-white",
+  3: "bg-(--color-bronze) text-white",
+};
+
 const clipNickname = (nickname: string): string => {
-  if (nickname.length > 7) {
-    return nickname.substring(0, 7) + "...";
+  if (nickname.length > 10) {
+    return nickname.substring(0, 10) + "...";
   }
   return nickname;
 };
@@ -20,7 +26,7 @@ const Podium = () => {
   const { podium, isLoading } = usePodium();
 
   if (isLoading) {
-    return <Skeleton pattern="listOnly" style={{ width: "100%" }} />;
+    return <Skeleton pattern="cardOnly" style={{ width: "100%" }} />;
   }
 
   if (!podium || podium.length === 0) {
@@ -36,7 +42,7 @@ const Podium = () => {
 
   return (
     <div
-      className="flex flex-col justify-end w-full  bg-[#F9FAFB] px-4"
+      className="flex w-full flex-col justify-end rounded-2xl bg-[#F9FAFB] px-4"
       style={{ height: 205 }}
     >
       <div className="flex items-end justify-center gap-2 pb-4">
@@ -46,7 +52,7 @@ const Podium = () => {
             className="flex flex-col items-center justify-end gap-2"
           >
             <div className="flex flex-col text-center">
-              <div className="w-[75px] truncate text-[16px] font-bold leading-tight text-black">
+              <div className="w-[98px] truncate text-[13px] font-bold leading-tight text-black">
                 {entry ? clipNickname(entry.nickname) : ""}
               </div>
               <div className="mt-1 text-[14px] leading-none text-[#8f97a3]">
@@ -56,7 +62,7 @@ const Podium = () => {
 
             <div
               data-testid="podium-slot"
-              className="flex items-end justify-center bg-[#E5E8EB] text-[14px] font-semibold text-white"
+              className={`flex items-end justify-center text-[14px] font-semibold ${RANK_COLOR_CLASS[rank]}`}
               style={{
                 width: WIDTH,
                 height: HEIGHTS[rank],

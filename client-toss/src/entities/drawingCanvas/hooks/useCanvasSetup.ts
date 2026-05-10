@@ -13,7 +13,6 @@ export const useCanvasSetup = () => {
     const dpr = window.devicePixelRatio || 1;
     const physicalSize = Math.round(size * dpr);
 
-    // canvas.width 재설정은 항상 캔버스를 초기화하므로, 같은 크기면 스킵
     if (canvas.width === physicalSize && canvas.height === physicalSize) {
       setCanvasSize(size);
       return;
@@ -38,7 +37,6 @@ export const useCanvasSetup = () => {
     setCanvasSize(size);
   }, []);
 
-  // ref callback: container div가 마운트/언마운트될 때마다 ResizeObserver 연결
   const containerRef = useCallback(
     (node: HTMLDivElement | null) => {
       if (observerRef.current) {

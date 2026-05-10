@@ -1,5 +1,5 @@
 import PlayChanceLayout from "@/app/layouts/PlayChanceLayout";
-import { DashboardView } from "@/views/dashboard";
+import { DashboardView, MyDrawingsPanel } from "@/views/dashboard";
 import { Drawing } from "@/views/drawing";
 import { LoginView } from "@/views/login";
 import { Memorize } from "@/views/memorize";
@@ -24,9 +24,14 @@ export const router = createBrowserRouter([
   {
     element: <PlayChanceLayout />,
     children: [
-      { path: "/", element: <DashboardView /> },
+      {
+        element: <DashboardView />,
+        children: [
+          { index: true, element: <MyDrawingsPanel /> },
+          { path: "ranking", element: <RankingView /> },
+        ],
+      },
       { path: "/submitted", element: <SubmittedView /> },
-      { path: "/ranking", element: <RankingView /> },
       { path: "/drawing/:drawingId", element: <RankingDetailView /> },
     ],
   },

@@ -1,21 +1,31 @@
-import { ProgressBar } from "@toss/tds-mobile";
+import { ProgressBar, Top } from "@toss/tds-mobile";
 
 interface PhaseHeaderProps {
   title: string;
   description?: string;
-  progress: number;
+  progress?: number;
 }
 
 const PhaseHeader = ({ title, description, progress }: PhaseHeaderProps) => {
   return (
-    <div className="px-(--page-px) pt-4 pb-2">
-      <h1 className="text-[22px] font-bold leading-tight">{title}</h1>
-      {description && (
-        <p className="mt-1 text-sm text-(--color-description)">{description}</p>
+    <div className="pt-2 pb-2">
+      <Top
+        upperGap={12}
+        lowerGap={progress === undefined ? 0 : 12}
+        title={<Top.TitleParagraph size={22}>{title}</Top.TitleParagraph>}
+        subtitleBottom={
+          description ? (
+            <Top.SubtitleParagraph size={13}>
+              {description}
+            </Top.SubtitleParagraph>
+          ) : undefined
+        }
+      />
+      {progress !== undefined && (
+        <div className="px-(--page-px)">
+          <ProgressBar progress={progress} size="bold" animate />
+        </div>
       )}
-      <div className="mt-3">
-        <ProgressBar progress={progress} size="bold" animate />
-      </div>
     </div>
   );
 };
