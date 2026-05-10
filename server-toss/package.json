@@ -25,8 +25,6 @@
     "seed:drawing:small": "npx mikro-orm seeder:run --class=SmallUserDrawingSeeder",
     "seed:drawing:small:fresh": "npx mikro-orm migration:fresh --seed SmallUserDrawingSeeder",
     "seed:drawing:large": "npx mikro-orm seeder:run --class=LargeUserDrawingSeeder",
-    "seed:drawing:large:10k": "cross-env SEED_DRAWING_USER_COUNT=10000 pnpm seed:drawing:large",
-    "seed:drawing:large:20k": "cross-env SEED_DRAWING_USER_COUNT=20000 pnpm seed:drawing:large",
     "seed:ranking": "npx mikro-orm seeder:run --class=RankingSeeder",
     "migration:check": "mikro-orm migration:check",
     "migration:list": "mikro-orm migration:list",
