@@ -5,7 +5,11 @@ jest.mock("src/common/util/time.util", () => ({
   }),
 }));
 
-import { ConflictException, ForbiddenException } from "@nestjs/common";
+import {
+  ConflictException,
+  ForbiddenException,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { AdView } from "src/modules/ad/ad-view.entity";
 import { ChanceService } from "./chance.service";
 import { PlayChance } from "./play-chance.entity";
@@ -60,23 +64,28 @@ const buildEm = (existing: PlayChance | null, todayShareLogs = 0) => {
   };
 };
 
-const buildConfigService = () => ({
+interface WhitelistOverrides {
+  adGroupIdWhitelist?: string;
+  shareModuleIdWhitelist?: string;
+}
+
+const buildConfigService = (overrides: WhitelistOverrides = {}) => ({
   get: jest.fn((key: string) => {
     switch (key) {
       case "SHARE_DAILY_CHARGE_LIMIT":
         return 5;
       case "AD_GROUP_ID_WHITELIST":
-        return ALLOWED_AD_GROUP;
+        return overrides.adGroupIdWhitelist ?? ALLOWED_AD_GROUP;
       case "SHARE_MODULE_ID_WHITELIST":
-        return ALLOWED_MODULE;
+        return overrides.shareModuleIdWhitelist ?? ALLOWED_MODULE;
       default:
         return undefined;
     }
   }),
 });
 
-const buildService = (em: unknown) =>
-  new ChanceService(em as never, buildConfigService() as never);
+const buildService = (em: unknown, overrides: WhitelistOverrides = {}) =>
+  new ChanceService(em as never, buildConfigService(overrides) as never);
 
 const buildExisting = (overrides: Partial<PlayChance> = {}): PlayChance =>
   Object.assign(new PlayChance(), {
@@ -159,6 +168,17 @@ describe("ChanceService", () => {
 
       expect(existing.count).toBe(11);
     });
+
+    it("화이트리스트 환경변수가 비어 있으면 ServiceUnavailableException", async () => {
+      const existing = buildExisting({ count: 1 });
+      const { em } = buildEm(existing);
+      const service = buildService(em, { adGroupIdWhitelist: "" });
+
+      await expect(
+        service.chargeByAd(1, { adGroupId: ALLOWED_AD_GROUP }),
+      ).rejects.toBeInstanceOf(ServiceUnavailableException);
+      expect(existing.count).toBe(1);
+    });
   });
 
   describe("chargeByShare", () => {
@@ -218,6 +238,20 @@ describe("ChanceService", () => {
           moduleId: ALLOWED_MODULE,
         }),
       ).resolves.toEqual({ count: 5 });
+    });
+
+    it("공유 화이트리스트 환경변수가 비어 있으면 ServiceUnavailableException", async () => {
+      const existing = buildExisting({ count: 1 });
+      const { em } = buildEm(existing);
+      const service = buildService(em, { shareModuleIdWhitelist: "" });
+
+      await expect(
+        service.chargeByShare(1, {
+          channel: "contactsViral",
+          moduleId: ALLOWED_MODULE,
+        }),
+      ).rejects.toBeInstanceOf(ServiceUnavailableException);
+      expect(existing.count).toBe(1);
     });
   });
 

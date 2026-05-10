@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
   Logger,
+  ServiceUnavailableException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type { AdSdkPayload, ShareSdkPayload } from "@toss/shared";
@@ -46,8 +47,17 @@ export class ChanceService {
     payload: AdSdkPayload,
   ): Promise<{ count: number }> {
     if (this.adGroupIdWhitelist.size === 0) {
-      this.denyLog(userKey, "ad", "whitelist_empty", payload);
-      throw new ForbiddenException(
+      // 운영 환경변수 누락은 클라이언트 권한 문제가 아닌 시스템 설정 오류 → 5xx + error 로그로 알람 유도
+      this.logger.error(
+        {
+          event: "chance.charge.failed",
+          userKey,
+          op: "ad",
+          reason: "whitelist_empty",
+        },
+        "광고 그룹 화이트리스트 환경변수가 비어 있어요.",
+      );
+      throw new ServiceUnavailableException(
         "광고 그룹 화이트리스트가 비어 있어요. 운영자에게 문의해주세요.",
       );
     }
@@ -79,8 +89,16 @@ export class ChanceService {
     payload: ShareSdkPayload,
   ): Promise<{ count: number }> {
     if (this.shareModuleIdWhitelist.size === 0) {
-      this.denyLog(userKey, "share", "whitelist_empty", payload);
-      throw new ForbiddenException(
+      this.logger.error(
+        {
+          event: "chance.charge.failed",
+          userKey,
+          op: "share",
+          reason: "whitelist_empty",
+        },
+        "공유 모듈 화이트리스트 환경변수가 비어 있어요.",
+      );
+      throw new ServiceUnavailableException(
         "공유 리워드 화이트리스트가 비어 있어요. 운영자에게 문의해주세요.",
       );
     }
