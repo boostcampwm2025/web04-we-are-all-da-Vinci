@@ -2,6 +2,7 @@ import { MyScoreCard } from "@/entities/myScoreCard";
 import { MyRankingSection } from "@/entities/ranking";
 import type { MyDrawingResponse } from "@toss/shared";
 import { colors } from "@toss/tds-colors";
+import { Skeleton } from "@toss/tds-mobile";
 import { useRef, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 
@@ -62,10 +63,7 @@ const MyDrawingsPanel = () => {
       >
         {isMyDrawingsLoading ? (
           <div className="w-full shrink-0 snap-start snap-always px-(--page-px)">
-            <div
-              className="h-96 w-full rounded-2xl"
-              style={{ backgroundColor: colors.grey100 }}
-            />
+            <Skeleton pattern="listOnly" style={{ width: "100%" }} />
           </div>
         ) : myDrawings.length > 0 ? (
           myDrawings.map((drawing) => (

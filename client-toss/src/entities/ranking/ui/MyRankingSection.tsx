@@ -10,20 +10,21 @@ interface MyRankingSectionProps {
 const MyRankingSection = ({ nickname }: MyRankingSectionProps) => {
   const { isLoading, myRanking } = useMyRanking();
 
-  return (
-    <>
-      {isLoading && <Skeleton pattern="listOnly" style={{ width: "100%" }} />}
-      {myRanking && myRanking.state === "FOUND" ? (
-        <MyRanking
-          nickname={nickname}
-          score={myRanking.ranking.score}
-          rank={myRanking.ranking.rank}
-        />
-      ) : (
-        <MyRankingNotSubmitted />
-      )}
-    </>
-  );
+  if (isLoading) {
+    return <Skeleton pattern="listOnly" style={{ width: "100%" }} />;
+  }
+
+  if (myRanking && myRanking.state === "FOUND") {
+    return (
+      <MyRanking
+        nickname={nickname}
+        score={myRanking.ranking.score}
+        rank={myRanking.ranking.rank}
+      />
+    );
+  }
+
+  return <MyRankingNotSubmitted />;
 };
 
 export default MyRankingSection;
