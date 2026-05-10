@@ -6,11 +6,14 @@ import { MikroORM } from "@mikro-orm/mysql";
 import { Drawing } from "../drawing.entity";
 import { SmallUserDrawingSeeder } from "src/seeders/small-user-drawing.seeder";
 import { User } from "src/modules/user/user.entity";
+import { Prompt } from "src/modules/prompt/prompt.entity";
 
 describe("DrawingRespository", () => {
   let orm: MikroORM;
   let repository: DrawingRepository;
   let module: TestingModule;
+  let givenUser: User;
+  let givenPrompt: Prompt;
 
   beforeAll(async () => {
     module = await Test.createTestingModule({
@@ -28,6 +31,10 @@ describe("DrawingRespository", () => {
       await orm.schema.refresh();
       await orm.seeder.seed(SmallUserDrawingSeeder);
     }
+
+    const readEm = orm.em.fork();
+    givenUser = (await readEm.findAll(User, { limit: 1 }))[0];
+    givenPrompt = await readEm.findOneOrFail(Prompt, { id: BigInt(1) });
   });
 
   afterAll(async () => {
@@ -40,28 +47,133 @@ describe("DrawingRespository", () => {
     }
   });
 
-  describe("Describe: findMyDrawings 메소드는", () => {
-    describe("Context: 제출한 기록이 있으면", () => {
-      let givenUser: User;
+  describe("saveDrawing 메소드는", () => {
+    describe("유효한 입력이면", () => {
+      it("drawing을 저장하고 저장된 엔티티를 반환한다", async () => {
+        const strokes = JSON.stringify([
+          { points: [[1], [2]], color: [0, 0, 0] },
+        ]);
+        const similarity = JSON.stringify({
+          score: 87,
+          strokeMatchSimilarity: 85,
+          shapeSimilarity: 88,
+          penalty: 5,
+        });
 
-      beforeAll(async () => {
-        givenUser = (await orm.em.fork().findAll(User, { limit: 1 }))[0];
+        const saved = await repository.saveDrawing(
+          givenUser,
+          Number(givenPrompt.id),
+          strokes,
+          similarity,
+          87,
+        );
+
+        expect(saved.id).toBeDefined();
+        expect(saved.score).toBe(87);
+        expect(saved.strokes).toBe(strokes);
+        expect(saved.similarity).toBe(similarity);
+
+        const persisted = await orm.em
+          .fork()
+          .findOneOrFail(
+            Drawing,
+            { id: saved.id },
+            { populate: ["user", "prompt"] },
+          );
+
+        expect(persisted.user.userKey).toBe(givenUser.userKey);
+        expect(persisted.prompt.id).toBe(givenPrompt.id);
+        expect(persisted.score).toBe(87);
       });
+    });
+  });
 
-      it("It: 그림과 랭크를 응답한다.", async () => {
+  describe("findDrawingById 메소드는", () => {
+    describe("존재하는 drawingId면", () => {
+      it("user 정보가 포함된 그림을 반환한다", async () => {
+        const existing = await orm.em
+          .fork()
+          .findOneOrFail(
+            Drawing,
+            { user: givenUser.userKey },
+            { orderBy: { id: "ASC" } },
+          );
+
+        const found = await repository.findDrawingById(existing.id);
+
+        expect(found).not.toBeNull();
+        expect(found!.id).toBe(existing.id);
+        expect(found!.user).toBeDefined();
+        expect(found!.user.nickname).toBeTruthy();
+      });
+    });
+    describe("존재하지 않는 drawingId면", () => {
+      it("null을 반환한다", async () => {
+        const found = await repository.findDrawingById(BigInt(999999999));
+        expect(found).toBeNull();
+      });
+    });
+  });
+
+  describe("findMyDrawings 메소드는", () => {
+    describe("제출한 기록이 있으면", () => {
+      it("id/similarity/strokes만 반환한다", async () => {
         const result = await repository.findMyDrawings(givenUser.userKey);
 
-        expect(result).not.toBeNull();
         expect(result.length).toBeGreaterThan(0);
+        expect(result[0]).toHaveProperty("id");
+        expect(result[0]).toHaveProperty("similarity");
+        expect(result[0]).toHaveProperty("strokes");
+        expect(Object.keys(result[0]).sort()).toEqual([
+          "id",
+          "similarity",
+          "strokes",
+        ]);
+        expect(() => {
+          JSON.parse(result[0].strokes);
+        }).not.toThrow();
+        expect(() => {
+          JSON.parse(result[0].similarity);
+        }).not.toThrow();
+      });
+
+      it("오늘 제출한 기록만 반환한다", async () => {
+        const writeEm = orm.em.fork();
+        const user = await writeEm.findOneOrFail(User, {
+          userKey: givenUser.userKey,
+        });
+        const prompt = await writeEm.findOneOrFail(Prompt, {
+          id: givenPrompt.id,
+        });
+
+        const oldDrawing = writeEm.create(Drawing, {
+          user,
+          prompt,
+          strokes: JSON.stringify([{ points: [[9], [9]], color: [9, 9, 9] }]),
+          similarity: JSON.stringify({
+            score: 1,
+            strokeMatchSimilarity: 1,
+            shapeSimilarity: 1,
+            penalty: 1,
+          }),
+          score: 1,
+          createdAt: new Date("2000-01-01T00:00:00.000Z"),
+          updatedAt: new Date("2000-01-01T00:00:00.000Z"),
+        });
+        writeEm.persist(oldDrawing);
+        await writeEm.flush();
+
+        const result = await repository.findMyDrawings(givenUser.userKey);
+        const ids = result.map((drawing) => drawing.id);
+
+        expect(ids).not.toContain(oldDrawing.id);
       });
     });
 
-    describe("Context: 제출한 기록이 없으면", () => {
-      it("It: 빈 배열을 응답한다.", async () => {
+    describe("제출한 기록이 없으면", () => {
+      it("빈 배열을 반환한다", async () => {
         const result = await repository.findMyDrawings(0);
-
-        expect(result).not.toBeNull();
-        expect(result.length).toEqual(0);
+        expect(result).toEqual([]);
       });
     });
   });

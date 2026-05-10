@@ -1,4 +1,4 @@
-import { EntityRepository, QueryOrder, sql } from "@mikro-orm/mysql";
+import { EntityRepository, QueryOrder } from "@mikro-orm/mysql";
 import { Drawing } from "./drawing.entity";
 import { getSeoulDayRange } from "src/common/util/time.util";
 import { Prompt } from "../prompt/prompt.entity";
@@ -27,11 +27,7 @@ export class DrawingRepository extends EntityRepository<Drawing> {
   }
 
   async findDrawingById(drawingId: bigint): Promise<Drawing | null> {
-    return this.em.findOne(
-      Drawing,
-      { id: drawingId },
-      { populate: ["prompt", "user"] },
-    );
+    return this.em.findOne(Drawing, { id: drawingId }, { populate: ["user"] });
   }
 
   async findMyDrawings(
@@ -52,42 +48,5 @@ export class DrawingRepository extends EntityRepository<Drawing> {
         disableIdentityMap: true,
       },
     );
-  }
-
-  async findMyDrawingsWithRank(userKey: number) {
-    const { start, end } = getSeoulDayRange();
-
-    const myDrawingsWithRank = await this.em
-      .createQueryBuilder(Drawing, "d")
-      .select([
-        "d.id",
-        "d.score",
-        "d.strokes",
-        "d.similarity",
-        sql`u.nickname`,
-        sql`(
-          SELECT count(*) + 1 
-          FROM drawings AS d2 
-          WHERE d2.created_at >= ${start} AND d2.created_at < ${end}
-            AND (d2.score > d.score OR (d2.score = d.score AND d2.created_at < d.created_at))
-        )`.as("rank"),
-      ])
-      .innerJoin("d.user", "u")
-      .where({
-        "d.user": userKey,
-        "d.createdAt": { $gte: start, $lt: end },
-      })
-      .orderBy({ createdAt: QueryOrder.DESC })
-      .execute<
-        {
-          id: bigint;
-          rank: number;
-          strokes: string;
-          similarity: string;
-          nickname: string;
-        }[]
-      >();
-
-    return myDrawingsWithRank;
   }
 }
