@@ -32,7 +32,6 @@ export const PromptResponseSchema = z.object({
 export type PromptResponse = z.infer<typeof PromptResponseSchema>;
 
 export const SubmitDrawingRequestSchema = z.object({
-  userKey: z.string().regex(/^\d+$/),
   strokes: z.array(StrokeSchema),
 });
 export type SubmitDrawingRequest = z.infer<typeof SubmitDrawingRequestSchema>;
@@ -48,7 +47,6 @@ export const MyDrawingResponseSchema = z.object({
   drawingId: z.number().int().positive(),
   similarity: SimilarityResponseSchema,
   strokes: z.array(StrokeSchema),
-  drawRanking: z.number().int().positive(),
 });
 export type MyDrawingResponse = z.infer<typeof MyDrawingResponseSchema>;
 

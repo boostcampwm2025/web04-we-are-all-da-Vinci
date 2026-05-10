@@ -2,13 +2,18 @@ import type { PodiumEntry } from "@/entities/podium";
 import type { MyRankingResponse, RankingListItem } from "@/entities/ranking";
 import { appLogin } from "@apps-in-toss/web-framework";
 import type {
+  AdSdkPayload,
   MyDrawingResponse,
   MyDrawingsResponse,
+  ShareSdkPayload,
   Stroke,
   SubmitStrokesRequest,
 } from "@toss/shared";
 import {
+  ChargeResponseSchema,
+  ConsumeResponseSchema,
   LoginResponseSchema,
+  MyChanceResponseSchema,
   PromptResponseSchema,
   SimilarityResponseSchema,
   SubmitDrawingResponseSchema,
@@ -71,6 +76,16 @@ interface RequestOptions {
   headers?: HeadersInit;
 }
 
+export class RequestError extends Error {
+  constructor(
+    public readonly status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = "RequestError";
+  }
+}
+
 interface RankingListServerResponse {
   updatedAt: string;
   rankings: RankingListItem[];
@@ -113,7 +128,10 @@ async function request<T>(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error((error as { message?: string }).message ?? "요청 실패");
+    throw new RequestError(
+      response.status,
+      (error as { message?: string }).message ?? "요청 실패",
+    );
   }
 
   // 204 No Content 등 body 없는 응답 처리
@@ -184,4 +202,30 @@ export const serverTossApi = {
   },
 
   recordAdView: () => request<void>("POST", "/adviews"),
+
+  getMyChance: async (options?: RequestOptions) =>
+    MyChanceResponseSchema.parse(
+      await request<unknown>("GET", "/chances/me", undefined, options),
+    ),
+
+  chargeChanceByAd: async (sdkPayload: AdSdkPayload) =>
+    ChargeResponseSchema.parse(
+      await request<unknown>("POST", "/chances/charge", {
+        source: "ad",
+        sdkPayload,
+      }),
+    ),
+
+  chargeChanceByShare: async (sdkPayload: ShareSdkPayload) =>
+    ChargeResponseSchema.parse(
+      await request<unknown>("POST", "/chances/charge", {
+        source: "share",
+        sdkPayload,
+      }),
+    ),
+
+  consumeChance: async () =>
+    ConsumeResponseSchema.parse(
+      await request<unknown>("POST", "/chances/consume"),
+    ),
 };

@@ -1,102 +1,107 @@
+import { RequestError, serverTossApi } from "@/shared/api";
+import type { AdSdkPayload, ShareSdkPayload } from "@toss/shared";
 import { useCallback, useEffect, useState } from "react";
-import {
-  chargePlayChance,
-  consumePlayChance,
-  loadPlayChance,
-  type PlayChanceState,
-} from "../model/playChanceStorage";
 import { startPlaySession } from "../model/playSessionStorage";
 
+interface PlayChanceHookState {
+  count: number;
+  isLoading: boolean;
+  error: Error | null;
+}
+
+const toError = (unknownError: unknown, fallbackMessage: string): Error =>
+  unknownError instanceof Error ? unknownError : new Error(fallbackMessage);
+
 export const usePlayChance = () => {
-  const [state, setState] = useState<PlayChanceState | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [state, setState] = useState<PlayChanceHookState>({
+    count: 0,
+    isLoading: true,
+    error: null,
+  });
 
   const refresh = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
+    setState((prev) => ({ ...prev, isLoading: true, error: null }));
     try {
-      const nextState = await loadPlayChance();
-      setState(nextState);
-      return nextState;
+      const { count } = await serverTossApi.getMyChance();
+      setState({ count, isLoading: false, error: null });
+      return count;
     } catch (unknownError) {
-      const nextError =
-        unknownError instanceof Error
-          ? unknownError
-          : new Error("플레이 기회를 불러오지 못했어요.");
-      setError(nextError);
-      throw nextError;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const charge = useCallback(async () => {
-    const nextState = await chargePlayChance();
-    setState(nextState);
-    return nextState;
-  }, []);
-
-  const consume = useCallback(async () => {
-    const result = await consumePlayChance();
-    setState(result.state);
-    return result.consumed;
-  }, []);
-
-  const startPlay = useCallback(async () => {
-    const result = await consumePlayChance();
-    setState(result.state);
-
-    if (!result.consumed) return false;
-
-    try {
-      await startPlaySession();
-      return true;
-    } catch (error) {
-      // 세션 시작이 실패하면 소비된 플레이 기회를 복구해 사용자가 손해보지 않도록 한다.
-      const restored = await chargePlayChance();
-      setState(restored);
+      const error = toError(unknownError, "그리기 기회를 불러오지 못했어요.");
+      setState((prev) => ({ ...prev, isLoading: false, error }));
       throw error;
     }
   }, []);
 
+  const chargeByAd = useCallback(async (sdkPayload: AdSdkPayload) => {
+    const { count } = await serverTossApi.chargeChanceByAd(sdkPayload);
+    setState((prev) => ({ ...prev, count, error: null }));
+    return count;
+  }, []);
+
+  const chargeByShare = useCallback(async (sdkPayload: ShareSdkPayload) => {
+    const { count } = await serverTossApi.chargeChanceByShare(sdkPayload);
+    setState((prev) => ({ ...prev, count, error: null }));
+    return count;
+  }, []);
+
+  const consume = useCallback(async () => {
+    try {
+      const { count } = await serverTossApi.consumeChance();
+      setState((prev) => ({ ...prev, count, error: null }));
+      return true;
+    } catch (unknownError) {
+      // 409만 "기회 부족"으로 false 처리. 그 외는 장애로 보고 throw해 호출자가 구분 가능하게 함
+      if (unknownError instanceof RequestError && unknownError.status === 409) {
+        return false;
+      }
+      const error = toError(unknownError, "그리기 기회 차감에 실패했어요.");
+      setState((prev) => ({ ...prev, error }));
+      throw error;
+    }
+  }, []);
+
+  const startPlay = useCallback(async () => {
+    // localStorage 세션 기록을 먼저, 성공 시에만 서버 차감 — 실패 시 chance가 손실되지 않게 순서를 뒤집음
+    try {
+      await startPlaySession();
+    } catch (unknownError) {
+      const error = toError(unknownError, "플레이 세션을 저장하지 못했어요.");
+      setState((prev) => ({ ...prev, error }));
+      return false;
+    }
+    return await consume();
+  }, [consume]);
+
   useEffect(() => {
     let isMounted = true;
-
-    setIsLoading(true);
-    setError(null);
-
-    loadPlayChance()
-      .then((nextState) => {
-        if (isMounted) setState(nextState);
-      })
-      .catch((unknownError) => {
+    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+    serverTossApi
+      .getMyChance()
+      .then(({ count }) => {
         if (!isMounted) return;
-
-        setError(
-          unknownError instanceof Error
-            ? unknownError
-            : new Error("플레이 기회를 불러오지 못했어요."),
-        );
+        setState({ count, isLoading: false, error: null });
       })
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
+      .catch((unknownError: unknown) => {
+        if (!isMounted) return;
+        setState({
+          count: 0,
+          isLoading: false,
+          error: toError(unknownError, "그리기 기회를 불러오지 못했어요."),
+        });
       });
-
     return () => {
       isMounted = false;
     };
   }, []);
 
   return {
-    chanceCount: state?.count ?? 0,
-    hasChance: (state?.count ?? 0) > 0,
-    date: state?.date ?? null,
-    isLoading,
-    error,
+    chanceCount: state.count,
+    hasChance: state.count > 0,
+    isLoading: state.isLoading,
+    error: state.error,
     refresh,
-    charge,
+    chargeByAd,
+    chargeByShare,
     consume,
     startPlay,
   };

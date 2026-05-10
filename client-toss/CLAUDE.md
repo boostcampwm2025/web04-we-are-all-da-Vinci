@@ -19,7 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | TDS        | `@toss/tds-mobile` ^2.3.0, `@toss/tds-mobile-ait` ^2.3.0 |
 | React      | 19.2.3                                                   |
 | Routing    | react-router-dom ^7.13                                   |
-| State      | Zustand ^5.0.9                                           |
+| State      | useState/useEffect 기반                                   |
 | Validation | Zod ^4.3.6                                               |
 | Styling    | Tailwind CSS ^4.1.18 + Emotion                           |
 | Build      | Vite ^7.2.4, port 5173                                   |

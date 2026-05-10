@@ -122,6 +122,6 @@ export class DrawingController {
 
   @Get("drawing/:drawingId")
   getDrawing(@Param() { drawingId }: DrawingDetailDto) {
-    return this.drawingService.getDrawing(drawingId);
+    return this.drawingService.getDrawing(BigInt(drawingId));
   }
 }

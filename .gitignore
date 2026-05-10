@@ -17,6 +17,11 @@ coverage
 .env
 .env.local
 .env.*.local
+.env.production
+.env.staging
+.env.development
+!.env.example
+!.env.test
 
 # OS files
 .DS_Store
@@ -26,6 +31,8 @@ Thumbs.db
 *.log
 npm-debug.log*
 pnpm-debug.log*
+*.csv
+report*.json
 
 # Claude Code
 **/.claude/settings.local.json
@@ -51,3 +58,5 @@ we-are-all-da-vinci.ait
 
 **/.codex/
 AGENTS.md
+
+**/tokens.json

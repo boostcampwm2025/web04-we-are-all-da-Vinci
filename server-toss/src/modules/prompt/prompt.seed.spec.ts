@@ -1,9 +1,8 @@
+import { Drawing } from "../drawing/drawing.entity";
 import { DailyPrompt } from "./daily-prompt.entity";
 import { Prompt } from "./prompt.entity";
 import type { DatedPrompt } from "./prompt.seed";
 import { PromptSeedService } from "./prompt.seed";
-
-type Persisted = Prompt | DailyPrompt;
 
 const buildStroke = () => ({
   points: [
@@ -13,106 +12,172 @@ const buildStroke = () => ({
   color: [0, 0, 0] as [number, number, number],
 });
 
-interface ForkedEm {
-  persist: jest.Mock<ForkedEm, [Persisted]>;
-  flush: jest.Mock<Promise<void>, []>;
-  transactional: jest.Mock<
-    Promise<void>,
-    [(em: ForkedEm) => Promise<void> | void]
-  >;
-  getRepository: jest.Mock<
-    { count: jest.Mock<Promise<number>, []> },
-    [unknown]
-  >;
-}
+const buildDaily = (date: string, id: bigint): DailyPrompt => {
+  const prompt = Object.assign(new Prompt(), {
+    id,
+    strokes: JSON.stringify([buildStroke()]),
+  });
+  return Object.assign(new DailyPrompt(), {
+    id,
+    prompt,
+    promptDate: new Date(date + "T00:00:00.000Z"),
+  });
+};
 
-const createMocks = (promptCount: number, dailyCount: number) => {
-  const persisted: Persisted[] = [];
-  const promptRepo = { count: jest.fn(async () => promptCount) };
-  const dailyRepo = { count: jest.fn(async () => dailyCount) };
-  const forked: ForkedEm = {
-    persist: jest.fn((entity: Persisted) => {
-      persisted.push(entity);
-      return forked;
-    }),
-    flush: jest.fn(async () => undefined),
-    transactional: jest.fn(
-      async (cb: (em: ForkedEm) => Promise<void> | void) => {
-        await cb(forked);
-      },
-    ),
-    getRepository: jest.fn((entity: unknown) =>
-      entity === Prompt ? promptRepo : dailyRepo,
+const setup = (
+  existingDailies: DailyPrompt[],
+  drawingCounts: Map<bigint, number> = new Map(),
+) => {
+  const persisted: (Prompt | DailyPrompt)[] = [];
+  const removed: (Prompt | DailyPrompt)[] = [];
+
+  const dailyRepo = {
+    findAll: jest.fn(async () => existingDailies),
+  };
+  const drawingRepo = {
+    count: jest.fn(
+      async ({ prompt }: { prompt: Prompt }) =>
+        drawingCounts.get(prompt.id) ?? 0,
     ),
   };
-  const em = { fork: jest.fn(() => forked) };
 
-  return { em, forked, promptRepo, dailyRepo, persisted };
+  const txEm = {
+    persist: jest.fn((e: Prompt | DailyPrompt) => {
+      persisted.push(e);
+    }),
+    remove: jest.fn((e: Prompt | DailyPrompt) => {
+      removed.push(e);
+    }),
+    flush: jest.fn(async () => undefined),
+    getRepository: jest.fn((cls: unknown) => {
+      if (cls === DailyPrompt) return dailyRepo;
+      if (cls === Drawing) return drawingRepo;
+    }),
+  };
+
+  const em = {
+    fork: jest.fn(() => ({
+      transactional: jest.fn(async (cb: (em: typeof txEm) => Promise<void>) =>
+        cb(txEm),
+      ),
+    })),
+  };
+
+  const service = new PromptSeedService(em as never);
+  return { service, persisted, removed };
 };
 
 describe("PromptSeedService", () => {
-  const sampleData: DatedPrompt[] = [
-    { date: "2026-04-01", strokes: [buildStroke()] },
-    { date: "2026-04-02", strokes: [buildStroke(), buildStroke()] },
-    { date: "2026-04-05", strokes: [buildStroke()] },
-  ];
+  const stroke = buildStroke();
 
-  it("prompts와 daily_prompts가 비어있으면 JSON의 date대로 시드한다", async () => {
-    const { em, promptRepo, dailyRepo, persisted } = createMocks(0, 0);
-    const service = new PromptSeedService(
-      em as never,
-      promptRepo as never,
-      dailyRepo as never,
-    );
+  describe("syncPrompts", () => {
+    it("빈 DB에서 JSON 항목 전체를 삽입한다", async () => {
+      const { service, persisted, removed } = setup([]);
+      const data: DatedPrompt[] = [
+        { date: "2026-07-01", strokes: [stroke] },
+        { date: "2026-07-02", strokes: [stroke] },
+      ];
 
-    const result = await service.runIfEmpty(sampleData);
+      const result = await service.syncPrompts(data);
 
-    expect(result).toEqual({ seeded: 3, skipped: false });
-
-    const prompts = persisted.filter((e): e is Prompt => e instanceof Prompt);
-    const dailies = persisted.filter(
-      (e): e is DailyPrompt => e instanceof DailyPrompt,
-    );
-    expect(prompts).toHaveLength(3);
-    expect(dailies).toHaveLength(3);
-
-    prompts.forEach((p, i) => {
-      expect(JSON.parse(p.strokes)).toEqual(sampleData[i].strokes);
+      expect(removed).toHaveLength(0);
+      expect(persisted.filter((e) => e instanceof Prompt)).toHaveLength(2);
+      expect(persisted.filter((e) => e instanceof DailyPrompt)).toHaveLength(2);
+      expect(result).toEqual({
+        added: 2,
+        deleted: 0,
+        protected: 0,
+        displaced: 0,
+      });
     });
 
-    dailies.forEach((d, i) => {
-      expect(d.prompt).toBe(prompts[i]);
-      expect(d.promptDate.toISOString()).toBe(
-        sampleData[i].date + "T00:00:00.000Z",
+    it("drawing 없는 기존 프롬프트는 삭제하고 JSON을 삽입한다", async () => {
+      const existing = [buildDaily("2026-04-01", 1n)];
+      const { service, persisted, removed } = setup(existing);
+      const data: DatedPrompt[] = [{ date: "2026-05-01", strokes: [stroke] }];
+
+      const result = await service.syncPrompts(data);
+
+      // DailyPrompt + Prompt 각 1개씩 삭제
+      expect(removed).toHaveLength(2);
+      expect(persisted.filter((e) => e instanceof Prompt)).toHaveLength(1);
+      expect(result).toEqual({
+        added: 1,
+        deleted: 1,
+        protected: 0,
+        displaced: 0,
+      });
+    });
+
+    it("drawing 있는 기존 프롬프트는 삭제하지 않는다", async () => {
+      const existing = [buildDaily("2026-04-01", 1n)];
+      const { service, removed, persisted } = setup(
+        existing,
+        new Map([[1n, 1]]),
       );
+      const data: DatedPrompt[] = [{ date: "2026-05-01", strokes: [stroke] }];
+
+      const result = await service.syncPrompts(data);
+
+      expect(removed).toHaveLength(0);
+      // 새 JSON 항목은 정상 삽입됨
+      expect(persisted.filter((e) => e instanceof DailyPrompt)).toHaveLength(1);
+      expect(result).toEqual({
+        added: 1,
+        deleted: 0,
+        protected: 1,
+        displaced: 0,
+      });
     });
-  });
 
-  it("prompts가 이미 존재하면 시드하지 않는다", async () => {
-    const { em, forked, promptRepo, dailyRepo } = createMocks(5, 0);
-    const service = new PromptSeedService(
-      em as never,
-      promptRepo as never,
-      dailyRepo as never,
-    );
+    it("JSON 날짜가 protected 날짜와 충돌하면 마지막 날짜 다음으로 삽입한다", async () => {
+      // protected: 2026-07-03 / JSON 마지막 날짜: 2026-07-03 → 다음 빈 날짜: 2026-07-04
+      const existing = [buildDaily("2026-07-03", 1n)];
+      const { service, persisted } = setup(existing, new Map([[1n, 1]]));
+      const data: DatedPrompt[] = [{ date: "2026-07-03", strokes: [stroke] }];
 
-    const result = await service.runIfEmpty(sampleData);
+      const result = await service.syncPrompts(data);
 
-    expect(result).toEqual({ seeded: 0, skipped: true });
-    expect(forked.persist).not.toHaveBeenCalled();
-  });
+      const dailies = persisted.filter((e) => e instanceof DailyPrompt);
+      expect(dailies[0].promptDate.toISOString()).toBe(
+        "2026-07-04T00:00:00.000Z",
+      );
+      expect(result).toEqual({
+        added: 1,
+        deleted: 0,
+        protected: 1,
+        displaced: 1,
+      });
+    });
 
-  it("daily_prompts만 존재해도 시드하지 않는다", async () => {
-    const { em, forked, promptRepo, dailyRepo } = createMocks(0, 1);
-    const service = new PromptSeedService(
-      em as never,
-      promptRepo as never,
-      dailyRepo as never,
-    );
+    it("displaced 후보 날짜도 이미 사용 중이면 그 다음 날짜를 사용한다", async () => {
+      // protected: 2026-07-03, 2026-07-04 → 첫 번째 displaced: 2026-07-05, 두 번째: 2026-07-06
+      const existing = [
+        buildDaily("2026-07-03", 1n),
+        buildDaily("2026-07-04", 2n),
+      ];
+      const { service, persisted } = setup(
+        existing,
+        new Map([
+          [1n, 1],
+          [2n, 1],
+        ]),
+      );
+      const data: DatedPrompt[] = [
+        { date: "2026-07-03", strokes: [stroke] },
+        { date: "2026-07-04", strokes: [stroke] },
+      ];
 
-    const result = await service.runIfEmpty(sampleData);
+      const result = await service.syncPrompts(data);
 
-    expect(result.skipped).toBe(true);
-    expect(forked.persist).not.toHaveBeenCalled();
+      const dailies = persisted.filter((e) => e instanceof DailyPrompt);
+      expect(dailies[0].promptDate.toISOString()).toBe(
+        "2026-07-05T00:00:00.000Z",
+      );
+      expect(dailies[1].promptDate.toISOString()).toBe(
+        "2026-07-06T00:00:00.000Z",
+      );
+      expect(result.displaced).toBe(2);
+    });
   });
 });

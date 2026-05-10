@@ -2,7 +2,7 @@ import { ScoreDetailCard } from "@/entities/scoreDetailCard";
 import { ArcScoreBar } from "@/shared/ui/arcScoreBar";
 import type { MyDrawingResponse } from "@toss/shared";
 import { colors } from "@toss/tds-colors";
-import { Paragraph, Post } from "@toss/tds-mobile";
+import { Paragraph } from "@toss/tds-mobile";
 import { useEffect, useRef } from "react";
 import { drawStrokesOnCanvas } from "../lib/drawStrokesOnCanvas";
 
@@ -51,9 +51,6 @@ const MyScoreCard = ({ drawing }: MyScoreCardProps) => {
           </Paragraph.Text>
           <Paragraph.Text typography="t5">점</Paragraph.Text>
         </Paragraph>
-        <Post.Paragraph>
-          현재 {drawing.drawRanking.toLocaleString()}위
-        </Post.Paragraph>
       </div>
 
       <ScoreDetailCard

@@ -1,5 +1,6 @@
+import type { PlayChanceLayoutContext } from "@/app/layouts/PlayChanceLayout";
 import { drawStrokesOnCanvas, useCanvasSetup } from "@/feature/drawing";
-import { usePlayChance, useRewardAd } from "@/feature/playChance";
+import { useRewardAd } from "@/feature/playChance";
 import { serverTossApi } from "@/shared/api";
 import { AD_GROUP_IDS } from "@/shared/config";
 import { trackClick, useExitGuard, useRequiredState } from "@/shared/lib";
@@ -8,7 +9,7 @@ import { Score } from "@/shared/ui/score";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
 import { Button, ConfirmDialog, Toast } from "@toss/tds-mobile";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 
 interface SubmittedRouteState {
   promptId: number;
@@ -22,7 +23,8 @@ const SubmittedView = () => {
   const routeState = useRequiredState<SubmittedRouteState>();
   const { showDialog, setShowDialog } = useExitGuard();
   const { containerRef, canvasRef, ctxRef, canvasSize } = useCanvasSetup();
-  const { charge, startPlay } = usePlayChance();
+  const { hasChance, chargeByAd, startPlay } =
+    useOutletContext<PlayChanceLayoutContext>();
   const { isAdLoaded, showAd } = useRewardAd();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,7 +56,7 @@ const SubmittedView = () => {
       });
     } catch (err) {
       console.error("제출 실패:", err);
-      setToastText("제출에 실패했어요. 다시 시도해주세요.");
+      setToastText("등록에 실패했어요. 다시 시도해주세요.");
       setToastOpen(true);
       setIsSubmitting(false);
     }
@@ -66,15 +68,12 @@ const SubmittedView = () => {
     try {
       if (isAdLoaded) {
         await showAd();
-        try {
-          await serverTossApi.recordAdView();
-        } catch (err) {
-          console.error("[recordAdView 실패, 무시]", err);
-        }
+        await chargeByAd({ adGroupId: AD_GROUP_IDS.REWARDED });
       }
-      await charge();
       const started = await startPlay();
       if (!started) {
+        setToastText("그리기 기회가 부족해요.");
+        setToastOpen(true);
         setIsReplaying(false);
         return;
       }
@@ -112,7 +111,7 @@ const SubmittedView = () => {
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col items-center px-(--page-px) pt-4">
-          <h1 className="mb-3 text-[22px] font-bold">그림을 완성했어요</h1>
+          <h1 className="mb-3 text-[22px] font-bold">완성한 그림이에요</h1>
         </div>
 
         <div className="mx-(--card-mx) rounded-2xl bg-gray-100 p-3">
@@ -127,7 +126,7 @@ const SubmittedView = () => {
         <div className="flex flex-col items-center py-4">
           <Score value={Math.round(score)} size="l" />
           <p className="mt-2 text-sm text-(--color-grey)">
-            저장하면 랭킹에 등록돼요
+            등록하면 다른 사람과 점수를 겨뤄요
           </p>
         </div>
 
@@ -146,7 +145,7 @@ const SubmittedView = () => {
             disabled={isReplaying || isSubmitting}
             onClick={handleReplay}
           >
-            다시하기
+            {hasChance ? "등록 없이 재도전해요" : "한 번 더 그려요"}
           </Button>
         </div>
         <div className="flex-1">
@@ -157,7 +156,7 @@ const SubmittedView = () => {
             disabled={isSubmitting || isReplaying}
             onClick={handleSubmitAndView}
           >
-            저장하기
+            이 그림으로 등록해요
           </Button>
         </div>
       </div>
@@ -166,7 +165,7 @@ const SubmittedView = () => {
         open={showDialog}
         onClose={() => setShowDialog(false)}
         title="게임에서 나가시겠어요?"
-        description="저장하지 않은 그림은 사라져요"
+        description="등록하지 않은 그림은 사라져요"
         confirmButton={
           <ConfirmDialog.ConfirmButton
             onClick={() => navigate("/", { replace: true })}

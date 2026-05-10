@@ -71,14 +71,14 @@ const MemorizeView = () => {
   return (
     <div data-no-safe-area-bottom className="flex h-full flex-col bg-white">
       <PhaseHeader
-        title="기억하세요!"
-        description={`${timeLeft}초 동안 그림을 기억하세요`}
+        title="이 그림을 외워주세요"
+        description={`${timeLeft}초 뒤에 똑같이 그려야 해요`}
         progress={progress}
       />
 
       <div className="px-(--page-px) text-center">
         <p className="text-sm text-(--color-grey)">
-          중도 종료 시 기회를 잃어요
+          중간에 나가면 도전 기회가 사라져요
         </p>
       </div>
 
@@ -98,8 +98,8 @@ const MemorizeView = () => {
       <ConfirmDialog
         open={showDialog}
         onClose={() => setShowDialog(false)}
-        title="나가시겠어요?"
-        description="나가면 처음부터 다시 시작해야 해요"
+        title="지금 나가면 기회가 사라져요"
+        description="오늘 도전이 그대로 끝나요"
         confirmButton={
           <ConfirmDialog.ConfirmButton
             onClick={() => {

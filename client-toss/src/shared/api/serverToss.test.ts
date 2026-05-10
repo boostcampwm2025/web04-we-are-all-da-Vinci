@@ -97,7 +97,6 @@ describe("serverTossApi", () => {
     const body = {
       drawingId: 42,
       nickname: "시드유저A",
-      drawRanking: 1,
       strokes: [],
       similarity: {
         score: 90,

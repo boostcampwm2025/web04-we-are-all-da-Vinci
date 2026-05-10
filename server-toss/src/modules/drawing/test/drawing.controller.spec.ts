@@ -113,7 +113,6 @@ describe("DrawingController (e2e)", () => {
       drawingService.getDrawing.mockResolvedValue({
         drawingId: 42,
         nickname: "시드유저A",
-        drawRanking: 3,
         strokes: validPayload.strokes,
         similarity,
       });
@@ -125,11 +124,10 @@ describe("DrawingController (e2e)", () => {
       expect(res.body).toEqual({
         drawingId: 42,
         nickname: "시드유저A",
-        drawRanking: 3,
         strokes: validPayload.strokes,
         similarity,
       });
-      expect(drawingService.getDrawing).toHaveBeenCalledWith("42");
+      expect(drawingService.getDrawing).toHaveBeenCalledWith(BigInt(42));
     });
   });
 });
