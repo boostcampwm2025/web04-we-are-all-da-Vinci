@@ -17,17 +17,10 @@
 
 - `LargeUserDrawingSeeder`는 배치 단위로 flush/clear 하도록 구성되어 메모리 사용량을 줄입니다.
 - 기본값:
-  - `SEED_DRAWING_USER_COUNT=5000`
-  - `SEED_DRAWING_BATCH_SIZE=300`
+  - `SEED_DRAWING_USER_COUNT=1000`
+  - `SEED_DRAWING_BATCH_SIZE=200`
 
 ```sh
-# 기본 5,000명
+# 기본 1,000명
 pnpm -F server-toss seed:drawing:large
-
-# 10,000명 / 20,000명
-pnpm -F server-toss seed:drawing:large:10k
-pnpm -F server-toss seed:drawing:large:20k
-
-# 배치 크기 직접 지정
-SEED_DRAWING_USER_COUNT=10000 SEED_DRAWING_BATCH_SIZE=200 pnpm -F server-toss seed:drawing:large
 ```
