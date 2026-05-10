@@ -17,7 +17,7 @@ const RankingDetailView = () => {
       <Top
         title={
           <Top.TitleParagraph>
-            {drawing?.drawRanking}위 {drawing?.nickname}의 솜씨
+            {drawing?.nickname}의 솜씨
           </Top.TitleParagraph>
         }
       />
