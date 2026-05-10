@@ -38,13 +38,14 @@ export class Migration20260509000000 extends Migration {
       "create table if not exists `share_logs` (" +
         "`id` bigint unsigned not null auto_increment, " +
         "`user_key` int unsigned not null, " +
-        "`channel` varchar(20) not null, " +
+        "`channel` enum('contactsViral') not null, " +
         "`module_id` varchar(64) null, " +
         "`created_at` timestamp not null, " +
         "`updated_at` timestamp not null, " +
         "primary key (`id`), " +
-        "index `idx_share_logs_user_created` (`user_key`, `created_at`), " +
-        "constraint `fk_share_logs_user` foreign key (`user_key`) references `users` (`user_key`)" +
+        "index `share_logs_user_key_index` (`user_key`), " +
+        "index `share_logs_user_key_created_at_index` (`user_key`, `created_at`), " +
+        "constraint `share_logs_user_key_foreign` foreign key (`user_key`) references `users` (`user_key`)" +
         ") default character set utf8mb4 engine = InnoDB;",
     );
   }
