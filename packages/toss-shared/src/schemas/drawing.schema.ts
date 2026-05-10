@@ -47,7 +47,6 @@ export const MyDrawingResponseSchema = z.object({
   drawingId: z.number().int().positive(),
   similarity: SimilarityResponseSchema,
   strokes: z.array(StrokeSchema),
-  drawRanking: z.number().int().positive(),
 });
 export type MyDrawingResponse = z.infer<typeof MyDrawingResponseSchema>;
 

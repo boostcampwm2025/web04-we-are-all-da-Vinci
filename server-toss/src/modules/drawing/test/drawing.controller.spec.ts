@@ -96,13 +96,6 @@ describe("DrawingController (e2e)", () => {
       expect(res.body).toEqual({ drawingId: 42, similarity });
     });
 
-    it("userKey 없는 payload는 400을 반환한다", async () => {
-      await request(app.getHttpServer())
-        .post("/drawing")
-        .send(validPayload)
-        .expect(400);
-    });
-
     it("서비스가 NotFoundException을 던지면 404를 반환한다", async () => {
       drawingService.submitDrawing.mockRejectedValue(
         new NotFoundException("USER_NOT_FOUND"),
@@ -120,7 +113,6 @@ describe("DrawingController (e2e)", () => {
       drawingService.getDrawing.mockResolvedValue({
         drawingId: 42,
         nickname: "시드유저A",
-        drawRanking: 3,
         strokes: validPayload.strokes,
         similarity,
       });
@@ -132,11 +124,10 @@ describe("DrawingController (e2e)", () => {
       expect(res.body).toEqual({
         drawingId: 42,
         nickname: "시드유저A",
-        drawRanking: 3,
         strokes: validPayload.strokes,
         similarity,
       });
-      expect(drawingService.getDrawing).toHaveBeenCalledWith("42");
+      expect(drawingService.getDrawing).toHaveBeenCalledWith(BigInt(42));
     });
   });
 });

@@ -40,7 +40,7 @@ describe("DrawingRespository", () => {
     }
   });
 
-  describe("Describe: findMyDrawingsWithRank 메소드는", () => {
+  describe("Describe: findMyDrawings 메소드는", () => {
     describe("Context: 제출한 기록이 있으면", () => {
       let givenUser: User;
 
@@ -49,9 +49,7 @@ describe("DrawingRespository", () => {
       });
 
       it("It: 그림과 랭크를 응답한다.", async () => {
-        const result = await repository.findMyDrawingsWithRank(
-          givenUser.userKey,
-        );
+        const result = await repository.findMyDrawings(givenUser.userKey);
 
         expect(result).not.toBeNull();
         expect(result.length).toBeGreaterThan(0);
@@ -60,7 +58,7 @@ describe("DrawingRespository", () => {
 
     describe("Context: 제출한 기록이 없으면", () => {
       it("It: 빈 배열을 응답한다.", async () => {
-        const result = await repository.findMyDrawingsWithRank(0);
+        const result = await repository.findMyDrawings(0);
 
         expect(result).not.toBeNull();
         expect(result.length).toEqual(0);
