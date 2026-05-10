@@ -63,7 +63,7 @@ const MyDrawingsPanel = () => {
       >
         {isMyDrawingsLoading ? (
           <div className="w-full shrink-0 snap-start snap-always px-(--page-px)">
-            <Skeleton pattern="listOnly" style={{ width: "100%" }} />
+            <Skeleton pattern="cardOnly" style={{ width: "100%" }} />
           </div>
         ) : myDrawings.length > 0 ? (
           myDrawings.map((drawing) => (

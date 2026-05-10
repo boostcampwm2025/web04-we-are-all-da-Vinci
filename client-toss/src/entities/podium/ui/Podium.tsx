@@ -26,7 +26,7 @@ const Podium = () => {
   const { podium, isLoading } = usePodium();
 
   if (isLoading) {
-    return <Skeleton pattern="listOnly" style={{ width: "100%" }} />;
+    return <Skeleton pattern="cardOnly" style={{ width: "100%" }} />;
   }
 
   if (!podium || podium.length === 0) {

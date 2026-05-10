@@ -17,7 +17,7 @@ const RankingDetailView = () => {
     if (isLoading) {
       return (
         <div className="px-(--page-px)">
-          <Skeleton pattern="listOnly" style={{ width: "100%" }} />
+          <Skeleton pattern="cardOnly" style={{ width: "100%" }} />
         </div>
       );
     }
