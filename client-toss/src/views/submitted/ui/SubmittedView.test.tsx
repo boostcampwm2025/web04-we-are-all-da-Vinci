@@ -44,7 +44,7 @@ vi.mock("@/entities/drawingCanvas", () => ({
   DrawingCanvasFrame: ({ children }: { children: ReactNode }) => (
     <div data-testid="canvas-frame">{children}</div>
   ),
-  StaticDrawingCanvas: () => <div data-testid="static-drawing-canvas" />,
+  ReplayDrawingCanvas: () => <div data-testid="replay-drawing-canvas" />,
 }));
 
 vi.mock("@/shared/ui/score", () => ({

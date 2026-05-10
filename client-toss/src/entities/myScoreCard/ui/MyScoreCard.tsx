@@ -1,5 +1,6 @@
 import {
   DrawingCanvasFrame,
+  ReplayDrawingCanvas,
   StaticDrawingCanvas,
 } from "@/entities/drawingCanvas";
 import { ScoreDetailCard } from "@/entities/scoreDetailCard";
@@ -35,8 +36,10 @@ const MyScoreCard = ({
           onClick={() => setIsDetailOpen(true)}
           ariaLabel="자세한 분석 보기"
         >
-          <StaticDrawingCanvas
+          <ReplayDrawingCanvas
             strokes={drawing.strokes}
+            loop
+            speed={0}
             ariaLabel="나의 그림"
           />
         </DrawingCanvasFrame>

@@ -1,7 +1,7 @@
 import type { PlayChanceLayoutContext } from "@/app/layouts/PlayChanceLayout";
 import {
   DrawingCanvasFrame,
-  StaticDrawingCanvas,
+  ReplayDrawingCanvas,
 } from "@/entities/drawingCanvas";
 import { PhaseHeader } from "@/entities/phaseHeader";
 import { useRewardAd } from "@/feature/playChance";
@@ -114,9 +114,11 @@ const SubmittedView = () => {
 
       <div className="mt-2 mb-(--card-mx) px-(--card-mx)">
         <DrawingCanvasFrame>
-          <StaticDrawingCanvas
+          <ReplayDrawingCanvas
             strokes={routeState.strokes}
-            ariaLabel="완성한 그림"
+            loop
+            speed={0}
+            ariaLabel="완성한 그림 리플레이"
           />
         </DrawingCanvasFrame>
       </div>
