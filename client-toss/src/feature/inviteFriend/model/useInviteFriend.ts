@@ -62,6 +62,10 @@ export const useInviteFriend = ({
               onCharged?.(count);
             } catch (err) {
               handleError(err, "그리기 기회 적립에 실패했어요.");
+              // sendViral 실패 시 SDK가 close를 보장하지 않아 isInviting이 영구 true로 남는 것을 방지
+              cleanupRef.current?.();
+              cleanupRef.current = null;
+              setIsInviting(false);
             }
           }
           if (event.type === "close") {

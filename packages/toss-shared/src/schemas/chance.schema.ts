@@ -13,7 +13,7 @@ export type MyChanceResponse = z.infer<typeof MyChanceResponseSchema>;
 export const AdSdkPayloadSchema = z.object({
   adGroupId: z.string().min(1), // 앱인토스 콘솔의 광고 그룹 ID (전면/리워드 자동 결정)
   unitType: z.string().optional(), // 리워드 단위 (예: coin, point)
-  unitAmount: z.number().optional(), // 리워드 수량
+  unitAmount: z.number().int().min(0).optional(), // 리워드 수량
 });
 export type AdSdkPayload = z.infer<typeof AdSdkPayloadSchema>;
 
@@ -21,7 +21,7 @@ export type AdSdkPayload = z.infer<typeof AdSdkPayloadSchema>;
 export const ShareSdkPayloadSchema = z.object({
   channel: z.literal("contactsViral"),
   moduleId: z.string().min(1), // 앱인토스 콘솔의 공유 리워드 모듈 ID
-  rewardAmount: z.number().optional(),
+  rewardAmount: z.number().int().min(0).optional(),
   rewardUnit: z.string().optional(),
 });
 export type ShareSdkPayload = z.infer<typeof ShareSdkPayloadSchema>;

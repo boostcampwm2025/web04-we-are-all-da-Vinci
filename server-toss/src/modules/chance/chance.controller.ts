@@ -6,7 +6,18 @@ import {
   Post,
   UseGuards,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConflictResponse,
+  ApiForbiddenResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiServiceUnavailableResponse,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from "@nestjs/swagger";
+import type { SchemaObject } from "@nestjs/swagger/dist/interfaces/open-api-spec.interface";
 import type {
   ChargeRequest,
   ChargeResponse,
@@ -22,6 +33,50 @@ import {
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { ChanceService } from "./chance.service";
 
+const ChanceCountResponseSchema: SchemaObject = {
+  type: "object",
+  properties: { count: { type: "integer", minimum: 0 } },
+  required: ["count"],
+};
+
+const ChargeRequestBodySchema: SchemaObject = {
+  oneOf: [
+    {
+      type: "object",
+      properties: {
+        source: { type: "string", enum: ["ad"] },
+        sdkPayload: {
+          type: "object",
+          properties: {
+            adGroupId: { type: "string", minLength: 1 },
+            unitType: { type: "string" },
+            unitAmount: { type: "integer", minimum: 0 },
+          },
+          required: ["adGroupId"],
+        },
+      },
+      required: ["source", "sdkPayload"],
+    },
+    {
+      type: "object",
+      properties: {
+        source: { type: "string", enum: ["share"] },
+        sdkPayload: {
+          type: "object",
+          properties: {
+            channel: { type: "string", enum: ["contactsViral"] },
+            moduleId: { type: "string", minLength: 1 },
+            rewardAmount: { type: "integer", minimum: 0 },
+            rewardUnit: { type: "string" },
+          },
+          required: ["channel", "moduleId"],
+        },
+      },
+      required: ["source", "sdkPayload"],
+    },
+  ],
+};
+
 @ApiTags("Chance")
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -31,6 +86,11 @@ export class ChanceController {
 
   @Get("me")
   @ApiOperation({ summary: "현재 그리기 기회 조회" })
+  @ApiOkResponse({
+    description: "현재 사용자의 그리기 기회 수",
+    schema: ChanceCountResponseSchema,
+  })
+  @ApiUnauthorizedResponse({ description: "인증이 필요해요." })
   getMyChance(
     @CurrentUser() user: CurrentUserPayload,
   ): Promise<MyChanceResponse> {
@@ -40,6 +100,21 @@ export class ChanceController {
   @Post("charge")
   @HttpCode(200)
   @ApiOperation({ summary: "그리기 기회 적립 (광고/공유)" })
+  @ApiBody({
+    description: "광고(ad) 또는 친구 공유(share) 적립 요청",
+    schema: ChargeRequestBodySchema,
+  })
+  @ApiOkResponse({
+    description: "적립 후 잔여 그리기 기회",
+    schema: ChanceCountResponseSchema,
+  })
+  @ApiUnauthorizedResponse({ description: "인증이 필요해요." })
+  @ApiForbiddenResponse({
+    description: "화이트리스트에 없거나 일일 적립 한도를 넘었어요.",
+  })
+  @ApiServiceUnavailableResponse({
+    description: "운영자 화이트리스트 환경변수가 누락됐어요.",
+  })
   charge(
     @CurrentUser() user: CurrentUserPayload,
     @Body(new ZodValidationPipe(ChargeRequestSchema)) body: ChargeRequest,
@@ -53,6 +128,12 @@ export class ChanceController {
   @Post("consume")
   @HttpCode(200)
   @ApiOperation({ summary: "그리기 시작 시 기회 1회 차감" })
+  @ApiOkResponse({
+    description: "차감 후 잔여 그리기 기회",
+    schema: ChanceCountResponseSchema,
+  })
+  @ApiUnauthorizedResponse({ description: "인증이 필요해요." })
+  @ApiConflictResponse({ description: "그리기 기회가 부족해요." })
   consume(@CurrentUser() user: CurrentUserPayload): Promise<ConsumeResponse> {
     return this.chanceService.consume(user.userKey);
   }

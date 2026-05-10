@@ -76,6 +76,16 @@ interface RequestOptions {
   headers?: HeadersInit;
 }
 
+export class RequestError extends Error {
+  constructor(
+    public readonly status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = "RequestError";
+  }
+}
+
 interface RankingListServerResponse {
   updatedAt: string;
   rankings: RankingListItem[];
@@ -118,7 +128,10 @@ async function request<T>(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error((error as { message?: string }).message ?? "요청 실패");
+    throw new RequestError(
+      response.status,
+      (error as { message?: string }).message ?? "요청 실패",
+    );
   }
 
   // 204 No Content 등 body 없는 응답 처리
