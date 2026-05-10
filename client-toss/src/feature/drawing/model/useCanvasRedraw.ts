@@ -1,6 +1,6 @@
+import { drawStrokesOnCanvas } from "@/entities/drawingCanvas";
 import type { Stroke } from "@toss/shared";
 import { useEffect } from "react";
-import { drawStrokesOnCanvas } from "../lib/drawStrokesOnCanvas";
 
 export const useCanvasRedraw = (
   canvasRef: React.RefObject<HTMLCanvasElement | null>,
