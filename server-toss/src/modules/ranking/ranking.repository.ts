@@ -20,7 +20,6 @@ export class RankingRepository extends EntityRepository<Ranking> {
           {
             score: QueryOrder.DESC,
             submittedAt: QueryOrder.ASC,
-            nickname: QueryOrder.ASC,
           },
         ],
       },
@@ -42,23 +41,26 @@ export class RankingRepository extends EntityRepository<Ranking> {
   }
 
   async findMyRanking(userKey: number) {
-    const rankQuery = this.createQueryBuilder("r")
+    const { start, end } = getSeoulDayRange();
+    const ranking = await this.createQueryBuilder("r")
       .select([
         "r.score",
-        "r.userKey",
-        sql`row_number() over(order by score DESC, submitted_at ASC, nickname ASC)`.as(
+        sql`(
+          SELECT count(*) + 1
+          FROM rankings AS r2
+          WHERE r2.submitted_at >= ${start} AND r2.submitted_at < ${end}
+            AND (r2.score > r.score 
+              OR (r2.score = r.score AND r2.submitted_at < r.submitted_at)))`.as(
           "rank",
         ),
       ])
-      .from(Ranking);
-
-    const qb = this.createQueryBuilder("r");
-
-    const ranking = await qb
-      .select([sql`rq.score`, sql`rq.rank`.as("rank")])
-      .with("rank_query", rankQuery)
-      .where({ [sql`rq.user_key`]: userKey })
-      .from("rank_query", "rq")
+      .where({
+        userKey: userKey,
+        submittedAt: {
+          $gte: start,
+          $lt: end,
+        },
+      })
       .execute<{ rank: number; score: number }[]>();
 
     if (ranking.length < 1) return null;
