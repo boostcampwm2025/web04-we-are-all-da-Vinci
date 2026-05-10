@@ -17,6 +17,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
+import type { SchemaObject } from "@nestjs/swagger/dist/interfaces/open-api-spec.interface";
 import type {
   ChargeRequest,
   ChargeResponse,
@@ -32,18 +33,18 @@ import {
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { ChanceService } from "./chance.service";
 
-const ChanceCountResponseSchema = {
+const ChanceCountResponseSchema: SchemaObject = {
   type: "object",
   properties: { count: { type: "integer", minimum: 0 } },
   required: ["count"],
-} as const;
+};
 
-const ChargeRequestBodySchema = {
+const ChargeRequestBodySchema: SchemaObject = {
   oneOf: [
     {
       type: "object",
       properties: {
-        source: { const: "ad" },
+        source: { type: "string", enum: ["ad"] },
         sdkPayload: {
           type: "object",
           properties: {
@@ -59,11 +60,11 @@ const ChargeRequestBodySchema = {
     {
       type: "object",
       properties: {
-        source: { const: "share" },
+        source: { type: "string", enum: ["share"] },
         sdkPayload: {
           type: "object",
           properties: {
-            channel: { const: "contactsViral" },
+            channel: { type: "string", enum: ["contactsViral"] },
             moduleId: { type: "string", minLength: 1 },
             rewardAmount: { type: "integer", minimum: 0 },
             rewardUnit: { type: "string" },
@@ -74,7 +75,7 @@ const ChargeRequestBodySchema = {
       required: ["source", "sdkPayload"],
     },
   ],
-} as const;
+};
 
 @ApiTags("Chance")
 @ApiBearerAuth()
