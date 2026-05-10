@@ -32,11 +32,9 @@ const RankingList = () => {
         if ((idx + 1) % 10 !== 0) return [entry];
         return [
           entry,
-          <BannerAd
-            key={`ad-${idx}`}
-            adGroupId={AD_GROUP_IDS.BANNER_LIST}
-            className="my-2"
-          />,
+          <div key={`ad-${idx}`} className="px-(--card-mx)">
+            <BannerAd adGroupId={AD_GROUP_IDS.BANNER_LIST} className="my-1" />
+          </div>,
         ];
       })}
     </List>
