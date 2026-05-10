@@ -137,6 +137,10 @@ src/
   - CSS 변수: `text-(--color-grey)` ✓, `text-[var(--color-grey)]` ✗
   - important: `rounded-full!` ✓, `!rounded-full` ✗
 - 모든 사용자 노출 문구는 **해요체** (앱인토스 심사 요건)
+- **상수·도메인 타입은 사용처 파일에 인라인하지 말고 슬라이스의 `config/`로 분리** (가독성)
+  - 시간/임계값 등 동작 튜닝 매직 넘버, 슬라이스 외부와 공유하는 도메인 타입이 대상
+  - 예: `feature/drawing/config/scoring.ts` (`SCORE_DEBOUNCE_MS`, `TREND_THRESHOLD`, `ScoreTrend`)
+  - 단일 함수 내부에서만 쓰이는 임시 상수는 그대로 둬도 됨
 
 ## TDS (Toss Design System) 사용 패턴
 
