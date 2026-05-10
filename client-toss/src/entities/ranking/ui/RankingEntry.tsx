@@ -46,7 +46,7 @@ export const RankingEntry = ({
   const navigate = useNavigate();
 
   const navigateToDrawing = () => {
-    navigate(`/drawing/${drawingId}`);
+    navigate(`/drawing/${drawingId}`, { state: { rank } });
   };
 
   return (

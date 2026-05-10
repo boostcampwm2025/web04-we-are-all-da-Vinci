@@ -5,11 +5,13 @@ import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";
 import { colors } from "@toss/tds-colors";
 import { Button, Skeleton } from "@toss/tds-mobile";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 
 const RankingDetailView = () => {
   const { drawingId } = useParams<{ drawingId: string }>();
   const { drawing, isLoading } = useDrawing(drawingId);
+  const location = useLocation();
+  const rank = (location.state as { rank?: number } | null)?.rank;
 
   const renderBody = () => {
     if (isLoading) {
@@ -58,7 +60,9 @@ const RankingDetailView = () => {
       <PhaseHeader
         title={
           drawing
-            ? `${drawing.drawRanking}위 ${drawing.nickname}의 솜씨`
+            ? rank
+              ? `${rank}위 ${drawing.nickname}의 솜씨`
+              : `${drawing.nickname}의 솜씨`
             : "그림 상세"
         }
         description={
