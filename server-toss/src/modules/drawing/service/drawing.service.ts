@@ -13,7 +13,8 @@ import { Drawing } from "../drawing.entity";
 import { DrawingAccessService } from "./drawing-access.service";
 import { DrawingRepository } from "../drawing.repository";
 import { InjectRepository } from "@mikro-orm/nestjs";
-import { RankingService } from "src/modules/ranking/ranking.service";
+import { SaveDrawingService } from "./save-drawing.service";
+import { SaveDrawingDto } from "../dto/save-drawing.dto";
 
 type Similarity = ReturnType<typeof scoreFinalSimilarity>;
 const SLOW_STROKES_DURATION_MS = 500;
@@ -34,7 +35,7 @@ export class DrawingService {
     private readonly drawingAccessService: DrawingAccessService,
     @InjectRepository(Drawing)
     private readonly drawingRepository: DrawingRepository,
-    private readonly rankingService: RankingService,
+    private readonly saveDrawingService: SaveDrawingService,
   ) {}
 
   // 획 단위 실시간 호출 엔드포인트. 클라 값 신뢰 X → 서버가 매번 유사도 재계산
@@ -100,14 +101,13 @@ export class DrawingService {
 
     const { promptId, preprocessed } =
       await this.promptService.getPreprocessedByDate(date);
+
     const playerPreprocessed = preprocessStrokes(playerStrokes);
     const similarity = scoreFinalSimilarity(preprocessed, playerPreprocessed);
-    const drawing = await this.drawingRepository.saveDrawing(
+
+    const drawing = await this.saveDrawingService.saveDrawingWithRanking(
       user,
-      promptId,
-      JSON.stringify(playerStrokes),
-      JSON.stringify(similarity),
-      similarity.score,
+      new SaveDrawingDto(promptId, playerStrokes, similarity),
     );
 
     this.logger.log(
@@ -121,7 +121,7 @@ export class DrawingService {
       },
       "최종 드로잉 제출 성공",
     );
-    await this.rankingService.updateRanking(user, drawing);
+
     const promotionGranted =
       await this.pointService.grantDrawingPromotionIfEligible(user.userKey);
 
