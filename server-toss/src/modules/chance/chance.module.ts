@@ -11,5 +11,6 @@ import { ShareLog } from "./share-log.entity";
   imports: [MikroOrmModule.forFeature([PlayChance, ShareLog, AdView, User])],
   controllers: [ChanceController],
   providers: [ChanceService],
+  exports: [ChanceService],
 })
 export class ChanceModule {}
