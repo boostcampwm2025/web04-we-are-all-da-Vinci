@@ -89,7 +89,7 @@ export const usePlayChance = () => {
       if (unknownError instanceof RequestError && unknownError.status === 409) {
         return null;
       }
-      const error = toError(unknownError, "寃뚯엫 ?쒖옉???ㅽ뙣?덉뼱??");
+      const error = toError(unknownError, "게임 시작에 실패했어요");
       setState((prev) => ({ ...prev, error }));
       throw error;
     }
