@@ -70,17 +70,16 @@ const DashboardView = () => {
     setIsStartingGame(true);
     setError(null);
     try {
-      const started = await startPlay();
-      if (!started) {
+      const prompt = await startPlay();
+      if (!prompt) {
         setIsStartingGame(false);
         return;
       }
 
-      const { promptId, strokes } = await serverTossApi.getPrompt();
       navigate("/memorize", {
         state: {
-          promptId,
-          promptStrokes: strokes,
+          promptId: prompt.promptId,
+          promptStrokes: prompt.strokes,
           anonymousHash: anonymousHashRef.current,
         },
         replace: true,
@@ -149,8 +148,8 @@ const DashboardView = () => {
         await showAd();
         await chargeByAd({ adGroupId: AD_GROUP_IDS.REWARDED });
       }
-      const started = await startPlay();
-      if (!started) {
+      const prompt = await startPlay();
+      if (!prompt) {
         await refreshChance();
         setToastText(
           "그리기 기회를 다시 확인했어요. 잠시 후 다시 시도해주세요.",
@@ -159,11 +158,10 @@ const DashboardView = () => {
         return;
       }
 
-      const { promptId, strokes } = await serverTossApi.getPrompt();
       navigate("/memorize", {
         state: {
-          promptId,
-          promptStrokes: strokes,
+          promptId: prompt.promptId,
+          promptStrokes: prompt.strokes,
           anonymousHash: anonymousHashRef.current,
         },
         replace: true,

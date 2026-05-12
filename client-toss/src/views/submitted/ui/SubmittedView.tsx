@@ -66,19 +66,18 @@ const SubmittedView = () => {
         await showAd();
         await chargeByAd({ adGroupId: AD_GROUP_IDS.REWARDED });
       }
-      const started = await startPlay();
-      if (!started) {
+      const prompt = await startPlay();
+      if (!prompt) {
         setToastText("그리기 기회가 부족해요.");
         setToastOpen(true);
         setIsReplaying(false);
         return;
       }
 
-      const { promptId, strokes } = await serverTossApi.getPrompt();
       navigate("/memorize", {
         state: {
-          promptId,
-          promptStrokes: strokes,
+          promptId: prompt.promptId,
+          promptStrokes: prompt.strokes,
           anonymousHash: routeState?.anonymousHash ?? "local",
         },
         replace: true,

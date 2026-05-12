@@ -1,6 +1,5 @@
 import type { PlayChanceLayoutContext } from "@/app/layouts/PlayChanceLayout";
 import { useRewardAd } from "@/feature/playChance";
-import { serverTossApi } from "@/shared/api";
 import { AD_GROUP_IDS } from "@/shared/config";
 import { getAnonymousHash } from "@/shared/lib";
 import { Button, Toast } from "@toss/tds-mobile";
@@ -30,16 +29,19 @@ const MyRankingNotSubmitted = () => {
         await showAd();
         await chargeByAd({ adGroupId: AD_GROUP_IDS.REWARDED });
       }
-      const started = await startPlay();
-      if (!started) {
+      const prompt = await startPlay();
+      if (!prompt) {
         showToast("그리기 기회가 부족해요. 잠시 후 다시 시도해주세요.");
         return;
       }
 
       const hash = await getAnonymousHash();
-      const { promptId, strokes } = await serverTossApi.getPrompt();
       navigate("/memorize", {
-        state: { promptId, promptStrokes: strokes, anonymousHash: hash },
+        state: {
+          promptId: prompt.promptId,
+          promptStrokes: prompt.strokes,
+          anonymousHash: hash,
+        },
         replace: true,
       });
     } catch (err) {

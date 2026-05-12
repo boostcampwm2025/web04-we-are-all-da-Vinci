@@ -137,18 +137,25 @@ export class ChanceService {
   }
 
   async consume(userKey: number): Promise<{ count: number }> {
-    return this.em.transactional(async (em) => {
-      const chance = await this.getOrInitWithReset(em, userKey);
+    return this.em.transactional((em) =>
+      this.consumeWithEntityManager(em, userKey),
+    );
+  }
 
-      if (chance.count <= 0) {
-        this.denyLog(userKey, "consume", "no_chance");
-        throw new ConflictException("그리기 기회가 부족해요.");
-      }
+  async consumeWithEntityManager(
+    em: EntityManager,
+    userKey: number,
+  ): Promise<{ count: number }> {
+    const chance = await this.getOrInitWithReset(em, userKey);
 
-      chance.count -= 1;
-      this.successLog(userKey, "consume", chance.count);
-      return { count: chance.count };
-    });
+    if (chance.count <= 0) {
+      this.denyLog(userKey, "consume", "no_chance");
+      throw new ConflictException("그리기 기회가 부족해요.");
+    }
+
+    chance.count -= 1;
+    this.successLog(userKey, "consume", chance.count);
+    return { count: chance.count };
   }
 
   private async getOrInitWithReset(
