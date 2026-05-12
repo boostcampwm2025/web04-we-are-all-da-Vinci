@@ -176,7 +176,10 @@ export class ChanceService {
       return created;
     }
 
-    if (existing.lastResetAt < start) {
+    // MikroORM date 컬럼은 driver에 따라 string("YYYY-MM-DD")으로 매핑되어
+    // Date 객체와 직접 비교 시 NaN으로 떨어져 reset 분기를 못 탐. Date로 정규화 후 비교.
+    const lastResetTime = new Date(existing.lastResetAt).getTime();
+    if (lastResetTime < start.getTime()) {
       existing.count = Math.max(existing.count, 1);
       existing.lastResetAt = start;
     }
