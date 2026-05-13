@@ -22,8 +22,8 @@ export const PALETTE_COLORS = [
   },
   {
     name: "노랑",
-    hex: "#EAB308",
-    rgb: [234, 179, 8] as const,
-    ring: "ring-yellow-500",
+    hex: "#FACC15",
+    rgb: [250, 204, 21] as const,
+    ring: "ring-yellow-400",
   },
 ] as const;
