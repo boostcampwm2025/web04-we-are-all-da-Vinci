@@ -222,24 +222,28 @@ describe("ChanceService", () => {
     });
   });
 
-  describe("consume", () => {
+  describe("consumeWithEntityManager", () => {
     it("count > 0이면 count-- 후 반환", async () => {
       const existing = buildExisting({ count: 3 });
-      const { em } = buildEm(existing);
+      const { em, fork } = buildEm(existing);
       const service = buildService(em);
 
-      await expect(service.consume(1)).resolves.toEqual({ count: 2 });
+      await expect(
+        service.consumeWithEntityManager(fork as never, 1),
+      ).resolves.toEqual({
+        count: 2,
+      });
       expect(existing.count).toBe(2);
     });
 
     it("count === 0이면 ConflictException + count 변화 없음", async () => {
       const existing = buildExisting({ count: 0 });
-      const { em } = buildEm(existing);
+      const { em, fork } = buildEm(existing);
       const service = buildService(em);
 
-      await expect(service.consume(1)).rejects.toBeInstanceOf(
-        ConflictException,
-      );
+      await expect(
+        service.consumeWithEntityManager(fork as never, 1),
+      ).rejects.toBeInstanceOf(ConflictException);
       expect(existing.count).toBe(0);
     });
 
@@ -248,10 +252,12 @@ describe("ChanceService", () => {
         count: 0,
         lastResetAt: YESTERDAY_START,
       });
-      const { em } = buildEm(existing);
+      const { em, fork } = buildEm(existing);
       const service = buildService(em);
 
-      await expect(service.consume(1)).resolves.toEqual({ count: 0 });
+      await expect(
+        service.consumeWithEntityManager(fork as never, 1),
+      ).resolves.toEqual({ count: 0 });
       expect(existing.count).toBe(0);
     });
   });
@@ -276,16 +282,6 @@ describe("ChanceService", () => {
         channel: "contactsViral",
         moduleId: ALLOWED_MODULE,
       });
-
-      expect(em.transactional).toHaveBeenCalled();
-    });
-
-    it("consume이 em.transactional 내부에서 실행된다", async () => {
-      const existing = buildExisting({ count: 1 });
-      const { em } = buildEm(existing);
-      const service = buildService(em);
-
-      await service.consume(1);
 
       expect(em.transactional).toHaveBeenCalled();
     });
