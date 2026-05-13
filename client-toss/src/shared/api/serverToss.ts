@@ -201,8 +201,6 @@ export const serverTossApi = {
     );
   },
 
-  recordAdView: () => request<void>("POST", "/adviews"),
-
   getMyChance: async (options?: RequestOptions) =>
     MyChanceResponseSchema.parse(
       await request<unknown>("GET", "/chances/me", undefined, options),
