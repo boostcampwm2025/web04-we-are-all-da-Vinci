@@ -13,7 +13,9 @@ const REQUIRED_PROD_ENV = [
 ] as const;
 
 export default defineConfig(({ mode }) => {
-  if (mode === "production") {
+  // CI(번들 사이즈 측정·산출물 검증 용도)에선 운영 env가 없는 게 정상이라 검증 우회한다.
+  // 실제 운영 빌드는 로컬/배포 환경에서 진행하며 그땐 CI 변수가 비어 있어 검증이 작동.
+  if (mode === "production" && !process.env.CI) {
     const env = loadEnv(mode, process.cwd(), "");
     const missing = REQUIRED_PROD_ENV.filter((key) => !env[key]?.trim());
     if (missing.length > 0) {
