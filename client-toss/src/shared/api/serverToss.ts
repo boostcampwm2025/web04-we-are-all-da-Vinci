@@ -11,7 +11,6 @@ import type {
 } from "@toss/shared";
 import {
   ChargeResponseSchema,
-  ConsumeResponseSchema,
   LoginResponseSchema,
   MyChanceResponseSchema,
   PromptResponseSchema,
@@ -220,10 +219,5 @@ export const serverTossApi = {
         source: "share",
         sdkPayload,
       }),
-    ),
-
-  consumeChance: async () =>
-    ConsumeResponseSchema.parse(
-      await request<unknown>("POST", "/chances/consume"),
     ),
 };

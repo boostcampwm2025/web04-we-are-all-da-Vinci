@@ -40,6 +40,3 @@ export type ChargeRequest = z.infer<typeof ChargeRequestSchema>;
 
 export const ChargeResponseSchema = MyChanceResponseSchema;
 export type ChargeResponse = z.infer<typeof ChargeResponseSchema>;
-
-export const ConsumeResponseSchema = MyChanceResponseSchema;
-export type ConsumeResponse = z.infer<typeof ConsumeResponseSchema>;

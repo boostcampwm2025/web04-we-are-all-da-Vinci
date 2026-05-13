@@ -51,22 +51,6 @@ export const usePlayChance = () => {
     return count;
   }, []);
 
-  const consume = useCallback(async () => {
-    try {
-      const { count } = await serverTossApi.consumeChance();
-      setState((prev) => ({ ...prev, count, error: null }));
-      return true;
-    } catch (unknownError) {
-      // 409만 "기회 부족"으로 false 처리. 그 외는 장애로 보고 throw해 호출자가 구분 가능하게 함
-      if (unknownError instanceof RequestError && unknownError.status === 409) {
-        return false;
-      }
-      const error = toError(unknownError, "그리기 기회 차감에 실패했어요.");
-      setState((prev) => ({ ...prev, error }));
-      throw error;
-    }
-  }, []);
-
   const startPlay = useCallback(async (): Promise<PromptResponse | null> => {
     // localStorage 세션 기록을 먼저, 성공 시에만 서버 차감 — 실패 시 chance가 손실되지 않게 순서를 뒤집음
     try {
@@ -125,7 +109,6 @@ export const usePlayChance = () => {
     refresh,
     chargeByAd,
     chargeByShare,
-    consume,
     startPlay,
   };
 };

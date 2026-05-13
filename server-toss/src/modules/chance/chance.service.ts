@@ -94,12 +94,6 @@ export class ChanceService {
     });
   }
 
-  async consume(userKey: number): Promise<{ count: number }> {
-    return this.em.transactional((em) =>
-      this.consumeWithEntityManager(em, userKey),
-    );
-  }
-
   async consumeWithEntityManager(
     em: EntityManager,
     userKey: number,
