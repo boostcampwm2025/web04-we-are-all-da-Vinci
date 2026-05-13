@@ -1,6 +1,5 @@
 import type { PlayChanceLayoutContext } from "@/app/layouts/PlayChanceLayout";
-import { useRewardAd } from "@/feature/playChance";
-import { AD_GROUP_IDS } from "@/shared/config";
+import { useFullScreenAd } from "@/feature/playChance";
 import { getAnonymousHash } from "@/shared/lib";
 import { Button, Toast } from "@toss/tds-mobile";
 import { useState } from "react";
@@ -11,7 +10,7 @@ const MyRankingNotSubmitted = () => {
   const navigate = useNavigate();
   const { chanceCount, hasChance, chargeByAd, startPlay } =
     useOutletContext<PlayChanceLayoutContext>();
-  const { isAdLoaded, showAd } = useRewardAd();
+  const { isAdLoaded, showAd, adGroupId } = useFullScreenAd();
   const [isStarting, setIsStarting] = useState(false);
   const [toastOpen, setToastOpen] = useState(false);
   const [toastText, setToastText] = useState("");
@@ -27,7 +26,7 @@ const MyRankingNotSubmitted = () => {
     try {
       if (isAdLoaded && !hasChance) {
         await showAd();
-        await chargeByAd({ adGroupId: AD_GROUP_IDS.REWARDED });
+        await chargeByAd({ adGroupId });
       }
       const prompt = await startPlay();
       if (!prompt) {

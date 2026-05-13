@@ -1,11 +1,13 @@
+import { AD_GROUP_IDS } from "@/shared/config";
 import {
   loadFullScreenAd,
   showFullScreenAd,
 } from "@apps-in-toss/web-framework";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AD_GROUP_IDS } from "@/shared/config";
 
-export const useRewardAd = () => {
+const FULL_SCREEN_AD_GROUP_ID = AD_GROUP_IDS.FULLSCREEN;
+
+export const useFullScreenAd = () => {
   const isSupported = loadFullScreenAd.isSupported();
   // 광고 SDK 미지원(로컬 dev 등)에서는 곧바로 "로드 완료" 상태로 간주해 흐름 차단을 막는다.
   const [isAdLoaded, setIsAdLoaded] = useState(!isSupported);
@@ -15,7 +17,7 @@ export const useRewardAd = () => {
     adUnregisterRef.current?.();
     if (!isSupported) return;
     adUnregisterRef.current = loadFullScreenAd({
-      options: { adGroupId: AD_GROUP_IDS.REWARDED },
+      options: { adGroupId: FULL_SCREEN_AD_GROUP_ID },
       onEvent: (event) => {
         if (event.type === "loaded") setIsAdLoaded(true);
       },
@@ -45,11 +47,11 @@ export const useRewardAd = () => {
           return;
         }
 
-        let rewarded = false;
+        let wasShown = false;
         let done = false;
 
         showFullScreenAd({
-          options: { adGroupId: AD_GROUP_IDS.REWARDED },
+          options: { adGroupId: FULL_SCREEN_AD_GROUP_ID },
           onEvent: (event) => {
             if (event.type === "failedToShow") {
               if (done) return;
@@ -58,12 +60,13 @@ export const useRewardAd = () => {
               reject(new Error("failedToShow"));
               return;
             }
-            if (event.type === "userEarnedReward") rewarded = true;
+            // 광고가 실제 화면에 렌더링된 시점(수익 발생 시점). impression 없이 종료된 경우 충전 트리거하지 않는다.
+            if (event.type === "impression") wasShown = true;
             if (event.type === "dismissed") {
               if (done) return;
               done = true;
               reloadAd();
-              if (rewarded) resolve();
+              if (wasShown) resolve();
               else reject(new Error("closed"));
             }
           },
@@ -78,5 +81,5 @@ export const useRewardAd = () => {
     [isSupported, reloadAd],
   );
 
-  return { isAdLoaded, showAd };
+  return { isAdLoaded, showAd, adGroupId: FULL_SCREEN_AD_GROUP_ID };
 };
