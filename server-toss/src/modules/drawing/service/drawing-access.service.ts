@@ -13,13 +13,13 @@ export class DrawingAccessService {
   }
 
   async validateAccess(user: User): Promise<void> {
-    // if (process.env.NODE_ENV === "development") {
-    //   this.logger.debug(
-    //     { event: "drawing.access.bypass_dev", userKey: user.userKey },
-    //     "개발환경 그림 제출 기회 검증 우회",
-    //   );
-    //   return;
-    // }
+    if (process.env.NODE_ENV === "development") {
+      this.logger.debug(
+        { event: "drawing.access.bypass_dev", userKey: user.userKey },
+        "개발환경 그림 제출 기회 검증 우회",
+      );
+      return;
+    }
 
     const accessStatus = await this.getAccessStatus(user);
     if (!accessStatus.allowed) {
