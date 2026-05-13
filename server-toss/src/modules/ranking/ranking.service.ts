@@ -13,6 +13,7 @@ import {
 import { Ranking } from "./ranking.entity";
 import { Drawing } from "../drawing/drawing.entity";
 import { User } from "../user/user.entity";
+import { Transactional } from "@mikro-orm/decorators/legacy";
 
 @Injectable()
 export class RankingService {
@@ -21,6 +22,7 @@ export class RankingService {
     private readonly rankingRepository: RankingRepository,
   ) {}
 
+  @Transactional()
   async updateRanking(user: User, drawing: Drawing) {
     const existing = await this.rankingRepository.findByUserKey(user.userKey);
 

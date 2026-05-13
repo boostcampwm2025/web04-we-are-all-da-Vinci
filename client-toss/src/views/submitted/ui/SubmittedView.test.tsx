@@ -9,7 +9,10 @@ import SubmittedView from "./SubmittedView";
 
 const navigateMock = vi.fn();
 const mockChargeByAd = vi.fn().mockResolvedValue(1);
-const mockStartPlay = vi.fn().mockResolvedValue(true);
+const mockStartPlay = vi.fn().mockResolvedValue({
+  promptId: 42,
+  strokes: [{ points: [[1], [2]], color: [0, 0, 0] }],
+});
 vi.mock("react-router-dom", async () => {
   const actual =
     await vi.importActual<typeof import("react-router-dom")>(
@@ -35,8 +38,6 @@ vi.mock("react-router-dom", async () => {
 vi.mock("@/shared/api", () => ({
   serverTossApi: {
     submitDrawing: vi.fn(),
-    recordAdView: vi.fn().mockResolvedValue(undefined),
-    getPrompt: vi.fn(),
   },
 }));
 
@@ -176,18 +177,12 @@ describe("SubmittedView", () => {
   it("다시하기 클릭 시 charge → startPlay → getPrompt를 호출한다", async () => {
     vi.useRealTimers();
     const user = userEvent.setup();
-    vi.mocked(serverTossApi.getPrompt).mockResolvedValue({
-      promptId: 42,
-      strokes: [{ points: [[1], [2]], color: [0, 0, 0] }],
-    });
-
     renderWithState();
 
     await user.click(screen.getByText("광고·등록 없이 재도전"));
 
     await waitFor(() => {
       expect(mockStartPlay).toHaveBeenCalled();
-      expect(serverTossApi.getPrompt).toHaveBeenCalled();
     });
 
     await waitFor(() => {
@@ -230,7 +225,7 @@ describe("SubmittedView", () => {
   it("다시하기 시 startPlay가 false 반환하면 부족 토스트를 표시하고 네비게이션하지 않는다", async () => {
     vi.useRealTimers();
     const user = userEvent.setup();
-    mockStartPlay.mockResolvedValueOnce(false);
+    mockStartPlay.mockResolvedValueOnce(null);
 
     renderWithState();
 
@@ -247,9 +242,7 @@ describe("SubmittedView", () => {
   it("다시하기 시 getPrompt 실패하면 에러 토스트를 표시한다", async () => {
     vi.useRealTimers();
     const user = userEvent.setup();
-    vi.mocked(serverTossApi.getPrompt).mockRejectedValueOnce(
-      new Error("프롬프트 실패"),
-    );
+    mockStartPlay.mockRejectedValueOnce(new Error("프롬프트 실패"));
 
     renderWithState();
 
@@ -267,7 +260,7 @@ describe("SubmittedView", () => {
       showAd: mockShowAd,
     }));
     const user = userEvent.setup();
-    vi.mocked(serverTossApi.getPrompt).mockResolvedValue({
+    mockStartPlay.mockResolvedValueOnce({
       promptId: 7,
       strokes: [],
     });
@@ -292,7 +285,7 @@ describe("SubmittedView", () => {
   it("광고가 로드되지 않은 경우 다시하기 시 광고/chargeByAd 없이 startPlay만 호출한다", async () => {
     vi.useRealTimers();
     const user = userEvent.setup();
-    vi.mocked(serverTossApi.getPrompt).mockResolvedValue({
+    mockStartPlay.mockResolvedValueOnce({
       promptId: 8,
       strokes: [],
     });

@@ -10,23 +10,13 @@ import { PointService } from "src/modules/point/point.service";
 import { UserService } from "src/modules/user/user.service";
 import { PromptService } from "../../prompt/prompt.service";
 import { Drawing } from "../drawing.entity";
-import { DrawingAccessService } from "./drawing-access.service";
 import { DrawingRepository } from "../drawing.repository";
 import { InjectRepository } from "@mikro-orm/nestjs";
-import { RankingService } from "src/modules/ranking/ranking.service";
+import { SaveDrawingService } from "./save-drawing.service";
+import { SaveDrawingDto } from "../dto/save-drawing.dto";
 
 type Similarity = ReturnType<typeof scoreFinalSimilarity>;
 const SLOW_STROKES_DURATION_MS = 500;
-
-function getStrokeMetrics(playerStrokes: Stroke[]) {
-  const strokeCount = playerStrokes.length;
-  const pointCount = playerStrokes.reduce((total, stroke) => {
-    const [xs, ys] = stroke.points;
-    return total + Math.max(xs.length, ys.length);
-  }, 0);
-
-  return { strokeCount, pointCount };
-}
 
 function getFailureLogLevel(error: unknown): "warn" | "error" {
   if (error instanceof HttpException && error.getStatus() < 500) return "warn";
@@ -41,16 +31,14 @@ export class DrawingService {
     private readonly userService: UserService,
     private readonly promptService: PromptService,
     private readonly pointService: PointService,
-    private readonly drawingAccessService: DrawingAccessService,
     @InjectRepository(Drawing)
     private readonly drawingRepository: DrawingRepository,
-    private readonly rankingService: RankingService,
+    private readonly saveDrawingService: SaveDrawingService,
   ) {}
 
   // 획 단위 실시간 호출 엔드포인트. 클라 값 신뢰 X → 서버가 매번 유사도 재계산
   async scoreStrokes(playerStrokes: Stroke[], date: Date): Promise<Similarity> {
     const startedAt = Date.now();
-    const strokeMetrics = getStrokeMetrics(playerStrokes);
     let promptId: number | undefined;
 
     try {
@@ -67,7 +55,6 @@ export class DrawingService {
         promptId,
         score: similarity.score,
         durationMs,
-        ...strokeMetrics,
       };
 
       if (durationMs >= SLOW_STROKES_DURATION_MS) {
@@ -82,7 +69,6 @@ export class DrawingService {
         event: "drawing.score.failed",
         promptId,
         durationMs: Date.now() - startedAt,
-        ...strokeMetrics,
         err,
       };
 
@@ -107,20 +93,18 @@ export class DrawingService {
     promotionGranted: boolean;
   }> {
     const startedAt = Date.now();
-    const strokeMetrics = getStrokeMetrics(playerStrokes);
+
     const user = await this.userService.getUserInfo(userKey);
-    await this.drawingAccessService.validateAccess(user);
 
     const { promptId, preprocessed } =
       await this.promptService.getPreprocessedByDate(date);
+
     const playerPreprocessed = preprocessStrokes(playerStrokes);
     const similarity = scoreFinalSimilarity(preprocessed, playerPreprocessed);
-    const drawing = await this.drawingRepository.saveDrawing(
+
+    const drawing = await this.saveDrawingService.saveDrawingWithRanking(
       user,
-      promptId,
-      JSON.stringify(playerStrokes),
-      JSON.stringify(similarity),
-      similarity.score,
+      new SaveDrawingDto(promptId, playerStrokes, similarity),
     );
 
     this.logger.log(
@@ -131,11 +115,10 @@ export class DrawingService {
         promptId,
         score: similarity.score,
         durationMs: Date.now() - startedAt,
-        ...strokeMetrics,
       },
       "최종 드로잉 제출 성공",
     );
-    await this.rankingService.updateRanking(user, drawing);
+
     const promotionGranted =
       await this.pointService.grantDrawingPromotionIfEligible(user.userKey);
 
