@@ -25,7 +25,7 @@ const MyRankingNotSubmitted = () => {
     if (isStarting) return;
     setIsStarting(true);
     try {
-      if (isAdLoaded) {
+      if (isAdLoaded && !hasChance) {
         await showAd();
         await chargeByAd({ adGroupId: AD_GROUP_IDS.REWARDED });
       }

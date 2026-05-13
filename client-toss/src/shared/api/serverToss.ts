@@ -11,7 +11,6 @@ import type {
 } from "@toss/shared";
 import {
   ChargeResponseSchema,
-  ConsumeResponseSchema,
   LoginResponseSchema,
   MyChanceResponseSchema,
   PromptResponseSchema,
@@ -166,9 +165,6 @@ export const serverTossApi = {
   getMe: async () =>
     UserInfoResponseSchema.parse(await request<unknown>("GET", "/user/me")),
 
-  getPrompt: async () =>
-    PromptResponseSchema.parse(await request<unknown>("GET", "/prompt")),
-
   startPlay: async () =>
     PromptResponseSchema.parse(await request<unknown>("POST", "/plays/start")),
 
@@ -204,8 +200,6 @@ export const serverTossApi = {
     );
   },
 
-  recordAdView: () => request<void>("POST", "/adviews"),
-
   getMyChance: async (options?: RequestOptions) =>
     MyChanceResponseSchema.parse(
       await request<unknown>("GET", "/chances/me", undefined, options),
@@ -225,10 +219,5 @@ export const serverTossApi = {
         source: "share",
         sdkPayload,
       }),
-    ),
-
-  consumeChance: async () =>
-    ConsumeResponseSchema.parse(
-      await request<unknown>("POST", "/chances/consume"),
     ),
 };

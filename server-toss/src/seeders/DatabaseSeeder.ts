@@ -1,7 +1,7 @@
 import type { EntityManager } from "@mikro-orm/core";
 import { Seeder } from "@mikro-orm/seeder";
 import { getTodayKst } from "src/common/util/today";
-import { AdType, AdView } from "src/modules/ad/ad-view.entity";
+import { AdType, AdView } from "src/modules/chance/ad-view.entity";
 import { Drawing } from "src/modules/drawing/drawing.entity";
 import { PointLog, PointReason } from "src/modules/point/point-log.entity";
 import { DailyPrompt } from "src/modules/prompt/daily-prompt.entity";

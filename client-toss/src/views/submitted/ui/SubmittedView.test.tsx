@@ -38,8 +38,6 @@ vi.mock("react-router-dom", async () => {
 vi.mock("@/shared/api", () => ({
   serverTossApi: {
     submitDrawing: vi.fn(),
-    recordAdView: vi.fn().mockResolvedValue(undefined),
-    getPrompt: vi.fn(),
   },
 }));
 

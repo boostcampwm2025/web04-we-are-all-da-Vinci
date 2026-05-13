@@ -9,19 +9,15 @@ import {
 import {
   ApiBearerAuth,
   ApiBody,
-  ApiConflictResponse,
   ApiForbiddenResponse,
   ApiOkResponse,
   ApiOperation,
-  ApiServiceUnavailableResponse,
   ApiTags,
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
-import type { SchemaObject } from "@nestjs/swagger/dist/interfaces/open-api-spec.interface";
 import type {
   ChargeRequest,
   ChargeResponse,
-  ConsumeResponse,
   MyChanceResponse,
 } from "@toss/shared";
 import { ChargeRequestSchema } from "@toss/shared";
@@ -32,6 +28,7 @@ import {
 } from "../auth/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { ChanceService } from "./chance.service";
+import type { SchemaObject } from "@nestjs/swagger/dist/interfaces/open-api-spec.interface";
 
 const ChanceCountResponseSchema: SchemaObject = {
   type: "object",
@@ -112,9 +109,6 @@ export class ChanceController {
   @ApiForbiddenResponse({
     description: "화이트리스트에 없거나 일일 적립 한도를 넘었어요.",
   })
-  @ApiServiceUnavailableResponse({
-    description: "운영자 화이트리스트 환경변수가 누락됐어요.",
-  })
   charge(
     @CurrentUser() user: CurrentUserPayload,
     @Body(new ZodValidationPipe(ChargeRequestSchema)) body: ChargeRequest,
@@ -123,18 +117,5 @@ export class ChanceController {
       return this.chanceService.chargeByAd(user.userKey, body.sdkPayload);
     }
     return this.chanceService.chargeByShare(user.userKey, body.sdkPayload);
-  }
-
-  @Post("consume")
-  @HttpCode(200)
-  @ApiOperation({ summary: "그리기 시작 시 기회 1회 차감" })
-  @ApiOkResponse({
-    description: "차감 후 잔여 그리기 기회",
-    schema: ChanceCountResponseSchema,
-  })
-  @ApiUnauthorizedResponse({ description: "인증이 필요해요." })
-  @ApiConflictResponse({ description: "그리기 기회가 부족해요." })
-  consume(@CurrentUser() user: CurrentUserPayload): Promise<ConsumeResponse> {
-    return this.chanceService.consume(user.userKey);
   }
 }

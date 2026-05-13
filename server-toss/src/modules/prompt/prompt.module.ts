@@ -1,7 +1,6 @@
 import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { forwardRef, Module } from "@nestjs/common";
 import { DailyPrompt } from "./daily-prompt.entity";
-import { PromptController } from "./prompt.controller";
 import { Prompt } from "./prompt.entity";
 import { PromptSeedService } from "./prompt.seed";
 import { PromptService } from "./prompt.service";
@@ -14,7 +13,6 @@ import { UserModule } from "../user/user.module";
     forwardRef(() => DrawingModule),
     UserModule,
   ],
-  controllers: [PromptController],
   providers: [PromptService, PromptSeedService],
   exports: [PromptService],
 })

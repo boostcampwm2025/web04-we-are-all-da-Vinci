@@ -5,12 +5,9 @@ jest.mock("src/common/util/time.util", () => ({
   }),
 }));
 
-import {
-  ConflictException,
-  ForbiddenException,
-  ServiceUnavailableException,
-} from "@nestjs/common";
-import { AdView } from "src/modules/ad/ad-view.entity";
+import { ConflictException, ForbiddenException } from "@nestjs/common";
+import { AdView } from "src/modules/chance/ad-view.entity";
+import { ChanceWhitelistValidator } from "./chance-whitelist.validator";
 import { ChanceService } from "./chance.service";
 import { PlayChance } from "./play-chance.entity";
 import { ShareLog } from "./share-log.entity";
@@ -64,28 +61,32 @@ const buildEm = (existing: PlayChance | null, todayShareLogs = 0) => {
   };
 };
 
-interface WhitelistOverrides {
-  adGroupIdWhitelist?: string;
-  shareModuleIdWhitelist?: string;
-}
-
-const buildConfigService = (overrides: WhitelistOverrides = {}) => ({
+const buildConfigService = () => ({
   get: jest.fn((key: string) => {
     switch (key) {
       case "SHARE_DAILY_CHARGE_LIMIT":
         return 5;
-      case "AD_GROUP_ID_WHITELIST":
-        return overrides.adGroupIdWhitelist ?? ALLOWED_AD_GROUP;
-      case "SHARE_MODULE_ID_WHITELIST":
-        return overrides.shareModuleIdWhitelist ?? ALLOWED_MODULE;
       default:
         return undefined;
     }
   }),
 });
 
-const buildService = (em: unknown, overrides: WhitelistOverrides = {}) =>
-  new ChanceService(em as never, buildConfigService(overrides) as never);
+const buildWhitelistValidator = () =>
+  ({
+    validateAdGroup: jest.fn(),
+    validateShareModule: jest.fn(),
+  }) as unknown as ChanceWhitelistValidator;
+
+const buildService = (
+  em: unknown,
+  chanceWhitelistValidator = buildWhitelistValidator(),
+) =>
+  new ChanceService(
+    em as never,
+    buildConfigService() as never,
+    chanceWhitelistValidator,
+  );
 
 const buildExisting = (overrides: Partial<PlayChance> = {}): PlayChance =>
   Object.assign(new PlayChance(), {
@@ -134,7 +135,8 @@ describe("ChanceService", () => {
     it("화이트리스트 통과 시 count++ 와 AdView INSERT", async () => {
       const existing = buildExisting({ count: 2 });
       const { em, fork, persisted } = buildEm(existing);
-      const service = buildService(em);
+      const chanceWhitelistValidator = buildWhitelistValidator();
+      const service = buildService(em, chanceWhitelistValidator);
 
       const result = await service.chargeByAd(1, {
         adGroupId: ALLOWED_AD_GROUP,
@@ -144,40 +146,25 @@ describe("ChanceService", () => {
       const adViewCreated = persisted.find((p) => p instanceof AdView);
       expect(adViewCreated).toBeDefined();
       expect(fork.getReference).toHaveBeenCalled();
-    });
-
-    it("화이트리스트에 없는 adGroupId면 ForbiddenException + count 변화 없음", async () => {
-      const existing = buildExisting({ count: 1 });
-      const { em } = buildEm(existing);
-      const service = buildService(em);
-
-      await expect(
-        service.chargeByAd(1, { adGroupId: "unknown-group" }),
-      ).rejects.toBeInstanceOf(ForbiddenException);
-      expect(existing.count).toBe(1);
+      expect(chanceWhitelistValidator.validateAdGroup).toHaveBeenCalledWith(1, {
+        adGroupId: ALLOWED_AD_GROUP,
+      });
     });
 
     it("같은 사용자가 광고를 11번 시도해도 모두 통과 (캡 없음)", async () => {
       const existing = buildExisting({ count: 0 });
       const { em } = buildEm(existing);
-      const service = buildService(em);
+      const chanceWhitelistValidator = buildWhitelistValidator();
+      const service = buildService(em, chanceWhitelistValidator);
 
       for (let i = 0; i < 11; i++) {
         await service.chargeByAd(1, { adGroupId: ALLOWED_AD_GROUP });
       }
 
       expect(existing.count).toBe(11);
-    });
-
-    it("화이트리스트 환경변수가 비어 있으면 ServiceUnavailableException", async () => {
-      const existing = buildExisting({ count: 1 });
-      const { em } = buildEm(existing);
-      const service = buildService(em, { adGroupIdWhitelist: "" });
-
-      await expect(
-        service.chargeByAd(1, { adGroupId: ALLOWED_AD_GROUP }),
-      ).rejects.toBeInstanceOf(ServiceUnavailableException);
-      expect(existing.count).toBe(1);
+      expect(chanceWhitelistValidator.validateAdGroup).toHaveBeenCalledTimes(
+        11,
+      );
     });
   });
 
@@ -185,7 +172,8 @@ describe("ChanceService", () => {
     it("contactsViral 채널: moduleId 통과 시 count++ 와 ShareLog INSERT", async () => {
       const existing = buildExisting({ count: 1 });
       const { em, persisted } = buildEm(existing, 0);
-      const service = buildService(em);
+      const chanceWhitelistValidator = buildWhitelistValidator();
+      const service = buildService(em, chanceWhitelistValidator);
 
       const result = await service.chargeByShare(1, {
         channel: "contactsViral",
@@ -197,20 +185,13 @@ describe("ChanceService", () => {
       expect(result).toEqual({ count: 2 });
       const shareLogCreated = persisted.find((p) => p instanceof ShareLog);
       expect(shareLogCreated).toBeDefined();
-    });
-
-    it("contactsViral + 화이트리스트 외 moduleId → 거부", async () => {
-      const existing = buildExisting();
-      const { em } = buildEm(existing);
-      const service = buildService(em);
-
-      await expect(
-        service.chargeByShare(1, {
+      expect(chanceWhitelistValidator.validateShareModule).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
           channel: "contactsViral",
-          moduleId: "unknown",
+          moduleId: ALLOWED_MODULE,
         }),
-      ).rejects.toBeInstanceOf(ForbiddenException);
-      expect(existing.count).toBe(0);
+      );
     });
 
     it("일일 캡(=5) 도달 시 거부", async () => {
@@ -239,40 +220,30 @@ describe("ChanceService", () => {
         }),
       ).resolves.toEqual({ count: 5 });
     });
-
-    it("공유 화이트리스트 환경변수가 비어 있으면 ServiceUnavailableException", async () => {
-      const existing = buildExisting({ count: 1 });
-      const { em } = buildEm(existing);
-      const service = buildService(em, { shareModuleIdWhitelist: "" });
-
-      await expect(
-        service.chargeByShare(1, {
-          channel: "contactsViral",
-          moduleId: ALLOWED_MODULE,
-        }),
-      ).rejects.toBeInstanceOf(ServiceUnavailableException);
-      expect(existing.count).toBe(1);
-    });
   });
 
-  describe("consume", () => {
+  describe("consumeWithEntityManager", () => {
     it("count > 0이면 count-- 후 반환", async () => {
       const existing = buildExisting({ count: 3 });
-      const { em } = buildEm(existing);
+      const { em, fork } = buildEm(existing);
       const service = buildService(em);
 
-      await expect(service.consume(1)).resolves.toEqual({ count: 2 });
+      await expect(
+        service.consumeWithEntityManager(fork as never, 1),
+      ).resolves.toEqual({
+        count: 2,
+      });
       expect(existing.count).toBe(2);
     });
 
     it("count === 0이면 ConflictException + count 변화 없음", async () => {
       const existing = buildExisting({ count: 0 });
-      const { em } = buildEm(existing);
+      const { em, fork } = buildEm(existing);
       const service = buildService(em);
 
-      await expect(service.consume(1)).rejects.toBeInstanceOf(
-        ConflictException,
-      );
+      await expect(
+        service.consumeWithEntityManager(fork as never, 1),
+      ).rejects.toBeInstanceOf(ConflictException);
       expect(existing.count).toBe(0);
     });
 
@@ -281,10 +252,12 @@ describe("ChanceService", () => {
         count: 0,
         lastResetAt: YESTERDAY_START,
       });
-      const { em } = buildEm(existing);
+      const { em, fork } = buildEm(existing);
       const service = buildService(em);
 
-      await expect(service.consume(1)).resolves.toEqual({ count: 0 });
+      await expect(
+        service.consumeWithEntityManager(fork as never, 1),
+      ).resolves.toEqual({ count: 0 });
       expect(existing.count).toBe(0);
     });
   });
@@ -309,16 +282,6 @@ describe("ChanceService", () => {
         channel: "contactsViral",
         moduleId: ALLOWED_MODULE,
       });
-
-      expect(em.transactional).toHaveBeenCalled();
-    });
-
-    it("consume이 em.transactional 내부에서 실행된다", async () => {
-      const existing = buildExisting({ count: 1 });
-      const { em } = buildEm(existing);
-      const service = buildService(em);
-
-      await service.consume(1);
 
       expect(em.transactional).toHaveBeenCalled();
     });

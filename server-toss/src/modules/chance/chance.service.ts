@@ -4,13 +4,13 @@ import {
   ForbiddenException,
   Injectable,
   Logger,
-  ServiceUnavailableException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type { AdSdkPayload, ShareSdkPayload } from "@toss/shared";
 import { getSeoulDayRange } from "src/common/util/time.util";
-import { AdType, AdView } from "src/modules/ad/ad-view.entity";
+import { AdType, AdView } from "src/modules/chance/ad-view.entity";
 import { User } from "src/modules/user/user.entity";
+import { ChanceWhitelistValidator } from "./chance-whitelist.validator";
 import { PlayChance } from "./play-chance.entity";
 import { ShareChannel, ShareLog } from "./share-log.entity";
 
@@ -18,21 +18,14 @@ import { ShareChannel, ShareLog } from "./share-log.entity";
 export class ChanceService {
   private readonly logger = new Logger(ChanceService.name);
   private readonly shareDailyChargeLimit: number;
-  private readonly adGroupIdWhitelist: ReadonlySet<string>;
-  private readonly shareModuleIdWhitelist: ReadonlySet<string>;
 
   constructor(
     private readonly em: EntityManager,
     configService: ConfigService,
+    private readonly chanceWhitelistValidator: ChanceWhitelistValidator,
   ) {
     this.shareDailyChargeLimit =
       configService.get<number>("SHARE_DAILY_CHARGE_LIMIT") ?? 5;
-    this.adGroupIdWhitelist = parseCsvSet(
-      configService.get<string>("AD_GROUP_ID_WHITELIST"),
-    );
-    this.shareModuleIdWhitelist = parseCsvSet(
-      configService.get<string>("SHARE_MODULE_ID_WHITELIST"),
-    );
   }
 
   async getMyChance(userKey: number): Promise<{ count: number }> {
@@ -46,25 +39,7 @@ export class ChanceService {
     userKey: number,
     payload: AdSdkPayload,
   ): Promise<{ count: number }> {
-    if (this.adGroupIdWhitelist.size === 0) {
-      // 운영 환경변수 누락은 클라이언트 권한 문제가 아닌 시스템 설정 오류 → 5xx + error 로그로 알람 유도
-      this.logger.error(
-        {
-          event: "chance.charge.failed",
-          userKey,
-          op: "ad",
-          reason: "whitelist_empty",
-        },
-        "광고 그룹 화이트리스트 환경변수가 비어 있어요.",
-      );
-      throw new ServiceUnavailableException(
-        "광고 그룹 화이트리스트가 비어 있어요. 운영자에게 문의해주세요.",
-      );
-    }
-    if (!this.adGroupIdWhitelist.has(payload.adGroupId)) {
-      this.denyLog(userKey, "ad", "whitelist_miss", payload);
-      throw new ForbiddenException("등록되지 않은 광고예요.");
-    }
+    this.chanceWhitelistValidator.validateAdGroup(userKey, payload);
 
     return this.em.transactional(async (em) => {
       const chance = await this.getOrInitWithReset(em, userKey);
@@ -88,24 +63,7 @@ export class ChanceService {
     userKey: number,
     payload: ShareSdkPayload,
   ): Promise<{ count: number }> {
-    if (this.shareModuleIdWhitelist.size === 0) {
-      this.logger.error(
-        {
-          event: "chance.charge.failed",
-          userKey,
-          op: "share",
-          reason: "whitelist_empty",
-        },
-        "공유 모듈 화이트리스트 환경변수가 비어 있어요.",
-      );
-      throw new ServiceUnavailableException(
-        "공유 리워드 화이트리스트가 비어 있어요. 운영자에게 문의해주세요.",
-      );
-    }
-    if (!this.shareModuleIdWhitelist.has(payload.moduleId)) {
-      this.denyLog(userKey, "share", "whitelist_miss", payload);
-      throw new ForbiddenException("등록되지 않은 공유 리워드예요.");
-    }
+    this.chanceWhitelistValidator.validateShareModule(userKey, payload);
 
     return this.em.transactional(async (em) => {
       const { start, end } = getSeoulDayRange();
@@ -134,12 +92,6 @@ export class ChanceService {
       });
       return { count: chance.count };
     });
-  }
-
-  async consume(userKey: number): Promise<{ count: number }> {
-    return this.em.transactional((em) =>
-      this.consumeWithEntityManager(em, userKey),
-    );
   }
 
   async consumeWithEntityManager(
@@ -227,13 +179,3 @@ export class ChanceService {
     );
   }
 }
-
-const parseCsvSet = (value: string | undefined): ReadonlySet<string> => {
-  if (!value) return new Set();
-  return new Set(
-    value
-      .split(",")
-      .map((token) => token.trim())
-      .filter(Boolean),
-  );
-};
