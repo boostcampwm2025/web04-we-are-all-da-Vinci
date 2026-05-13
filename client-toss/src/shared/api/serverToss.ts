@@ -169,6 +169,9 @@ export const serverTossApi = {
   getPrompt: async () =>
     PromptResponseSchema.parse(await request<unknown>("GET", "/prompt")),
 
+  startPlay: async () =>
+    PromptResponseSchema.parse(await request<unknown>("POST", "/plays/start")),
+
   scoreStrokes: async (body: SubmitStrokesRequest) =>
     SimilarityResponseSchema.parse(
       await request<unknown>("POST", "/strokes", body),

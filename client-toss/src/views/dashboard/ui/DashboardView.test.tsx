@@ -1,5 +1,4 @@
 /// <reference types="@testing-library/jest-dom/vitest" />
-import { serverTossApi } from "@/shared/api";
 import { formatLocalDate } from "@/shared/lib";
 import { getDeviceId } from "@apps-in-toss/web-framework";
 import { render, screen, waitFor } from "@testing-library/react";
@@ -10,7 +9,10 @@ import DashboardView from "./DashboardView";
 import MyDrawingsPanel from "./MyDrawingsPanel";
 
 const navigateMock = vi.fn();
-const mockStartPlay = vi.fn().mockResolvedValue(true);
+const mockStartPlay = vi.fn().mockResolvedValue({
+  promptId: 42,
+  strokes: [{ points: [[1], [2]], color: [0, 0, 0] }],
+});
 const mockChargeByAd = vi.fn().mockResolvedValue(1);
 const mockRefresh = vi.fn().mockResolvedValue(1);
 vi.mock("react-router-dom", async () => {
@@ -107,11 +109,6 @@ describe("DashboardView", () => {
   });
 
   it("첫 방문 시 getPrompt 호출 후 /memorize로 이동한다", async () => {
-    vi.mocked(serverTossApi.getPrompt).mockResolvedValue({
-      promptId: 42,
-      strokes: [{ points: [[1], [2]], color: [0, 0, 0] }],
-    });
-
     renderDashboard();
 
     // 초기에는 "준비 중..." 로딩 표시
@@ -130,9 +127,7 @@ describe("DashboardView", () => {
   });
 
   it("getPrompt 실패 시 에러 메시지와 재시도 버튼을 표시한다", async () => {
-    vi.mocked(serverTossApi.getPrompt).mockRejectedValue(
-      new Error("네트워크 오류"),
-    );
+    mockStartPlay.mockRejectedValueOnce(new Error("네트워크 오류"));
 
     renderDashboard();
 
@@ -147,7 +142,7 @@ describe("DashboardView", () => {
 
   it("다시 시도 클릭 시 getPrompt를 재호출한다", async () => {
     const user = userEvent.setup();
-    vi.mocked(serverTossApi.getPrompt)
+    mockStartPlay
       .mockRejectedValueOnce(new Error("실패"))
       .mockResolvedValueOnce({
         promptId: 1,
@@ -163,7 +158,7 @@ describe("DashboardView", () => {
     await user.click(screen.getByText("다시 시도해요"));
 
     await waitFor(() => {
-      expect(serverTossApi.getPrompt).toHaveBeenCalledTimes(2);
+      expect(mockStartPlay).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -177,12 +172,12 @@ describe("DashboardView", () => {
       expect(screen.getByTestId("my-ranking-section")).toBeInTheDocument();
     });
 
-    expect(serverTossApi.getPrompt).not.toHaveBeenCalled();
+    expect(mockStartPlay).not.toHaveBeenCalled();
   });
 
   it("getDeviceId 실패 시 local 폴백으로 동작한다", async () => {
     vi.mocked(getDeviceId).mockRejectedValue(new Error("미지원"));
-    vi.mocked(serverTossApi.getPrompt).mockResolvedValue({
+    mockStartPlay.mockResolvedValueOnce({
       promptId: 1,
       strokes: [],
     });
@@ -229,7 +224,7 @@ describe("DashboardView", () => {
     localStorage.setItem("lastPlayed_test-device", today);
     const user = userEvent.setup();
 
-    vi.mocked(serverTossApi.getPrompt).mockResolvedValue({
+    mockStartPlay.mockResolvedValueOnce({
       promptId: 99,
       strokes: [],
     });

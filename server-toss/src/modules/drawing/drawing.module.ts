@@ -8,6 +8,7 @@ import { DrawingService } from "./service/drawing.service";
 import { DrawingAccessService } from "./service/drawing-access.service";
 import { UserModule } from "../user/user.module";
 import { RankingModule } from "../ranking/ranking.module";
+import { ChanceModule } from "../chance/chance.module";
 import { SaveDrawingService } from "./service/save-drawing.service";
 
 @Module({
@@ -17,6 +18,7 @@ import { SaveDrawingService } from "./service/save-drawing.service";
     UserModule,
     PointModule,
     RankingModule,
+    ChanceModule,
   ],
   controllers: [DrawingController],
   providers: [DrawingService, DrawingAccessService, SaveDrawingService],

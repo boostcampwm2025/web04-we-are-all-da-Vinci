@@ -12,6 +12,7 @@ import { AuthModule } from "./modules/auth/auth.module";
 import { ChanceModule } from "./modules/chance/chance.module";
 import { DrawingModule } from "./modules/drawing/drawing.module";
 import { PointModule } from "./modules/point/point.module";
+import { PlayModule } from "./modules/play/play.module";
 import { PromptModule } from "./modules/prompt/prompt.module";
 import { RankingModule } from "./modules/ranking/ranking.module";
 import { UserModule } from "./modules/user/user.module";
@@ -40,6 +41,7 @@ import { UserModule } from "./modules/user/user.module";
     DrawingModule,
     PromptModule,
     PointModule,
+    PlayModule,
     AdModule,
     ChanceModule,
     RankingModule,

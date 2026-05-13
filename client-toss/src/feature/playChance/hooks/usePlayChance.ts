@@ -1,7 +1,14 @@
 import { RequestError, serverTossApi } from "@/shared/api";
-import type { AdSdkPayload, ShareSdkPayload } from "@toss/shared";
+import type {
+  AdSdkPayload,
+  PromptResponse,
+  ShareSdkPayload,
+} from "@toss/shared";
 import { useCallback, useEffect, useState } from "react";
-import { startPlaySession } from "../model/playSessionStorage";
+import {
+  clearPlaySession,
+  startPlaySession,
+} from "../model/playSessionStorage";
 
 interface PlayChanceHookState {
   count: number;
@@ -60,17 +67,33 @@ export const usePlayChance = () => {
     }
   }, []);
 
-  const startPlay = useCallback(async () => {
+  const startPlay = useCallback(async (): Promise<PromptResponse | null> => {
     // localStorage 세션 기록을 먼저, 성공 시에만 서버 차감 — 실패 시 chance가 손실되지 않게 순서를 뒤집음
     try {
       await startPlaySession();
     } catch (unknownError) {
       const error = toError(unknownError, "플레이 세션을 저장하지 못했어요.");
       setState((prev) => ({ ...prev, error }));
-      return false;
+      return null;
     }
-    return await consume();
-  }, [consume]);
+    try {
+      const prompt = await serverTossApi.startPlay();
+      setState((prev) => ({
+        ...prev,
+        count: Math.max(prev.count - 1, 0),
+        error: null,
+      }));
+      return prompt;
+    } catch (unknownError) {
+      await clearPlaySession().catch(() => {});
+      if (unknownError instanceof RequestError && unknownError.status === 409) {
+        return null;
+      }
+      const error = toError(unknownError, "게임 시작에 실패했어요");
+      setState((prev) => ({ ...prev, error }));
+      throw error;
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;

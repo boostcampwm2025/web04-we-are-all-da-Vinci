@@ -10,7 +10,6 @@ import { PointService } from "src/modules/point/point.service";
 import { UserService } from "src/modules/user/user.service";
 import { PromptService } from "../../prompt/prompt.service";
 import { Drawing } from "../drawing.entity";
-import { DrawingAccessService } from "./drawing-access.service";
 import { DrawingRepository } from "../drawing.repository";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { SaveDrawingService } from "./save-drawing.service";
@@ -32,7 +31,6 @@ export class DrawingService {
     private readonly userService: UserService,
     private readonly promptService: PromptService,
     private readonly pointService: PointService,
-    private readonly drawingAccessService: DrawingAccessService,
     @InjectRepository(Drawing)
     private readonly drawingRepository: DrawingRepository,
     private readonly saveDrawingService: SaveDrawingService,
@@ -97,7 +95,6 @@ export class DrawingService {
     const startedAt = Date.now();
 
     const user = await this.userService.getUserInfo(userKey);
-    await this.drawingAccessService.validateAccess(user);
 
     const { promptId, preprocessed } =
       await this.promptService.getPreprocessedByDate(date);
