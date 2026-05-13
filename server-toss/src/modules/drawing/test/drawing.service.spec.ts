@@ -13,7 +13,16 @@ jest.mock("@davinci/similarity", () => ({
   scoreFinalSimilarity: mockScoreFinalSimilarity,
 }));
 
+jest.mock("src/common/util/time.util", () => ({
+  getSeoulDayRange: () => ({
+    start: new Date("2026-04-26T15:00:00.000Z"),
+    end: new Date("2026-04-27T15:00:00.000Z"),
+  }),
+}));
+
+import { Stroke } from "@toss/shared";
 import type { User } from "../../user/user.entity";
+import { SaveDrawingDto } from "../dto/save-drawing.dto";
 import { DrawingService } from "../service/drawing.service";
 
 const sampleStrokes = [
@@ -69,8 +78,8 @@ const buildDrawingRepository = () => ({
   findDrawingById: jest.fn(),
 });
 
-const buildRankingService = () => ({
-  updateRanking: jest.fn(),
+const buildSaveDrawingService = () => ({
+  saveDrawingWithRanking: jest.fn(),
 });
 
 const buildService = ({
@@ -78,20 +87,20 @@ const buildService = ({
   promptService = buildPromptService(),
   pointService = buildPointService(),
   drawingRepository = buildDrawingRepository(),
-  rankingService = buildRankingService(),
+  saveDrawingService = buildSaveDrawingService(),
 }: {
   userService?: ReturnType<typeof buildUserService>;
   promptService?: ReturnType<typeof buildPromptService>;
   pointService?: ReturnType<typeof buildPointService>;
   drawingRepository?: ReturnType<typeof buildDrawingRepository>;
-  rankingService?: ReturnType<typeof buildRankingService>;
+  saveDrawingService?: ReturnType<typeof buildSaveDrawingService>;
 }) =>
   new DrawingService(
     userService as never,
     promptService as never,
     pointService as never,
     drawingRepository as never,
-    rankingService as never,
+    saveDrawingService as never,
   );
 
 describe("DrawingService", () => {
@@ -127,15 +136,15 @@ describe("DrawingService", () => {
       const userService = {
         getUserInfo: jest.fn(async () => fakeUser),
       };
-      const drawingRepository = buildDrawingRepository();
-      drawingRepository.saveDrawing.mockResolvedValue({
+      const saveDrawingService = buildSaveDrawingService();
+      saveDrawingService.saveDrawingWithRanking.mockResolvedValue({
         id: BigInt(42),
       });
 
       const service = buildService({
         userService,
         pointService: buildPointService(false),
-        drawingRepository,
+        saveDrawingService,
       });
 
       const result = await service.submitDrawing(
@@ -145,18 +154,17 @@ describe("DrawingService", () => {
       );
 
       expect(userService.getUserInfo).toHaveBeenCalledWith(1234);
-      expect(drawingRepository.saveDrawing).toHaveBeenCalledTimes(1);
-      expect(drawingRepository.saveDrawing).toHaveBeenCalledWith(
+      expect(saveDrawingService.saveDrawingWithRanking).toHaveBeenCalledTimes(
+        1,
+      );
+      expect(saveDrawingService.saveDrawingWithRanking).toHaveBeenCalledWith(
         fakeUser,
-        7,
-        JSON.stringify(sampleStrokes),
-        JSON.stringify({
+        new SaveDrawingDto(7, sampleStrokes as Stroke[], {
           score: 87,
           strokeMatchSimilarity: 85,
           shapeSimilarity: 88,
           penalty: 5,
         }),
-        87,
       );
       expect(result).toMatchObject({
         drawingId: 42,
@@ -168,8 +176,17 @@ describe("DrawingService", () => {
     it("프로모션 지급은 PointService에 위임하고 결과를 그대로 반환한다", async () => {
       const pointService = buildPointService(true);
       const drawingRepository = buildDrawingRepository();
+      const saveDrawingService = buildSaveDrawingService();
+      saveDrawingService.saveDrawingWithRanking.mockResolvedValue({
+        id: BigInt(1),
+      });
       drawingRepository.saveDrawing.mockResolvedValue({ id: BigInt(1) });
-      const service = buildService({ pointService, drawingRepository });
+
+      const service = buildService({
+        pointService,
+        drawingRepository,
+        saveDrawingService,
+      });
 
       const result = await service.submitDrawing(
         1234,
