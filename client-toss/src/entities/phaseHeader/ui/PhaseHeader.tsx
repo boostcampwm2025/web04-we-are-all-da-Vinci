@@ -1,8 +1,9 @@
 import { ProgressBar, Top } from "@toss/tds-mobile";
+import type { ReactNode } from "react";
 
 interface PhaseHeaderProps {
   title: string;
-  description?: string;
+  description?: ReactNode;
   progress?: number;
 }
 
