@@ -7,6 +7,7 @@ import {
 import { useEffect } from "react";
 import { serverTossApi } from "@/shared/api";
 import type { MyRankingResponse } from "@/entities/ranking";
+import { buildShareMessageWithRanking } from "../config/shareMessage";
 
 const buildShareMessage = (
   tossLink: string,
@@ -14,7 +15,7 @@ const buildShareMessage = (
 ): string => {
   if (myRanking?.state === "FOUND") {
     const { score, rank } = myRanking.ranking;
-    return `제 다빈치 점수는 ${score}점이에요! (랭킹 ${rank}위)\n같이 도전해봐요\n${tossLink}`;
+    return buildShareMessageWithRanking(score, rank, tossLink);
   }
   return tossLink;
 };
