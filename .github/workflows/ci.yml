@@ -194,12 +194,6 @@ jobs:
       needs.changes.outputs.packages-toss-shared == 'true' ||
       needs.changes.outputs.packages-similarity == 'true'
     runs-on: ubuntu-latest
-    # CI 빌드는 산출물 검증/사이즈 측정 용도라 vite.config production env 검증을
-    # placeholder로 통과시킨다. 실제 운영 값은 로컬/배포 환경 .env에서 주입.
-    env:
-      VITE_API_BASE_URL: https://api.placeholder.invalid
-      VITE_CONTACTS_VIRAL_MODULE_ID: ci-placeholder
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -252,13 +246,21 @@ jobs:
           json-final-path: ./coverage/coverage-final.json
           name: client-toss
 
+      # 빌드 step에만 production env placeholder 주입.
+      # 테스트 step에 노출되면 BASE_URL 단언/MISSING_MODULE_ID 분기가 깨진다.
       - name: QA Check
         working-directory: client-toss
         run: pnpm run qa:ci
+        env:
+          VITE_API_BASE_URL: https://api.placeholder.invalid
+          VITE_CONTACTS_VIRAL_MODULE_ID: ci-placeholder
 
       - name: Build
         working-directory: client-toss
         run: pnpm run build
+        env:
+          VITE_API_BASE_URL: https://api.placeholder.invalid
+          VITE_CONTACTS_VIRAL_MODULE_ID: ci-placeholder
 
   server-toss:
     name: Server-Toss
