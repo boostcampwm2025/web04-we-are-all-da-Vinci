@@ -1,6 +1,6 @@
 import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Module } from "@nestjs/common";
-import { AdView } from "../ad/ad-view.entity";
+import { AdView } from "./ad-view.entity";
 import { User } from "../user/user.entity";
 import { ChanceController } from "./chance.controller";
 import { ChanceService } from "./chance.service";

@@ -6,7 +6,7 @@ jest.mock("src/common/util/time.util", () => ({
 }));
 
 import { ConflictException, ForbiddenException } from "@nestjs/common";
-import { AdView } from "src/modules/ad/ad-view.entity";
+import { AdView } from "src/modules/chance/ad-view.entity";
 import { ChanceWhitelistValidator } from "./chance-whitelist.validator";
 import { ChanceService } from "./chance.service";
 import { PlayChance } from "./play-chance.entity";

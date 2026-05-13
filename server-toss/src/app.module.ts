@@ -8,7 +8,6 @@ import { createLoggerParams } from "./common/logging/logger.config";
 import { RequestContextHelper } from "./common/middleware/request-context-helper.middleware";
 import { HealthModule } from "./health/health.module";
 import config from "./mikro-orm.config";
-import { AdModule } from "./modules/ad/ad.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { ChanceModule } from "./modules/chance/chance.module";
 import { DrawingModule } from "./modules/drawing/drawing.module";
@@ -44,7 +43,6 @@ import { UserModule } from "./modules/user/user.module";
     PromptModule,
     PointModule,
     PlayModule,
-    AdModule,
     ChanceModule,
     RankingModule,
   ],

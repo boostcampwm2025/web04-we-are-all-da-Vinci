@@ -8,7 +8,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import type { AdSdkPayload, ShareSdkPayload } from "@toss/shared";
 import { getSeoulDayRange } from "src/common/util/time.util";
-import { AdType, AdView } from "src/modules/ad/ad-view.entity";
+import { AdType, AdView } from "src/modules/chance/ad-view.entity";
 import { User } from "src/modules/user/user.entity";
 import { ChanceWhitelistValidator } from "./chance-whitelist.validator";
 import { PlayChance } from "./play-chance.entity";
