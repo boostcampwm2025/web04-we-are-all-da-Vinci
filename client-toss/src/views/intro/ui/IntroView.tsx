@@ -1,5 +1,6 @@
 import { painterMan2Img } from "@/shared/assets/images";
-import { Button, Paragraph, Top } from "@toss/tds-mobile";
+import { useExitGuard } from "@/shared/lib";
+import { Button, ConfirmDialog, Paragraph, Top } from "@toss/tds-mobile";
 import { STEPS } from "../config/steps";
 
 type IntroViewProps = {
@@ -7,6 +8,8 @@ type IntroViewProps = {
 };
 
 const IntroView = ({ onStart }: IntroViewProps) => {
+  const { showDialog, setShowDialog, exit } = useExitGuard();
+
   return (
     <div data-no-safe-area-bottom className="flex h-full flex-col">
       <div className="flex flex-1 flex-col py-2">
@@ -76,6 +79,23 @@ const IntroView = ({ onStart }: IntroViewProps) => {
           시작하기
         </Button>
       </section>
+
+      <ConfirmDialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        title="앱을 종료할까요?"
+        description="언제든 다시 들어와서 시작할 수 있어요"
+        confirmButton={
+          <ConfirmDialog.ConfirmButton onClick={exit}>
+            종료
+          </ConfirmDialog.ConfirmButton>
+        }
+        cancelButton={
+          <ConfirmDialog.CancelButton onClick={() => setShowDialog(false)}>
+            계속 보기
+          </ConfirmDialog.CancelButton>
+        }
+      />
     </div>
   );
 };
