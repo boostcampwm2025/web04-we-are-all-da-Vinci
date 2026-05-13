@@ -8,7 +8,7 @@ export class RankingCleanupScheduler {
 
   constructor(private readonly rankingRepository: RankingRepository) {}
 
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, { timeZone: "Asia/Seoul" })
   async handleRankingSnapshotCleanup() {
     try {
       await this.rankingRepository.cleanupRanking();

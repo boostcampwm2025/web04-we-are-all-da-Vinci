@@ -13,7 +13,6 @@ import {
   ApiForbiddenResponse,
   ApiOkResponse,
   ApiOperation,
-  ApiServiceUnavailableResponse,
   ApiTags,
   ApiUnauthorizedResponse,
 } from "@nestjs/swagger";
@@ -111,9 +110,6 @@ export class ChanceController {
   @ApiUnauthorizedResponse({ description: "인증이 필요해요." })
   @ApiForbiddenResponse({
     description: "화이트리스트에 없거나 일일 적립 한도를 넘었어요.",
-  })
-  @ApiServiceUnavailableResponse({
-    description: "운영자 화이트리스트 환경변수가 누락됐어요.",
   })
   charge(
     @CurrentUser() user: CurrentUserPayload,

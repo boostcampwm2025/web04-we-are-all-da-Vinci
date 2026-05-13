@@ -3,6 +3,7 @@ import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
 import { LoggerModule } from "nestjs-pino";
+import { validateChanceWhitelistEnv } from "./common/config/env.validation";
 import { createLoggerParams } from "./common/logging/logger.config";
 import { RequestContextHelper } from "./common/middleware/request-context-helper.middleware";
 import { HealthModule } from "./health/health.module";
@@ -23,6 +24,7 @@ import { UserModule } from "./modules/user/user.module";
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [".env.local", ".env"],
+      validate: validateChanceWhitelistEnv,
     }),
     LoggerModule.forRootAsync({
       imports: [ConfigModule],
