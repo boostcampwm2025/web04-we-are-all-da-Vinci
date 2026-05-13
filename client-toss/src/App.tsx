@@ -6,8 +6,12 @@ import { useEffect, useState } from "react";
 import { RouterProvider } from "react-router-dom";
 import { useShareButton } from "./feature/shareLink";
 
+const INTRO_SEEN_KEY = "introSeen";
+
 const App = () => {
-  const [hasStarted, setHasStarted] = useState(false);
+  const [hasStarted, setHasStarted] = useState(
+    () => sessionStorage.getItem(INTRO_SEEN_KEY) === "1",
+  );
 
   useEffect(() => {
     initTossAdsOnce().catch(console.warn);
@@ -15,12 +19,17 @@ const App = () => {
 
   useShareButton();
 
+  const handleStart = () => {
+    sessionStorage.setItem(INTRO_SEEN_KEY, "1");
+    setHasStarted(true);
+  };
+
   return (
     <TDSMobileAITProvider>
       {hasStarted ? (
         <RouterProvider router={router} />
       ) : (
-        <IntroView onStart={() => setHasStarted(true)} />
+        <IntroView onStart={handleStart} />
       )}
     </TDSMobileAITProvider>
   );
