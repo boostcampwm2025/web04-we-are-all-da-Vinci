@@ -1,9 +1,17 @@
-jest.mock("src/common/util/time.util", () => ({
-  getSeoulDayRange: () => ({
-    start: new Date("2026-05-08T15:00:00.000Z"), // KST 2026-05-09 00:00
-    end: new Date("2026-05-09T15:00:00.000Z"),
-  }),
-}));
+// reference 미지정 시 KST 2026-05-09 09:00(= UTC 2026-05-09 00:00)에 픽싱하고,
+// 그 외엔 실제 구현을 그대로 호출해 알고리즘이 service와 일치하도록 보장.
+jest.mock("src/common/util/time.util", () => {
+  const actual = jest.requireActual<typeof import("src/common/util/time.util")>(
+    "src/common/util/time.util",
+  );
+  return {
+    getSeoulDayRange: jest.fn((reference?: Date) =>
+      actual.getSeoulDayRange(
+        reference ?? new Date("2026-05-09T00:00:00.000Z"),
+      ),
+    ),
+  };
+});
 
 import { ConflictException, ForbiddenException } from "@nestjs/common";
 import { AdView } from "src/modules/chance/ad-view.entity";
@@ -258,6 +266,52 @@ describe("ChanceService", () => {
       await expect(
         service.consumeWithEntityManager(fork as never, 1),
       ).resolves.toEqual({ count: 0 });
+      expect(existing.count).toBe(0);
+    });
+  });
+
+  describe("일일 리셋 (KST 정규화)", () => {
+    it("lastResetAt이 TODAY_START(=KST 자정의 UTC 시각)면 리셋되지 않고 count가 유지된다", async () => {
+      const existing = buildExisting({ count: 0, lastResetAt: TODAY_START });
+      const { em } = buildEm(existing);
+      const service = buildService(em);
+
+      await expect(service.getMyChance(1)).resolves.toEqual({ count: 0 });
+      expect(existing.count).toBe(0);
+    });
+
+    it("lastResetAt이 같은 KST 날짜의 다른 시각(KST 23:00)이어도 리셋되지 않는다", async () => {
+      const existing = buildExisting({
+        count: 0,
+        lastResetAt: new Date("2026-05-09T14:00:00.000Z"), // KST 5/9 23:00
+      });
+      const { em } = buildEm(existing);
+      const service = buildService(em);
+
+      await expect(service.getMyChance(1)).resolves.toEqual({ count: 0 });
+    });
+
+    it("lastResetAt이 driver로부터 string으로 들어와도 KST 정규화 후 비교한다", async () => {
+      const existing = buildExisting({
+        count: 3,
+        // 일부 driver는 datetime 컬럼을 string으로 돌려준다. 같은 KST 5/9이므로 유지돼야 한다.
+        lastResetAt: "2026-05-08T15:00:00.000Z" as unknown as Date,
+      });
+      const { em } = buildEm(existing);
+      const service = buildService(em);
+
+      await expect(service.getMyChance(1)).resolves.toEqual({ count: 3 });
+    });
+
+    it("같은 KST 날짜에 consume 후 다시 조회해도 count는 회복되지 않는다 (운영 버그 회귀)", async () => {
+      const existing = buildExisting({ count: 1, lastResetAt: TODAY_START });
+      const { em, fork } = buildEm(existing);
+      const service = buildService(em);
+
+      await service.consumeWithEntityManager(fork as never, 1);
+      expect(existing.count).toBe(0);
+
+      await expect(service.getMyChance(1)).resolves.toEqual({ count: 0 });
       expect(existing.count).toBe(0);
     });
   });

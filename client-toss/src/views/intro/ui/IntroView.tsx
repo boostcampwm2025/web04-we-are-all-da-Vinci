@@ -26,7 +26,7 @@ const IntroView = ({ onStart }: IntroViewProps) => {
           subtitleBottom={
             <Top.SubtitleParagraph size={17}>
               <Top.SubtitleParagraph.Text>
-                기억하고 그리며 두뇌를 깨우는{" "}
+                기억하고 그려서 두뇌를 깨우는{" "}
               </Top.SubtitleParagraph.Text>
               <Top.SubtitleParagraph.Text
                 fontWeight="bold"

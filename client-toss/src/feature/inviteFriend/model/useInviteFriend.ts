@@ -88,7 +88,16 @@ export const useInviteFriend = ({
 
   const start = useCallback(() => {
     if (isInviting) return;
-    if (!isContactsViralAvailable() || !moduleId) {
+    if (!moduleId) {
+      // VITE_CONTACTS_VIRAL_MODULE_ID가 빌드에 주입되지 않은 운영 사고 신호.
+      // 사용자에게는 일반 메시지, 콘솔에는 명시적인 사유를 남겨 빠르게 감지한다.
+      handleError(
+        "MISSING_MODULE_ID",
+        "친구 초대 기능 설정에 문제가 있어요. 잠시 후 다시 시도해주세요.",
+      );
+      return;
+    }
+    if (!isContactsViralAvailable()) {
       handleError(
         "UNSUPPORTED",
         "이 환경에서는 친구 초대 적립이 지원되지 않아요.",

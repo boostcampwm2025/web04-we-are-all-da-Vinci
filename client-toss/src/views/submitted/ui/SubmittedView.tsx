@@ -4,7 +4,7 @@ import {
   ReplayDrawingCanvas,
 } from "@/entities/drawingCanvas";
 import { PhaseHeader } from "@/entities/phaseHeader";
-import { useRewardAd } from "@/feature/playChance";
+import { useFullScreenAd } from "@/feature/playChance";
 import { serverTossApi } from "@/shared/api";
 import { AD_GROUP_IDS } from "@/shared/config";
 import { trackClick, useExitGuard, useRequiredState } from "@/shared/lib";
@@ -28,7 +28,7 @@ const SubmittedView = () => {
   const { showDialog, setShowDialog } = useExitGuard();
   const { hasChance, chargeByAd, startPlay } =
     useOutletContext<PlayChanceLayoutContext>();
-  const { isAdLoaded, showAd } = useRewardAd();
+  const { isAdLoaded, showAd, adGroupId } = useFullScreenAd();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isReplaying, setIsReplaying] = useState(false);
@@ -64,7 +64,7 @@ const SubmittedView = () => {
       // chance가 있으면 광고 면제 (라벨 "광고·등록 없이 재도전"과 일치)
       if (!hasChance && isAdLoaded) {
         await showAd();
-        await chargeByAd({ adGroupId: AD_GROUP_IDS.REWARDED });
+        await chargeByAd({ adGroupId });
       }
       const prompt = await startPlay();
       if (!prompt) {

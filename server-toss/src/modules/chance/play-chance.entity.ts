@@ -18,6 +18,6 @@ export class PlayChance {
   // 나중에 기본 횟수가 바뀌어도 서비스 코드는 건드릴 필요가 없음
   count: Opt<number> = 0; // default 책임이 엔티티 있음
 
-  @Property({ fieldName: "last_reset_at", type: "date" })
+  @Property({ fieldName: "last_reset_at", type: "datetime" })
   lastResetAt!: Date;
 }

@@ -51,7 +51,6 @@ jobs:
       needs.changes.outputs.packages-shared == 'true' ||
       needs.changes.outputs.packages-similarity == 'true'
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -125,7 +124,6 @@ jobs:
       needs.changes.outputs.server == 'true' ||
       needs.changes.outputs.packages-shared == 'true'
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -196,7 +194,6 @@ jobs:
       needs.changes.outputs.packages-toss-shared == 'true' ||
       needs.changes.outputs.packages-similarity == 'true'
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -266,7 +263,6 @@ jobs:
       needs.changes.outputs.packages-toss-shared == 'true' ||
       needs.changes.outputs.packages-similarity == 'true'
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -321,7 +317,6 @@ jobs:
       github.event_name == 'pull_request' &&
       (needs.changes.outputs.client == 'true' || needs.changes.outputs.packages-shared == 'true' || needs.changes.outputs.packages-similarity == 'true')
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -355,7 +350,6 @@ jobs:
       github.event_name == 'pull_request' &&
       (needs.changes.outputs.client-toss == 'true' || needs.changes.outputs.packages-toss-shared == 'true' || needs.changes.outputs.packages-similarity == 'true')
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -384,7 +378,16 @@ jobs:
 
   notify:
     name: Slack Notification
-    needs: [changes, client, server, client-toss, server-toss, bundle-size-client, bundle-size-toss]
+    needs:
+      [
+        changes,
+        client,
+        server,
+        client-toss,
+        server-toss,
+        bundle-size-client,
+        bundle-size-toss,
+      ]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 

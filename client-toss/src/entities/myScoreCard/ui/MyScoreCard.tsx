@@ -46,7 +46,7 @@ const MyScoreCard = ({
       </div>
       {!hideHeader && (
         <div className="mt-3 flex flex-col items-center">
-          <div className="text-xs text-(--color-description)">
+          <div className="text-xs text-(--color-blue)">
             캔버스를 누르면 자세한 분석을 볼 수 있어요
           </div>
           <div className="mt-1">

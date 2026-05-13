@@ -57,12 +57,12 @@ vi.mock("@/shared/ui/bannerAd", () => ({
 }));
 
 const mockShowAd = vi.fn().mockResolvedValue(undefined);
-const mockUseRewardAd = vi.fn(() => ({
+const mockUseFullScreenAd = vi.fn(() => ({
   isAdLoaded: false as boolean,
   showAd: mockShowAd,
 }));
 vi.mock("@/feature/playChance", () => ({
-  useRewardAd: () => mockUseRewardAd(),
+  useFullScreenAd: () => mockUseFullScreenAd(),
 }));
 
 const mockRouteState = {
@@ -95,7 +95,7 @@ describe("SubmittedView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
-    mockUseRewardAd.mockImplementation(() => ({
+    mockUseFullScreenAd.mockImplementation(() => ({
       isAdLoaded: false,
       showAd: mockShowAd,
     }));
@@ -255,7 +255,7 @@ describe("SubmittedView", () => {
 
   it("hasChance가 있으면 광고가 로드되어도 광고/chargeByAd 없이 startPlay만 호출한다", async () => {
     vi.useRealTimers();
-    mockUseRewardAd.mockImplementation(() => ({
+    mockUseFullScreenAd.mockImplementation(() => ({
       isAdLoaded: true,
       showAd: mockShowAd,
     }));

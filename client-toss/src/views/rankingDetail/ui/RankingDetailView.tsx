@@ -66,7 +66,11 @@ const RankingDetailView = () => {
             : "그림 상세"
         }
         description={
-          drawing ? "캔버스를 누르면 자세한 분석을 볼 수 있어요" : undefined
+          drawing ? (
+            <span className="text-(--color-blue)">
+              캔버스를 누르면 자세한 분석을 볼 수 있어요
+            </span>
+          ) : undefined
         }
       />
 

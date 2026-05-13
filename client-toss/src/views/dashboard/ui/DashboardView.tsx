@@ -1,12 +1,11 @@
 import type { PlayChanceLayoutContext } from "@/app/layouts/PlayChanceLayout";
 import { useMyDrawings } from "@/entities/myScoreCard";
-import { useRewardAd } from "@/feature/playChance";
+import { useFullScreenAd } from "@/feature/playChance";
 import {
   getCachedNickname,
   serverTossApi,
   setCachedNickname,
 } from "@/shared/api";
-import { AD_GROUP_IDS } from "@/shared/config";
 import { formatLocalDate, getAnonymousHash, useExitGuard } from "@/shared/lib";
 import { Border, Button, ConfirmDialog, Tab, Toast } from "@toss/tds-mobile";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -37,7 +36,7 @@ const DashboardView = () => {
     startPlay,
     refresh: refreshChance,
   } = useOutletContext<PlayChanceLayoutContext>();
-  const { isAdLoaded, showAd } = useRewardAd();
+  const { isAdLoaded, showAd, adGroupId } = useFullScreenAd();
 
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -146,7 +145,7 @@ const DashboardView = () => {
     try {
       if (isAdLoaded) {
         await showAd();
-        await chargeByAd({ adGroupId: AD_GROUP_IDS.REWARDED });
+        await chargeByAd({ adGroupId });
       }
       const prompt = await startPlay();
       if (!prompt) {
@@ -246,7 +245,7 @@ const DashboardView = () => {
             disabled={isStartingGame}
             onClick={handleRetry}
           >
-            광고 보고 도전하기
+            5초 광고 보고 도전하기
           </Button>
         )}
       </section>

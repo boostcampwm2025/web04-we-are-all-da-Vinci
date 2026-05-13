@@ -48,14 +48,10 @@ vi.mock("@/shared/api", () => ({
 }));
 
 vi.mock("@/feature/playChance", () => ({
-  useRewardAd: () => ({
+  useFullScreenAd: () => ({
     isAdLoaded: false,
     showAd: vi.fn().mockResolvedValue(undefined),
   }),
-}));
-
-vi.mock("@/shared/ui/rewardAd", () => ({
-  RewardAd: () => <div data-testid="reward-ad" />,
 }));
 
 vi.mock("@/entities/myScoreCard", () => ({

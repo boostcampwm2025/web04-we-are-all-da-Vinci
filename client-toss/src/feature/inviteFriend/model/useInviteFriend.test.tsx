@@ -25,8 +25,39 @@ describe("useInviteFriend", () => {
     mockedCharge.mockResolvedValue({ count: 2 });
   });
 
-  describe("contactsViral 미지원 또는 moduleId 미설정", () => {
-    it("contactsViral.isSupported false면 onError 호출 + start 차단", async () => {
+  describe("moduleId / SDK 미지원 분기", () => {
+    afterEach(() => {
+      // @ts-expect-error: 다른 워커/테스트로 환경변수가 새지 않도록 정리
+      delete import.meta.env.VITE_CONTACTS_VIRAL_MODULE_ID;
+    });
+
+    it("VITE_CONTACTS_VIRAL_MODULE_ID 미설정이면 MISSING_MODULE_ID 메시지로 차단된다", async () => {
+      mockedContactsViral.isSupported.mockReturnValue(true);
+      const onCharged = vi.fn();
+      const onError = vi.fn();
+
+      const { result } = renderHook(() =>
+        useInviteFriend({ onCharged, onError }),
+      );
+
+      await act(async () => {
+        result.current.start();
+      });
+
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message:
+            "친구 초대 기능 설정에 문제가 있어요. 잠시 후 다시 시도해주세요.",
+        }),
+      );
+      expect(mockedContactsViral).not.toHaveBeenCalled();
+      expect(onCharged).not.toHaveBeenCalled();
+      expect(result.current.isInviting).toBe(false);
+    });
+
+    it("moduleId는 있지만 contactsViral.isSupported false면 UNSUPPORTED 메시지로 차단된다", async () => {
+      // @ts-expect-error: 테스트에서 환경변수 주입
+      import.meta.env.VITE_CONTACTS_VIRAL_MODULE_ID = "test-module";
       mockedContactsViral.isSupported.mockReturnValue(false);
       const onCharged = vi.fn();
       const onError = vi.fn();

@@ -128,10 +128,13 @@ export class ChanceService {
       return created;
     }
 
-    // MikroORM date 컬럼은 driver에 따라 string("YYYY-MM-DD")으로 매핑되어
-    // Date 객체와 직접 비교 시 NaN으로 떨어져 reset 분기를 못 탐. Date로 정규화 후 비교.
-    const lastResetTime = new Date(existing.lastResetAt).getTime();
-    if (lastResetTime < start.getTime()) {
+    // 양변을 KST 자정으로 정규화해서 비교한다. driver/컬럼 타입에 따라
+    // lastResetAt이 string("YYYY-MM-DD")이나 UTC 자정 Date로 들어와도
+    // 같은 KST 날짜라면 리셋 분기를 안 타도록 보장.
+    const lastResetSeoulStart = getSeoulDayRange(
+      new Date(existing.lastResetAt),
+    ).start.getTime();
+    if (lastResetSeoulStart < start.getTime()) {
       existing.count = Math.max(existing.count, 1);
       existing.lastResetAt = start;
     }
