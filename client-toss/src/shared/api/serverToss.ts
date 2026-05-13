@@ -166,9 +166,6 @@ export const serverTossApi = {
   getMe: async () =>
     UserInfoResponseSchema.parse(await request<unknown>("GET", "/user/me")),
 
-  getPrompt: async () =>
-    PromptResponseSchema.parse(await request<unknown>("GET", "/prompt")),
-
   startPlay: async () =>
     PromptResponseSchema.parse(await request<unknown>("POST", "/plays/start")),
 
