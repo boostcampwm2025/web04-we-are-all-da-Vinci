@@ -33,7 +33,7 @@ const RankingList = () => {
         return [
           entry,
           <div key={`ad-${idx}`} className="px-(--card-mx)">
-            <BannerAd adGroupId={AD_GROUP_IDS.BANNER_LIST} className="my-1" />
+            <BannerAd adGroupId={AD_GROUP_IDS.BANNER_LIST} />
           </div>,
         ];
       })}

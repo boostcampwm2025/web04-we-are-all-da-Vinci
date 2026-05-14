@@ -25,13 +25,8 @@ const RankingDetailView = () => {
       return (
         <>
           <MyScoreCard drawing={drawing} hideHeader hideAd />
-          <div className="mt-3">
-            <Score
-              value={Number(drawing.similarity.score.toFixed(2))}
-              size="s"
-            />
-          </div>
-          <div className="mt-3 px-(--card-mx)">
+          <Score value={Number(drawing.similarity.score.toFixed(2))} size="s" />
+          <div className="px-(--card-mx)">
             <BannerAd type="feed" adGroupId={AD_GROUP_IDS.BANNER_FEED} />
           </div>
         </>
@@ -76,7 +71,7 @@ const RankingDetailView = () => {
 
       {renderBody()}
 
-      <div className="mt-8 px-(--page-px)">
+      <div className="mt-3 px-(--page-px)">
         <Link to="/ranking">
           <Button size="xlarge" variant="weak" display="block">
             랭킹으로 돌아가기
