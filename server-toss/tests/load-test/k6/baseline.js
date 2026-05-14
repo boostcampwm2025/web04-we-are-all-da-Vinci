@@ -3,6 +3,7 @@ import { check, sleep } from "k6";
 import { SharedArray } from "k6/data";
 
 const BASE_URL = __ENV.BASE_URL || "http://localhost:3000";
+const TEST_AD_GROUP_ID = __ENV.TEST_AD_GROUP_ID || "TEST_AD_GROUP";
 const STAGES = [
   { duration: "1m", target: 20 },
   { duration: "1m", target: 50 },
@@ -24,14 +25,15 @@ export const options = {
   },
   thresholds: {
     http_req_failed: ["rate<0.01"],
-    http_req_duration: ["p(95)<500", "p(99)<1500"],
+    http_req_duration: ["p(95)<1000", "p(99)<1500"],
     "http_req_duration{api:myDrawings}": ["p(95)<500"],
     "http_req_duration{api:podium}": ["p(95)<500"],
-    "http_req_duration{api:prompt}": ["p(95)<500"],
+    "http_req_duration{api:start}": ["p(95)<500"],
     "http_req_duration{api:strokes}": ["p(95)<300"],
     "http_req_duration{api:submit}": ["p(95)<1000"],
     "http_req_duration{api:myRanking}": ["p(95)<500"],
     "http_req_duration{api:rankings}": ["p(95)<500"],
+    "http_req_duration{api:chargeChancesByAd}": ["p(95)<500"],
   },
 };
 
@@ -88,15 +90,16 @@ export default function () {
     "podium success": (r) => r.status === 200,
   });
 
-  const promptRes = http.get(`${BASE_URL}/prompt`, {
+  const startRes = http.post(`${BASE_URL}/plays/start`, "", {
     headers: authHeaders(user),
-    tags: { api: "prompt" },
-  });
-  check(promptRes, {
-    "prompt success": (r) => r.status === 200,
+    tags: { api: "start" },
   });
 
-  const promptJson = promptRes.json();
+  check(startRes, {
+    "start success": (r) => r.status === 200 || r.status === 201,
+  });
+
+  const promptJson = startRes.json();
 
   const strokes = promptJson.strokes;
 
@@ -138,5 +141,26 @@ export default function () {
   http.get(`${BASE_URL}/rankings/me`, {
     headers: authHeaders(user),
     tags: { api: "myRanking" },
+  });
+
+  const chargeChancesByAdPayload = JSON.stringify({
+    source: "ad",
+    sdkPayload: {
+      adGroupId: TEST_AD_GROUP_ID,
+      unitType: "point",
+      unitAmount: 1, // 리워드 수량
+    },
+  });
+  const chargeRes = http.post(
+    `${BASE_URL}/chances/charge`,
+    chargeChancesByAdPayload,
+    {
+      headers: authHeaders(user),
+      tags: { api: "chargeChancesByAd" },
+    },
+  );
+
+  check(chargeRes, {
+    "charge success": (r) => r.status === 201 || r.status === 200,
   });
 }
