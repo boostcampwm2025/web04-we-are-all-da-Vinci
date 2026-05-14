@@ -32,9 +32,9 @@
     "migration:pending": "mikro-orm migration:pending",
     "migration:down": "mikro-orm migration:down",
     "migration:fresh": "mikro-orm migration:fresh",
-    "load-test:docker:build": "docker buildx build -f tests/load-test/docker/Dockerfile -t toss-local ..",
-    "load-test:docker:run": "docker run -d --name toss-local -p 3000:3000 --cpus='2' --memory='2g' --env-file .env toss-local",
-    "load-test:docker:logs": "docker logs -f toss-local",
+    "load-test:docker:run": "docker compose -f tests/load-test/docker/compose.yml up -d --build",
+    "load-test:docker:stop": "docker compose -f tests/load-test/docker/compose.yml down",
+    "load-test:docker:logs": "docker compose -f tests/load-test/docker/compose.yml logs -f",
     "tokens:generate": "node ./tests/load-test/scripts/generate-test-tokens.js"
   },
   "dependencies": {
