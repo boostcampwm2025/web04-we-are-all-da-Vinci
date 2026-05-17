@@ -2,94 +2,148 @@ interface Position {
   x: number;
   y: number;
 }
+
 interface Arc {
   rad: number;
   start: Position;
   end: Position;
   stroke: string;
+  radius: number;
+  strokeWidth: number;
 }
 
 interface ArcScoreBarProps {
-  shapeSimilarity: number;
-  countSimilarity: number;
-  penalty: number;
+  shapeSimilarity: number; // 0 ~ 10
+  strokeMatchSimilarity: number; // 0 ~ 90
+  penalty: number; // 0 ~ 75
 }
 
-const RADIUS = 100;
-const STROKE_WIDTH = 16;
-const PI = Math.PI;
-const GAP = 2;
+const OUTER_RADIUS = 100;
+const INNER_RADIUS = 72;
 
-const calcRad = (score: number) => {
-  // Radian = PI / 180 * Degree
-  // Degree = score / 100 * 90
-  // 90도가 100점
-  return (PI / 180) * ((score / 100) * 90);
+const OUTER_STROKE_WIDTH = 16;
+const INNER_STROKE_WIDTH = 12;
+
+const PI = Math.PI;
+
+const SCORE_MAX = 100;
+const PENALTY_MAX = 75;
+
+const SCORE_STROKE = "#3182F6";
+const SCORE_BACKGROUND_STROKE = "#E8F3FF";
+
+const PENALTY_STROKE = "#F66570";
+const PENALTY_BACKGROUND_STROKE = "#FFEEEE";
+
+const clamp = (value: number, min: number, max: number) => {
+  return Math.max(min, Math.min(max, value));
 };
 
-const pointOnArc = (angle: number) => ({
-  x: RADIUS * Math.cos(angle),
-  y: Math.min(-RADIUS * Math.sin(angle), 0),
+const pointOnArc = (angle: number, radius: number): Position => ({
+  x: radius * Math.cos(angle),
+  y: -radius * Math.sin(angle),
 });
 
-const makeArc = (startAngle: number, rad: number, stroke: string): Arc => {
+const makeArc = (
+  startAngle: number,
+  rad: number,
+  stroke: string,
+  radius: number,
+  strokeWidth: number,
+): Arc => {
   const endAngle = startAngle + rad;
 
   return {
     rad,
     stroke,
-    start: pointOnArc(startAngle),
-    end: pointOnArc(endAngle),
+    radius,
+    strokeWidth,
+    start: pointOnArc(startAngle, radius),
+    end: pointOnArc(endAngle, radius),
   };
 };
 
-const clampScore = (value: number) => Math.max(0, Math.min(100, value));
+const scoreToRad = (value: number, maxValue: number) => {
+  const ratio = clamp(value / maxValue, 0, 1);
+  return ratio * PI;
+};
+
+const ArcPath = ({ arc }: { arc: Arc }) => {
+  if (arc.rad <= 0) {
+    return null;
+  }
+
+  return (
+    <path
+      d={`M ${arc.start.x} ${arc.start.y} A ${arc.radius} ${arc.radius} 0 0 0 ${arc.end.x} ${arc.end.y}`}
+      fill="none"
+      stroke={arc.stroke}
+      strokeWidth={arc.strokeWidth}
+      strokeLinecap="round"
+    />
+  );
+};
 
 const ArcScoreBar = ({
   shapeSimilarity,
-  countSimilarity,
+  strokeMatchSimilarity,
   penalty,
 }: ArcScoreBarProps) => {
-  const gapRad = calcRad(GAP);
+  const totalScore = clamp(
+    shapeSimilarity + strokeMatchSimilarity,
+    0,
+    SCORE_MAX,
+  );
+  const clampedPenalty = clamp(penalty, 0, PENALTY_MAX);
 
-  const shapeSimRad = Math.max(calcRad(clampScore(shapeSimilarity)), 0);
-  const countSimRad = Math.max(calcRad(clampScore(countSimilarity)), 0);
-  const penaltyRad = Math.max(calcRad(clampScore(penalty)), 0);
+  const scoreRad = scoreToRad(totalScore, SCORE_MAX);
+  const penaltyRad = scoreToRad(clampedPenalty, PENALTY_MAX);
 
-  const baseSimRad = Math.max(PI / 2 - (shapeSimRad + countSimRad), 0);
-  const basePenaltyRad = Math.max(PI / 2 - penaltyRad, 0);
+  const scoreBackgroundArc = makeArc(
+    0,
+    PI,
+    SCORE_BACKGROUND_STROKE,
+    OUTER_RADIUS,
+    OUTER_STROKE_WIDTH,
+  );
 
-  const segments = [
-    { rad: baseSimRad, stroke: "#E8F3FF" },
-    { rad: shapeSimRad, stroke: "#3182F6" },
-    { rad: gapRad, stroke: "#F9FAFB" },
-    { rad: countSimRad, stroke: "#3182F6" },
-    { rad: gapRad, stroke: "#F9FAFB" },
-    { rad: penaltyRad, stroke: "#F66570" },
-    { rad: basePenaltyRad, stroke: "#FFEEEE" },
-  ];
+  const scoreArc = makeArc(
+    0,
+    scoreRad,
+    SCORE_STROKE,
+    OUTER_RADIUS,
+    OUTER_STROKE_WIDTH,
+  );
 
-  let currentAngle = 0;
-  const paths = segments.map(({ rad, stroke }) => {
-    const arc = makeArc(currentAngle, rad, stroke);
-    currentAngle = Math.min(currentAngle + rad, PI);
-    return arc;
-  });
+  const penaltyBackgroundArc = makeArc(
+    0,
+    PI,
+    PENALTY_BACKGROUND_STROKE,
+    INNER_RADIUS,
+    INNER_STROKE_WIDTH,
+  );
+
+  const penaltyArc = makeArc(
+    0,
+    penaltyRad,
+    PENALTY_STROKE,
+    INNER_RADIUS,
+    INNER_STROKE_WIDTH,
+  );
 
   return (
     <svg
-      width={`${2 * RADIUS + 20}`}
-      height={`${RADIUS + 20}`}
-      viewBox={`${-RADIUS - 10} ${-RADIUS - 10} ${2 * RADIUS + 20} ${RADIUS + 10}`}
+      width={2 * OUTER_RADIUS + 24}
+      height={OUTER_RADIUS + 24}
+      viewBox={`${-OUTER_RADIUS - 12} ${-OUTER_RADIUS - 12} ${
+        2 * OUTER_RADIUS + 24
+      } ${OUTER_RADIUS + 24}`}
     >
-      {paths.map((p) => (
-        <path
-          d={`M${p.start.x},${p.start.y} A${RADIUS},${RADIUS} 0 0 0 ${p.end.x},${p.end.y}`}
-          fill="none"
-          stroke={`${p.stroke}`}
-          strokeWidth={`${STROKE_WIDTH}`}
-        />
-      ))}
+      <ArcPath arc={scoreBackgroundArc} />
+      <ArcPath arc={scoreArc} />
+
+      <ArcPath arc={penaltyBackgroundArc} />
+      <ArcPath arc={penaltyArc} />
     </svg>
   );
 };

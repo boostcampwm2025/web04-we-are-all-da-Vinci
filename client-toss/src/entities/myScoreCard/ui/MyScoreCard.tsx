@@ -101,7 +101,7 @@ const MyScoreCard = ({
         <div className="flex w-full flex-col items-center gap-4 px-(--page-px) pt-2 pb-[env(safe-area-inset-bottom)]">
           <ArcScoreBar
             shapeSimilarity={similarity.shapeSimilarity}
-            countSimilarity={similarity.strokeMatchSimilarity}
+            strokeMatchSimilarity={similarity.strokeMatchSimilarity}
             penalty={similarity.penalty}
           />
           <ScoreDetailCard
