@@ -5,7 +5,6 @@ import {
 } from "@/entities/drawingCanvas";
 import { ScoreDetailCard } from "@/entities/scoreDetailCard";
 import { AD_GROUP_IDS } from "@/shared/config";
-import { ArcScoreBar } from "@/shared/ui/arcScoreBar";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";
 import type { MyDrawingResponse } from "@toss/shared";
@@ -99,11 +98,6 @@ const MyScoreCard = ({
         }
       >
         <div className="flex w-full flex-col items-center gap-4 px-(--page-px) pt-2 pb-[env(safe-area-inset-bottom)]">
-          <ArcScoreBar
-            shapeSimilarity={similarity.shapeSimilarity}
-            strokeMatchSimilarity={similarity.strokeMatchSimilarity}
-            penalty={similarity.penalty}
-          />
           <ScoreDetailCard
             strokeMatchSimilarity={similarity.strokeMatchSimilarity}
             shapeSimilarity={similarity.shapeSimilarity}
