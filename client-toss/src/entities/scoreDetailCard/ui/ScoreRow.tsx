@@ -29,7 +29,7 @@ const ScoreRow = ({
       </Paragraph>
 
       <Paragraph typography="t6">
-        <Paragraph.Text fontWeight="medium" color={scoreColor}>
+        <Paragraph.Text fontWeight="medium" color={scoreColor} typography="t5">
           {sign}
           {formatScore(score)}
         </Paragraph.Text>
