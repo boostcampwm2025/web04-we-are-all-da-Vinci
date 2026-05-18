@@ -6,7 +6,7 @@ interface ScoreBarProps {
   variant: "positive" | "negative";
 }
 const ScoreBar = ({ score, max, variant }: ScoreBarProps) => {
-  const ratio = Math.min(Math.abs(score) / max, 1);
+  const ratio = max > 0 ? Math.min(Math.abs(score) / max, 1) : 0;
 
   const percentage = ratio === 0 ? 0 : Math.max(ratio * 100, 4);
 
