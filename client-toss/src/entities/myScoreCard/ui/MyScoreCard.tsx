@@ -59,10 +59,7 @@ const MyScoreCard = ({
       )}
       {!hideAd && (
         <div className="w-full px-(--card-mx)">
-          <BannerAd
-            adGroupId={AD_GROUP_IDS.BANNER_LIST}
-            className="mt-px mb-2 w-full"
-          />
+          <BannerAd adGroupId={AD_GROUP_IDS.BANNER_LIST} className="w-full" />
         </div>
       )}
       {isDetailOpen && (
