@@ -123,7 +123,7 @@ const SubmittedView = () => {
       </div>
 
       <div className="flex flex-1 flex-col justify-between pb-(--card-mx)">
-        <Score value={Math.round(score)} size="l" />
+        <Score value={score} size="l" />
         <div className="flex w-full flex-col gap-3">
           <div className="px-(--card-mx)">
             <BannerAd adGroupId={AD_GROUP_IDS.BANNER_LIST} type="list" />
