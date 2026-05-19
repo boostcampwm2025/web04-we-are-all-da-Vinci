@@ -1,0 +1,8 @@
+docker/mysql/data
+docker/mysql/data/* 
+docker/mysql/data/**/*
+
+docker/env/.env.*
+docker/env/.env
+**/.env
+**/.env.*
