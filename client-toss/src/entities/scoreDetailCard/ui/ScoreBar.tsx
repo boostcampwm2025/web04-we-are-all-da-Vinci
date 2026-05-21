@@ -19,11 +19,9 @@ const ScoreBar = ({ score, max, variant }: ScoreBarProps) => {
         w-full
         overflow-hidden
         rounded-md
-        border
       "
       style={{
         backgroundColor: colors.grey100,
-        borderColor: colors.grey900,
       }}
     >
       <div
