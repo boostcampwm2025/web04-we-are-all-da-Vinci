@@ -7,6 +7,7 @@ import { useRequirePlaySession } from "@/feature/playChance";
 import { AD_GROUP_IDS } from "@/shared/config";
 import {
   MEMORIZE_SECONDS,
+  trackScreen,
   useCountdown,
   useExitGuard,
   useRequiredState,
@@ -14,7 +15,7 @@ import {
 import { BannerAd } from "@/shared/ui/bannerAd";
 import type { Stroke } from "@toss/shared";
 import { ConfirmDialog } from "@toss/tds-mobile";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface MemorizeRouteState {
@@ -28,6 +29,11 @@ const MemorizeView = () => {
   const { isCheckingSession } = useRequirePlaySession();
   const routeState = useRequiredState<MemorizeRouteState>();
   const { showDialog, setShowDialog } = useExitGuard();
+
+  useEffect(() => {
+    if (isCheckingSession || !routeState) return;
+    trackScreen("memorize_view");
+  }, [isCheckingSession, routeState]);
   const [endTime] = useState(() => {
     const stored = sessionStorage.getItem("memorizeEndTime");
     const now = Date.now();
