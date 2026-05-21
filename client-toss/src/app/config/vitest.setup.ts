@@ -246,11 +246,12 @@ vi.mock("@toss/tds-mobile", () => ({
       left,
       contents,
       right,
+      ...props
     }: Record<string, unknown> & {
       left?: ReactNode;
       contents?: ReactNode;
       right?: ReactNode;
-    }) => createElement("div", null, left, contents, right),
+    }) => createElement("div", props, left, contents, right),
     {
       Texts: ({
         top,

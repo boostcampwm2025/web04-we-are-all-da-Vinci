@@ -13,7 +13,7 @@ const mockedGetMyRanking = serverTossApi.getMyRanking as unknown as Mock;
 const mockedGetTossShareLink = getTossShareLink as unknown as Mock;
 const mockedShare = share as unknown as Mock;
 
-describe("shareMyScore", () => {
+describe("점수 공유", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockedGetTossShareLink.mockResolvedValue("intoss://link");

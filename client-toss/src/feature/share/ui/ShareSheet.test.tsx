@@ -9,7 +9,15 @@ import {
   tdsEvent,
 } from "@apps-in-toss/web-framework";
 import { act, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type Mock,
+  vi,
+} from "vitest";
 import ShareSheet from "./ShareSheet";
 
 vi.mock("@/shared/api", () => ({
@@ -51,7 +59,7 @@ const openSheet = async () => {
   });
 };
 
-describe("ShareSheet", () => {
+describe("공유 시트", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockedApi.getMyChance.mockResolvedValue({ count: 0 });
@@ -59,6 +67,12 @@ describe("ShareSheet", () => {
     mockedApi.chargeChanceByShare.mockResolvedValue({ count: 3 });
     mockedContactsViral.isSupported.mockReturnValue(false);
     mockedContactsViral.mockReturnValue(vi.fn());
+  });
+
+  afterEach(() => {
+    // 테스트 간 환경변수가 새지 않도록 정리 — assertion 실패 시에도 보장
+    // @ts-expect-error: 테스트에서 주입한 환경변수 제거
+    delete import.meta.env.VITE_CONTACTS_VIRAL_MODULE_ID;
   });
 
   it("마운트 시 네비게이션 바 공유 액세서리 버튼을 등록한다", async () => {
@@ -115,9 +129,6 @@ describe("ShareSheet", () => {
     expect(mockedContactsViral).toHaveBeenCalledWith(
       expect.objectContaining({ options: { moduleId: "test-module" } }),
     );
-
-    // @ts-expect-error: 다른 테스트로 환경변수가 새지 않도록 정리
-    delete import.meta.env.VITE_CONTACTS_VIRAL_MODULE_ID;
   });
 
   it("친구 초대 적립이 완료되면 토스트를 띄우고 그리기 기회를 다시 불러온다", async () => {
@@ -166,8 +177,5 @@ describe("ShareSheet", () => {
       ).toBeInTheDocument();
       expect(mockedApi.getMyChance).toHaveBeenCalledTimes(2);
     });
-
-    // @ts-expect-error: 다른 테스트로 환경변수가 새지 않도록 정리
-    delete import.meta.env.VITE_CONTACTS_VIRAL_MODULE_ID;
   });
 });
