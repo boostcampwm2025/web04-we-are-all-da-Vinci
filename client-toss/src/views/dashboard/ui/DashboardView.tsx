@@ -27,6 +27,7 @@ const DashboardView = () => {
   const [toastOpen, setToastOpen] = useState(false);
   const [toastText, setToastText] = useState("일시적 오류가 발생했어요");
   const anonymousHashRef = useRef<string>("local");
+  const autoStartedRef = useRef(false);
   const { myDrawings, isLoading, refetch: refetchDrawings } = useMyDrawings();
   const {
     chanceCount,
@@ -75,6 +76,12 @@ const DashboardView = () => {
         return;
       }
 
+      // 게임 시작 시점에 자동시작 게이트를 닫는다 — 제출 없이 이탈해도 재자동시작/이중차감 방지
+      localStorage.setItem(
+        `lastPlayed_${anonymousHashRef.current}`,
+        formatLocalDate(),
+      );
+
       navigate("/memorize", {
         state: {
           promptId: prompt.promptId,
@@ -102,7 +109,6 @@ const DashboardView = () => {
         // state를 즉시 제거하여 재마운트 시 토스트 재표시 방지
         window.history.replaceState({}, "");
 
-        localStorage.setItem(`lastPlayed_${hash}`, formatLocalDate());
         refetchDrawings();
 
         const promotionGranted = (
@@ -126,6 +132,13 @@ const DashboardView = () => {
         setInitialLoading(false);
         return;
       }
+
+      // effect가 두 번 실행돼도 자동시작은 마운트당 1회만 — startPlay 이중 호출 방지
+      if (autoStartedRef.current) {
+        setInitialLoading(false);
+        return;
+      }
+      autoStartedRef.current = true;
 
       // 첫 방문: initialLoading=true 상태로 게임 시작 (로딩 화면 유지)
       try {
@@ -156,6 +169,11 @@ const DashboardView = () => {
         setToastOpen(true);
         return;
       }
+
+      localStorage.setItem(
+        `lastPlayed_${anonymousHashRef.current}`,
+        formatLocalDate(),
+      );
 
       navigate("/memorize", {
         state: {
