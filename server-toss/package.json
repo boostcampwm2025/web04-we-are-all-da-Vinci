@@ -26,6 +26,7 @@
     "seed:drawing:small:fresh": "npx mikro-orm migration:fresh --seed SmallUserDrawingSeeder",
     "seed:drawing:large": "npx mikro-orm seeder:run --class=LargeUserDrawingSeeder",
     "seed:ranking": "npx mikro-orm seeder:run --class=RankingSeeder",
+    "chance:reset": "bash scripts/reset-chance.sh",
     "migration:check": "mikro-orm migration:check",
     "migration:list": "mikro-orm migration:list",
     "migration:up": "mikro-orm migration:up",
