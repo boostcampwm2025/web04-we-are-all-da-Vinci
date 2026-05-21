@@ -1,4 +1,4 @@
-import { EntityManager } from "@mikro-orm/core";
+import { EntityManager, LockMode } from "@mikro-orm/core";
 import {
   ConflictException,
   ForbiddenException,
@@ -14,6 +14,10 @@ import { ChanceWhitelistValidator } from "./chance-whitelist.validator";
 import { PlayChance } from "./play-chance.entity";
 import { ShareChannel, ShareLog } from "./share-log.entity";
 
+// 기회 모델
+// - count: 광고/공유로 충전한 추가 기회. 일일 리셋 없이 다음 날로 이월된다.
+// - lastResetAt: 무료 플레이를 마지막으로 사용한 날(KST). 오늘보다 과거면 오늘 무료 1회 가능.
+// - 클라이언트에 노출하는 "기회 수" = count + (오늘 무료 가능 ? 1 : 0).
 @Injectable()
 export class ChanceService {
   private readonly logger = new Logger(ChanceService.name);
@@ -28,11 +32,12 @@ export class ChanceService {
       configService.get<number>("SHARE_DAILY_CHARGE_LIMIT") ?? 5;
   }
 
+  // 읽기 전용. DB를 수정하지 않으므로 차감(consume)과 동시에 호출돼도 lost update가 발생하지 않는다.
   async getMyChance(userKey: number): Promise<{ count: number }> {
-    return this.em.transactional(async (em) => {
-      const chance = await this.getOrInitWithReset(em, userKey);
-      return { count: chance.count };
-    });
+    const todayStart = getSeoulDayRange().start;
+    const chance = await this.em.findOne(PlayChance, { userKey });
+    if (!chance) return { count: 1 };
+    return { count: this.computeAvailable(chance, todayStart) };
   }
 
   async chargeByAd(
@@ -42,7 +47,8 @@ export class ChanceService {
     this.chanceWhitelistValidator.validateAdGroup(userKey, payload);
 
     return this.em.transactional(async (em) => {
-      const chance = await this.getOrInitWithReset(em, userKey);
+      const todayStart = getSeoulDayRange().start;
+      const chance = await this.findOrCreate(em, userKey);
 
       const userRef = em.getReference(User, userKey);
       const adView = em.create(AdView, {
@@ -55,7 +61,7 @@ export class ChanceService {
       this.successLog(userKey, "ad", chance.count, {
         adGroupId: payload.adGroupId,
       });
-      return { count: chance.count };
+      return { count: this.computeAvailable(chance, todayStart) };
     });
   }
 
@@ -67,7 +73,7 @@ export class ChanceService {
 
     return this.em.transactional(async (em) => {
       const { start, end } = getSeoulDayRange();
-      const chance = await this.getOrInitWithReset(em, userKey, start);
+      const chance = await this.findOrCreate(em, userKey);
 
       const todayShareLogs = await em.count(ShareLog, {
         user: { userKey },
@@ -90,7 +96,7 @@ export class ChanceService {
       this.successLog(userKey, "share", chance.count, {
         channel: payload.channel,
       });
-      return { count: chance.count };
+      return { count: this.computeAvailable(chance, start) };
     });
   }
 
@@ -98,7 +104,15 @@ export class ChanceService {
     em: EntityManager,
     userKey: number,
   ): Promise<{ count: number }> {
-    const chance = await this.getOrInitWithReset(em, userKey);
+    const todayStart = getSeoulDayRange().start;
+    const chance = await this.findOrCreate(em, userKey);
+
+    // 당일 첫 플레이는 무료 — 충전분(count)을 차감하지 않고 무료 사용일만 갱신한다.
+    if (this.isFreeAvailable(chance.lastResetAt, todayStart)) {
+      chance.lastResetAt = todayStart;
+      this.successLog(userKey, "consume", chance.count, { free: true });
+      return { count: chance.count };
+    }
 
     if (chance.count <= 0) {
       this.denyLog(userKey, "consume", "no_chance");
@@ -110,36 +124,42 @@ export class ChanceService {
     return { count: chance.count };
   }
 
-  private async getOrInitWithReset(
+  // 변경(차감/충전) 경로 전용. PESSIMISTIC_WRITE로 행을 잠가 동시 변경을 직렬화한다.
+  private async findOrCreate(
     em: EntityManager,
     userKey: number,
-    todayStart?: Date,
   ): Promise<PlayChance> {
-    const start = todayStart ?? getSeoulDayRange().start;
-    const existing = await em.findOne(PlayChance, { userKey });
+    const existing = await em.findOne(
+      PlayChance,
+      { userKey },
+      { lockMode: LockMode.PESSIMISTIC_WRITE },
+    );
+    if (existing) return existing;
 
-    if (!existing) {
-      const created = em.create(PlayChance, {
-        userKey,
-        count: 1,
-        lastResetAt: start,
-      });
-      em.persist(created);
-      return created;
-    }
+    // 새 행: lastResetAt을 epoch로 둬서 무료 플레이가 아직 사용 가능한 상태로 만든다.
+    const created = em.create(PlayChance, {
+      userKey,
+      count: 0,
+      lastResetAt: new Date(0),
+    });
+    em.persist(created);
+    return created;
+  }
 
-    // 양변을 KST 자정으로 정규화해서 비교한다. driver/컬럼 타입에 따라
-    // lastResetAt이 string("YYYY-MM-DD")이나 UTC 자정 Date로 들어와도
-    // 같은 KST 날짜라면 리셋 분기를 안 타도록 보장.
+  // 양변을 KST 자정으로 정규화해 비교한다. driver/컬럼 타입에 따라 lastResetAt이
+  // string("YYYY-MM-DD")이나 UTC 자정 Date로 들어와도 같은 KST 날짜면 동일하게 취급.
+  private isFreeAvailable(lastResetAt: Date, todayStart: Date): boolean {
     const lastResetSeoulStart = getSeoulDayRange(
-      new Date(existing.lastResetAt),
+      new Date(lastResetAt),
     ).start.getTime();
-    if (lastResetSeoulStart < start.getTime()) {
-      existing.count = Math.max(existing.count, 1);
-      existing.lastResetAt = start;
-    }
+    return lastResetSeoulStart < todayStart.getTime();
+  }
 
-    return existing;
+  private computeAvailable(chance: PlayChance, todayStart: Date): number {
+    const freeBonus = this.isFreeAvailable(chance.lastResetAt, todayStart)
+      ? 1
+      : 0;
+    return chance.count + freeBonus;
   }
 
   private successLog(
