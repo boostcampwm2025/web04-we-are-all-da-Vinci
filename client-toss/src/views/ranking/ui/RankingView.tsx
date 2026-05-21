@@ -3,7 +3,7 @@ import { RankingList } from "@/entities/ranking";
 import { AD_GROUP_IDS } from "@/shared/config";
 import { trackScreen } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
-import { Border, ListHeader } from "@toss/tds-mobile";
+import { ListHeader } from "@toss/tds-mobile";
 import { useEffect } from "react";
 
 const RankingView = () => {
@@ -12,15 +12,16 @@ const RankingView = () => {
   }, []);
 
   return (
-    <div className="pt-4 pb-2">
-      <div className="flex w-full flex-col items-center gap-4 px-(--page-px) pb-2">
+    <div className="pb-2">
+      <div className="px-(--page-px)">
         <Podium />
       </div>
-      <Border variant="full" />
+
       <div className="px-(--card-mx)">
         <BannerAd adGroupId={AD_GROUP_IDS.BANNER_LIST} />
       </div>
-      <div className="-mt-4">
+
+      <div>
         <ListHeader
           title={
             <ListHeader.TitleParagraph typography="t5" fontWeight="bold">
@@ -34,8 +35,8 @@ const RankingView = () => {
           }
           descriptionPosition="bottom"
         />
+        <RankingList />
       </div>
-      <RankingList />
     </div>
   );
 };

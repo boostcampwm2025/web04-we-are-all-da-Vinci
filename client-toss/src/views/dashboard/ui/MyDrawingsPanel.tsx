@@ -27,9 +27,9 @@ const MyDrawingsPanel = () => {
   };
 
   return (
-    <div className="pt-2 pb-2">
+    <div className="pb-2">
       <MyRankingSection nickname={nickname} />
-      <div className="mt-2 flex justify-center gap-2 py-1">
+      <div className="flex justify-center gap-2 py-1">
         {Array.from({ length: cardCount }).map((_, i) => (
           <button
             key={i}
@@ -49,7 +49,7 @@ const MyDrawingsPanel = () => {
               className="block h-2 w-2 rounded-full transition-colors duration-200"
               style={{
                 backgroundColor:
-                  i === activeIndex ? colors.blue500 : colors.grey100,
+                  i === activeIndex ? colors.blue500 : colors.grey300,
               }}
             />
           </button>
@@ -62,7 +62,7 @@ const MyDrawingsPanel = () => {
         onScroll={handleScroll}
       >
         {isMyDrawingsLoading ? (
-          <div className="w-full shrink-0 snap-start snap-always px-(--page-px)">
+          <div className="w-full shrink-0 snap-start snap-always px-(--card-mx)">
             <Skeleton pattern="cardOnly" style={{ width: "100%" }} />
           </div>
         ) : myDrawings.length > 0 ? (
@@ -75,13 +75,10 @@ const MyDrawingsPanel = () => {
             </div>
           ))
         ) : (
-          <div className="w-full shrink-0 snap-start snap-always px-(--page-px)">
+          <div className="w-full shrink-0 snap-start snap-always px-(--card-mx)">
             <div
-              className="flex h-44 w-full items-center justify-center rounded-2xl text-sm"
-              style={{
-                backgroundColor: colors.grey100,
-                color: colors.grey600,
-              }}
+              className="card flex h-44 w-full items-center justify-center text-sm"
+              style={{ color: colors.grey600 }}
             >
               아직 제출한 그림이 없어요
             </div>

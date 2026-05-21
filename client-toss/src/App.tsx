@@ -1,11 +1,12 @@
 import { router } from "@/app/config/router";
+import { PlayChanceProvider } from "@/feature/playChance";
+import { ShareSheet } from "@/feature/share";
 import { initFirebaseAnalyticsOnce } from "@/shared/api";
 import { captureAttributionOnce, initTossAdsOnce } from "@/shared/lib";
 import { IntroView } from "@/views/intro";
 import { TDSMobileAITProvider } from "@toss/tds-mobile-ait";
 import { useEffect, useState } from "react";
 import { RouterProvider } from "react-router-dom";
-import { useShareButton } from "./feature/shareLink";
 
 const INTRO_SEEN_KEY = "introSeen";
 
@@ -23,8 +24,6 @@ const App = () => {
       });
   }, []);
 
-  useShareButton();
-
   const handleStart = () => {
     sessionStorage.setItem(INTRO_SEEN_KEY, "1");
     setHasStarted(true);
@@ -33,7 +32,10 @@ const App = () => {
   return (
     <TDSMobileAITProvider>
       {hasStarted ? (
-        <RouterProvider router={router} />
+        <PlayChanceProvider>
+          <RouterProvider router={router} />
+          <ShareSheet />
+        </PlayChanceProvider>
       ) : (
         <IntroView onStart={handleStart} />
       )}

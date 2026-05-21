@@ -10,7 +10,7 @@
     /* palette */
     --color-black: #000000;
     --color-red: #ef4444;
-    --color-blue: #3b82f6;
+    --color-blue: #3182f6;
     --color-green: #22c55e;
     --color-yellow: #facc15;
 
@@ -25,6 +25,20 @@
     --color-gold: #ffd158;
     --color-silver: #d1d6db;
     --color-bronze: #ee8f11;
+
+    /* canvas — 그림 캔버스 배경색. 이 값만 바꾸면 모든 캔버스에 반영됨 */
+    --color-canvas: #f8f9f6;
+    /* surface — 페이지 바탕(흰색)과 카드(회색) */
+    --color-page: #ffffff;
+    --color-card: #f2f4f6;
+
+    /* card — 카드가 배경 위에 은은히 떠 보이는 그림자 */
+    --card-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 14px rgba(0, 0, 0, 0.05);
+
+    /* radius — card는 카드/큰 표면(16px), inner는 캔버스 안쪽·작은 항목(12px) */
+    --radius-card: 16px;
+    --radius-inner: 12px;
   }
 
   html,
@@ -39,6 +53,7 @@
     height: 100%;
     width: 100%;
     padding-bottom: env(safe-area-inset-bottom);
+    background-color: var(--color-page);
   }
 
   #root:has([data-no-safe-area-bottom]) {
@@ -64,6 +79,13 @@
   animation: penalty-flash 400ms ease-out forwards;
 }
 
+/* card — 회색 페이지 바탕 위에 떠 보이는 흰 카드. 배경·그림자·모서리를 한 곳에서 관리 */
+.card {
+  background-color: var(--color-card);
+  box-shadow: var(--card-shadow);
+  border-radius: var(--radius-card);
+}
+
 @keyframes slide-up-canvas {
   0% {
     transform: translateY(100vh);
@@ -75,4 +97,25 @@
 
 .animate-slide-up-canvas {
   animation: slide-up-canvas 280ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+@keyframes info-ticker-roll {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-info-ticker {
+  animation: info-ticker-roll 420ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-info-ticker {
+    animation: none;
+  }
 }

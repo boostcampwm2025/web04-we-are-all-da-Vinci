@@ -1,10 +1,9 @@
-import type { PlayChanceLayoutContext } from "@/app/layouts/PlayChanceLayout";
 import {
   DrawingCanvasFrame,
   ReplayDrawingCanvas,
 } from "@/entities/drawingCanvas";
 import { PhaseHeader } from "@/entities/phaseHeader";
-import { useFullScreenAd } from "@/feature/playChance";
+import { useFullScreenAd, usePlayChanceContext } from "@/feature/playChance";
 import { serverTossApi } from "@/shared/api";
 import { AD_GROUP_IDS } from "@/shared/config";
 import {
@@ -18,7 +17,7 @@ import { Score } from "@/shared/ui/score";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
 import { Button, ConfirmDialog, Toast } from "@toss/tds-mobile";
 import { useEffect, useState } from "react";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 interface SubmittedRouteState {
   promptId: number;
@@ -36,8 +35,7 @@ const SubmittedView = () => {
     if (!routeState) return;
     trackScreen("submitted_view");
   }, [routeState]);
-  const { hasChance, chargeByAd, startPlay } =
-    useOutletContext<PlayChanceLayoutContext>();
+  const { hasChance, chargeByAd, startPlay } = usePlayChanceContext();
   const { isAdLoaded, showAd, adGroupId } = useFullScreenAd();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -104,7 +102,7 @@ const SubmittedView = () => {
   const score = routeState.similarity?.score ?? 0;
 
   return (
-    <div className="flex h-full flex-col bg-white">
+    <div className="flex h-full flex-col bg-(--color-page)">
       <Toast
         position="top"
         open={toastOpen}

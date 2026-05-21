@@ -21,17 +21,6 @@ vi.mock("react-router-dom", async () => {
   return {
     ...actual,
     useNavigate: () => navigateMock,
-    useOutletContext: () => ({
-      chanceCount: 1,
-      hasChance: true,
-      isLoading: false,
-      error: null,
-      refresh: vi.fn(),
-      chargeByAd: mockChargeByAd,
-      chargeByShare: vi.fn(),
-      consume: vi.fn(),
-      startPlay: mockStartPlay,
-    }),
   };
 });
 
@@ -63,6 +52,16 @@ const mockUseFullScreenAd = vi.fn(() => ({
 }));
 vi.mock("@/feature/playChance", () => ({
   useFullScreenAd: () => mockUseFullScreenAd(),
+  usePlayChanceContext: () => ({
+    chanceCount: 1,
+    hasChance: true,
+    isLoading: false,
+    error: null,
+    refresh: vi.fn(),
+    chargeByAd: mockChargeByAd,
+    chargeByShare: vi.fn(),
+    startPlay: mockStartPlay,
+  }),
 }));
 
 const mockRouteState = {

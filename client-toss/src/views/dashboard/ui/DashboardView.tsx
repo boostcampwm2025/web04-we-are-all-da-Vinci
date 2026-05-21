@@ -1,20 +1,15 @@
-import type { PlayChanceLayoutContext } from "@/app/layouts/PlayChanceLayout";
 import { useMyDrawings } from "@/entities/myScoreCard";
-import { useFullScreenAd } from "@/feature/playChance";
+import { useFullScreenAd, usePlayChanceContext } from "@/feature/playChance";
 import {
   getCachedNickname,
   serverTossApi,
   setCachedNickname,
 } from "@/shared/api";
 import { formatLocalDate, getAnonymousHash, useExitGuard } from "@/shared/lib";
-import { Border, Button, ConfirmDialog, Tab, Toast } from "@toss/tds-mobile";
+import { Button, ConfirmDialog, Tab, Toast } from "@toss/tds-mobile";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Outlet,
-  useLocation,
-  useNavigate,
-  useOutletContext,
-} from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import InfoTicker from "./InfoTicker";
 
 const RANKING_PATH = "/ranking";
 
@@ -36,7 +31,7 @@ const DashboardView = () => {
     chargeByAd,
     startPlay,
     refresh: refreshChance,
-  } = useOutletContext<PlayChanceLayoutContext>();
+  } = usePlayChanceContext();
   const { isAdLoaded, showAd, adGroupId } = useFullScreenAd();
 
   const [initialLoading, setInitialLoading] = useState(true);
@@ -212,7 +207,10 @@ const DashboardView = () => {
   }
 
   return (
-    <div data-no-safe-area-bottom className="flex h-full flex-col bg-white">
+    <div
+      data-no-safe-area-bottom
+      className="flex h-full flex-col bg-(--color-page)"
+    >
       <Toast
         position="top"
         open={toastOpen}
@@ -222,12 +220,12 @@ const DashboardView = () => {
         onClose={() => setToastOpen(false)}
       />
 
-      <div className="shrink-0 bg-white">
+      <div className="shrink-0 bg-(--color-page)">
         <Tab onChange={(index) => navigate(index === 1 ? RANKING_PATH : "/")}>
           <Tab.Item selected={selectedTab === 0}>오늘 그린 그림</Tab.Item>
           <Tab.Item selected={selectedTab === 1}>오늘의 다빈치</Tab.Item>
         </Tab>
-        <Border variant="full" />
+        <InfoTicker />
       </div>
 
       <main className="min-h-0 flex-1 overflow-y-auto">
@@ -240,7 +238,7 @@ const DashboardView = () => {
         />
       </main>
 
-      <section className="shrink-0 bg-white px-(--page-px) pt-3 pb-[env(safe-area-inset-bottom)]">
+      <section className="shrink-0 bg-(--color-page) px-(--page-px) pt-3 pb-[env(safe-area-inset-bottom)]">
         {isChanceLoading ? (
           <Button color="primary" display="block" loading disabled>
             도전 기회 확인 중

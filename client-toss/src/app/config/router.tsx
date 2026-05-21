@@ -1,5 +1,4 @@
 import AnalyticsTracker from "@/app/config/AnalyticsTracker";
-import PlayChanceLayout from "@/app/layouts/PlayChanceLayout";
 import { DashboardView, MyDrawingsPanel } from "@/views/dashboard";
 import { Drawing } from "@/views/drawing";
 import { LoginView } from "@/views/login";
@@ -26,19 +25,14 @@ export const router = createBrowserRouter([
         element: <Drawing />,
       },
       {
-        element: <PlayChanceLayout />,
+        element: <DashboardView />,
         children: [
-          {
-            element: <DashboardView />,
-            children: [
-              { index: true, element: <MyDrawingsPanel /> },
-              { path: "ranking", element: <RankingView /> },
-            ],
-          },
-          { path: "/submitted", element: <SubmittedView /> },
-          { path: "/drawing/:drawingId", element: <RankingDetailView /> },
+          { index: true, element: <MyDrawingsPanel /> },
+          { path: "ranking", element: <RankingView /> },
         ],
       },
+      { path: "/submitted", element: <SubmittedView /> },
+      { path: "/drawing/:drawingId", element: <RankingDetailView /> },
     ],
   },
 ]);

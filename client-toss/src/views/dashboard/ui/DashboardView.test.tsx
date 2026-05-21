@@ -23,17 +23,6 @@ vi.mock("react-router-dom", async () => {
   return {
     ...actual,
     useNavigate: () => navigateMock,
-    useOutletContext: () => ({
-      chanceCount: 1,
-      hasChance: true,
-      isLoading: false,
-      error: null,
-      refresh: mockRefresh,
-      chargeByAd: mockChargeByAd,
-      chargeByShare: vi.fn(),
-      consume: vi.fn(),
-      startPlay: mockStartPlay,
-    }),
   };
 });
 
@@ -51,6 +40,16 @@ vi.mock("@/feature/playChance", () => ({
   useFullScreenAd: () => ({
     isAdLoaded: false,
     showAd: vi.fn().mockResolvedValue(undefined),
+  }),
+  usePlayChanceContext: () => ({
+    chanceCount: 1,
+    hasChance: true,
+    isLoading: false,
+    error: null,
+    refresh: mockRefresh,
+    chargeByAd: mockChargeByAd,
+    chargeByShare: vi.fn(),
+    startPlay: mockStartPlay,
   }),
 }));
 
@@ -76,6 +75,7 @@ vi.mock("@toss/tds-colors", () => ({
   colors: {
     blue500: "#3182f6",
     grey100: "#f2f4f6",
+    grey300: "#d1d6db",
     grey600: "#6b7684",
   },
 }));

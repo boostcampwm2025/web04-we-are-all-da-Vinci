@@ -1,4 +1,5 @@
 import type { Stroke } from "@toss/shared";
+import { getCanvasBackgroundColor } from "./canvasBackground";
 import { calculateStrokeScale, transformPoint } from "./scaleStrokes";
 
 export const drawStrokesOnCanvas = (
@@ -11,7 +12,7 @@ export const drawStrokesOnCanvas = (
   const logicalWidth = canvas.width / dpr;
   const logicalHeight = canvas.height / dpr;
 
-  ctx.fillStyle = "white";
+  ctx.fillStyle = getCanvasBackgroundColor();
   ctx.fillRect(0, 0, logicalWidth, logicalHeight);
 
   if (strokes.length === 0) return;

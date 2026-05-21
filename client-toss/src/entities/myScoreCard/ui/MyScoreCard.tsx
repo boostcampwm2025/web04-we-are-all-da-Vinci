@@ -46,7 +46,7 @@ const MyScoreCard = ({
       {!hideHeader && (
         <div className="mt-3 flex flex-col items-center">
           <div className="text-xs text-(--color-blue)">
-            캔버스를 누르면 자세한 분석을 볼 수 있어요
+            그림을 누르면 자세한 분석을 볼 수 있어요
           </div>
           <div className="mt-1">
             <Score
@@ -66,7 +66,7 @@ const MyScoreCard = ({
           className="animate-slide-up-canvas pointer-events-none fixed inset-x-0 bottom-[calc(60vh+40px)] z-10001 flex justify-center"
           aria-hidden
         >
-          <div className="w-56.25 rounded-2xl bg-gray-100 p-2 shadow-md">
+          <div className="w-56.25 rounded-(--radius-card) bg-(--color-card) p-2 shadow-md">
             <StaticDrawingCanvas
               strokes={drawing.strokes}
               isPrompt

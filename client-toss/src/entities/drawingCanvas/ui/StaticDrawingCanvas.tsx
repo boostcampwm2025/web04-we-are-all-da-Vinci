@@ -33,13 +33,13 @@ const StaticDrawingCanvas = ({
   return (
     <div
       ref={containerRef}
-      className="flex w-full items-center justify-center rounded-xl bg-white shadow-sm"
+      className="flex w-full items-center justify-center rounded-(--radius-inner) bg-(--color-card) shadow-sm"
     >
       <canvas
         ref={canvasRef}
         role="img"
         aria-label={ariaLabel}
-        className="rounded-xl"
+        className="rounded-(--radius-inner)"
       />
     </div>
   );
