@@ -1,15 +1,14 @@
-import type { PlayChanceLayoutContext } from "@/app/layouts/PlayChanceLayout";
-import { useFullScreenAd } from "@/feature/playChance";
+import { useFullScreenAd, usePlayChanceContext } from "@/feature/playChance";
 import { getAnonymousHash } from "@/shared/lib";
 import { Button, Toast } from "@toss/tds-mobile";
 import { useState } from "react";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { NOT_SUBMITTED_MESSAGE } from "../config/constants";
 
 const MyRankingNotSubmitted = () => {
   const navigate = useNavigate();
   const { chanceCount, hasChance, chargeByAd, startPlay } =
-    useOutletContext<PlayChanceLayoutContext>();
+    usePlayChanceContext();
   const { isAdLoaded, showAd, adGroupId } = useFullScreenAd();
   const [isStarting, setIsStarting] = useState(false);
   const [toastOpen, setToastOpen] = useState(false);

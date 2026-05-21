@@ -50,7 +50,7 @@ const IntroView = ({ onStart }: IntroViewProps) => {
           {STEPS.map((step) => (
             <div
               key={step.title}
-              className="flex items-center gap-3 rounded-xl bg-gray-100 px-3.5 py-2.5"
+              className="flex items-center gap-3 rounded-(--radius-inner) bg-(--color-card) px-3.5 py-2.5"
             >
               <img
                 src={step.icon}

@@ -21,17 +21,6 @@ vi.mock("react-router-dom", async () => {
   return {
     ...actual,
     useNavigate: () => navigateMock,
-    useOutletContext: () => ({
-      chanceCount: 1,
-      hasChance: true,
-      isLoading: false,
-      error: null,
-      refresh: vi.fn(),
-      chargeByAd: mockChargeByAd,
-      chargeByShare: vi.fn(),
-      consume: vi.fn(),
-      startPlay: mockStartPlay,
-    }),
   };
 });
 
@@ -63,6 +52,16 @@ const mockUseFullScreenAd = vi.fn(() => ({
 }));
 vi.mock("@/feature/playChance", () => ({
   useFullScreenAd: () => mockUseFullScreenAd(),
+  usePlayChanceContext: () => ({
+    chanceCount: 1,
+    hasChance: true,
+    isLoading: false,
+    error: null,
+    refresh: vi.fn(),
+    chargeByAd: mockChargeByAd,
+    chargeByShare: vi.fn(),
+    startPlay: mockStartPlay,
+  }),
 }));
 
 const mockRouteState = {
@@ -105,7 +104,7 @@ describe("SubmittedView", () => {
     renderWithState();
 
     expect(screen.getByText("완성한 그림이에요")).toBeInTheDocument();
-    expect(screen.getByText("76점")).toBeInTheDocument();
+    expect(screen.getByText("75.5점")).toBeInTheDocument();
   });
 
   it("저장하기 클릭 시 submitDrawing을 호출하고 홈으로 이동한다", async () => {

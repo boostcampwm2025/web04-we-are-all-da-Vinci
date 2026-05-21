@@ -2,6 +2,7 @@ import type { Stroke } from "@toss/shared";
 import type { RefObject } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { animateDrawing } from "./animateDrawing";
+import { getCanvasBackgroundColor } from "./canvasBackground";
 
 describe("animateDrawing", () => {
   let canvasRef: RefObject<HTMLCanvasElement>;
@@ -72,7 +73,7 @@ describe("animateDrawing", () => {
 
       animateDrawing(canvasRef, ctxRef, strokes, 40, false);
 
-      expect(mockCtx.fillStyle).toBe("white");
+      expect(mockCtx.fillStyle).toBe(getCanvasBackgroundColor());
       expect(mockCtx.fillRect).toHaveBeenCalledWith(0, 0, 500, 500);
     });
   });

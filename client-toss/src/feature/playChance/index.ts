@@ -5,6 +5,9 @@ export {
 export { useFullScreenAd } from "./hooks/useFullScreenAd";
 export { usePlayChance } from "./hooks/usePlayChance";
 export { useRequirePlaySession } from "./hooks/useRequirePlaySession";
+export { usePlayChanceContext } from "./model/playChanceContext";
+export type { PlayChanceContextValue } from "./model/playChanceContext";
+export { default as PlayChanceProvider } from "./model/PlayChanceProvider";
 export {
   clearPlaySession,
   loadActivePlaySession,

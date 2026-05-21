@@ -20,23 +20,26 @@ import { ChanceService } from "./chance.service";
 import { PlayChance } from "./play-chance.entity";
 import { ShareLog } from "./share-log.entity";
 
+// TODAY_START = KST 2026-05-09 00:00 (= UTC 2026-05-08 15:00). getSeoulDayRange()의 start와 일치.
 const TODAY_START = new Date("2026-05-08T15:00:00.000Z");
+// YESTERDAY_START = KST 2026-05-08 00:00. lastResetAt이 이 값이면 오늘 무료 플레이 가능.
 const YESTERDAY_START = new Date("2026-05-07T15:00:00.000Z");
 const ALLOWED_AD_GROUP = "ait.dev.allowed-group";
 const ALLOWED_MODULE = "module-allowed";
 
-interface ForkApi {
+interface EmApi {
   findOne: jest.Mock;
   count: jest.Mock;
   create: jest.Mock;
   persist: jest.Mock;
   getReference: jest.Mock;
   flush: jest.Mock;
+  transactional: jest.Mock;
 }
 
 const buildEm = (existing: PlayChance | null, todayShareLogs = 0) => {
   const persisted: unknown[] = [];
-  const fork: ForkApi = {
+  const em: EmApi = {
     findOne: jest.fn(async () => existing),
     count: jest.fn(async (entity) =>
       entity === ShareLog ? todayShareLogs : 0,
@@ -57,16 +60,11 @@ const buildEm = (existing: PlayChance | null, todayShareLogs = 0) => {
     }),
     getReference: jest.fn((_entity, key) => ({ userKey: key })),
     flush: jest.fn(async () => undefined),
+    transactional: jest.fn(async (callback: (em: EmApi) => Promise<unknown>) =>
+      callback(em),
+    ),
   };
-  return {
-    em: {
-      transactional: jest.fn(
-        async (callback: (em: ForkApi) => Promise<unknown>) => callback(fork),
-      ),
-    },
-    fork,
-    persisted,
-  };
+  return { em, persisted };
 };
 
 const buildConfigService = () => ({
@@ -106,17 +104,103 @@ const buildExisting = (overrides: Partial<PlayChance> = {}): PlayChance =>
 
 describe("ChanceService", () => {
   describe("getMyChance", () => {
-    it("기존 row가 없으면 count=1로 초기화하여 반환한다", async () => {
-      const { em, fork } = buildEm(null);
+    it("기존 row가 없으면 무료 1회로 count=1을 반환한다", async () => {
+      const { em } = buildEm(null);
       const service = buildService(em);
 
-      const result = await service.getMyChance(1);
-
-      expect(result).toEqual({ count: 1 });
-      expect(fork.persist).toHaveBeenCalledTimes(1);
+      await expect(service.getMyChance(1)).resolves.toEqual({ count: 1 });
     });
 
-    it("lastResetAt이 어제면 count는 최소 1을 보장하고 lastResetAt 갱신", async () => {
+    it("무료 미사용(어제 사용) 상태면 충전분 + 무료 1을 더해 반환한다", async () => {
+      const existing = buildExisting({
+        count: 4,
+        lastResetAt: YESTERDAY_START,
+      });
+      const { em } = buildEm(existing);
+      const service = buildService(em);
+
+      await expect(service.getMyChance(1)).resolves.toEqual({ count: 5 });
+    });
+
+    it("오늘 무료를 이미 사용했으면 충전분만 반환한다", async () => {
+      const existing = buildExisting({ count: 5, lastResetAt: TODAY_START });
+      const { em } = buildEm(existing);
+      const service = buildService(em);
+
+      await expect(service.getMyChance(1)).resolves.toEqual({ count: 5 });
+    });
+
+    it("같은 KST 날짜의 다른 시각(KST 23:00)이어도 무료는 사용한 것으로 본다", async () => {
+      const existing = buildExisting({
+        count: 0,
+        lastResetAt: new Date("2026-05-09T14:00:00.000Z"), // KST 5/9 23:00
+      });
+      const { em } = buildEm(existing);
+      const service = buildService(em);
+
+      await expect(service.getMyChance(1)).resolves.toEqual({ count: 0 });
+    });
+
+    it("driver가 lastResetAt을 string으로 돌려줘도 KST 정규화 후 비교한다", async () => {
+      const existing = buildExisting({
+        count: 3,
+        lastResetAt: "2026-05-08T15:00:00.000Z" as unknown as Date,
+      });
+      const { em } = buildEm(existing);
+      const service = buildService(em);
+
+      await expect(service.getMyChance(1)).resolves.toEqual({ count: 3 });
+    });
+  });
+
+  describe("lost update 회귀 방지 (getMyChance 읽기 전용 불변식)", () => {
+    it("getMyChance는 persist/flush/transactional을 호출하지 않는다", async () => {
+      const existing = buildExisting({
+        count: 2,
+        lastResetAt: YESTERDAY_START,
+      });
+      const { em } = buildEm(existing);
+      const service = buildService(em);
+
+      await service.getMyChance(1);
+
+      expect(em.persist).not.toHaveBeenCalled();
+      expect(em.flush).not.toHaveBeenCalled();
+      expect(em.transactional).not.toHaveBeenCalled();
+    });
+
+    it("getMyChance는 row 객체를 수정하지 않는다", async () => {
+      const existing = buildExisting({
+        count: 2,
+        lastResetAt: YESTERDAY_START,
+      });
+      const { em } = buildEm(existing);
+      const service = buildService(em);
+
+      await service.getMyChance(1);
+
+      expect(existing.count).toBe(2);
+      expect(existing.lastResetAt).toBe(YESTERDAY_START);
+    });
+  });
+
+  describe("consumeWithEntityManager", () => {
+    it("당일 첫 플레이는 무료 — 충전분을 차감하지 않고 lastResetAt만 오늘로 갱신한다", async () => {
+      const existing = buildExisting({
+        count: 4,
+        lastResetAt: YESTERDAY_START,
+      });
+      const { em } = buildEm(existing);
+      const service = buildService(em);
+
+      await expect(
+        service.consumeWithEntityManager(em as never, 1),
+      ).resolves.toEqual({ count: 4 });
+      expect(existing.count).toBe(4);
+      expect(existing.lastResetAt).toEqual(TODAY_START);
+    });
+
+    it("무료 사용 가능하면 충전분이 0이어도 예외 없이 진행한다", async () => {
       const existing = buildExisting({
         count: 0,
         lastResetAt: YESTERDAY_START,
@@ -124,25 +208,71 @@ describe("ChanceService", () => {
       const { em } = buildEm(existing);
       const service = buildService(em);
 
-      const result = await service.getMyChance(1);
-
-      expect(result).toEqual({ count: 1 });
+      await expect(
+        service.consumeWithEntityManager(em as never, 1),
+      ).resolves.toEqual({ count: 0 });
       expect(existing.lastResetAt).toEqual(TODAY_START);
     });
 
-    it("같은 날짜면 count를 그대로 유지한다", async () => {
-      const existing = buildExisting({ count: 5 });
+    it("무료를 이미 썼고 충전분이 있으면 count를 1 차감한다", async () => {
+      const existing = buildExisting({ count: 3, lastResetAt: TODAY_START });
       const { em } = buildEm(existing);
       const service = buildService(em);
 
-      await expect(service.getMyChance(1)).resolves.toEqual({ count: 5 });
+      await expect(
+        service.consumeWithEntityManager(em as never, 1),
+      ).resolves.toEqual({ count: 2 });
+      expect(existing.count).toBe(2);
+    });
+
+    it("무료를 이미 썼고 충전분이 0이면 ConflictException + 변화 없음", async () => {
+      const existing = buildExisting({ count: 0, lastResetAt: TODAY_START });
+      const { em } = buildEm(existing);
+      const service = buildService(em);
+
+      await expect(
+        service.consumeWithEntityManager(em as never, 1),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(existing.count).toBe(0);
+    });
+
+    it("row가 없으면 새로 생성하고 무료 플레이로 처리한다", async () => {
+      const { em, persisted } = buildEm(null);
+      const service = buildService(em);
+
+      await expect(
+        service.consumeWithEntityManager(em as never, 1),
+      ).resolves.toEqual({ count: 0 });
+      const created = persisted.find((p) => p instanceof PlayChance);
+      expect(created).toBeDefined();
+      expect(created?.lastResetAt).toEqual(TODAY_START);
+    });
+  });
+
+  describe("충전분 이월", () => {
+    it("충전분 4 보유 유저가 당일 첫 자동플레이를 해도 충전분은 4로 유지된다", async () => {
+      const existing = buildExisting({
+        count: 4,
+        lastResetAt: YESTERDAY_START,
+      });
+      const { em } = buildEm(existing);
+      const service = buildService(em);
+
+      await service.consumeWithEntityManager(em as never, 1);
+
+      expect(existing.count).toBe(4);
+      // 무료를 소진했으므로 이후 조회는 충전분 4만 반환
+      await expect(service.getMyChance(1)).resolves.toEqual({ count: 4 });
     });
   });
 
   describe("chargeByAd (광고 무제한)", () => {
-    it("화이트리스트 통과 시 count++ 와 AdView INSERT", async () => {
-      const existing = buildExisting({ count: 2 });
-      const { em, fork, persisted } = buildEm(existing);
+    it("무료 미사용 상태면 count++ 후 충전분+무료를 반환한다", async () => {
+      const existing = buildExisting({
+        count: 2,
+        lastResetAt: YESTERDAY_START,
+      });
+      const { em, persisted } = buildEm(existing);
       const chanceWhitelistValidator = buildWhitelistValidator();
       const service = buildService(em, chanceWhitelistValidator);
 
@@ -150,17 +280,26 @@ describe("ChanceService", () => {
         adGroupId: ALLOWED_AD_GROUP,
       });
 
-      expect(result).toEqual({ count: 3 });
-      const adViewCreated = persisted.find((p) => p instanceof AdView);
-      expect(adViewCreated).toBeDefined();
-      expect(fork.getReference).toHaveBeenCalled();
+      expect(result).toEqual({ count: 4 }); // 충전분 3 + 무료 1
+      expect(existing.count).toBe(3);
+      expect(persisted.find((p) => p instanceof AdView)).toBeDefined();
       expect(chanceWhitelistValidator.validateAdGroup).toHaveBeenCalledWith(1, {
         adGroupId: ALLOWED_AD_GROUP,
       });
     });
 
+    it("오늘 무료를 이미 썼으면 충전분만 반환한다", async () => {
+      const existing = buildExisting({ count: 2, lastResetAt: TODAY_START });
+      const { em } = buildEm(existing);
+      const service = buildService(em);
+
+      await expect(
+        service.chargeByAd(1, { adGroupId: ALLOWED_AD_GROUP }),
+      ).resolves.toEqual({ count: 3 });
+    });
+
     it("같은 사용자가 광고를 11번 시도해도 모두 통과 (캡 없음)", async () => {
-      const existing = buildExisting({ count: 0 });
+      const existing = buildExisting({ count: 0, lastResetAt: TODAY_START });
       const { em } = buildEm(existing);
       const chanceWhitelistValidator = buildWhitelistValidator();
       const service = buildService(em, chanceWhitelistValidator);
@@ -178,7 +317,7 @@ describe("ChanceService", () => {
 
   describe("chargeByShare", () => {
     it("contactsViral 채널: moduleId 통과 시 count++ 와 ShareLog INSERT", async () => {
-      const existing = buildExisting({ count: 1 });
+      const existing = buildExisting({ count: 1, lastResetAt: TODAY_START });
       const { em, persisted } = buildEm(existing, 0);
       const chanceWhitelistValidator = buildWhitelistValidator();
       const service = buildService(em, chanceWhitelistValidator);
@@ -191,8 +330,7 @@ describe("ChanceService", () => {
       });
 
       expect(result).toEqual({ count: 2 });
-      const shareLogCreated = persisted.find((p) => p instanceof ShareLog);
-      expect(shareLogCreated).toBeDefined();
+      expect(persisted.find((p) => p instanceof ShareLog)).toBeDefined();
       expect(chanceWhitelistValidator.validateShareModule).toHaveBeenCalledWith(
         1,
         expect.objectContaining({
@@ -203,7 +341,7 @@ describe("ChanceService", () => {
     });
 
     it("일일 캡(=5) 도달 시 거부", async () => {
-      const existing = buildExisting({ count: 5 });
+      const existing = buildExisting({ count: 5, lastResetAt: TODAY_START });
       const { em } = buildEm(existing, 5);
       const service = buildService(em);
 
@@ -217,7 +355,7 @@ describe("ChanceService", () => {
     });
 
     it("일일 캡 직전(4건)이면 통과 → 5번째 적립", async () => {
-      const existing = buildExisting({ count: 4 });
+      const existing = buildExisting({ count: 4, lastResetAt: TODAY_START });
       const { em } = buildEm(existing, 4);
       const service = buildService(em);
 
@@ -230,95 +368,9 @@ describe("ChanceService", () => {
     });
   });
 
-  describe("consumeWithEntityManager", () => {
-    it("count > 0이면 count-- 후 반환", async () => {
-      const existing = buildExisting({ count: 3 });
-      const { em, fork } = buildEm(existing);
-      const service = buildService(em);
-
-      await expect(
-        service.consumeWithEntityManager(fork as never, 1),
-      ).resolves.toEqual({
-        count: 2,
-      });
-      expect(existing.count).toBe(2);
-    });
-
-    it("count === 0이면 ConflictException + count 변화 없음", async () => {
-      const existing = buildExisting({ count: 0 });
-      const { em, fork } = buildEm(existing);
-      const service = buildService(em);
-
-      await expect(
-        service.consumeWithEntityManager(fork as never, 1),
-      ).rejects.toBeInstanceOf(ConflictException);
-      expect(existing.count).toBe(0);
-    });
-
-    it("자정 리셋 후 count는 최소 1이므로 consume 가능", async () => {
-      const existing = buildExisting({
-        count: 0,
-        lastResetAt: YESTERDAY_START,
-      });
-      const { em, fork } = buildEm(existing);
-      const service = buildService(em);
-
-      await expect(
-        service.consumeWithEntityManager(fork as never, 1),
-      ).resolves.toEqual({ count: 0 });
-      expect(existing.count).toBe(0);
-    });
-  });
-
-  describe("일일 리셋 (KST 정규화)", () => {
-    it("lastResetAt이 TODAY_START(=KST 자정의 UTC 시각)면 리셋되지 않고 count가 유지된다", async () => {
-      const existing = buildExisting({ count: 0, lastResetAt: TODAY_START });
-      const { em } = buildEm(existing);
-      const service = buildService(em);
-
-      await expect(service.getMyChance(1)).resolves.toEqual({ count: 0 });
-      expect(existing.count).toBe(0);
-    });
-
-    it("lastResetAt이 같은 KST 날짜의 다른 시각(KST 23:00)이어도 리셋되지 않는다", async () => {
-      const existing = buildExisting({
-        count: 0,
-        lastResetAt: new Date("2026-05-09T14:00:00.000Z"), // KST 5/9 23:00
-      });
-      const { em } = buildEm(existing);
-      const service = buildService(em);
-
-      await expect(service.getMyChance(1)).resolves.toEqual({ count: 0 });
-    });
-
-    it("lastResetAt이 driver로부터 string으로 들어와도 KST 정규화 후 비교한다", async () => {
-      const existing = buildExisting({
-        count: 3,
-        // 일부 driver는 datetime 컬럼을 string으로 돌려준다. 같은 KST 5/9이므로 유지돼야 한다.
-        lastResetAt: "2026-05-08T15:00:00.000Z" as unknown as Date,
-      });
-      const { em } = buildEm(existing);
-      const service = buildService(em);
-
-      await expect(service.getMyChance(1)).resolves.toEqual({ count: 3 });
-    });
-
-    it("같은 KST 날짜에 consume 후 다시 조회해도 count는 회복되지 않는다 (운영 버그 회귀)", async () => {
-      const existing = buildExisting({ count: 1, lastResetAt: TODAY_START });
-      const { em, fork } = buildEm(existing);
-      const service = buildService(em);
-
-      await service.consumeWithEntityManager(fork as never, 1);
-      expect(existing.count).toBe(0);
-
-      await expect(service.getMyChance(1)).resolves.toEqual({ count: 0 });
-      expect(existing.count).toBe(0);
-    });
-  });
-
   describe("transactional 래핑", () => {
     it("chargeByAd가 em.transactional 내부에서 실행된다", async () => {
-      const existing = buildExisting({ count: 0 });
+      const existing = buildExisting({ count: 0, lastResetAt: TODAY_START });
       const { em } = buildEm(existing);
       const service = buildService(em);
 
@@ -328,7 +380,7 @@ describe("ChanceService", () => {
     });
 
     it("chargeByShare가 em.transactional 내부에서 실행된다", async () => {
-      const existing = buildExisting({ count: 0 });
+      const existing = buildExisting({ count: 0, lastResetAt: TODAY_START });
       const { em } = buildEm(existing, 0);
       const service = buildService(em);
 

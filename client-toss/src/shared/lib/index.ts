@@ -1,4 +1,9 @@
 export { trackClick, trackImpression, trackScreen } from "./analytics";
+export {
+  type Attribution,
+  captureAttributionOnce,
+  getFirstTouchAttribution,
+} from "./attribution";
 export { formatLocalDate } from "./formatLocalDate";
 export { getAnonymousHash } from "./getAnonymousHash";
 export { initTossAdsOnce } from "./tossAds";

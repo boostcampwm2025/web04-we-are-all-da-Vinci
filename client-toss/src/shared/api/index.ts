@@ -1,3 +1,4 @@
+export { getAnalyticsInstance, initFirebaseAnalyticsOnce } from "./firebase";
 export {
   clearAccessToken,
   getCachedNickname,

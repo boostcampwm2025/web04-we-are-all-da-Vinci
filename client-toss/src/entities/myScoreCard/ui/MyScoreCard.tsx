@@ -5,7 +5,6 @@ import {
 } from "@/entities/drawingCanvas";
 import { ScoreDetailCard } from "@/entities/scoreDetailCard";
 import { AD_GROUP_IDS } from "@/shared/config";
-import { ArcScoreBar } from "@/shared/ui/arcScoreBar";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";
 import type { MyDrawingResponse } from "@toss/shared";
@@ -47,7 +46,7 @@ const MyScoreCard = ({
       {!hideHeader && (
         <div className="mt-3 flex flex-col items-center">
           <div className="text-xs text-(--color-blue)">
-            캔버스를 누르면 자세한 분석을 볼 수 있어요
+            그림을 누르면 자세한 분석을 볼 수 있어요
           </div>
           <div className="mt-1">
             <Score
@@ -59,10 +58,7 @@ const MyScoreCard = ({
       )}
       {!hideAd && (
         <div className="w-full px-(--card-mx)">
-          <BannerAd
-            adGroupId={AD_GROUP_IDS.BANNER_LIST}
-            className="mt-px mb-2 w-full"
-          />
+          <BannerAd adGroupId={AD_GROUP_IDS.BANNER_LIST} className="w-full" />
         </div>
       )}
       {isDetailOpen && (
@@ -70,7 +66,7 @@ const MyScoreCard = ({
           className="animate-slide-up-canvas pointer-events-none fixed inset-x-0 bottom-[calc(60vh+40px)] z-10001 flex justify-center"
           aria-hidden
         >
-          <div className="w-56.25 rounded-2xl bg-gray-100 p-2 shadow-md">
+          <div className="w-56.25 rounded-(--radius-card) bg-(--color-card) p-2 shadow-md">
             <StaticDrawingCanvas
               strokes={drawing.strokes}
               isPrompt
@@ -99,11 +95,6 @@ const MyScoreCard = ({
         }
       >
         <div className="flex w-full flex-col items-center gap-4 px-(--page-px) pt-2 pb-[env(safe-area-inset-bottom)]">
-          <ArcScoreBar
-            shapeSimilarity={similarity.shapeSimilarity}
-            countSimilarity={similarity.strokeMatchSimilarity}
-            penalty={similarity.penalty}
-          />
           <ScoreDetailCard
             strokeMatchSimilarity={similarity.strokeMatchSimilarity}
             shapeSimilarity={similarity.shapeSimilarity}

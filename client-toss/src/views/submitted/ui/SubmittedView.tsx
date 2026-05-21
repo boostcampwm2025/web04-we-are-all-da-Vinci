@@ -1,19 +1,23 @@
-import type { PlayChanceLayoutContext } from "@/app/layouts/PlayChanceLayout";
 import {
   DrawingCanvasFrame,
   ReplayDrawingCanvas,
 } from "@/entities/drawingCanvas";
 import { PhaseHeader } from "@/entities/phaseHeader";
-import { useFullScreenAd } from "@/feature/playChance";
+import { useFullScreenAd, usePlayChanceContext } from "@/feature/playChance";
 import { serverTossApi } from "@/shared/api";
 import { AD_GROUP_IDS } from "@/shared/config";
-import { trackClick, useExitGuard, useRequiredState } from "@/shared/lib";
+import {
+  trackClick,
+  trackScreen,
+  useExitGuard,
+  useRequiredState,
+} from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
 import { Button, ConfirmDialog, Toast } from "@toss/tds-mobile";
-import { useState } from "react";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface SubmittedRouteState {
   promptId: number;
@@ -26,8 +30,12 @@ const SubmittedView = () => {
   const navigate = useNavigate();
   const routeState = useRequiredState<SubmittedRouteState>();
   const { showDialog, setShowDialog } = useExitGuard();
-  const { hasChance, chargeByAd, startPlay } =
-    useOutletContext<PlayChanceLayoutContext>();
+
+  useEffect(() => {
+    if (!routeState) return;
+    trackScreen("submitted_view");
+  }, [routeState]);
+  const { hasChance, chargeByAd, startPlay } = usePlayChanceContext();
   const { isAdLoaded, showAd, adGroupId } = useFullScreenAd();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -94,7 +102,7 @@ const SubmittedView = () => {
   const score = routeState.similarity?.score ?? 0;
 
   return (
-    <div className="flex h-full flex-col bg-white">
+    <div className="flex h-full flex-col bg-(--color-page)">
       <Toast
         position="top"
         open={toastOpen}
@@ -123,7 +131,7 @@ const SubmittedView = () => {
       </div>
 
       <div className="flex flex-1 flex-col justify-between pb-(--card-mx)">
-        <Score value={Math.round(score)} size="l" />
+        <Score value={score} size="l" />
         <div className="flex w-full flex-col gap-3">
           <div className="px-(--card-mx)">
             <BannerAd adGroupId={AD_GROUP_IDS.BANNER_LIST} type="list" />

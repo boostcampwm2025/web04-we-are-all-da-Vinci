@@ -1,4 +1,4 @@
-import PlayChanceLayout from "@/app/layouts/PlayChanceLayout";
+import AnalyticsTracker from "@/app/config/AnalyticsTracker";
 import { DashboardView, MyDrawingsPanel } from "@/views/dashboard";
 import { Drawing } from "@/views/drawing";
 import { LoginView } from "@/views/login";
@@ -10,20 +10,20 @@ import { createBrowserRouter } from "react-router-dom";
 
 export const router = createBrowserRouter([
   {
-    path: "/login",
-    element: <LoginView />,
-  },
-  {
-    path: "/memorize",
-    element: <Memorize />,
-  },
-  {
-    path: "/drawing",
-    element: <Drawing />,
-  },
-  {
-    element: <PlayChanceLayout />,
+    element: <AnalyticsTracker />,
     children: [
+      {
+        path: "/login",
+        element: <LoginView />,
+      },
+      {
+        path: "/memorize",
+        element: <Memorize />,
+      },
+      {
+        path: "/drawing",
+        element: <Drawing />,
+      },
       {
         element: <DashboardView />,
         children: [

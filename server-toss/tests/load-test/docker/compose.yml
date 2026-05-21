@@ -1,0 +1,52 @@
+services:
+  davinci-mysql:
+    container_name: davinci-mysql
+    image: mysql:8.4
+    ports:
+      - 3306:3306
+    restart: no
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: true
+      MYSQL_DATABASE: load_test
+      TZ: UTC
+    cpus: 1.0
+    mem_limit: 1g
+    networks:
+      - load-net
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  davinci-app-1:
+    container_name: davinci-app-1
+    build:
+      context: ../../../../
+      dockerfile: server-toss/tests/load-test/docker/Dockerfile
+    ports:
+      - 3000:3000
+    restart: no
+    networks:
+      - load-net
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      MYSQL_DATABASE: load_test
+      MYSQL_HOST: davinci-mysql
+      MYSQL_PORT: 3306
+    env_file:
+      - ./env/.env
+    depends_on:
+      davinci-mysql:
+        condition: service_healthy
+    cpus: 1.0
+    mem_limit: 1g
+
+networks:
+  load-net:
+    name: load-net
+    driver: bridge

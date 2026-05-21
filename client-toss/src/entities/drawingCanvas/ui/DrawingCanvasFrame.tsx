@@ -9,7 +9,7 @@ interface DrawingCanvasFrameProps {
   topAccessory?: ReactNode;
 }
 
-const FRAME_BASE = "block w-full rounded-2xl! bg-gray-100 p-2";
+const FRAME_BASE = "card block w-full rounded-(--radius-card)! p-2";
 
 const DrawingCanvasFrame = ({
   children,

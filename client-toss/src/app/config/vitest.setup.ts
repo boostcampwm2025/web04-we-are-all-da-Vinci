@@ -241,6 +241,34 @@ vi.mock("@toss/tds-mobile", () => ({
         createElement("p", props, children),
     },
   ),
+  ListRow: Object.assign(
+    ({
+      left,
+      contents,
+      right,
+      ...props
+    }: Record<string, unknown> & {
+      left?: ReactNode;
+      contents?: ReactNode;
+      right?: ReactNode;
+    }) => createElement("div", props, left, contents, right),
+    {
+      Texts: ({
+        top,
+        bottom,
+        ...props
+      }: Record<string, unknown> & {
+        top?: ReactNode;
+        bottom?: ReactNode;
+      }) =>
+        createElement(
+          "div",
+          props,
+          createElement("span", { "data-slot": "top" }, top),
+          createElement("span", { "data-slot": "bottom" }, bottom),
+        ),
+    },
+  ),
   Tab: Object.assign(
     ({
       children,
@@ -305,6 +333,17 @@ vi.mock("@toss/tds-mobile-ait", () => ({
   TDSMobileAITProvider: ({ children }: { children?: ReactNode }) => children,
 }));
 
+vi.mock("firebase/app", () => ({
+  initializeApp: vi.fn().mockReturnValue({}),
+}));
+
+vi.mock("firebase/analytics", () => ({
+  getAnalytics: vi.fn().mockReturnValue({}),
+  isSupported: vi.fn().mockResolvedValue(false),
+  logEvent: vi.fn(),
+  setUserId: vi.fn(),
+}));
+
 vi.mock("@apps-in-toss/web-framework", () => ({
   appLogin: vi.fn().mockResolvedValue({
     authorizationCode: "test-code",
@@ -328,6 +367,12 @@ vi.mock("@apps-in-toss/web-framework", () => ({
   contactsViral: Object.assign(vi.fn().mockReturnValue(vi.fn()), {
     isSupported: vi.fn().mockReturnValue(false),
   }),
+  partner: {
+    addAccessoryButton: vi.fn(),
+  },
+  tdsEvent: {
+    addEventListener: vi.fn().mockReturnValue(vi.fn()),
+  },
   TossAds: {
     init: vi.fn(),
     BannerAd: ({

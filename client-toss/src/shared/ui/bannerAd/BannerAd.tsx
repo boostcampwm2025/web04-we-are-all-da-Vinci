@@ -13,7 +13,7 @@ interface BannerAdProps {
 
 const BANNER_HEIGHTS: Record<BannerType, number> = {
   list: 96,
-  feed: 410,
+  feed: 350,
 };
 
 const MockBanner = ({
@@ -28,8 +28,7 @@ const MockBanner = ({
     <div
       style={{ height }}
       className={clsx(
-        "flex w-full items-center justify-center rounded-2xl bg-gray-100 text-sm text-(--color-grey)",
-        type === "feed" && "mt-2",
+        "card flex w-full items-center justify-center text-sm text-(--color-grey)",
         className,
       )}
     >
@@ -90,7 +89,7 @@ const BannerAd = ({ adGroupId, type = "list", className }: BannerAdProps) => {
   return (
     <div
       ref={bannerRef}
-      style={{ width: "100%", height }}
+      style={type === "feed" ? { width: "100%" } : { width: "100%", height }}
       className={className}
     />
   );

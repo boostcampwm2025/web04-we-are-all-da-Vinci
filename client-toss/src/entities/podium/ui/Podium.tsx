@@ -42,7 +42,7 @@ const Podium = () => {
 
   return (
     <div
-      className="flex w-full flex-col justify-end rounded-2xl bg-[#F9FAFB] px-4"
+      className="card flex w-full flex-col justify-end px-4"
       style={{ height: 205 }}
     >
       <div className="flex items-end justify-center gap-2 pb-4">
@@ -52,10 +52,10 @@ const Podium = () => {
             className="flex flex-col items-center justify-end gap-2"
           >
             <div className="flex flex-col text-center">
-              <div className="w-[98px] truncate text-[13px] font-bold leading-tight text-black">
+              <div className="w-[98px] truncate text-[13px] font-bold leading-tight text-(--color-black)">
                 {entry ? clipNickname(entry.nickname) : ""}
               </div>
-              <div className="mt-1 text-[14px] leading-none text-[#8f97a3]">
+              <div className="mt-1 text-[14px] leading-none text-(--color-grey)">
                 {entry ? `${entry.score}점` : ""}
               </div>
             </div>

@@ -1,10 +1,12 @@
 import { MyScoreCard, useDrawing } from "@/entities/myScoreCard";
 import { PhaseHeader } from "@/entities/phaseHeader";
 import { AD_GROUP_IDS } from "@/shared/config";
+import { trackScreen } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";
 import { colors } from "@toss/tds-colors";
 import { Button, Skeleton } from "@toss/tds-mobile";
+import { useEffect } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 
 const RankingDetailView = () => {
@@ -12,6 +14,10 @@ const RankingDetailView = () => {
   const { drawing, isLoading } = useDrawing(drawingId);
   const location = useLocation();
   const rank = (location.state as { rank?: number } | null)?.rank;
+
+  useEffect(() => {
+    trackScreen("ranking_detail_view", rank != null ? { rank } : undefined);
+  }, [rank]);
 
   const renderBody = () => {
     if (isLoading) {
@@ -25,13 +31,8 @@ const RankingDetailView = () => {
       return (
         <>
           <MyScoreCard drawing={drawing} hideHeader hideAd />
-          <div className="mt-3">
-            <Score
-              value={Number(drawing.similarity.score.toFixed(2))}
-              size="s"
-            />
-          </div>
-          <div className="mt-3 px-(--card-mx)">
+          <Score value={Number(drawing.similarity.score.toFixed(2))} size="s" />
+          <div className="px-(--card-mx)">
             <BannerAd type="feed" adGroupId={AD_GROUP_IDS.BANNER_FEED} />
           </div>
         </>
@@ -40,11 +41,8 @@ const RankingDetailView = () => {
     return (
       <div className="px-(--page-px)">
         <div
-          className="flex h-44 w-full items-center justify-center rounded-2xl text-sm"
-          style={{
-            backgroundColor: colors.grey100,
-            color: colors.grey600,
-          }}
+          className="card flex h-44 w-full items-center justify-center text-sm"
+          style={{ color: colors.grey600 }}
         >
           그림을 찾을 수 없어요
         </div>
@@ -55,7 +53,7 @@ const RankingDetailView = () => {
   return (
     <div
       data-no-safe-area-bottom
-      className="min-h-0 flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)] bg-white"
+      className="min-h-0 flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)] bg-(--color-page)"
     >
       <PhaseHeader
         title={
@@ -68,7 +66,7 @@ const RankingDetailView = () => {
         description={
           drawing ? (
             <span className="text-(--color-blue)">
-              캔버스를 누르면 자세한 분석을 볼 수 있어요
+              그림을 누르면 자세한 분석을 볼 수 있어요
             </span>
           ) : undefined
         }
@@ -76,7 +74,7 @@ const RankingDetailView = () => {
 
       {renderBody()}
 
-      <div className="mt-8 px-(--page-px)">
+      <div className="mt-3 px-(--page-px)">
         <Link to="/ranking">
           <Button size="xlarge" variant="weak" display="block">
             랭킹으로 돌아가기
