@@ -96,7 +96,10 @@ const ShareSheet = () => {
   const handleScoreShare = () => {
     trackClick("share_score_selected");
     setIsSheetOpen(false);
-    shareMyScore().catch(console.error);
+    shareMyScore().catch((error) => {
+      console.error(error);
+      showToast("공유에 실패했어요. 잠시 후 다시 시도해주세요.");
+    });
   };
 
   const handleInviteShare = () => {
