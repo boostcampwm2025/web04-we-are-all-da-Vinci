@@ -45,11 +45,13 @@ export const captureAttributionOnce = async (): Promise<void> => {
 export const getFirstTouchAttribution =
   async (): Promise<Attribution | null> => {
     const hash = await getAnonymousHash();
-    const raw = localStorage.getItem(buildKey(hash));
+    const key = buildKey(hash);
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
     try {
       return JSON.parse(raw) as Attribution;
     } catch {
+      localStorage.removeItem(key);
       return null;
     }
   };
