@@ -38,8 +38,13 @@
 
 - [ ] 캔버스 드로잉 시 버벅임 없음
 - [ ] 메모리 안정적 (장시간 드로잉 세션)
-- [ ] CPU 스파이크 없음 (Safari Web Inspector로 확인)
+- [ ] CPU 스파이크 없음
 - [ ] 스크롤 성능 부드러움 (memorize/status 화면)
+
+> 성능 측정/디버깅 도구 (일반 브라우저 DevTools 아님 — 샌드박스에 연결된 실제 WebView에서):
+>
+> - iOS(iPhone 샌드박스): Mac Safari → 개발자 메뉴 → iPhone WebView → Web Inspector
+> - Android: Android Studio 에뮬레이터 + 앱인토스 Android 샌드박스 APK → Chrome `chrome://inspect`
 
 ## 6. 광고 수동 체크
 

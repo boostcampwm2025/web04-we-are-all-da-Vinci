@@ -1,221 +1,158 @@
-# Client-Toss (Apps-in-Toss Mini-App) - CLAUDE.md
+# Client-Toss (Apps-in-Toss Mini-App)
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Apps-in-Toss WebView 미니앱 — 그림을 기억해서 따라 그리는 **비게임** 미니앱. 기존 드로잉 게임(`client/` + `server/`)과 **완전히 독립**이다 (WebSocket/Redis/Socket.io 없음). 백엔드는 `server-toss`와 REST API로만 통신하고, `@toss/shared` 패키지로 타입·Zod 스키마를 공유한다. 루트 CLAUDE.md는 모노레포 인프라·Git 워크플로우만 참고.
 
-> 이 워크스페이스는 기존 드로잉 게임(client/ + server/)과 독립적입니다. 루트 CLAUDE.md는 모노레포 인프라와 Git 워크플로우만 참고하세요.
+스택: Granite framework v2.x (`@apps-in-toss/web-framework`), React 19, react-router-dom v7, TDS(`@toss/tds-mobile`, `@toss/tds-mobile-ait`), Zod, Tailwind CSS v4 + Emotion, Vite(port 5173), Vitest(jsdom). 정확한 버전은 `package.json`이 권위.
 
-## Overview
+## 반드시 지킬 규칙 (위반 잦음 — 작업 전 확인)
 
-- Apps-in-Toss WebView 미니앱 (Granite framework v2.0.9)
-- 비게임 미니앱이므로 **TDS(Toss Design System) 사용 필수** (토스 리뷰 승인 요건)
-- **WebSocket/Redis/Socket.io 없음** — 기존 게임과 완전 독립. server-toss와는 REST API로만 통신
-- `@toss/shared` 패키지로 server-toss와 타입/Zod 스키마 공유
+- **일반 브라우저로 동작·성능을 확인하지 말 것.** `pnpm dev`를 크롬 등 일반 브라우저로 열면 로그인부터 실패해 앱이 진행되지 않는다 → "로컬 검증·테스트" 절 참조.
+- **모든 사용자 노출 문구는 해요체.** 앱인토스 심사 요건. `pnpm qa`의 ux-writing 검사로 강제.
+- **Tailwind CSS는 v4 문법만, v3 금지.**
+  - CSS 변수: `text-(--color-grey)` ✓ / `text-[var(--color-grey)]` ✗
+  - important: `rounded-full!` ✓ / `!rounded-full` ✗
+- **FSD Public API import만.** 슬라이스 내부 경로 직접 import 금지 (ESLint `no-restricted-imports`로 강제) → "아키텍처" 절 참조.
+- **새 모듈 생성 시 해당 슬라이스의 `index.ts`에 export 추가.** 누락 시 다른 레이어에서 import 불가.
+- **비게임 미니앱이므로 TDS(Toss Design System) 사용 필수.** 토스 리뷰 승인 요건.
 
-## Tech Stack
+## 로컬 검증·테스트 — 일반 브라우저 금지, 샌드박스 필수
 
-| 항목       | 값                                                       |
-| ---------- | -------------------------------------------------------- |
-| Framework  | `@apps-in-toss/web-framework` ^2.0.9 (Granite)           |
-| TDS        | `@toss/tds-mobile` ^2.3.0, `@toss/tds-mobile-ait` ^2.3.0 |
-| React      | 19.2.3                                                   |
-| Routing    | react-router-dom ^7.13                                   |
-| State      | useState/useEffect 기반                                  |
-| Validation | Zod ^4.3.6                                               |
-| Styling    | Tailwind CSS ^4.1.18 + Emotion                           |
-| Build      | Vite ^7.2.4, port 5173                                   |
-| Test       | Vitest ^4.0.16 (jsdom) + React Testing Library           |
+### `pnpm dev` 서버는 일반 브라우저용이 아니다
 
-## Development Commands
+`scripts/dev.js`가 Mac의 LAN IP를 감지해 `WEBVIEW_HOST`로 주입한다. 이는 **같은 WiFi에 연결된 토스 샌드박스 앱이 이 dev 서버에 접속하기 위한 것**이다. 일반 브라우저로 `localhost:5173`을 여는 용도가 아니다.
+
+### 일반 브라우저로 열면 안 되는 이유
+
+`appLogin` 등 SDK가 `ReactNativeWebView` 브리지를 호출하는데 일반 브라우저에는 이 브리지가 없다. **로그인 단계에서 바로 실패하고 앱은 로그인 화면 이후로 진행되지 않는다.** 따라서:
+
+- 라우트·뷰·API 호출·렌더가 아예 실행되지 않는다 → **Network 탭, Performance 탭, Lighthouse 등 어떤 측정도 무의미하다.**
+- "SDK 일부 호출이 실패"하는 수준이 아니라 "앱이 동작하지 않는" 것이다. 일반 브라우저 결과로는 동작도 성능도 결론 내리지 말 것.
+- 콘솔의 `ReactNativeWebView is not available` / `is not a constant handler` 에러가 이 상태의 증거다.
+
+브리지에 의존하는 SDK: `@apps-in-toss/web-framework`(`appLogin`, `getDeviceId`, `getSafeAreaInsets`, `share`, `getTossShareLink`, `partner.addAccessoryButton`, `tdsEvent`, `TossAds.*`, `Analytics.*`), `@toss/tds-mobile-ait`(`TDSMobileAITProvider` 내부 init).
+
+### 올바른 로컬 검증 절차
+
+1. `pnpm dev` 실행 → 콘솔에 출력된 `host: <LAN IP>` 확인.
+2. Mac과 iPhone을 **같은 WiFi**에 연결.
+3. 토스 샌드박스 앱(개발자 로그인) → 앱 선택 → 스킴 입력: `intoss://we-are-all-da-vinci`.
+4. 빌드 결과물(`.ait`) 검증이 필요하면: `pnpm build` → 토스 콘솔 업로드 → 발급된 QR로 실제 토스앱에서 테스트. (콘솔 QR은 실제 토스앱용 경로 — 로컬 dev 서버는 위 스킴으로 접속)
+
+### 동작·성능 측정·디버깅
+
+측정은 **샌드박스에 연결된 실제 WebView**에서만 의미가 있다.
+
+- **iOS (iPhone 샌드박스):** Mac Safari → 개발자 메뉴 → iPhone의 해당 WebView → Web Inspector(Network/Timelines 패널).
+- **Android:** Android Studio 에뮬레이터 + 앱인토스 Android 샌드박스 APK 설치 → Chrome `chrome://inspect`로 WebView 원격 디버깅. 실물 Android 기기 없이 가능. 단 에뮬레이터의 절대 수치(로딩 시간 등)는 실기기를 대표하지 못하므로 변경 전후 상대 비교용으로만 쓸 것.
+
+### 검증 결론 규칙
+
+- **단위 로직**(순수 함수, hooks의 데이터 변환): vitest로 검증 OK. `vitest.setup.ts`에서 SDK가 모두 mock되어 있음.
+- **UI·통합·SDK 동작·성능**: 위 샌드박스 절차로만 검증.
+- 사용자가 명시적으로 로컬 브라우저 검증을 요청하지 않는 한, 일반 브라우저로 띄우는 단계 자체를 제안하지 말 것.
+
+## 명령어
 
 ```bash
-# Development (granite dev via scripts/dev.js — 로컬 IP 자동 감지 후 WEBVIEW_HOST 주입)
-pnpm dev
-
-# Build (ait build — 결과물: we-are-all-da-vinci.ait)
-pnpm build
-
-# 단일 테스트 파일 실행
-pnpm test src/feature/drawing/model/useDrawingStrokes.test.ts
-
-# 모든 테스트 (CI와 동일)
-pnpm test
-
-# Watch 모드
-pnpm test:watch
-
-# 커버리지 (v8 provider, HTML + LCOV)
-pnpm test:coverage
-
-# Lint / Format
-pnpm lint
-pnpm format
-pnpm format:check
-
-# QA: 앱인토스 심사 기준 자동 검증 (CI 모드는 WARN도 실패 처리)
-pnpm qa
-pnpm qa:ci
+pnpm dev            # granite dev (scripts/dev.js — LAN IP를 WEBVIEW_HOST로 주입, 샌드박스 접속용)
+pnpm build          # ait build → we-are-all-da-vinci.ait
+pnpm test           # 전체 테스트 (CI와 동일)
+pnpm test <file>    # 단일 파일 — 예: pnpm test src/feature/drawing/model/useDrawingStrokes.test.ts
+pnpm test:watch     # watch 모드
+pnpm test:coverage  # 커버리지 (v8, HTML + LCOV)
+pnpm lint           # ESLint
+pnpm format         # Prettier 적용 / pnpm format:check 는 검사만
+pnpm qa             # 앱인토스 심사 기준 자동 검증 / pnpm qa:ci 는 WARN도 실패 처리
 ```
 
-## Configuration
+## 코드 컨벤션
 
-### granite.config.ts
+- 컴포넌트는 **화살표 함수**로 작성, **파일 마지막 줄에서 export** (default 또는 named).
+- FSD 슬라이스 폴더명은 **camelCase** (`phaseHeader`, `myScoreCard`).
+- 상태는 **useState/useEffect 기반** — 전역 스토어(Zustand 등) 없음.
+- Tailwind CSS v4 문법, 사용자 문구 해요체 (위 "반드시 지킬 규칙" 참조).
+- **상수·도메인 타입은 사용처에 인라인하지 말고 슬라이스의 `config/`로 분리.** 시간/임계값 등 튜닝 매직 넘버, 슬라이스 외부와 공유하는 도메인 타입이 대상 (예: `feature/drawing/config/scoring.ts`의 `SCORE_DEBOUNCE_MS`, `TREND_THRESHOLD`, `ScoreTrend`). 단일 함수 내부에서만 쓰는 임시 상수는 그대로 둬도 됨.
 
-- `appName`: "we-are-all-da-vinci"
-- `webViewProps.type`: "partner" (비게임), `bounces: false`, `pullToRefreshEnabled: false`, `allowsBackForwardNavigationGestures: false` — 캔버스 드로잉 보호용 기본값. 뷰별로 필요 시 재설정 가능
-- `port`: 5173, `host`: WEBVIEW_HOST 환경변수 또는 "localhost" (dev.js가 자동 주입)
+## 아키텍처 (FSD)
 
-### Path Aliases (vite.config.ts + tsconfig.app.json + vitest.config.ts에 모두 동기화)
+Feature-Sliced Design. 레이어: `app` → `views` → `feature` → `entities` → `shared`.
 
-- `@/*` → `./src/*`
-- `@toss/shared` → `../packages/toss-shared/src` (공유 타입/Zod 스키마)
+**Public API 규칙 (ESLint `no-restricted-imports`로 강제):** 각 레이어는 `index.ts`로 export를 캡슐화한다.
 
-### Vite Dev Proxy
+- `shared/lib`: 단일 진입점 — `@/shared/lib` ✓ / `@/shared/lib/useCountdown` ✗
+- `shared/ui`, `shared/assets`: 세그먼트 단위 — `@/shared/ui/score` ✓ / `@/shared/ui/score/Score` ✗
+- `feature`/`entities`/`views`: 슬라이스 단위 — `@/feature/drawing` ✓ / `@/feature/drawing/ui/Toolbar` ✗
 
-- `/api` → `http://localhost:3000` (rewrite로 `/api` prefix 제거). 로컬 개발 시 server-toss를 3000번 포트에서 실행 중이라고 가정
-
-## Architecture (FSD)
-
-Feature-Sliced Design 구조:
+슬라이스별 역할 (코드 구조만으로는 알기 어려운 의도):
 
 ```text
-src/
-├── app/config/         - router.tsx, vitest.setup.ts
-├── views/              - 라우트 뷰 페이지
-│   ├── dashboard/      - 홈("/") — 일일 1회 자동 진입 + "한번 더 그리기" 버튼
-│   ├── login/          - 로그인 화면
-│   ├── memorize/       - 그림 보고 기억하기
-│   ├── drawing/        - 캔버스에 그리기
-│   ├── submitted/      - 제출 완료 화면
-│   ├── ranking/        - TOP 100 랭킹
-│   ├── rankingDetail/  - 개별 그림 상세 ("/drawing/:drawingId")
-│   └── status/         - 상태 화면
-├── feature/            - 사용자 상호작용 로직
-│   ├── drawing/        - 캔버스/툴바, 스트로크 모델, 채점 훅
-│   └── login/          - 토스 OAuth 로그인 훅
-├── entities/           - 비즈니스 모델 (UI + 도메인 훅)
-│   ├── myScoreCard/    - 내 그림 카드 + useMyDrawings
-│   ├── podium/         - 랭킹 TOP3 시상대
-│   ├── ranking/        - 랭킹 리스트 항목
-│   ├── scoreDetailCard - 점수 상세
-│   └── phaseHeader/    - 단계 헤더
-├── shared/
-│   ├── api/            - serverTossApi (토큰 재발급 포함 fetch 클라이언트)
-│   ├── hooks/          - useAbortableQuery
-│   ├── lib/            - useCountdown, useExitGuard, useRequiredState, tossAds
-│   ├── ui/             - 공용 UI (BannerAd, score 등)
-│   └── assets/         - 이미지, 아이콘
-├── App.tsx             - TDSMobileAITProvider + RouterProvider 래핑 + initTossAdsOnce
-├── index.tsx           - React 진입점
-└── index.css           - Tailwind CSS + WebView 리셋 + 글로벌 레이아웃
+views/      dashboard 홈("/", 일일 1회 자동 진입), login, memorize(그림 기억),
+            drawing(캔버스), submitted(제출 완료), ranking(TOP 100),
+            rankingDetail("/drawing/:drawingId"), status
+feature/    drawing(캔버스/툴바·스트로크 모델·채점 훅), login(토스 OAuth 훅)
+entities/   myScoreCard(+useMyDrawings), podium(TOP3 시상대), ranking(리스트 항목),
+            scoreDetailCard(점수 상세), phaseHeader(단계 헤더)
+shared/     api(serverTossApi), hooks(useAbortableQuery),
+            lib(useCountdown·useExitGuard·useRequiredState·tossAds),
+            ui(BannerAd·score 등), assets
+app/config/ router.tsx, vitest.setup.ts
 ```
 
-**FSD Public API Pattern (필수, ESLint `no-restricted-imports`로 강제):**
+`App.tsx`는 `TDSMobileAITProvider` + `RouterProvider`를 래핑하고 `initTossAdsOnce`를 호출한다.
 
-- 각 레이어는 `index.ts`로 export 캡슐화. 새 모듈 생성 시 반드시 해당 슬라이스의 `index.ts`에 export 추가
-- shared/lib: `@/shared/lib` ✓, `@/shared/lib/useCountdown` ✗ (단일 진입점)
-- shared/ui, shared/assets: 세그먼트 단위 — `@/shared/ui/score` ✓, `@/shared/ui/score/Score` ✗
-- feature/entities/views: 슬라이스 단위 — `@/feature/drawing` ✓, `@/feature/drawing/ui/Toolbar` ✗
+## 도메인 메모
 
-## API Layer (shared/api/serverToss.ts)
+### API 레이어 (`shared/api/serverToss.ts`)
 
-- 모든 요청은 `request<T>()` 헬퍼 경유. `localStorage.access_token`을 `Authorization: Bearer`로 자동 주입
-- **401 자동 토큰 재발급**: 401 응답 시 `appLogin()` → `/oauth/toss/login`으로 재발급 → 원 요청 1회 재시도. `reissuePromise` 싱글톤으로 동시 401 합치기 (무한 루프 방지를 위해 로그인 엔드포인트 자체는 재시도 제외)
-- 모든 응답은 `@toss/shared`의 Zod 스키마로 파싱 (`LoginResponseSchema`, `PromptResponseSchema`, `SimilarityResponseSchema`, 등)
-- 에러 메시지는 해요체 ("요청 실패", "토큰 재발급 응답이 올바르지 않아요")
+- 모든 요청은 `request<T>()` 헬퍼 경유. `localStorage.access_token`을 `Authorization: Bearer`로 자동 주입.
+- **401 자동 토큰 재발급**: 401 시 `appLogin()` → `/oauth/toss/login`으로 재발급 → 원 요청 1회 재시도. `reissuePromise` 싱글톤으로 동시 401을 합침. 로그인 엔드포인트 자체는 재시도 제외(무한 루프 방지).
+- 모든 응답은 `@toss/shared`의 Zod 스키마로 파싱 (`LoginResponseSchema`, `PromptResponseSchema`, `SimilarityResponseSchema` 등).
+- 에러 메시지는 해요체 ("요청 실패", "토큰 재발급 응답이 올바르지 않아요").
+- Vite dev proxy: `/api` → `http://localhost:3000` (`/api` prefix는 rewrite로 제거). 로컬 개발 시 server-toss가 3000 포트에서 실행 중이라고 가정.
 
-## 게임 플레이 모델 (DashboardView)
+### 게임 플레이 모델 (DashboardView)
 
-- 일일 1회 강제: `getDeviceId()`로 익명 해시 획득 → `localStorage.lastPlayed_${hash}`가 오늘 날짜면 대시보드만 표시, 아니면 `getPrompt()` 호출 후 `/memorize`로 자동 navigate (`replace: true`)
-- `getDeviceId()` 실패 시 hash="local"로 폴백
-- "한번 더 그리기" 버튼으로 수동 재진입 가능
+- 일일 1회 강제: `getDeviceId()`로 익명 해시 획득 → `localStorage.lastPlayed_${hash}`가 오늘이면 대시보드만 표시, 아니면 `getPrompt()` 호출 후 `/memorize`로 자동 navigate(`replace: true`).
+- `getDeviceId()` 실패 시 hash="local" 폴백.
+- "한번 더 그리기" 버튼으로 수동 재진입.
 
-## Code Conventions
+### TDS 사용
 
-- 컴포넌트는 **화살표 함수**로 작성, **마지막 줄에 export** (default 또는 named)
-- FSD 슬라이스 폴더명은 **camelCase** (e.g., `phaseHeader`, `myScoreCard`)
-- **Tailwind CSS v4 문법 필수** (v3 문법 금지)
-  - CSS 변수: `text-(--color-grey)` ✓, `text-[var(--color-grey)]` ✗
-  - important: `rounded-full!` ✓, `!rounded-full` ✗
-- 모든 사용자 노출 문구는 **해요체** (앱인토스 심사 요건)
-- **상수·도메인 타입은 사용처 파일에 인라인하지 말고 슬라이스의 `config/`로 분리** (가독성)
-  - 시간/임계값 등 동작 튜닝 매직 넘버, 슬라이스 외부와 공유하는 도메인 타입이 대상
-  - 예: `feature/drawing/config/scoring.ts` (`SCORE_DEBOUNCE_MS`, `TREND_THRESHOLD`, `ScoreTrend`)
-  - 단일 함수 내부에서만 쓰이는 임시 상수는 그대로 둬도 됨
+- `TDSMobileAITProvider`로 App 최상위를 감싸야 TDS 컴포넌트가 동작.
+- Import: `import { Button, BottomCTA, CTAButton, Top } from '@toss/tds-mobile'`.
+- 하단 버튼 2개는 `BottomCTA.Double` (`leftButton` + `rightButton` with `CTAButton`).
+- Typography는 `Top.TitleParagraph`, `Top.SubtitleParagraph`, `Paragraph.Text` 등 TDS 토큰.
+- TDS는 일반 브라우저에서 동작하지 않음 → UI 확인은 샌드박스에서 ("로컬 검증·테스트" 절).
 
-## TDS (Toss Design System) 사용 패턴
+### 앱인토스 SDK
 
-- `TDSMobileAITProvider`로 App 최상위를 감싸야 TDS 컴포넌트 동작
-- **TDS는 로컬 브라우저에서 동작하지 않음** → 반드시 토스 샌드박스 앱에서 UI 확인
-- Import: `import { Button, BottomCTA, CTAButton, Top } from '@toss/tds-mobile'`
-- 하단 버튼 2개: `BottomCTA.Double` (`leftButton` + `rightButton` with `CTAButton`)
-- Typography: `Top.TitleParagraph`, `Top.SubtitleParagraph`, `Paragraph.Text` 등 TDS 토큰 사용
+- `useExitGuard` (`shared/lib`): Android 하드웨어 뒤로가기를 가로채 다이얼로그 표시. iOS 스와이프 제스처도 동시 비활성화.
+- `initTossAdsOnce` (`shared/lib`): `App.tsx`에서 1회 초기화. `<BannerAd>` 컴포넌트로 노출.
+- 캔버스 화면 보호용으로 `granite.config.ts`에서 `bounces`/`pullToRefreshEnabled`/`allowsBackForwardNavigationGestures`를 모두 false로 둠 (`webViewProps.type: "partner"`). 뷰별로 필요 시 재설정 가능.
 
-## 수동/통합 테스트 환경 — 반드시 토스 샌드박스에서 확인
+### 글로벌 레이아웃 (`index.css`)
 
-**로컬 브라우저(`pnpm dev` + Playwright 등)는 통합 동작 검증 용도로 사용하지 말 것.** 다음 SDK들이 모두 `ReactNativeWebView` 브리지를 통해 동작하므로 일반 브라우저에서는 거의 모든 호출이 실패합니다:
+- `#root`에 `flex column` + `height: 100%` + `padding-bottom: env(safe-area-inset-bottom)`. 별도 Layout 컴포넌트 없음.
+- CSS 변수: `--page-px: 20px`(좌우 패딩 — 각 페이지에서 `px-(--page-px)` 적용), `--card-mx: 12px`, 색상 토큰(`--color-toss-blue`, `--color-grey`, `--color-gold` 등).
 
-- `@apps-in-toss/web-framework`: `getDeviceId`, `getSafeAreaInsets`, `appLogin`, `share`, `getTossShareLink`, `partner.addAccessoryButton`, `tdsEvent`, `TossAds.*`, `Analytics.*`
-- `@toss/tds-mobile-ait`: `TDSMobileAITProvider` 내부 init (SafeAreaInsets 호출로 인해 에러)
+### 라우팅 (`app/config/router.tsx`)
 
-로컬 브라우저에서 보이는 `ReactNativeWebView is not available`, `is not a constant handler` 류 에러는 위 SDK들이 브라우저에 없는 네이티브 브리지를 호출해서 발생하는 정상 동작. **이 환경의 동작은 실제 토스 앱의 동작을 반영하지 않습니다.**
+- `createBrowserRouter` 기반. 샌드박스 앱은 루트(`/`) → `DashboardView`로 진입.
+- 라우트: `/login`, `/`, `/memorize`, `/drawing`, `/drawing/:drawingId`(rankingDetail), `/submitted`, `/ranking`.
 
-검증해야 할 경우:
+### 설정
 
-1. **단위 로직(순수 함수, hooks의 데이터 변환)** → vitest. setup에서 SDK 모두 mock 처리되어 있음.
-2. **UI/통합/SDK 동작** → `pnpm build` → 결과 `we-are-all-da-vinci.ait` → **토스 샌드박스 앱에서 QR 스캔으로 로드**.
-3. **Analytics·utm·딥링크처럼 진입 URL이 핵심인 시나리오** → 샌드박스 앱에서 직접 진입 + GA4 DebugView 또는 토스 콘솔로 이벤트 확인.
+- `granite.config.ts`: `appName` "we-are-all-da-vinci", `port` 5173, `host`는 `WEBVIEW_HOST` 환경변수 또는 "localhost"(dev.js가 주입).
+- Path alias (`vite.config.ts`·`tsconfig.app.json`·`vitest.config.ts`에 **모두 동기화** 필요): `@/*` → `./src/*`, `@toss/shared` → `../packages/toss-shared/src`.
 
-로컬에서 dev 서버를 띄울 수는 있지만, "동작 확인했음"으로 카운트하지 말 것. 사용자가 명시적으로 로컬 검증을 요청하지 않는 한 샌드박스 검증으로 결론을 내려야 함.
+## 테스트
 
-## 앱인토스 SDK 활용
+- Vitest(jsdom, `globals: true`), setup `src/app/config/vitest.setup.ts`. 패턴 `src/**/*.{test,spec}.{ts,tsx}`, `passWithNoTests` 활성.
+- `vitest.setup.ts`가 외부 의존성을 전부 모킹: `@toss/tds-mobile` 컴포넌트 전체, `@toss/tds-mobile-ait`의 `TDSMobileAITProvider`, `@apps-in-toss/web-framework`의 모든 export, `HTMLCanvasElement.prototype.getContext`·`ResizeObserver` 폴리필.
+- 모든 테스트 description은 한국어 (예: `describe('카운트다운', …)`).
 
-- `useExitGuard` (shared/lib): Android 하드웨어 뒤로가기를 가로채서 다이얼로그 표시. iOS 스와이프 제스처도 동시 비활성화
-- `initTossAdsOnce` (shared/lib): App.tsx에서 1회 초기화. `<BannerAd>` 컴포넌트로 노출
-- 캔버스 화면에서는 `bounces`, `pullToRefreshEnabled`, `allowsBackForwardNavigationGestures` 모두 false (granite.config.ts 기본값)
+## QA / CI
 
-## Global Layout (index.css)
+`pnpm qa` (`scripts/qa.ts`) — 8개 자동 검증: tooling, granite-config, tds-usage, ux-writing(해요체·다크패턴 단어), dark-pattern, ad-integration, external-links, bundle-size. 수동 QA(실기기)는 `QA_CHECKLIST.md` 참고.
 
-- `#root`에 `flex column` + `height: 100%` + `padding-bottom: env(safe-area-inset-bottom)` 적용. 별도 Layout 컴포넌트 없음
-- CSS 변수: `--page-px: 20px` (좌우 패딩), `--card-mx: 12px`, 색상 토큰 (`--color-toss-blue`, `--color-grey`, `--color-gold` 등)
-- 각 페이지에서 `px-(--page-px)`로 좌우 패딩 적용
-
-## Routing (app/config/router.tsx)
-
-- `createBrowserRouter` 기반. 샌드박스 앱은 루트(`/`) → `DashboardView`로 진입
-- 라우트: `/login`, `/`, `/memorize`, `/drawing`, `/drawing/:drawingId` (rankingDetail), `/submitted`, `/ranking`
-
-## Testing
-
-- Vitest with jsdom, `globals: true`, setup: `src/app/config/vitest.setup.ts`
-- 테스트 파일 패턴: `src/**/*.{test,spec}.{ts,tsx}`, `passWithNoTests` 활성화
-- **vitest.setup.ts에서 외부 의존성을 모두 모킹**:
-  - `@toss/tds-mobile` 컴포넌트 전체 (Top, Button, BottomCTA, CTAButton, ConfirmDialog, Paragraph, ProgressBar 등)
-  - `@toss/tds-mobile-ait`의 TDSMobileAITProvider
-  - `@apps-in-toss/web-framework`의 모든 export (appLogin, getDeviceId, graniteEvent, TossAds 등)
-  - `HTMLCanvasElement.prototype.getContext`와 `ResizeObserver` 폴리필
-- 모든 테스트 description은 한국어 (e.g., `describe('카운트다운', () => ...)`)
-
-## QA (scripts/qa.ts)
-
-`pnpm qa` 실행 시 다음 8개 자동 검증:
-
-1. **tooling** — 의존성/스크립트 검증
-2. **granite-config** — granite.config.ts 필수 필드
-3. **tds-usage** — TDS 컴포넌트 사용 여부
-4. **ux-writing** — 문구 검사 (해요체, 다크패턴 단어 등)
-5. **dark-pattern** — UI 다크패턴 패턴 검출
-6. **ad-integration** — 광고 SDK 통합 검증
-7. **external-links** — 외부 링크 노출 검사
-8. **bundle-size** — `dist/` 번들 크기
-
-수동 QA(실기기)는 `QA_CHECKLIST.md` 참고.
-
-## CI
-
-PR에서 `client-toss/**` 또는 `packages/**` 변경 시 자동 실행 (루트 ci.yml):
-
-1. `pnpm lint`
-2. `pnpm format:check`
-3. `pnpm test:coverage`
-4. `pnpm qa:ci` (CI 모드는 WARN도 실패)
-5. `pnpm build`
+CI (PR에서 `client-toss/**` 또는 `packages/**` 변경 시): `pnpm lint` → `format:check` → `test:coverage` → `qa:ci`(WARN도 실패) → `build`.
