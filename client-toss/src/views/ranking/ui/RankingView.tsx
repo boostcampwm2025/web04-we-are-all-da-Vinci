@@ -1,10 +1,16 @@
 import { Podium } from "@/entities/podium";
 import { RankingList } from "@/entities/ranking";
 import { AD_GROUP_IDS } from "@/shared/config";
+import { trackScreen } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Border, ListHeader } from "@toss/tds-mobile";
+import { useEffect } from "react";
 
 const RankingView = () => {
+  useEffect(() => {
+    trackScreen("ranking_view");
+  }, []);
+
   return (
     <div className="pt-4 pb-2">
       <div className="flex w-full flex-col items-center gap-4 px-(--page-px) pb-2">

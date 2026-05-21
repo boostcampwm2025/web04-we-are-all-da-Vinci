@@ -7,12 +7,17 @@ import { PhaseHeader } from "@/entities/phaseHeader";
 import { useFullScreenAd } from "@/feature/playChance";
 import { serverTossApi } from "@/shared/api";
 import { AD_GROUP_IDS } from "@/shared/config";
-import { trackClick, useExitGuard, useRequiredState } from "@/shared/lib";
+import {
+  trackClick,
+  trackScreen,
+  useExitGuard,
+  useRequiredState,
+} from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
 import { Button, ConfirmDialog, Toast } from "@toss/tds-mobile";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 
 interface SubmittedRouteState {
@@ -26,6 +31,11 @@ const SubmittedView = () => {
   const navigate = useNavigate();
   const routeState = useRequiredState<SubmittedRouteState>();
   const { showDialog, setShowDialog } = useExitGuard();
+
+  useEffect(() => {
+    if (!routeState) return;
+    trackScreen("submitted_view");
+  }, [routeState]);
   const { hasChance, chargeByAd, startPlay } =
     useOutletContext<PlayChanceLayoutContext>();
   const { isAdLoaded, showAd, adGroupId } = useFullScreenAd();

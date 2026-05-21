@@ -1,10 +1,12 @@
 import { MyScoreCard, useDrawing } from "@/entities/myScoreCard";
 import { PhaseHeader } from "@/entities/phaseHeader";
 import { AD_GROUP_IDS } from "@/shared/config";
+import { trackScreen } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";
 import { colors } from "@toss/tds-colors";
 import { Button, Skeleton } from "@toss/tds-mobile";
+import { useEffect } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 
 const RankingDetailView = () => {
@@ -12,6 +14,10 @@ const RankingDetailView = () => {
   const { drawing, isLoading } = useDrawing(drawingId);
   const location = useLocation();
   const rank = (location.state as { rank?: number } | null)?.rank;
+
+  useEffect(() => {
+    trackScreen("ranking_detail_view", rank != null ? { rank } : undefined);
+  }, [rank]);
 
   const renderBody = () => {
     if (isLoading) {
