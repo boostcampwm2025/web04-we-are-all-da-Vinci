@@ -11,7 +11,7 @@ export const STEPS = [
     icon: painterMan1Img,
     alt: "화가 아이콘",
     title: "다빈치처럼 멋지게 그려봐요",
-    description: "기억을 떠올려 캔버스 똑같이 그려요.",
+    description: "기억을 떠올려 캔버스에 똑같이 그려요.",
   },
   {
     icon: paletteImg,
