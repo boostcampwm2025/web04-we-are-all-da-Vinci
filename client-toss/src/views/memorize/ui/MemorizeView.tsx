@@ -69,7 +69,10 @@ const MemorizeView = () => {
   if (isCheckingSession || !routeState) return null;
 
   return (
-    <div data-no-safe-area-bottom className="flex h-full flex-col bg-white">
+    <div
+      data-no-safe-area-bottom
+      className="flex h-full flex-col bg-(--color-page)"
+    >
       <PhaseHeader
         title="이 그림을 외워주세요"
         description={`${timeLeft}초 뒤에 똑같이 그려야 해요\n중간에 나가면 도전 기회가 사라져요`}

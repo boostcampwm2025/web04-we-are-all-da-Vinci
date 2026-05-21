@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { getCanvasBackgroundColor } from "../lib/canvasBackground";
 
 export const useCanvasSetup = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -27,7 +28,7 @@ export const useCanvasSetup = () => {
     if (!ctx) return;
 
     ctx.scale(dpr, dpr);
-    ctx.fillStyle = "white";
+    ctx.fillStyle = getCanvasBackgroundColor();
     ctx.fillRect(0, 0, size, size);
     ctx.lineWidth = 3;
     ctx.lineCap = "round";

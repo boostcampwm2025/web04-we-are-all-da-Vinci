@@ -110,7 +110,7 @@ const DrawingView = () => {
   if (isCheckingSession || !routeState) return null;
 
   return (
-    <div className="relative flex h-full flex-col bg-white">
+    <div className="relative flex h-full flex-col bg-(--color-page)">
       {scoring.showPenalty && (
         <div className="animate-penalty pointer-events-none absolute inset-0 z-50 bg-red-500/20" />
       )}

@@ -28,7 +28,7 @@ const MockBanner = ({
     <div
       style={{ height }}
       className={clsx(
-        "flex w-full items-center justify-center rounded-2xl bg-gray-100 text-sm text-(--color-grey)",
+        "card flex w-full items-center justify-center text-sm text-(--color-grey)",
         className,
       )}
     >

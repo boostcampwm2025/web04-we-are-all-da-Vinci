@@ -1,5 +1,9 @@
-const PODIUM_RANK_COLORS = ["#FFD158", "#D1D6DB", "#EE8F11"];
-const DEFAULT_RANK_COLOR = "#F2F4F6";
-const MY_RANK_HIGHLIGHT = "#3182F6";
+const PODIUM_RANK_COLORS = [
+  "var(--color-gold)",
+  "var(--color-silver)",
+  "var(--color-bronze)",
+];
+const DEFAULT_RANK_COLOR = "var(--color-card)";
+const MY_RANK_HIGHLIGHT = "var(--color-blue)";
 
 export { PODIUM_RANK_COLORS, DEFAULT_RANK_COLOR, MY_RANK_HIGHLIGHT };

@@ -8,16 +8,18 @@ interface MyRankingProps {
 
 const MyRanking = ({ nickname, rank, score }: MyRankingProps) => {
   return (
-    <TableRow
-      align="space-between"
-      left={nickname ? `${nickname}의 순위` : "내 순위"}
-      right={
-        <span className="text-base">
-          <strong>{rank}위</strong>
-          <span className="ml-2 text-(--color-grey)">{score}점</span>
-        </span>
-      }
-    />
+    <div className="pointer-events-none bg-(--color-page) select-none">
+      <TableRow
+        align="space-between"
+        left={nickname ? `${nickname}의 순위` : "내 순위"}
+        right={
+          <span className="text-base">
+            <strong>{rank}위</strong>
+            <span className="ml-2 text-(--color-grey)">{score}점</span>
+          </span>
+        }
+      />
+    </div>
   );
 };
 

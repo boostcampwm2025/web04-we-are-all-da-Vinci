@@ -1,5 +1,6 @@
 import type { Stroke } from "@toss/shared";
 import type { RefObject } from "react";
+import { getCanvasBackgroundColor } from "./canvasBackground";
 
 const LOOP_DELAY_MS = 1000; // 루프 재시작 전 대기 시간(ms)
 const NORMALIZE_SIZE = 500; // strokes는 500x500 정규화 좌표로 저장됨 (normalizeStrokes 참조)
@@ -29,8 +30,9 @@ export const animateDrawing = (
   // 정규화 공간(500x500) → 캔버스 logical 공간 변환 비율
   const scale = logicalWidth / NORMALIZE_SIZE;
 
+  const backgroundColor = getCanvasBackgroundColor();
   const clearCanvas = () => {
-    ctx.fillStyle = "white";
+    ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, logicalWidth, logicalHeight);
   };
 

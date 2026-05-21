@@ -41,11 +41,8 @@ const RankingDetailView = () => {
     return (
       <div className="px-(--page-px)">
         <div
-          className="flex h-44 w-full items-center justify-center rounded-2xl text-sm"
-          style={{
-            backgroundColor: colors.grey100,
-            color: colors.grey600,
-          }}
+          className="card flex h-44 w-full items-center justify-center text-sm"
+          style={{ color: colors.grey600 }}
         >
           그림을 찾을 수 없어요
         </div>
@@ -56,7 +53,7 @@ const RankingDetailView = () => {
   return (
     <div
       data-no-safe-area-bottom
-      className="min-h-0 flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)] bg-white"
+      className="min-h-0 flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)] bg-(--color-page)"
     >
       <PhaseHeader
         title={
@@ -69,7 +66,7 @@ const RankingDetailView = () => {
         description={
           drawing ? (
             <span className="text-(--color-blue)">
-              캔버스를 누르면 자세한 분석을 볼 수 있어요
+              그림을 누르면 자세한 분석을 볼 수 있어요
             </span>
           ) : undefined
         }
