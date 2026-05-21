@@ -29,7 +29,7 @@ const handleShare = async () => {
   }
 
   const tossLink = await getTossShareLink(
-    "intoss://we-are-all-da-vinci",
+    "intoss://we-are-all-da-vinci?utm_source=share&utm_medium=organic",
     "https://imgur.com/JUlHwsT.png",
   );
 

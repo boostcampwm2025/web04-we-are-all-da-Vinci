@@ -305,6 +305,17 @@ vi.mock("@toss/tds-mobile-ait", () => ({
   TDSMobileAITProvider: ({ children }: { children?: ReactNode }) => children,
 }));
 
+vi.mock("firebase/app", () => ({
+  initializeApp: vi.fn().mockReturnValue({}),
+}));
+
+vi.mock("firebase/analytics", () => ({
+  getAnalytics: vi.fn().mockReturnValue({}),
+  isSupported: vi.fn().mockResolvedValue(false),
+  logEvent: vi.fn(),
+  setUserId: vi.fn(),
+}));
+
 vi.mock("@apps-in-toss/web-framework", () => ({
   appLogin: vi.fn().mockResolvedValue({
     authorizationCode: "test-code",

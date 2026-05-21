@@ -1,3 +1,4 @@
+import AnalyticsTracker from "@/app/config/AnalyticsTracker";
 import PlayChanceLayout from "@/app/layouts/PlayChanceLayout";
 import { DashboardView, MyDrawingsPanel } from "@/views/dashboard";
 import { Drawing } from "@/views/drawing";
@@ -10,29 +11,34 @@ import { createBrowserRouter } from "react-router-dom";
 
 export const router = createBrowserRouter([
   {
-    path: "/login",
-    element: <LoginView />,
-  },
-  {
-    path: "/memorize",
-    element: <Memorize />,
-  },
-  {
-    path: "/drawing",
-    element: <Drawing />,
-  },
-  {
-    element: <PlayChanceLayout />,
+    element: <AnalyticsTracker />,
     children: [
       {
-        element: <DashboardView />,
+        path: "/login",
+        element: <LoginView />,
+      },
+      {
+        path: "/memorize",
+        element: <Memorize />,
+      },
+      {
+        path: "/drawing",
+        element: <Drawing />,
+      },
+      {
+        element: <PlayChanceLayout />,
         children: [
-          { index: true, element: <MyDrawingsPanel /> },
-          { path: "ranking", element: <RankingView /> },
+          {
+            element: <DashboardView />,
+            children: [
+              { index: true, element: <MyDrawingsPanel /> },
+              { path: "ranking", element: <RankingView /> },
+            ],
+          },
+          { path: "/submitted", element: <SubmittedView /> },
+          { path: "/drawing/:drawingId", element: <RankingDetailView /> },
         ],
       },
-      { path: "/submitted", element: <SubmittedView /> },
-      { path: "/drawing/:drawingId", element: <RankingDetailView /> },
     ],
   },
 ]);

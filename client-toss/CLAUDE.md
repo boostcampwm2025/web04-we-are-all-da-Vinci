@@ -150,6 +150,23 @@ src/
 - 하단 버튼 2개: `BottomCTA.Double` (`leftButton` + `rightButton` with `CTAButton`)
 - Typography: `Top.TitleParagraph`, `Top.SubtitleParagraph`, `Paragraph.Text` 등 TDS 토큰 사용
 
+## 수동/통합 테스트 환경 — 반드시 토스 샌드박스에서 확인
+
+**로컬 브라우저(`pnpm dev` + Playwright 등)는 통합 동작 검증 용도로 사용하지 말 것.** 다음 SDK들이 모두 `ReactNativeWebView` 브리지를 통해 동작하므로 일반 브라우저에서는 거의 모든 호출이 실패합니다:
+
+- `@apps-in-toss/web-framework`: `getDeviceId`, `getSafeAreaInsets`, `appLogin`, `share`, `getTossShareLink`, `partner.addAccessoryButton`, `tdsEvent`, `TossAds.*`, `Analytics.*`
+- `@toss/tds-mobile-ait`: `TDSMobileAITProvider` 내부 init (SafeAreaInsets 호출로 인해 에러)
+
+로컬 브라우저에서 보이는 `ReactNativeWebView is not available`, `is not a constant handler` 류 에러는 위 SDK들이 브라우저에 없는 네이티브 브리지를 호출해서 발생하는 정상 동작. **이 환경의 동작은 실제 토스 앱의 동작을 반영하지 않습니다.**
+
+검증해야 할 경우:
+
+1. **단위 로직(순수 함수, hooks의 데이터 변환)** → vitest. setup에서 SDK 모두 mock 처리되어 있음.
+2. **UI/통합/SDK 동작** → `pnpm build` → 결과 `we-are-all-da-vinci.ait` → **토스 샌드박스 앱에서 QR 스캔으로 로드**.
+3. **Analytics·utm·딥링크처럼 진입 URL이 핵심인 시나리오** → 샌드박스 앱에서 직접 진입 + GA4 DebugView 또는 토스 콘솔로 이벤트 확인.
+
+로컬에서 dev 서버를 띄울 수는 있지만, "동작 확인했음"으로 카운트하지 말 것. 사용자가 명시적으로 로컬 검증을 요청하지 않는 한 샌드박스 검증으로 결론을 내려야 함.
+
 ## 앱인토스 SDK 활용
 
 - `useExitGuard` (shared/lib): Android 하드웨어 뒤로가기를 가로채서 다이얼로그 표시. iOS 스와이프 제스처도 동시 비활성화

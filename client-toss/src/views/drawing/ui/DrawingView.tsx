@@ -12,6 +12,8 @@ import {
 import { clearPlaySession, useRequirePlaySession } from "@/feature/playChance";
 import {
   DRAWING_SECONDS,
+  trackClick,
+  trackScreen,
   useCountdown,
   useExitGuard,
   useRequiredState,
@@ -19,7 +21,7 @@ import {
 import { Score } from "@/shared/ui/score";
 import type { Stroke } from "@toss/shared";
 import { Button, ConfirmDialog } from "@toss/tds-mobile";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface DrawingRouteState {
@@ -33,6 +35,11 @@ const DrawingView = () => {
   const { isCheckingSession } = useRequirePlaySession();
   const routeState = useRequiredState<DrawingRouteState>();
   const { showDialog, setShowDialog } = useExitGuard();
+
+  useEffect(() => {
+    if (isCheckingSession || !routeState) return;
+    trackScreen("drawing_view");
+  }, [isCheckingSession, routeState]);
 
   const [endTime] = useState(() => {
     const stored = sessionStorage.getItem("drawingEndTime");
@@ -49,13 +56,29 @@ const DrawingView = () => {
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
 
   const scoring = useStrokeScoring();
-  const { strokes, handleAddStroke, handleUndo, handleClear } =
-    useDrawingStrokes({
-      onScoreImmediate: scoring.scoreStrokes,
-      onScoreDebounced: scoring.scheduleScore,
-      onCancelScore: scoring.cancelPendingScore,
-      onResetScore: scoring.resetSimilarity,
-    });
+  const {
+    strokes,
+    handleAddStroke: addStroke,
+    handleUndo,
+    handleClear,
+  } = useDrawingStrokes({
+    onScoreImmediate: scoring.scoreStrokes,
+    onScoreDebounced: scoring.scheduleScore,
+    onCancelScore: scoring.cancelPendingScore,
+    onResetScore: scoring.resetSimilarity,
+  });
+
+  const firstStrokeTracked = useRef(false);
+  const handleAddStroke = useCallback(
+    (stroke: Stroke) => {
+      if (!firstStrokeTracked.current) {
+        firstStrokeTracked.current = true;
+        trackClick("drawing_first_stroke");
+      }
+      addStroke(stroke);
+    },
+    [addStroke],
+  );
   const { handleSubmit } = useDrawingSubmit({
     promptId: routeState?.promptId ?? 0,
     anonymousHash: routeState?.anonymousHash ?? "",
