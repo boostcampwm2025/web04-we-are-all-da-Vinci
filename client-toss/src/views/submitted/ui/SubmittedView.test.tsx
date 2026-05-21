@@ -105,7 +105,7 @@ describe("SubmittedView", () => {
     renderWithState();
 
     expect(screen.getByText("완성한 그림이에요")).toBeInTheDocument();
-    expect(screen.getByText("76점")).toBeInTheDocument();
+    expect(screen.getByText("75.5점")).toBeInTheDocument();
   });
 
   it("저장하기 클릭 시 submitDrawing을 호출하고 홈으로 이동한다", async () => {
