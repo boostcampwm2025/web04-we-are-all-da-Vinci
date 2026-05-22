@@ -20,6 +20,11 @@ describe("useFullScreenAd", () => {
     mockedLoad.mockReturnValue(vi.fn());
   });
 
+  // spyOn 복원을 일괄 보장 — 테스트 중간 실패 시에도 spy가 누수되지 않게 한다.
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   describe("SDK 미지원 환경", () => {
     it("isSupported가 false면 즉시 ready 상태다", () => {
       mockedLoad.isSupported.mockReturnValue(false);
@@ -78,7 +83,8 @@ describe("useFullScreenAd", () => {
     });
 
     it("onError가 호출되면 failed 상태로 전환된다", () => {
-      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      // 광고 로드 실패 시 console.error가 호출되므로 출력만 억제한다(복원은 afterEach).
+      vi.spyOn(console, "error").mockImplementation(() => {});
       const { result } = renderHook(() => useFullScreenAd());
 
       act(() => {
@@ -86,7 +92,6 @@ describe("useFullScreenAd", () => {
       });
 
       expect(result.current.adStatus).toBe("failed");
-      errorSpy.mockRestore();
     });
 
     it("loaded 이후엔 타임아웃이 지나도 ready를 유지한다", () => {
