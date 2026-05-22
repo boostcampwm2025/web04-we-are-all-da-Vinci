@@ -1,4 +1,5 @@
 import { getAnalyticsInstance } from "@/shared/api";
+import { FUNNEL_EVENTS } from "@/shared/lib";
 import { logEvent } from "firebase/analytics";
 import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
@@ -10,7 +11,7 @@ const AnalyticsTracker = () => {
     const fa = getAnalyticsInstance();
     if (!fa) return;
     try {
-      logEvent(fa, "page_view", {
+      logEvent(fa, FUNNEL_EVENTS.pageView, {
         page_path: location.pathname,
         page_title: location.pathname,
       });

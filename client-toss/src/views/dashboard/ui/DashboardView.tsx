@@ -5,13 +5,23 @@ import {
   serverTossApi,
   setCachedNickname,
 } from "@/shared/api";
-import { formatLocalDate, getAnonymousHash, useExitGuard } from "@/shared/lib";
+import {
+  FUNNEL_EVENTS,
+  formatLocalDate,
+  getAnonymousHash,
+  trackClick,
+  useExitGuard,
+} from "@/shared/lib";
 import { Button, ConfirmDialog, Tab, Toast } from "@toss/tds-mobile";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import InfoTicker from "./InfoTicker";
 
 const RANKING_PATH = "/ranking";
+type PlayStartSource = "auto" | "cta" | "retry";
+
+const getErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
 
 const DashboardView = () => {
   const navigate = useNavigate();
@@ -60,37 +70,58 @@ const DashboardView = () => {
     };
   }, [nickname]);
 
-  const startGame = useCallback(async () => {
-    if (isStartingGame) return;
-    setIsStartingGame(true);
-    setError(null);
-    try {
-      const prompt = await startPlay();
-      if (!prompt) {
-        setIsStartingGame(false);
-        return;
-      }
-
-      // 게임 시작 시점에 자동시작 게이트를 닫는다 — 제출 없이 이탈해도 재자동시작/이중차감 방지
-      localStorage.setItem(
-        `lastPlayed_${anonymousHashRef.current}`,
-        formatLocalDate(),
-      );
-
-      navigate("/memorize", {
-        state: {
-          promptId: prompt.promptId,
-          promptStrokes: prompt.strokes,
-          anonymousHash: anonymousHashRef.current,
-        },
-        replace: true,
+  const startGame = useCallback(
+    async (source: PlayStartSource = "cta") => {
+      if (isStartingGame) return;
+      setIsStartingGame(true);
+      setError(null);
+      trackClick(FUNNEL_EVENTS.playStartAttempt, {
+        source,
+        has_chance: hasChance,
+        chance_count: chanceCount,
       });
-    } catch (err) {
-      console.error("프롬프트 로드 실패:", err);
-      setError("서버 응답이 늦어지고 있어요. 다시 시도해주세요.");
-      setIsStartingGame(false);
-    }
-  }, [navigate, startPlay, isStartingGame]);
+      try {
+        const prompt = await startPlay();
+        if (!prompt) {
+          trackClick(FUNNEL_EVENTS.playStartFailed, {
+            source,
+            reason: "empty_prompt_response",
+          });
+          setIsStartingGame(false);
+          return;
+        }
+
+        // 게임 시작 시점에 자동시작 게이트를 닫는다 — 제출 없이 이탈해도 재자동시작/이중차감 방지
+        localStorage.setItem(
+          `lastPlayed_${anonymousHashRef.current}`,
+          formatLocalDate(),
+        );
+
+        trackClick(FUNNEL_EVENTS.playStartSuccess, {
+          source,
+          prompt_id: prompt.promptId,
+        });
+
+        navigate("/memorize", {
+          state: {
+            promptId: prompt.promptId,
+            promptStrokes: prompt.strokes,
+            anonymousHash: anonymousHashRef.current,
+          },
+          replace: true,
+        });
+      } catch (err) {
+        console.error("프롬프트 로드 실패:", err);
+        trackClick(FUNNEL_EVENTS.playStartFailed, {
+          source,
+          reason: getErrorMessage(err),
+        });
+        setError("서버 응답이 늦어지고 있어요. 다시 시도해주세요.");
+        setIsStartingGame(false);
+      }
+    },
+    [chanceCount, hasChance, isStartingGame, navigate, startPlay],
+  );
 
   useEffect(() => {
     const fromSubmitted = (locationState as { fromSubmitted?: boolean })
@@ -137,7 +168,7 @@ const DashboardView = () => {
 
       // 첫 방문: initialLoading=true 상태로 게임 시작 (로딩 화면 유지)
       try {
-        await startGame();
+        await startGame("auto");
       } finally {
         setInitialLoading(false);
       }
@@ -150,13 +181,35 @@ const DashboardView = () => {
   const handleRetry = async () => {
     if (isStartingGame) return;
     setIsStartingGame(true);
+    trackClick(FUNNEL_EVENTS.playStartAttempt, {
+      source: "retry",
+      has_chance: hasChance,
+      chance_count: chanceCount,
+    });
     try {
       if (isAdLoaded) {
-        await showAd();
-        await chargeByAd({ adGroupId });
+        trackClick(FUNNEL_EVENTS.adRewardAttempt, { ad_group_id: adGroupId });
+        try {
+          await showAd();
+          const count = await chargeByAd({ adGroupId });
+          trackClick(FUNNEL_EVENTS.adRewardSuccess, {
+            ad_group_id: adGroupId,
+            chance_count: count,
+          });
+        } catch (err) {
+          trackClick(FUNNEL_EVENTS.adRewardFailed, {
+            ad_group_id: adGroupId,
+            reason: getErrorMessage(err),
+          });
+          throw err;
+        }
       }
       const prompt = await startPlay();
       if (!prompt) {
+        trackClick(FUNNEL_EVENTS.playStartFailed, {
+          source: "retry",
+          reason: "empty_prompt_response",
+        });
         await refreshChance();
         setToastText(
           "그리기 기회를 다시 확인했어요. 잠시 후 다시 시도해주세요.",
@@ -170,6 +223,11 @@ const DashboardView = () => {
         formatLocalDate(),
       );
 
+      trackClick(FUNNEL_EVENTS.playStartSuccess, {
+        source: "retry",
+        prompt_id: prompt.promptId,
+      });
+
       navigate("/memorize", {
         state: {
           promptId: prompt.promptId,
@@ -180,6 +238,10 @@ const DashboardView = () => {
       });
     } catch (err) {
       console.error("[handleRetry 실패]", err);
+      trackClick(FUNNEL_EVENTS.playStartFailed, {
+        source: "retry",
+        reason: getErrorMessage(err),
+      });
       setToastText("일시적 오류가 발생했어요");
       setToastOpen(true);
     } finally {
@@ -199,7 +261,7 @@ const DashboardView = () => {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 px-(--page-px)">
         <p className="text-center text-(--color-grey)">{error}</p>
-        <Button size="large" onClick={startGame}>
+        <Button size="large" onClick={() => startGame("cta")}>
           다시 시도해요
         </Button>
       </div>
@@ -249,7 +311,7 @@ const DashboardView = () => {
             display="block"
             loading={isStartingGame}
             disabled={isStartingGame}
-            onClick={startGame}
+            onClick={() => startGame("cta")}
           >
             광고 없이 {chanceCount}번 도전
           </Button>

@@ -1,4 +1,4 @@
-import { trackClick } from "@/shared/lib";
+import { FUNNEL_EVENTS, trackClick } from "@/shared/lib";
 import { ListRow } from "@toss/tds-mobile";
 import { useNavigate } from "react-router-dom";
 import {
@@ -47,7 +47,7 @@ export const RankingEntry = ({
   const navigate = useNavigate();
 
   const navigateToDrawing = () => {
-    trackClick("ranking_item_click", { rank });
+    trackClick(FUNNEL_EVENTS.rankingItemClick, { rank });
     navigate(`/drawing/${drawingId}`, { state: { rank } });
   };
 

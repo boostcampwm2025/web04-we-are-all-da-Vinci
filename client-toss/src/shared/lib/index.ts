@@ -5,6 +5,7 @@ export {
   getFirstTouchAttribution,
 } from "./attribution";
 export { formatLocalDate } from "./formatLocalDate";
+export { FUNNEL_EVENTS, type FunnelEventName } from "./funnelEvents";
 export { getAnonymousHash } from "./getAnonymousHash";
 export { initTossAdsOnce } from "./tossAds";
 export {
