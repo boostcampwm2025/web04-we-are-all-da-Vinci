@@ -1,5 +1,6 @@
 import { getAnonymousHash } from "./getAnonymousHash";
 import { trackScreen } from "./analytics";
+import { FUNNEL_EVENTS } from "./funnelEvents";
 
 const UTM_KEYS = [
   "utm_source",
@@ -39,7 +40,7 @@ export const captureAttributionOnce = async (): Promise<void> => {
 
   const payload: Attribution = { ...utm, capturedAt: Date.now() };
   localStorage.setItem(key, JSON.stringify(payload));
-  trackScreen("attribution_first_touch", utm);
+  trackScreen(FUNNEL_EVENTS.attributionFirstTouch, utm);
 };
 
 export const getFirstTouchAttribution =

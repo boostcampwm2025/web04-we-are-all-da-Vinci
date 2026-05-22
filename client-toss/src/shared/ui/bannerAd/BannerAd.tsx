@@ -1,7 +1,7 @@
 import { TossAds } from "@apps-in-toss/web-framework";
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
-import { initTossAdsOnce, trackImpression } from "@/shared/lib";
+import { FUNNEL_EVENTS, initTossAdsOnce, trackImpression } from "@/shared/lib";
 
 type BannerType = "list" | "feed";
 
@@ -50,7 +50,9 @@ const BannerAd = ({ adGroupId, type = "list", className }: BannerAdProps) => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          trackImpression("banner_ad_impression", { ad_group_id: adId });
+          trackImpression(FUNNEL_EVENTS.bannerAdImpression, {
+            ad_group_id: adId,
+          });
           observer.disconnect();
         }
       },
@@ -58,7 +60,7 @@ const BannerAd = ({ adGroupId, type = "list", className }: BannerAdProps) => {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [adGroupId]);
 
   useEffect(() => {
     let attached: ReturnType<typeof TossAds.attachBanner> | undefined;

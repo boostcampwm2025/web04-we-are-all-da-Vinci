@@ -23,38 +23,48 @@ const fanOutToFirebase = (
   }
 };
 
+const sanitizeParams = (params?: Record<string, unknown>) => {
+  if (!params) return undefined;
+  return Object.fromEntries(
+    Object.entries(params).filter(([, value]) => value != null),
+  );
+};
+
 export const trackClick = (
   logName: string,
   params?: Record<string, unknown>,
 ) => {
+  const analyticsParams = sanitizeParams(params);
   try {
-    TossAnalytics.click({ ...params, log_name: logName });
+    TossAnalytics.click({ ...analyticsParams, log_name: logName });
   } catch {
     trackAnalyticsError();
   }
-  fanOutToFirebase(logName, params);
+  fanOutToFirebase(logName, analyticsParams);
 };
 
 export const trackImpression = (
   logName: string,
   params?: Record<string, unknown>,
 ) => {
+  const analyticsParams = sanitizeParams(params);
   try {
-    TossAnalytics.impression({ ...params, log_name: logName });
+    TossAnalytics.impression({ ...analyticsParams, log_name: logName });
   } catch {
     trackAnalyticsError();
   }
-  fanOutToFirebase(logName, params);
+  fanOutToFirebase(logName, analyticsParams);
 };
 
 export const trackScreen = (
   logName: string,
   params?: Record<string, unknown>,
 ) => {
+  const analyticsParams = sanitizeParams(params);
   try {
-    TossAnalytics.screen({ ...params, log_name: logName });
+    TossAnalytics.screen({ ...analyticsParams, log_name: logName });
   } catch {
     trackAnalyticsError();
   }
-  fanOutToFirebase(logName, params);
+  fanOutToFirebase(logName, analyticsParams);
 };

@@ -1,4 +1,5 @@
 import { serverTossApi } from "@/shared/api";
+import { FUNNEL_EVENTS, trackClick } from "@/shared/lib";
 import { contactsViral } from "@apps-in-toss/web-framework";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -40,6 +41,9 @@ export const useInviteFriend = ({
   const handleError = useCallback(
     (err: unknown, fallback: string) => {
       const error = toError(err, fallback);
+      trackClick(FUNNEL_EVENTS.shareInviteFailed, {
+        reason: error.message,
+      });
       onError?.(error);
       console.error(`[useInviteFriend] ${fallback}`, error);
     },
@@ -59,8 +63,16 @@ export const useInviteFriend = ({
                 rewardAmount: event.data.rewardAmount,
                 rewardUnit: event.data.rewardUnit,
               });
+              trackClick(FUNNEL_EVENTS.shareInviteRewardSuccess, {
+                reward_amount: event.data.rewardAmount,
+                reward_unit: event.data.rewardUnit,
+                chance_count: count,
+              });
               onCharged?.(count);
             } catch (err) {
+              trackClick(FUNNEL_EVENTS.shareInviteRewardFailed, {
+                reason: err instanceof Error ? err.message : String(err),
+              });
               handleError(err, "그리기 기회 적립에 실패했어요.");
               // sendViral 실패 시 SDK가 close를 보장하지 않아 isInviting이 영구 true로 남는 것을 방지
               cleanupRef.current?.();

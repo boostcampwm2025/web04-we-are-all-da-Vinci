@@ -7,6 +7,7 @@ import { useFullScreenAd, usePlayChanceContext } from "@/feature/playChance";
 import { serverTossApi } from "@/shared/api";
 import { AD_GROUP_IDS } from "@/shared/config";
 import {
+  FUNNEL_EVENTS,
   trackClick,
   trackScreen,
   useExitGuard,
@@ -26,6 +27,9 @@ interface SubmittedRouteState {
   anonymousHash: string;
 }
 
+const getErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
 const SubmittedView = () => {
   const navigate = useNavigate();
   const routeState = useRequiredState<SubmittedRouteState>();
@@ -33,7 +37,7 @@ const SubmittedView = () => {
 
   useEffect(() => {
     if (!routeState) return;
-    trackScreen("submitted_view");
+    trackScreen(FUNNEL_EVENTS.submittedView);
   }, [routeState]);
   const { hasChance, chargeByAd, startPlay } = usePlayChanceContext();
   const { isAdLoaded, showAd, adGroupId } = useFullScreenAd();
@@ -48,10 +52,18 @@ const SubmittedView = () => {
     setIsSubmitting(true);
 
     try {
-      trackClick("submitted_submit_click");
+      trackClick(FUNNEL_EVENTS.submittedSubmitClick, {
+        score: routeState.similarity?.score,
+        stroke_count: routeState.strokes.length,
+      });
       const { promotionGranted } = await serverTossApi.submitDrawing(
         routeState.strokes,
       );
+      trackClick(FUNNEL_EVENTS.submittedSubmitSuccess, {
+        promotion_granted: promotionGranted,
+        score: routeState.similarity?.score,
+        stroke_count: routeState.strokes.length,
+      });
 
       navigate("/", {
         replace: true,
@@ -59,6 +71,11 @@ const SubmittedView = () => {
       });
     } catch (err) {
       console.error("제출 실패:", err);
+      trackClick(FUNNEL_EVENTS.submittedSubmitFailed, {
+        reason: err instanceof Error ? err.message : String(err),
+        score: routeState.similarity?.score,
+        stroke_count: routeState.strokes.length,
+      });
       setToastText("등록에 실패했어요. 다시 시도해주세요.");
       setToastOpen(true);
       setIsSubmitting(false);
@@ -68,19 +85,45 @@ const SubmittedView = () => {
   const handleReplay = async () => {
     if (isReplaying) return;
     setIsReplaying(true);
+    trackClick(FUNNEL_EVENTS.playStartAttempt, {
+      source: "submitted_replay",
+      has_chance: hasChance,
+    });
     try {
       // chance가 있으면 광고 면제 (라벨 "광고·등록 없이 재도전"과 일치)
       if (!hasChance && isAdLoaded) {
-        await showAd();
-        await chargeByAd({ adGroupId });
+        trackClick(FUNNEL_EVENTS.adRewardAttempt, { ad_group_id: adGroupId });
+        try {
+          await showAd();
+          const count = await chargeByAd({ adGroupId });
+          trackClick(FUNNEL_EVENTS.adRewardSuccess, {
+            ad_group_id: adGroupId,
+            chance_count: count,
+          });
+        } catch (err) {
+          trackClick(FUNNEL_EVENTS.adRewardFailed, {
+            ad_group_id: adGroupId,
+            reason: getErrorMessage(err),
+          });
+          throw err;
+        }
       }
       const prompt = await startPlay();
       if (!prompt) {
+        trackClick(FUNNEL_EVENTS.playStartFailed, {
+          source: "submitted_replay",
+          reason: "empty_prompt_response",
+        });
         setToastText("그리기 기회가 부족해요.");
         setToastOpen(true);
         setIsReplaying(false);
         return;
       }
+
+      trackClick(FUNNEL_EVENTS.playStartSuccess, {
+        source: "submitted_replay",
+        prompt_id: prompt.promptId,
+      });
 
       navigate("/memorize", {
         state: {
@@ -90,7 +133,11 @@ const SubmittedView = () => {
         },
         replace: true,
       });
-    } catch {
+    } catch (err) {
+      trackClick(FUNNEL_EVENTS.playStartFailed, {
+        source: "submitted_replay",
+        reason: getErrorMessage(err),
+      });
       setToastText("다시 시도해주세요.");
       setToastOpen(true);
       setIsReplaying(false);

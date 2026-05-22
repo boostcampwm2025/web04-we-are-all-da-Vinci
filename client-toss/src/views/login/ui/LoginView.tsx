@@ -1,6 +1,6 @@
 import { logoImg } from "@/shared/assets/images";
 import { BottomCTAButton } from "@/shared/ui/bottomCTAButton";
-import { trackClick } from "@/shared/lib";
+import { FUNNEL_EVENTS, trackClick } from "@/shared/lib";
 import { Paragraph, Top } from "@toss/tds-mobile";
 import { useLoginFlow } from "@/feature/login";
 import { STEPS } from "../config/steps";
@@ -66,7 +66,7 @@ const LoginView = () => {
 
       <BottomCTAButton
         onClick={() => {
-          trackClick("login_button_click");
+          trackClick(FUNNEL_EVENTS.loginButtonClick);
           handleLogin();
         }}
         loading={isLoading}

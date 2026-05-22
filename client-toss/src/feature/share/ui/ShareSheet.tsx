@@ -1,5 +1,5 @@
 import { usePlayChanceContext } from "@/feature/playChance";
-import { trackClick } from "@/shared/lib";
+import { FUNNEL_EVENTS, trackClick } from "@/shared/lib";
 import { partner, tdsEvent } from "@apps-in-toss/web-framework";
 import { BottomSheet, ListRow, Toast } from "@toss/tds-mobile";
 import { useEffect, useState } from "react";
@@ -94,7 +94,7 @@ const ShareSheet = () => {
   }, []);
 
   const handleScoreShare = () => {
-    trackClick("share_score_selected");
+    trackClick(FUNNEL_EVENTS.shareScoreSelected);
     setIsSheetOpen(false);
     shareMyScore().catch((error) => {
       console.error(error);
@@ -103,7 +103,7 @@ const ShareSheet = () => {
   };
 
   const handleInviteShare = () => {
-    trackClick("share_invite_selected");
+    trackClick(FUNNEL_EVENTS.shareInviteSelected);
     setIsSheetOpen(false);
     startInvite();
   };

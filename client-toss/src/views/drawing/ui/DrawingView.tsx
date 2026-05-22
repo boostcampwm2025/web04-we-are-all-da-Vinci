@@ -12,6 +12,7 @@ import {
 import { clearPlaySession, useRequirePlaySession } from "@/feature/playChance";
 import {
   DRAWING_SECONDS,
+  FUNNEL_EVENTS,
   trackClick,
   trackScreen,
   useCountdown,
@@ -38,7 +39,9 @@ const DrawingView = () => {
 
   useEffect(() => {
     if (isCheckingSession || !routeState) return;
-    trackScreen("drawing_view");
+    trackScreen(FUNNEL_EVENTS.drawingView, {
+      prompt_id: routeState.promptId,
+    });
   }, [isCheckingSession, routeState]);
 
   const [endTime] = useState(() => {
@@ -73,11 +76,13 @@ const DrawingView = () => {
     (stroke: Stroke) => {
       if (!firstStrokeTracked.current) {
         firstStrokeTracked.current = true;
-        trackClick("drawing_first_stroke");
+        trackClick(FUNNEL_EVENTS.drawingFirstStroke, {
+          prompt_id: routeState?.promptId,
+        });
       }
       addStroke(stroke);
     },
-    [addStroke],
+    [addStroke, routeState?.promptId],
   );
   const { handleSubmit } = useDrawingSubmit({
     promptId: routeState?.promptId ?? 0,

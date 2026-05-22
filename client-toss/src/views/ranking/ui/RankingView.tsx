@@ -1,14 +1,14 @@
 import { Podium } from "@/entities/podium";
 import { RankingList } from "@/entities/ranking";
 import { AD_GROUP_IDS } from "@/shared/config";
-import { trackScreen } from "@/shared/lib";
+import { FUNNEL_EVENTS, trackScreen } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { ListHeader } from "@toss/tds-mobile";
 import { useEffect } from "react";
 
 const RankingView = () => {
   useEffect(() => {
-    trackScreen("ranking_view");
+    trackScreen(FUNNEL_EVENTS.rankingView);
   }, []);
 
   return (
