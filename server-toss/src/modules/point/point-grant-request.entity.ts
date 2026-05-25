@@ -1,4 +1,4 @@
-import type { Opt, Rel } from "@mikro-orm/core";
+import { EntityRepositoryType, type Opt, type Rel } from "@mikro-orm/core";
 import {
   Entity,
   Enum,
@@ -10,9 +10,14 @@ import { User } from "../user/user.entity";
 import { BaseEntity } from "src/common/entitiy/base.entity";
 import { PointReason } from "./point-log.entity";
 import { getSeoulDateTime } from "src/common/util/time.util";
+import { PointGrantRequestRepository } from "./point-grant-request.repository";
 
-@Entity({ tableName: "point_grant_requests" })
+@Entity({
+  tableName: "point_grant_requests",
+  repository: () => PointGrantRequestRepository,
+})
 export class PointGrantRequest extends BaseEntity {
+  [EntityRepositoryType]?: PointGrantRequestRepository;
   @PrimaryKey({ type: "bigint" })
   id!: bigint;
 
