@@ -18,7 +18,7 @@ import { InjectRepository } from "@mikro-orm/nestjs";
 import { PointGrantRequestRepository } from "./point-grant-request.repository";
 
 const PROMOTION_AMOUNT = 2;
-const PROMOTION_MAX_RETRIES = 2;
+const PROMOTION_MAX_RETRIES = 3;
 
 @Injectable()
 export class PointService {

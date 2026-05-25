@@ -1,18 +1,20 @@
-import { EntityRepository, LockMode, sql } from "@mikro-orm/mysql";
+import { EntityRepository, LockMode } from "@mikro-orm/mysql";
 import {
   PointGrantRequest,
   PointGrantStatus,
 } from "./point-grant-request.entity";
+import { getSeoulDateTime } from "src/common/util/time.util";
 
 export class PointGrantRequestRepository extends EntityRepository<PointGrantRequest> {
   async findEligibleGrantsWithLock(): Promise<PointGrantRequest[]> {
+    const now = getSeoulDateTime();
     const qb = this.em.createQueryBuilder(PointGrantRequest, "pgr");
     const requests = await qb
       .where({ status: PointGrantStatus.PENDING })
       .orWhere({
         $and: [
           { status: PointGrantStatus.RETRY },
-          { attemptCount: { $lt: sql`pgr.maxAttemptCount` } },
+          { nextRetryAt: { $lte: now } },
         ],
       })
       .setLockMode(LockMode.PESSIMISTIC_WRITE)

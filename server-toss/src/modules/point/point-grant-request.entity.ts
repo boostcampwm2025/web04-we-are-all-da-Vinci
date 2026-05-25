@@ -42,12 +42,6 @@ export class PointGrantRequest extends BaseEntity {
   @Property({ name: "next_retry_at", type: "timestamp", nullable: true })
   nextRetryAt?: Opt<Date>;
 
-  @Property({ name: "locked_at", type: "timestamp", nullable: true })
-  lockedAt?: Opt<Date>;
-
-  @Property({ name: "locked_by", type: "varchar", length: 255, nullable: true })
-  lockedBy?: Opt<string>;
-
   @Property({ name: "processed_at", type: "timestamp", nullable: true })
   processedAt?: Opt<Date>;
 
