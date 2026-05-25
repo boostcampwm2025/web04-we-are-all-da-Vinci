@@ -102,10 +102,11 @@ export class DrawingService {
     const playerPreprocessed = preprocessStrokes(playerStrokes);
     const similarity = scoreFinalSimilarity(preprocessed, playerPreprocessed);
 
-    const drawing = await this.saveDrawingService.saveDrawingWithRanking(
-      user,
-      new SaveDrawingDto(promptId, playerStrokes, similarity),
-    );
+    const { drawing, promotionGranted } =
+      await this.saveDrawingService.saveDrawingWithRanking(
+        user,
+        new SaveDrawingDto(promptId, playerStrokes, similarity),
+      );
 
     this.logger.log(
       {
@@ -122,7 +123,7 @@ export class DrawingService {
     return {
       drawingId: Number(drawing.id),
       similarity,
-      promotionGranted: true,
+      promotionGranted,
     };
   }
 

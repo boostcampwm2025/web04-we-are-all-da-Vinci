@@ -22,7 +22,7 @@ export class SaveDrawingService {
   async saveDrawingWithRanking(
     user: User,
     dto: SaveDrawingDto,
-  ): Promise<Drawing> {
+  ): Promise<{ drawing: Drawing; promotionGranted: boolean }> {
     const { promptId, strokes, similarity } = dto;
 
     const drawing = await this.drawingRepository.saveDrawing(
@@ -36,11 +36,14 @@ export class SaveDrawingService {
     await this.rankingService.updateRanking(user, drawing);
 
     // 프로모션 지급 가능 여부 판단
-    if (await this.pointService.canGrantTodayPromotion(user.userKey)) {
+    const promotionGranted = await this.pointService.canGrantTodayPromotion(
+      user.userKey,
+    );
+    if (promotionGranted) {
       // 프로모션 지급 로그 저장
       await this.pointService.savePointGrantRequest(user, PointReason.DRAWING);
     }
 
-    return drawing;
+    return { drawing, promotionGranted };
   }
 }
