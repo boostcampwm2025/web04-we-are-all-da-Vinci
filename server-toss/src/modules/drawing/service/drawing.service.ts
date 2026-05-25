@@ -119,10 +119,11 @@ export class DrawingService {
       "최종 드로잉 제출 성공",
     );
 
-    const promotionGranted =
-      await this.pointService.grantDrawingPromotionIfEligible(user.userKey);
-
-    return { drawingId: Number(drawing.id), similarity, promotionGranted };
+    return {
+      drawingId: Number(drawing.id),
+      similarity,
+      promotionGranted: true,
+    };
   }
 
   async getMyDrawings(userKey: number) {

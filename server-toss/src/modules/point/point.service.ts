@@ -9,6 +9,11 @@ import {
 } from "src/modules/auth/errors/toss.errors";
 import { User } from "src/modules/user/user.entity";
 import { PointLog, PointReason } from "./point-log.entity";
+import {
+  PointGrantRequest,
+  PointGrantStatus,
+} from "./point-grant-request.entity";
+import { Transactional } from "@mikro-orm/decorators/legacy";
 
 const PROMOTION_AMOUNT = 2;
 const PROMOTION_MAX_RETRIES = 2;
@@ -40,6 +45,21 @@ export class PointService {
       createdAt: { $gte: start, $lt: end },
     });
     return count < 2;
+  }
+
+  @Transactional()
+  async savePointGrantRequest(user: User, reason: PointReason): Promise<void> {
+    const request = this.em.create(PointGrantRequest, {
+      user,
+      reason,
+      pointAmount: PROMOTION_AMOUNT,
+      status: PointGrantStatus.PENDING,
+      maxAttemptCount: PROMOTION_MAX_RETRIES,
+      attemptCount: 0,
+    });
+
+    this.em.persist(request);
+    await this.em.flush();
   }
 
   async saveDrawingPointLog(userKey: number): Promise<void> {

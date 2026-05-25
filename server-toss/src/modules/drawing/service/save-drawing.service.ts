@@ -6,6 +6,8 @@ import { Injectable } from "@nestjs/common";
 import { DrawingRepository } from "../drawing.repository";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Transactional } from "@mikro-orm/decorators/legacy";
+import { PointService } from "src/modules/point/point.service";
+import { PointReason } from "src/modules/point/point-log.entity";
 
 @Injectable()
 export class SaveDrawingService {
@@ -13,6 +15,7 @@ export class SaveDrawingService {
     @InjectRepository(Drawing)
     private readonly drawingRepository: DrawingRepository,
     private readonly rankingService: RankingService,
+    private readonly pointService: PointService,
   ) {}
 
   @Transactional()
@@ -31,6 +34,12 @@ export class SaveDrawingService {
     );
 
     await this.rankingService.updateRanking(user, drawing);
+
+    // 프로모션 지급 가능 여부 판단
+    if (await this.pointService.canGrantTodayPromotion(user.userKey)) {
+      // 프로모션 지급 로그 저장
+      await this.pointService.savePointGrantRequest(user, PointReason.DRAWING);
+    }
 
     return drawing;
   }
