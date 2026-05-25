@@ -115,14 +115,7 @@ export class PointService {
     const requests =
       await this.pointGrantRequestRepository.findEligibleGrantsWithLock();
 
-    requests.forEach((request) => {
-      if (request.status === PointGrantStatus.PENDING) {
-        request.status = PointGrantStatus.PROCESSING;
-      } else if (request.status === PointGrantStatus.RETRY) {
-        request.status = PointGrantStatus.PROCESSING;
-        request.attemptCount += 1;
-      }
-    });
+    requests.forEach((request) => request.processing());
     await this.pointGrantRequestRepository.getEntityManager().flush();
 
     return requests;

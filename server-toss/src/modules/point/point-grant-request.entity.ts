@@ -9,6 +9,7 @@ import {
 import { User } from "../user/user.entity";
 import { BaseEntity } from "src/common/entitiy/base.entity";
 import { PointReason } from "./point-log.entity";
+import { getSeoulDateTime } from "src/common/util/time.util";
 
 @Entity({ tableName: "point_grant_requests" })
 export class PointGrantRequest extends BaseEntity {
@@ -45,16 +46,39 @@ export class PointGrantRequest extends BaseEntity {
   @Property({ name: "processed_at", type: "timestamp", nullable: true })
   processedAt?: Opt<Date>;
 
+  @Property({ name: "last_error", type: "text", nullable: true })
+  lastError?: Opt<String>;
+
   succeeded() {
     this.status = PointGrantStatus.SUCCEEDED;
   }
 
   retry() {
     this.status = PointGrantStatus.RETRY;
+    this.attemptCount += 1;
+
+    if (this.attemptCount === this.maxAttemptCount) {
+      this.failed("재시도 횟수 초과");
+      return;
+    }
+    this.nextRetryAt = new Date(
+      getSeoulDateTime().getTime() + this.calculateBackOff(this.attemptCount),
+    );
   }
 
-  failed() {
+  failed(errorMessage?: string) {
     this.status = PointGrantStatus.FAILED;
+    this.lastError = errorMessage;
+  }
+
+  processing() {
+    this.status = PointGrantStatus.PROCESSING;
+    this.processedAt = getSeoulDateTime();
+  }
+
+  private calculateBackOff(attemptCount: number) {
+    const delays = [0, 5_000, 30_000, 60_000, 300_000];
+    return delays[Math.min(attemptCount, delays.length - 1)];
   }
 }
 
