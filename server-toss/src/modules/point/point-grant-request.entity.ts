@@ -44,6 +44,18 @@ export class PointGrantRequest extends BaseEntity {
 
   @Property({ name: "processed_at", type: "timestamp", nullable: true })
   processedAt?: Opt<Date>;
+
+  succeeded() {
+    this.status = PointGrantStatus.SUCCEEDED;
+  }
+
+  retry() {
+    this.status = PointGrantStatus.RETRY;
+  }
+
+  failed() {
+    this.status = PointGrantStatus.FAILED;
+  }
 }
 
 export enum PointGrantStatus {

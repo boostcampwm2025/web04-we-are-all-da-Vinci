@@ -16,7 +16,7 @@ export class PointGrantRequestRepository extends EntityRepository<PointGrantRequ
         ],
       })
       .setLockMode(LockMode.PESSIMISTIC_WRITE)
-      .limit(100)
+      .limit(20)
       .getResultList();
 
     return requests;

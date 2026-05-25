@@ -14,8 +14,8 @@ import {
   PointGrantStatus,
 } from "./point-grant-request.entity";
 import { Transactional } from "@mikro-orm/decorators/legacy";
-import { PointGrantRequestRepository } from "./point-grant-request.repository";
 import { InjectRepository } from "@mikro-orm/nestjs";
+import { PointGrantRequestRepository } from "./point-grant-request.repository";
 
 const PROMOTION_AMOUNT = 2;
 const PROMOTION_MAX_RETRIES = 2;
@@ -26,9 +26,9 @@ export class PointService {
   private readonly promotionCode: string;
 
   constructor(
-    private readonly em: EntityManager,
     @InjectRepository(PointGrantRequest)
     private readonly pointGrantRequestRepository: PointGrantRequestRepository,
+    private readonly em: EntityManager,
     private readonly tossApiClient: TossApiClient,
     private readonly configService: ConfigService,
   ) {
@@ -66,6 +66,50 @@ export class PointService {
     await this.em.flush();
   }
 
+  async settleGrantRequests() {
+    const requests = await this.lockAndFetchEligibleGrants();
+
+    for (const request of requests) {
+      await this.settleGrantRequest(request);
+    }
+  }
+
+  async settleGrantRequest(request: PointGrantRequest): Promise<void> {
+    try {
+      await this.grantDrawingPromotion(request);
+      await this.recordGrantSucceeded(request);
+    } catch (err) {
+      await this.recordGrantFailedOrRetry(request, err);
+    }
+  }
+
+  @Transactional()
+  async recordGrantSucceeded(request: PointGrantRequest) {
+    request.succeeded();
+
+    const pointLog = this.em.create(PointLog, {
+      user: request.user,
+      reason: request.reason,
+      pointAmount: request.pointAmount,
+    });
+    this.em.persist(pointLog);
+
+    await this.em.flush();
+  }
+
+  @Transactional()
+  async recordGrantFailedOrRetry(request: PointGrantRequest, err: unknown) {
+    if (err instanceof TossTransportError) {
+      request.retry();
+    } else if (err instanceof TossPromotionError) {
+      request.failed();
+    } else {
+      request.retry();
+    }
+
+    await this.em.flush();
+  }
+
   @Transactional()
   async lockAndFetchEligibleGrants(): Promise<PointGrantRequest[]> {
     const requests =
@@ -79,7 +123,7 @@ export class PointService {
         request.attemptCount += 1;
       }
     });
-    await this.em.flush();
+    await this.pointGrantRequestRepository.getEntityManager().flush();
 
     return requests;
   }
@@ -93,6 +137,18 @@ export class PointService {
     log.pointAmount = PROMOTION_AMOUNT;
     em.persist(log);
     await em.flush();
+  }
+
+  async grantDrawingPromotion(request: PointGrantRequest): Promise<void> {
+    const { user, pointAmount } = request;
+    const key = await this.tossApiClient.getPromotionKey(user.userKey);
+
+    await this.tossApiClient.executePromotion(
+      user.userKey,
+      key,
+      this.promotionCode,
+      pointAmount,
+    );
   }
 
   async grantDrawingPromotionIfEligible(userKey: number): Promise<boolean> {
