@@ -106,6 +106,10 @@ export class PointService {
       request.retry();
     } else if (err instanceof TossPromotionError) {
       request.failed(err.message);
+
+      this.logger.warn(
+        `프로모션 지급 실패 (재시도 불필요): ${err instanceof Error ? err.message : String(err)}`,
+      );
     } else {
       request.retry();
     }
@@ -124,17 +128,6 @@ export class PointService {
     return requests;
   }
 
-  async saveDrawingPointLog(userKey: number): Promise<void> {
-    const em = this.em.fork();
-    const userRef = em.getReference(User, userKey);
-    const log = new PointLog();
-    log.user = userRef;
-    log.reason = PointReason.DRAWING;
-    log.pointAmount = PROMOTION_AMOUNT;
-    em.persist(log);
-    await em.flush();
-  }
-
   async grantDrawingPromotion(request: PointGrantRequest): Promise<void> {
     const { user, pointAmount } = request;
     const key = await this.tossApiClient.getPromotionKey(user.userKey);
@@ -145,43 +138,5 @@ export class PointService {
       this.promotionCode,
       pointAmount,
     );
-  }
-
-  async grantDrawingPromotionIfEligible(userKey: number): Promise<boolean> {
-    const canGrant = await this.canGrantTodayPromotion(userKey);
-    if (!canGrant) return false;
-
-    let lastError: unknown;
-
-    for (let attempt = 0; attempt <= PROMOTION_MAX_RETRIES; attempt++) {
-      try {
-        const key = await this.tossApiClient.getPromotionKey(userKey);
-        await this.tossApiClient.executePromotion(
-          userKey,
-          key,
-          this.promotionCode,
-          PROMOTION_AMOUNT,
-        );
-        await this.saveDrawingPointLog(userKey);
-        return true;
-      } catch (err) {
-        if (
-          err instanceof TossTransportError ||
-          (err instanceof TossPromotionError && err.errorCode === "4110")
-        ) {
-          lastError = err;
-          continue;
-        }
-        this.logger.warn(
-          `프로모션 지급 실패 (재시도 불필요): ${err instanceof Error ? err.message : String(err)}`,
-        );
-        return false;
-      }
-    }
-
-    this.logger.warn(
-      `프로모션 지급 최대 재시도 초과: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
-    );
-    return false;
   }
 }
