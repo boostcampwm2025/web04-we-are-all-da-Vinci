@@ -99,7 +99,10 @@ export class PointService {
 
   @Transactional()
   async recordGrantFailedOrRetry(request: PointGrantRequest, err: unknown) {
-    if (err instanceof TossTransportError) {
+    if (
+      err instanceof TossTransportError ||
+      (err instanceof TossPromotionError && err.errorCode === "4110")
+    ) {
       request.retry();
     } else if (err instanceof TossPromotionError) {
       request.failed();

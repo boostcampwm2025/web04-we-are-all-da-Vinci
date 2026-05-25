@@ -47,7 +47,7 @@ export class PointGrantRequest extends BaseEntity {
   processedAt?: Opt<Date>;
 
   @Property({ name: "last_error", type: "text", nullable: true })
-  lastError?: Opt<String>;
+  lastError?: Opt<string>;
 
   succeeded() {
     this.status = PointGrantStatus.SUCCEEDED;
