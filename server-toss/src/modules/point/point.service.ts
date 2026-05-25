@@ -13,7 +13,10 @@ import {
   PointGrantRequest,
   PointGrantStatus,
 } from "./point-grant-request.entity";
-import { Transactional } from "@mikro-orm/decorators/legacy";
+import {
+  CreateRequestContext,
+  Transactional,
+} from "@mikro-orm/decorators/legacy";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { PointGrantRequestRepository } from "./point-grant-request.repository";
 
@@ -76,6 +79,7 @@ export class PointService {
     return true;
   }
 
+  @CreateRequestContext()
   async settleGrantRequests() {
     const requests = await this.lockAndFetchEligibleGrants();
 
@@ -84,6 +88,7 @@ export class PointService {
     }
   }
 
+  @CreateRequestContext()
   async purgeProcessedGrantRequests(): Promise<{
     succeededDeleted: number;
     failedDeleted: number;

@@ -206,7 +206,9 @@ describe("SaveDrawingService", () => {
 
       it("포인트 적립 불가면 promotionGranted가 false를 반환한다", async () => {
         const user = givenUsers[4];
-        pointService.savePointGrantRequest.mockResolvedValueOnce(false);
+        pointService.savePointGrantRequest.mockResolvedValueOnce(
+          false as never,
+        );
 
         const { promotionGranted } = await service.saveDrawingWithRanking(
           user,
