@@ -138,7 +138,8 @@ describe("DrawingService", () => {
       };
       const saveDrawingService = buildSaveDrawingService();
       saveDrawingService.saveDrawingWithRanking.mockResolvedValue({
-        id: BigInt(42),
+        drawing: { id: BigInt(42) },
+        promotionGranted: true,
       });
 
       const service = buildService({
@@ -168,7 +169,7 @@ describe("DrawingService", () => {
       );
       expect(result).toMatchObject({
         drawingId: 42,
-        promotionGranted: false,
+        promotionGranted: true,
       });
       expect(result.similarity.score).toBe(87);
     });
@@ -178,7 +179,8 @@ describe("DrawingService", () => {
       const drawingRepository = buildDrawingRepository();
       const saveDrawingService = buildSaveDrawingService();
       saveDrawingService.saveDrawingWithRanking.mockResolvedValue({
-        id: BigInt(1),
+        drawing: { id: BigInt(1) },
+        promotionGranted: true,
       });
       drawingRepository.saveDrawing.mockResolvedValue({ id: BigInt(1) });
 
@@ -192,10 +194,6 @@ describe("DrawingService", () => {
         1234,
         sampleStrokes as never,
         new Date(),
-      );
-
-      expect(pointService.grantDrawingPromotionIfEligible).toHaveBeenCalledWith(
-        1234,
       );
       expect(result.promotionGranted).toBe(true);
     });
