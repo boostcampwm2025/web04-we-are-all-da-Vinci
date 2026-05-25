@@ -105,7 +105,7 @@ export class PointService {
     ) {
       request.retry();
     } else if (err instanceof TossPromotionError) {
-      request.failed();
+      request.failed(err.message);
     } else {
       request.retry();
     }
