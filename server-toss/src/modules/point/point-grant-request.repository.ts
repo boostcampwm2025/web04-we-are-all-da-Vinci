@@ -31,21 +31,42 @@ export class PointGrantRequestRepository extends EntityRepository<PointGrantRequ
     return this.nativeDelete({ id: { $in: ids } });
   }
 
-  async findEligibleGrantsWithLock(): Promise<PointGrantRequest[]> {
+  async findEligibleGrantsWithLock(
+    batchSize: number = 20,
+  ): Promise<PointGrantRequest[]> {
     const now = getSeoulDateTime();
-    const qb = this.em.createQueryBuilder(PointGrantRequest, "pgr");
-    const requests = await qb
-      .where({ status: PointGrantStatus.PENDING })
-      .orWhere({
+    const retryRequests = await this.find(
+      {
         $and: [
           { status: PointGrantStatus.RETRY },
           { nextRetryAt: { $lte: now } },
         ],
-      })
-      .setLockMode(LockMode.PESSIMISTIC_WRITE)
-      .limit(20)
-      .getResultList();
+      },
+      {
+        limit: batchSize,
+        orderBy: { nextRetryAt: "ASC" },
+        lockMode: LockMode.PESSIMISTIC_PARTIAL_WRITE,
+      },
+    );
 
-    return requests;
+    if (batchSize <= retryRequests.length) {
+      return retryRequests;
+    }
+
+    const pendingRequests = await this.find(
+      {
+        $and: [
+          { status: PointGrantStatus.PENDING },
+          { createdAt: { $lte: now } },
+        ],
+      },
+      {
+        orderBy: { createdAt: "ASC" },
+        limit: batchSize - retryRequests.length,
+        lockMode: LockMode.PESSIMISTIC_PARTIAL_WRITE,
+      },
+    );
+
+    return [...retryRequests, ...pendingRequests];
   }
 }
