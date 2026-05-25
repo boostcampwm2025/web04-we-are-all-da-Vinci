@@ -41,9 +41,8 @@ export class PointService {
   }
 
   async canGrantTodayPromotion(userKey: number): Promise<boolean> {
-    const em = this.em.fork();
     const { start, end } = getSeoulDayRange();
-    const count = await em.count(PointLog, {
+    const count = await this.em.count(PointLog, {
       user: { userKey },
       reason: PointReason.DRAWING,
       createdAt: { $gte: start, $lt: end },
@@ -53,7 +52,7 @@ export class PointService {
 
   @Transactional()
   async savePointGrantRequest(user: User, reason: PointReason): Promise<void> {
-    const request = this.em.create(PointGrantRequest, {
+    this.pointGrantRequestRepository.create({
       user,
       reason,
       pointAmount: PROMOTION_AMOUNT,
@@ -62,8 +61,7 @@ export class PointService {
       attemptCount: 0,
     });
 
-    this.em.persist(request);
-    await this.em.flush();
+    await this.pointGrantRequestRepository.getEntityManager().flush();
   }
 
   async settleGrantRequests() {
