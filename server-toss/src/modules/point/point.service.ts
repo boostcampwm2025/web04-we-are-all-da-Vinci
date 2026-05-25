@@ -1,7 +1,7 @@
 import { EntityManager } from "@mikro-orm/core";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { getSeoulDayRange } from "src/common/util/time.util";
+import { getSeoulDateTime, getSeoulDayRange } from "src/common/util/time.util";
 import { TossApiClient } from "src/modules/auth/toss-api.client";
 import {
   TossPromotionError,
@@ -19,6 +19,9 @@ import { PointGrantRequestRepository } from "./point-grant-request.repository";
 
 const PROMOTION_AMOUNT = 2;
 const PROMOTION_MAX_RETRIES = 3;
+const PURGE_BATCH_SIZE = 100;
+const SUCCEEDED_RETENTION_DAYS = 7;
+const FAILED_RETENTION_DAYS = 30;
 
 @Injectable()
 export class PointService {
@@ -70,6 +73,46 @@ export class PointService {
     for (const request of requests) {
       await this.settleGrantRequest(request);
     }
+  }
+
+  async purgeProcessedGrantRequests(): Promise<{
+    succeededDeleted: number;
+    failedDeleted: number;
+  }> {
+    const startedAt = Date.now();
+    const now = getSeoulDateTime();
+    const succeededCutoff = new Date(
+      now.getTime() - SUCCEEDED_RETENTION_DAYS * 24 * 60 * 60 * 1000,
+    );
+    const failedCutoff = new Date(
+      now.getTime() - FAILED_RETENTION_DAYS * 24 * 60 * 60 * 1000,
+    );
+
+    const succeededDeleted =
+      await this.pointGrantRequestRepository.purgeByStatusBefore(
+        PointGrantStatus.SUCCEEDED,
+        succeededCutoff,
+        PURGE_BATCH_SIZE,
+      );
+
+    const failedDeleted =
+      await this.pointGrantRequestRepository.purgeByStatusBefore(
+        PointGrantStatus.FAILED,
+        failedCutoff,
+        PURGE_BATCH_SIZE,
+      );
+
+    this.logger.log(
+      {
+        event: "point_grant.purge.succeeded",
+        succeededDeleted,
+        failedDeleted,
+        durationMs: Date.now() - startedAt,
+      },
+      "포인트 지급 요청 purge 완료",
+    );
+
+    return { succeededDeleted, failedDeleted };
   }
 
   async settleGrantRequest(request: PointGrantRequest): Promise<void> {

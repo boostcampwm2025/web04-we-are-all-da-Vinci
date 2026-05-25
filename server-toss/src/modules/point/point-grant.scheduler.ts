@@ -7,7 +7,7 @@ import { CreateRequestContext } from "@mikro-orm/decorators/legacy";
 export class PointGrantScheduler {
   constructor(private readonly pointService: PointService) {}
 
-  @Cron(CronExpression.EVERY_SECOND)
+  @Cron(CronExpression.EVERY_SECOND, { timeZone: "Asia/Seoul" })
   @CreateRequestContext()
   async processEligiblePoints() {
     await this.pointService.settleGrantRequests();

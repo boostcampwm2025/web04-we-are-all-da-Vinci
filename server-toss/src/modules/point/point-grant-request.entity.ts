@@ -50,6 +50,7 @@ export class PointGrantRequest extends BaseEntity {
 
   succeeded() {
     this.status = PointGrantStatus.SUCCEEDED;
+    this.processedAt = getSeoulDateTime();
   }
 
   retry() {
@@ -68,6 +69,7 @@ export class PointGrantRequest extends BaseEntity {
   failed(errorMessage?: string) {
     this.status = PointGrantStatus.FAILED;
     this.failedMessage = errorMessage;
+    this.processedAt = getSeoulDateTime();
   }
 
   processing() {
