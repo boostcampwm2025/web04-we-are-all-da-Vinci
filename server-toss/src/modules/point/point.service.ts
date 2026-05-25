@@ -54,7 +54,15 @@ export class PointService {
   }
 
   @Transactional()
-  async savePointGrantRequest(user: User, reason: PointReason): Promise<void> {
+  async savePointGrantRequest(
+    user: User,
+    reason: PointReason,
+  ): Promise<boolean> {
+    const promotionGranted = await this.canGrantTodayPromotion(user.userKey);
+
+    if (!promotionGranted) {
+      return false;
+    }
     this.pointGrantRequestRepository.create({
       user,
       reason,
@@ -65,6 +73,7 @@ export class PointService {
     });
 
     await this.pointGrantRequestRepository.getEntityManager().flush();
+    return true;
   }
 
   async settleGrantRequests() {

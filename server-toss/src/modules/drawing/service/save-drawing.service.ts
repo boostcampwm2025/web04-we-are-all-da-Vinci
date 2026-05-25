@@ -35,14 +35,10 @@ export class SaveDrawingService {
 
     await this.rankingService.updateRanking(user, drawing);
 
-    // 프로모션 지급 가능 여부 판단
-    const promotionGranted = await this.pointService.canGrantTodayPromotion(
-      user.userKey,
+    const promotionGranted = await this.pointService.savePointGrantRequest(
+      user,
+      PointReason.DRAWING,
     );
-    if (promotionGranted) {
-      // 프로모션 지급 로그 저장
-      await this.pointService.savePointGrantRequest(user, PointReason.DRAWING);
-    }
 
     return { drawing, promotionGranted };
   }
