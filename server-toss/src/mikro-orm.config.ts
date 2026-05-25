@@ -5,6 +5,7 @@ import { AdView } from "./modules/chance/ad-view.entity";
 import { PlayChance } from "./modules/chance/play-chance.entity";
 import { ShareLog } from "./modules/chance/share-log.entity";
 import { Drawing } from "./modules/drawing/drawing.entity";
+import { PointGrantRequest } from "./modules/point/point-grant-request.entity";
 import { PointLog } from "./modules/point/point-log.entity";
 import { DailyPrompt } from "./modules/prompt/daily-prompt.entity";
 import { Prompt } from "./modules/prompt/prompt.entity";
@@ -23,6 +24,7 @@ export default defineConfig({
     Prompt,
     DailyPrompt,
     PointLog,
+    PointGrantRequest,
     AdView,
     Ranking,
     PlayChance,
