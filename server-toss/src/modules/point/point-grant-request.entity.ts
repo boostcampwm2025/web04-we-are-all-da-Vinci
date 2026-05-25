@@ -49,6 +49,7 @@ export class PointGrantRequest extends BaseEntity {
 export enum PointGrantStatus {
   PENDING = "pending",
   PROCESSING = "processing",
+  RETRY = "retry",
   FAILED = "failed",
   SUCCEEDED = "succeeded",
 }

@@ -14,6 +14,8 @@ import {
   PointGrantStatus,
 } from "./point-grant-request.entity";
 import { Transactional } from "@mikro-orm/decorators/legacy";
+import { PointGrantRequestRepository } from "./point-grant-request.repository";
+import { InjectRepository } from "@mikro-orm/nestjs";
 
 const PROMOTION_AMOUNT = 2;
 const PROMOTION_MAX_RETRIES = 2;
@@ -25,6 +27,8 @@ export class PointService {
 
   constructor(
     private readonly em: EntityManager,
+    @InjectRepository(PointGrantRequest)
+    private readonly pointGrantRequestRepository: PointGrantRequestRepository,
     private readonly tossApiClient: TossApiClient,
     private readonly configService: ConfigService,
   ) {
@@ -60,6 +64,24 @@ export class PointService {
 
     this.em.persist(request);
     await this.em.flush();
+  }
+
+  @Transactional()
+  async lockAndFetchEligibleGrants(): Promise<PointGrantRequest[]> {
+    const requests =
+      await this.pointGrantRequestRepository.findEligibleGrantsWithLock();
+
+    requests.forEach((request) => {
+      if (request.status === PointGrantStatus.PENDING) {
+        request.status = PointGrantStatus.PROCESSING;
+      } else if (request.status === PointGrantStatus.RETRY) {
+        request.status = PointGrantStatus.PROCESSING;
+        request.attemptCount += 1;
+      }
+    });
+    await this.em.flush();
+
+    return requests;
   }
 
   async saveDrawingPointLog(userKey: number): Promise<void> {
