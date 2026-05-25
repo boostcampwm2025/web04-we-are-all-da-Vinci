@@ -9,6 +9,9 @@ const { AdView } = require("./dist/modules/chance/ad-view.entity");
 const { Ranking } = require("./dist/modules/ranking/ranking.entity");
 const { PlayChance } = require("./dist/modules/chance/play-chance.entity");
 const { ShareLog } = require("./dist/modules/chance/share-log.entity");
+const {
+  PointGrantRequest,
+} = require("./dist/modules/point/point-grant-request.entity");
 
 const { Migrator } = require("@mikro-orm/migrations");
 const { SeedManager } = require("@mikro-orm/seeder");
@@ -30,6 +33,7 @@ module.exports = defineConfig({
     Ranking,
     PlayChance,
     ShareLog,
+    PointGrantRequest,
   ],
   debug: process.env.NODE_ENV !== "production",
   forceUtcTimezone: true, // UTC로 시간 설정 고정

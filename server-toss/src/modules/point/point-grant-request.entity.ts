@@ -2,6 +2,7 @@ import { EntityRepositoryType, type Opt, type Rel } from "@mikro-orm/core";
 import {
   Entity,
   Enum,
+  Index,
   ManyToOne,
   PrimaryKey,
   Property,
@@ -15,6 +16,20 @@ import { PointGrantRequestRepository } from "./point-grant-request.repository";
 @Entity({
   tableName: "point_grant_requests",
   repository: () => PointGrantRequestRepository,
+})
+@Index({
+  name: "idx_pgr_status_created_at",
+  columns: [
+    { name: "status", sort: "ASC" },
+    { name: "createdAt", sort: "ASC" },
+  ],
+})
+@Index({
+  name: "idx_pgr_status_next_retry_at",
+  columns: [
+    { name: "status", sort: "ASC" },
+    { name: "nextRetryAt", sort: "ASC" },
+  ],
 })
 export class PointGrantRequest extends BaseEntity {
   [EntityRepositoryType]?: PointGrantRequestRepository;
