@@ -60,6 +60,9 @@ export class PointGrantRequest extends BaseEntity {
   @Property({ name: "processed_at", type: "timestamp", nullable: true })
   processedAt?: Opt<Date>;
 
+  @Property({ name: "locked_at", type: "timestamp", nullable: true })
+  lockedAt?: Opt<Date>;
+
   @Property({ name: "failed_message", type: "text", nullable: true })
   failedMessage?: Opt<string>;
 
@@ -89,7 +92,7 @@ export class PointGrantRequest extends BaseEntity {
 
   processing() {
     this.status = PointGrantStatus.PROCESSING;
-    this.processedAt = getSeoulDateTime();
+    this.lockedAt = getSeoulDateTime();
   }
 
   private calculateBackOff(attemptCount: number) {

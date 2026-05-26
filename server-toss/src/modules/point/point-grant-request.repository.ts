@@ -7,6 +7,8 @@ import {
 import { getSeoulDateTime } from "src/common/util/time.util";
 
 export class PointGrantRequestRepository extends EntityRepository<PointGrantRequest> {
+  private readonly LEASE_TIMEOUT: number = 3 * 60 * 1000;
+
   async purgeByStatusBefore(
     status: PointGrantStatus,
     cutoff: Date,
@@ -35,6 +37,25 @@ export class PointGrantRequestRepository extends EntityRepository<PointGrantRequ
     batchSize: number = 20,
   ): Promise<PointGrantRequest[]> {
     const now = getSeoulDateTime();
+
+    const staleRequests = await this.find(
+      {
+        $and: [
+          { status: PointGrantStatus.PROCESSING },
+          { lockedAt: { $lte: new Date(now.getTime() - this.LEASE_TIMEOUT) } },
+        ],
+      },
+      {
+        limit: batchSize,
+        orderBy: { lockedAt: "ASC" },
+        lockMode: LockMode.PESSIMISTIC_PARTIAL_WRITE,
+      },
+    );
+
+    if (batchSize <= staleRequests.length) {
+      return staleRequests;
+    }
+
     const retryRequests = await this.find(
       {
         $and: [
@@ -43,14 +64,14 @@ export class PointGrantRequestRepository extends EntityRepository<PointGrantRequ
         ],
       },
       {
-        limit: batchSize,
+        limit: batchSize - staleRequests.length,
         orderBy: { nextRetryAt: "ASC" },
         lockMode: LockMode.PESSIMISTIC_PARTIAL_WRITE,
       },
     );
 
-    if (batchSize <= retryRequests.length) {
-      return retryRequests;
+    if (batchSize <= retryRequests.length + staleRequests.length) {
+      return [...staleRequests, ...retryRequests];
     }
 
     const pendingRequests = await this.find(
@@ -67,6 +88,6 @@ export class PointGrantRequestRepository extends EntityRepository<PointGrantRequ
       },
     );
 
-    return [...retryRequests, ...pendingRequests];
+    return [...staleRequests, ...retryRequests, ...pendingRequests];
   }
 }
