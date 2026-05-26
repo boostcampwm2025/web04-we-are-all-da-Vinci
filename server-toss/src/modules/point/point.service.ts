@@ -1,37 +1,34 @@
 import { EntityManager } from "@mikro-orm/core";
-import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { getSeoulDateTime, getSeoulDayRange } from "src/common/util/time.util";
-import { TossApiClient } from "src/modules/auth/toss-api.client";
-import {
-  TossPromotionError,
-  TossTransportError,
-} from "src/modules/auth/errors/toss.errors";
-import { User } from "src/modules/user/user.entity";
-import { PointLog, PointReason } from "./point-log.entity";
-import {
-  PointGrantRequest,
-  PointGrantStatus,
-} from "./point-grant-request.entity";
 import {
   CreateRequestContext,
   Transactional,
 } from "@mikro-orm/decorators/legacy";
 import { InjectRepository } from "@mikro-orm/nestjs";
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { getSeoulDateTime, getSeoulDayRange } from "src/common/util/time.util";
+import {
+  TossPromotionError,
+  TossTransportError,
+} from "src/modules/auth/errors/toss.errors";
+import { TossApiClient } from "src/modules/auth/toss-api.client";
+import { User } from "src/modules/user/user.entity";
+import {
+  PointGrantRequest,
+  PointGrantStatus,
+} from "./entitiy/point-grant-request.entity";
+import { PointLog, PointReason } from "./entitiy/point-log.entity";
 import { PointGrantRequestRepository } from "./point-grant-request.repository";
-
-const PROMOTION_AMOUNT = 2;
-const PROMOTION_MAX_RETRIES = 3;
-const PURGE_BATCH_SIZE = 100;
-const SUCCEEDED_RETENTION_DAYS = 7;
-const FAILED_RETENTION_DAYS = 30;
-const DAILY_DRAWING_PROMOTION_LIMIT = 2;
-const DAILY_LIMIT_EXCEEDED_MESSAGE = "일일 지급 한도 초과";
-
-type GrantEligibilityDecision =
-  | { decision: "PROCEED" }
-  | { decision: "FAIL"; reason: string }
-  | { decision: "RETRY" };
+import {
+  DAILY_DRAWING_PROMOTION_LIMIT,
+  DAILY_LIMIT_EXCEEDED_MESSAGE,
+  FAILED_RETENTION_DAYS,
+  PROMOTION_AMOUNT,
+  PROMOTION_MAX_RETRIES,
+  PURGE_BATCH_SIZE,
+  SUCCEEDED_RETENTION_DAYS,
+} from "./point.contants";
+import { GrantEligibilityDecision } from "./point.types";
 
 @Injectable()
 export class PointService {
@@ -86,6 +83,17 @@ export class PointService {
     return true;
   }
 
+  @Transactional()
+  async lockAndFetchEligibleGrants(): Promise<PointGrantRequest[]> {
+    const requests =
+      await this.pointGrantRequestRepository.findEligibleGrantsWithLock();
+
+    requests.forEach((request) => request.processing());
+    await this.pointGrantRequestRepository.getEntityManager().flush();
+
+    return requests;
+  }
+
   @CreateRequestContext()
   async settleGrantRequests() {
     const requests = await this.lockAndFetchEligibleGrants();
@@ -93,47 +101,6 @@ export class PointService {
     for (const request of requests) {
       await this.settleGrantRequest(request);
     }
-  }
-
-  @CreateRequestContext()
-  async purgeProcessedGrantRequests(): Promise<{
-    succeededDeleted: number;
-    failedDeleted: number;
-  }> {
-    const startedAt = Date.now();
-    const now = getSeoulDateTime();
-    const succeededCutoff = new Date(
-      now.getTime() - SUCCEEDED_RETENTION_DAYS * 24 * 60 * 60 * 1000,
-    );
-    const failedCutoff = new Date(
-      now.getTime() - FAILED_RETENTION_DAYS * 24 * 60 * 60 * 1000,
-    );
-
-    const succeededDeleted =
-      await this.pointGrantRequestRepository.purgeByStatusBefore(
-        PointGrantStatus.SUCCEEDED,
-        succeededCutoff,
-        PURGE_BATCH_SIZE,
-      );
-
-    const failedDeleted =
-      await this.pointGrantRequestRepository.purgeByStatusBefore(
-        PointGrantStatus.FAILED,
-        failedCutoff,
-        PURGE_BATCH_SIZE,
-      );
-
-    this.logger.log(
-      {
-        event: "point_grant.purge.succeeded",
-        succeededDeleted,
-        failedDeleted,
-        durationMs: Date.now() - startedAt,
-      },
-      "포인트 지급 요청 purge 완료",
-    );
-
-    return { succeededDeleted, failedDeleted };
   }
 
   async settleGrantRequest(request: PointGrantRequest): Promise<void> {
@@ -261,17 +228,6 @@ export class PointService {
     await this.em.flush();
   }
 
-  @Transactional()
-  async lockAndFetchEligibleGrants(): Promise<PointGrantRequest[]> {
-    const requests =
-      await this.pointGrantRequestRepository.findEligibleGrantsWithLock();
-
-    requests.forEach((request) => request.processing());
-    await this.pointGrantRequestRepository.getEntityManager().flush();
-
-    return requests;
-  }
-
   async grantDrawingPromotion(
     request: PointGrantRequest,
     key: string,
@@ -284,5 +240,46 @@ export class PointService {
       this.promotionCode,
       pointAmount,
     );
+  }
+
+  @CreateRequestContext()
+  async purgeProcessedGrantRequests(): Promise<{
+    succeededDeleted: number;
+    failedDeleted: number;
+  }> {
+    const startedAt = Date.now();
+    const now = getSeoulDateTime();
+    const succeededCutoff = new Date(
+      now.getTime() - SUCCEEDED_RETENTION_DAYS * 24 * 60 * 60 * 1000,
+    );
+    const failedCutoff = new Date(
+      now.getTime() - FAILED_RETENTION_DAYS * 24 * 60 * 60 * 1000,
+    );
+
+    const succeededDeleted =
+      await this.pointGrantRequestRepository.purgeByStatusBefore(
+        PointGrantStatus.SUCCEEDED,
+        succeededCutoff,
+        PURGE_BATCH_SIZE,
+      );
+
+    const failedDeleted =
+      await this.pointGrantRequestRepository.purgeByStatusBefore(
+        PointGrantStatus.FAILED,
+        failedCutoff,
+        PURGE_BATCH_SIZE,
+      );
+
+    this.logger.log(
+      {
+        event: "point_grant.purge.succeeded",
+        succeededDeleted,
+        failedDeleted,
+        durationMs: Date.now() - startedAt,
+      },
+      "포인트 지급 요청 purge 완료",
+    );
+
+    return { succeededDeleted, failedDeleted };
   }
 }

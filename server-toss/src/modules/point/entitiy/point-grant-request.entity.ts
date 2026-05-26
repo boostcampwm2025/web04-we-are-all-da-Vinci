@@ -7,11 +7,11 @@ import {
   PrimaryKey,
   Property,
 } from "@mikro-orm/decorators/legacy";
-import { User } from "../user/user.entity";
+import { User } from "../../user/user.entity";
 import { BaseEntity } from "src/common/entitiy/base.entity";
 import { PointReason } from "./point-log.entity";
 import { getSeoulDateTime } from "src/common/util/time.util";
-import { PointGrantRequestRepository } from "./point-grant-request.repository";
+import { PointGrantRequestRepository } from "../point-grant-request.repository";
 
 @Entity({
   tableName: "point_grant_requests",

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
-import { PointService } from "./point.service";
+import { PointService } from "../point.service";
 
 @Injectable()
 export class PointGrantPurgeScheduler {

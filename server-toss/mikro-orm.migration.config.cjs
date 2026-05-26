@@ -4,14 +4,14 @@ const { User } = require("./dist/modules/user/user.entity");
 const { Drawing } = require("./dist/modules/drawing/drawing.entity");
 const { Prompt } = require("./dist/modules/prompt/prompt.entity");
 const { DailyPrompt } = require("./dist/modules/prompt/daily-prompt.entity");
-const { PointLog } = require("./dist/modules/point/point-log.entity");
+const { PointLog } = require("./dist/modules/point/entity/point-log.entity");
 const { AdView } = require("./dist/modules/chance/ad-view.entity");
 const { Ranking } = require("./dist/modules/ranking/ranking.entity");
 const { PlayChance } = require("./dist/modules/chance/play-chance.entity");
 const { ShareLog } = require("./dist/modules/chance/share-log.entity");
 const {
   PointGrantRequest,
-} = require("./dist/modules/point/point-grant-request.entity");
+} = require("./dist/modules/point/entity/point-grant-request.entity");
 
 const { Migrator } = require("@mikro-orm/migrations");
 const { SeedManager } = require("@mikro-orm/seeder");
