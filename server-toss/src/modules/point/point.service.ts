@@ -140,7 +140,7 @@ export class PointService {
       await this.grantDrawingPromotion(request, key);
       await this.recordGrantSucceeded(request);
     } catch (err) {
-      await this.recordGrantFailedOrRetry(request, err);
+      await this.recordGrantOutcomeFromError(request, err);
     }
   }
 
@@ -175,8 +175,11 @@ export class PointService {
   }
 
   @Transactional()
-  async recordGrantFailedOrRetry(request: PointGrantRequest, err: unknown) {
-    if (
+  async recordGrantOutcomeFromError(request: PointGrantRequest, err: unknown) {
+    if (err instanceof TossPromotionError && err.errorCode === "4113") {
+      await this.recordGrantSucceeded(request);
+      return;
+    } else if (
       err instanceof TossTransportError ||
       (err instanceof TossPromotionError && err.errorCode === "4110")
     ) {

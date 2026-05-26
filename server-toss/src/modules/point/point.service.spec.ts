@@ -215,7 +215,7 @@ describe("PointService", () => {
           .spyOn(service, "recordGrantSucceeded")
           .mockResolvedValue(undefined);
         const failedSpy = jest
-          .spyOn(service, "recordGrantFailedOrRetry")
+          .spyOn(service, "recordGrantOutcomeFromError")
           .mockResolvedValue(undefined);
 
         await service.settleGrantRequest(request);
@@ -257,7 +257,7 @@ describe("PointService", () => {
         const service = buildService({ entityManager: em });
         const request = { retry: jest.fn(), failed: jest.fn() };
 
-        await service.recordGrantFailedOrRetry(
+        await service.recordGrantOutcomeFromError(
           request as never,
           new TossTransportError("timeout"),
         );
@@ -274,7 +274,7 @@ describe("PointService", () => {
         const service = buildService({ entityManager: em });
         const request = { retry: jest.fn(), failed: jest.fn() };
 
-        await service.recordGrantFailedOrRetry(
+        await service.recordGrantOutcomeFromError(
           request as never,
           new TossPromotionError("4110", "internal"),
         );
@@ -291,7 +291,7 @@ describe("PointService", () => {
         const service = buildService({ entityManager: em });
         const request = { retry: jest.fn(), failed: jest.fn() };
 
-        await service.recordGrantFailedOrRetry(
+        await service.recordGrantOutcomeFromError(
           request as never,
           new TossPromotionError("4109", "promotion ended"),
         );
@@ -308,7 +308,7 @@ describe("PointService", () => {
         const service = buildService({ entityManager: em });
         const request = { retry: jest.fn(), failed: jest.fn() };
 
-        await service.recordGrantFailedOrRetry(
+        await service.recordGrantOutcomeFromError(
           request as never,
           new Error("unknown"),
         );
