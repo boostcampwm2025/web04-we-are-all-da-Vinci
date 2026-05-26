@@ -31,6 +31,13 @@ import { PointGrantRequestRepository } from "../point-grant-request.repository";
     { name: "nextRetryAt", sort: "ASC" },
   ],
 })
+@Index({
+  name: "idx_pgr_status_locked_at",
+  columns: [
+    { name: "status", sort: "ASC" },
+    { name: "lockedAt", sort: "ASC" },
+  ],
+})
 export class PointGrantRequest extends BaseEntity {
   [EntityRepositoryType]?: PointGrantRequestRepository;
   @PrimaryKey({ type: "bigint" })
