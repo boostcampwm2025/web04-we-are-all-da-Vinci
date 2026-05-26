@@ -25,6 +25,13 @@ const PROMOTION_MAX_RETRIES = 3;
 const PURGE_BATCH_SIZE = 100;
 const SUCCEEDED_RETENTION_DAYS = 7;
 const FAILED_RETENTION_DAYS = 30;
+const DAILY_DRAWING_PROMOTION_LIMIT = 2;
+const DAILY_LIMIT_EXCEEDED_MESSAGE = "일일 지급 한도 초과";
+
+type GrantEligibilityDecision =
+  | { decision: "PROCEED" }
+  | { decision: "FAIL"; reason: string }
+  | { decision: "RETRY" };
 
 @Injectable()
 export class PointService {
@@ -130,9 +137,12 @@ export class PointService {
   }
 
   async settleGrantRequest(request: PointGrantRequest): Promise<void> {
-    try {
-      // TODO: canGrant 체크
+    const eligibilityDecision = await this.evaluateGrantEligibility(request);
+    if (await this.applyEligibilityDecision(request, eligibilityDecision)) {
+      return;
+    }
 
+    try {
       const key =
         request.pointIdempotencyKey ??
         (await this.issueAndSavePromotionKey(request));
@@ -142,6 +152,60 @@ export class PointService {
     } catch (err) {
       await this.recordGrantOutcomeFromError(request, err);
     }
+  }
+
+  async evaluateGrantEligibility(
+    request: PointGrantRequest,
+  ): Promise<GrantEligibilityDecision> {
+    if (request.reason !== PointReason.DRAWING) {
+      return { decision: "PROCEED" };
+    }
+
+    const { start, end } = getSeoulDayRange();
+    const userKey = request.user.userKey;
+
+    const pointLogCount = await this.em.count(PointLog, {
+      user: { userKey },
+      reason: PointReason.DRAWING,
+      createdAt: { $gte: start, $lt: end },
+    });
+
+    if (pointLogCount >= DAILY_DRAWING_PROMOTION_LIMIT) {
+      return { decision: "FAIL", reason: DAILY_LIMIT_EXCEEDED_MESSAGE };
+    }
+
+    const inFlightCount = await this.em.count(PointGrantRequest, {
+      id: { $ne: request.id },
+      user: { userKey },
+      reason: PointReason.DRAWING,
+      status: PointGrantStatus.PROCESSING,
+      createdAt: { $gte: start, $lt: end },
+    });
+
+    if (pointLogCount + inFlightCount >= DAILY_DRAWING_PROMOTION_LIMIT) {
+      return { decision: "RETRY" };
+    }
+
+    return { decision: "PROCEED" };
+  }
+
+  async applyEligibilityDecision(
+    request: PointGrantRequest,
+    decision: GrantEligibilityDecision,
+  ): Promise<boolean> {
+    if (decision.decision === "FAIL") {
+      request.failed(decision.reason);
+      await this.em.flush();
+      return true;
+    }
+
+    if (decision.decision === "RETRY") {
+      request.retry();
+      await this.em.flush();
+      return true;
+    }
+
+    return false;
   }
 
   async issueAndSavePromotionKey(request: PointGrantRequest) {
