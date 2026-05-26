@@ -66,9 +66,17 @@ export class PointGrantRequest extends BaseEntity {
   @Property({ name: "failed_message", type: "text", nullable: true })
   failedMessage?: Opt<string>;
 
+  @Property({
+    name: "point_idempotency_key",
+    type: "varchar(255)",
+    nullable: true,
+  })
+  pointIdempotencyKey?: Opt<string>;
+
   succeeded() {
     this.status = PointGrantStatus.SUCCEEDED;
     this.processedAt = getSeoulDateTime();
+    this.pointIdempotencyKey = undefined;
   }
 
   retry() {
@@ -82,6 +90,7 @@ export class PointGrantRequest extends BaseEntity {
     this.nextRetryAt = new Date(
       getSeoulDateTime().getTime() + this.calculateBackOff(this.attemptCount),
     );
+    this.pointIdempotencyKey = undefined;
   }
 
   failed(errorMessage?: string) {
@@ -93,6 +102,10 @@ export class PointGrantRequest extends BaseEntity {
   processing() {
     this.status = PointGrantStatus.PROCESSING;
     this.lockedAt = getSeoulDateTime();
+  }
+
+  setPointIdempotencyKey(key: string) {
+    this.pointIdempotencyKey = key;
   }
 
   private calculateBackOff(attemptCount: number) {

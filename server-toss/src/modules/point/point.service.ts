@@ -131,11 +131,33 @@ export class PointService {
 
   async settleGrantRequest(request: PointGrantRequest): Promise<void> {
     try {
-      await this.grantDrawingPromotion(request);
+      // TODO: canGrant 체크
+
+      const key =
+        request.pointIdempotencyKey ??
+        (await this.issueAndSavePromotionKey(request));
+
+      await this.grantDrawingPromotion(request, key);
       await this.recordGrantSucceeded(request);
     } catch (err) {
       await this.recordGrantFailedOrRetry(request, err);
     }
+  }
+
+  async issueAndSavePromotionKey(request: PointGrantRequest) {
+    const { user } = request;
+
+    const key = await this.tossApiClient.getPromotionKey(user.userKey);
+
+    await this.savePointIdempotencyKey(request, key);
+
+    return key;
+  }
+
+  @Transactional()
+  async savePointIdempotencyKey(request: PointGrantRequest, key: string) {
+    request.setPointIdempotencyKey(key);
+    await this.pointGrantRequestRepository.getEntityManager().flush();
   }
 
   @Transactional()
@@ -183,9 +205,11 @@ export class PointService {
     return requests;
   }
 
-  async grantDrawingPromotion(request: PointGrantRequest): Promise<void> {
+  async grantDrawingPromotion(
+    request: PointGrantRequest,
+    key: string,
+  ): Promise<void> {
     const { user, pointAmount } = request;
-    const key = await this.tossApiClient.getPromotionKey(user.userKey);
 
     await this.tossApiClient.executePromotion(
       user.userKey,
