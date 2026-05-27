@@ -38,13 +38,29 @@ services:
       MYSQL_DATABASE: load_test
       MYSQL_HOST: davinci-mysql
       MYSQL_PORT: 3306
+      OTEL_SERVICE_NAME: davinci-app-1
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://davinci-jaeger:4318/v1/traces
+      OTEL_LOGS_EXPORTER: none
+      OTEL_METRICS_EXPORTER: none
     env_file:
       - ./env/.env
     depends_on:
       davinci-mysql:
         condition: service_healthy
+      davinci-jaeger:
+        condition: service_started
     cpus: 1.0
     mem_limit: 1g
+  davinci-jaeger:
+    image: jaegertracing/all-in-one
+    container_name: davinci-jaeger
+    networks:
+      - load-net
+    ports:
+      - 16686:16686
+      - 4318:4318
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
 
 networks:
   load-net:
