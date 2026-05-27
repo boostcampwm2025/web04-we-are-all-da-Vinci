@@ -16,6 +16,7 @@ import { PlayModule } from "./modules/play/play.module";
 import { PromptModule } from "./modules/prompt/prompt.module";
 import { RankingModule } from "./modules/ranking/ranking.module";
 import { UserModule } from "./modules/user/user.module";
+import { TraceAopModule } from "./common/observability/trace-aop.module";
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { UserModule } from "./modules/user/user.module";
     }),
     ScheduleModule.forRoot(),
     MikroOrmModule.forRoot(config),
+    TraceAopModule,
     AuthModule,
     UserModule,
     DrawingModule,
