@@ -19,6 +19,10 @@ export class TraceAopModule implements OnModuleInit {
   ) {}
 
   onModuleInit() {
+    if (process.env.OTEL_ENABLED !== "true") {
+      return;
+    }
+
     this.getProviders().forEach((provider: InstanceWrapper) => {
       const instance = provider.instance as Record<string, unknown> | undefined;
       if (!instance) {

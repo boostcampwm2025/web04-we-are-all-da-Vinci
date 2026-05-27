@@ -18,6 +18,7 @@ import { RankingModule } from "./modules/ranking/ranking.module";
 import { UserModule } from "./modules/user/user.module";
 import { TraceAopModule } from "./common/observability/trace-aop.module";
 
+const isOtelEnabled = process.env.OTEL_ENABLED === "true";
 @Module({
   imports: [
     HealthModule,
@@ -38,7 +39,7 @@ import { TraceAopModule } from "./common/observability/trace-aop.module";
     }),
     ScheduleModule.forRoot(),
     MikroOrmModule.forRoot(config),
-    TraceAopModule,
+    ...(isOtelEnabled ? [TraceAopModule] : []),
     AuthModule,
     UserModule,
     DrawingModule,

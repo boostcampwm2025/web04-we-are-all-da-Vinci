@@ -42,6 +42,7 @@ services:
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://davinci-jaeger:4318/v1/traces
       OTEL_LOGS_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
+      OTEL_ENABLED: true
     env_file:
       - ./env/.env
     depends_on:
