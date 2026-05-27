@@ -21,6 +21,9 @@ const sdk = new NodeSDK({
       "@opentelemetry/instrumentation-fs": {
         enabled: false,
       },
+      "@opentelemetry/instrumentation-router": {
+        enabled: false,
+      },
     }),
   ],
 });
