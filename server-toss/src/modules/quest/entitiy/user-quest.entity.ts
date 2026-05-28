@@ -1,4 +1,4 @@
-import { type Rel } from "@mikro-orm/core";
+import type { Opt, Rel } from "@mikro-orm/core";
 import {
   Entity,
   ManyToOne,
@@ -17,9 +17,12 @@ export class UserQuest extends BaseEntity {
   @ManyToOne(() => User, { joinColumn: "user_key" })
   user!: Rel<User>;
 
-  @ManyToOne(() => Quest)
+  @ManyToOne(() => Quest, { joinColumn: "quest_id" })
   quest!: Rel<Quest>;
 
-  @Property({ name: "current_count", type: "int" })
-  currentCount!: number;
+  @Property({ name: "current_count", type: "int", default: 0 })
+  currentCount: Opt<number> = 0;
+
+  @Property({ name: "completed_at", type: "datetime", nullable: true })
+  completedAt?: Opt<Date | null>;
 }
