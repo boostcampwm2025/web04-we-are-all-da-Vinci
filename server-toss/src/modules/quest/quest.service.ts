@@ -131,9 +131,10 @@ export class QuestService {
 
     for (const uq of activeQuests) {
       if (!command.execute(uq, context)) continue;
-      const result = await this.completeIfFulfilled(userKey, uq);
-      if (result) completed.push(result);
+      if (this.completeIfFulfilled(uq)) completed.push(uq);
     }
+
+    await this.grantRewards(userKey, completed);
 
     return completed;
   }
@@ -157,35 +158,39 @@ export class QuestService {
     const metaCompleted: UserQuest[] = [];
 
     for (const uq of metaQuests) {
-      this.executeQuestCompleted(uq, { completedQuestIds: completedIds });
-      const result = await this.completeIfFulfilled(userKey, uq);
-      if (result) metaCompleted.push(result);
+      this.applyQuestCompleted(uq, { completedQuestIds: completedIds });
+      if (this.completeIfFulfilled(uq)) metaCompleted.push(uq);
     }
+
+    await this.grantRewards(userKey, metaCompleted);
 
     return metaCompleted;
   }
 
-  private async completeIfFulfilled(
-    userKey: number,
-    uq: UserQuest,
-  ): Promise<UserQuest | null> {
-    if (uq.currentCount < uq.quest.requiredCount) return null;
-
+  private completeIfFulfilled(uq: UserQuest): boolean {
+    if (uq.currentCount < uq.quest.requiredCount) return false;
     uq.completedAt = new Date();
-    await this.grantReward(userKey, uq.quest);
+    return true;
+  }
 
-    this.logger.log(
-      {
-        event: "quest.complete.succeeded",
-        userKey,
-        questId: uq.quest.id.toString(),
-        rewardType: uq.quest.rewardType,
-        rewardAmount: uq.quest.rewardAmount,
-      },
-      "퀘스트 완료",
-    );
+  private async grantRewards(
+    userKey: number,
+    completed: UserQuest[],
+  ): Promise<void> {
+    for (const uq of completed) {
+      await this.grantReward(userKey, uq.quest);
 
-    return uq;
+      this.logger.log(
+        {
+          event: "quest.complete.succeeded",
+          userKey,
+          questId: uq.quest.id.toString(),
+          rewardType: uq.quest.rewardType,
+          rewardAmount: uq.quest.rewardAmount,
+        },
+        "퀘스트 완료",
+      );
+    }
   }
 
   private async assignQuests(
@@ -229,12 +234,11 @@ export class QuestService {
     return true;
   }
 
-  private executeQuestCompleted(
+  private applyQuestCompleted(
     userQuest: UserQuest,
     context: QuestCompletedAction,
-  ): boolean {
+  ): void {
     userQuest.currentCount += context.completedQuestIds.length;
-    return true;
   }
 
   private async grantReward(userKey: number, quest: Quest): Promise<void> {
