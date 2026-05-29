@@ -1,6 +1,6 @@
 import { EntityRepository, QueryOrder } from "@mikro-orm/mysql";
 import { Drawing } from "./drawing.entity";
-import { getSeoulDayRange } from "src/common/util/time.util";
+import { getSeoulDateKey, getSeoulDayRange } from "src/common/util/time.util";
 import { Prompt } from "../prompt/prompt.entity";
 import { User } from "../user/user.entity";
 
@@ -46,6 +46,46 @@ export class DrawingRepository extends EntityRepository<Drawing> {
         fields: ["id", "similarity", "strokes"],
         orderBy: [{ createdAt: QueryOrder.DESC }],
         disableIdentityMap: true,
+      },
+    );
+  }
+
+  async findCompletedDrawingDateKeys(
+    reference = new Date(),
+  ): Promise<string[]> {
+    const { start } = getSeoulDayRange(reference);
+
+    const drawings = await this.em.find(
+      Drawing,
+      { createdAt: { $lt: start } },
+      {
+        fields: ["createdAt"],
+        orderBy: [{ createdAt: QueryOrder.ASC }],
+        disableIdentityMap: true,
+      },
+    );
+
+    return [
+      ...new Set(drawings.map((drawing) => getSeoulDateKey(drawing.createdAt))),
+    ];
+  }
+
+  async findDrawingsByCreatedAtRange(
+    start: Date,
+    end: Date,
+  ): Promise<Drawing[]> {
+    return this.em.find(
+      Drawing,
+      {
+        createdAt: { $gte: start, $lt: end },
+      },
+      {
+        populate: ["user"],
+        orderBy: [
+          { score: QueryOrder.DESC },
+          { createdAt: QueryOrder.ASC },
+          { id: QueryOrder.ASC },
+        ],
       },
     );
   }

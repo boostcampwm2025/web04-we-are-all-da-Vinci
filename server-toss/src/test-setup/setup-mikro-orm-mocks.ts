@@ -32,5 +32,6 @@ jest.mock("@mikro-orm/decorators/legacy", () => ({
   OneToMany: () => () => undefined,
   Enum: () => () => undefined,
   Index: () => () => undefined,
+  Unique: () => () => undefined,
   Transactional: () => () => undefined,
 }));
