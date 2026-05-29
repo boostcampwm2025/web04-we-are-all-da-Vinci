@@ -6,7 +6,7 @@ export type DrawingAction = {
 };
 
 export type QuestCompletedAction = {
-  userQuestId?: bigint;
+  completedQuestIds: bigint[];
 };
 
 export type ActionContext = DrawingAction | QuestCompletedAction;

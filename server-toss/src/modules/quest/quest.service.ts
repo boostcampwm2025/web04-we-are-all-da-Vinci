@@ -9,18 +9,25 @@ import {
   RewardType,
 } from "./entitiy/quest.entity";
 import { UserQuest } from "./entitiy/user-quest.entity";
-import type { ActionContext, DrawingAction, QuestCommand } from "./quest.types";
+import type {
+  ActionContext,
+  DrawingAction,
+  QuestCommand,
+  QuestCompletedAction,
+} from "./quest.types";
 import type { QuestRepository } from "./repository/quest.repository";
 import type { UserQuestRepository } from "./repository/user-quest.repository";
 
-const MAX_RECURSION_DEPTH = 2;
 const DAILY_RANDOM_COUNT = 2;
 const WEEKLY_RANDOM_COUNT = 2;
 
 @Injectable()
 export class QuestService {
   private readonly logger = new Logger(QuestService.name);
-  private readonly commandMap: Record<ObjectiveType, QuestCommand>;
+  private readonly commandMap: Record<
+    Exclude<ObjectiveType, ObjectiveType.QUEST_COMPLETED>,
+    QuestCommand
+  >;
 
   constructor(
     @InjectRepository(Quest)
@@ -32,9 +39,6 @@ export class QuestService {
     this.commandMap = {
       [ObjectiveType.SUBMIT]: { execute: this.executeSubmit.bind(this) },
       [ObjectiveType.SCORE]: { execute: this.executeScore.bind(this) },
-      [ObjectiveType.QUEST_COMPLETED]: {
-        execute: this.executeQuestCompleted.bind(this),
-      },
     };
   }
 
@@ -83,15 +87,38 @@ export class QuestService {
 
   async recordAction(
     userKey: number,
-    objectiveType: ObjectiveType,
+    objectiveType: Exclude<ObjectiveType, ObjectiveType.QUEST_COMPLETED>,
     context: ActionContext,
-    depth = 0,
   ): Promise<UserQuest[]> {
-    if (depth > MAX_RECURSION_DEPTH) return [];
-
     const { start: todayStart } = getSeoulDayRange();
     const weekStart = getSeoulWeekStart();
 
+    const completed = await this.progressQuests(
+      userKey,
+      objectiveType,
+      context,
+      todayStart,
+      weekStart,
+    );
+    const metaCompleted = await this.processMetaQuests(
+      userKey,
+      completed,
+      todayStart,
+      weekStart,
+    );
+
+    await this.userQuestRepository.flush();
+
+    return [...completed, ...metaCompleted];
+  }
+
+  private async progressQuests(
+    userKey: number,
+    objectiveType: Exclude<ObjectiveType, ObjectiveType.QUEST_COMPLETED>,
+    context: ActionContext,
+    todayStart: Date,
+    weekStart: Date,
+  ): Promise<UserQuest[]> {
     const activeQuests = await this.userQuestRepository.findActiveByObjective(
       userKey,
       objectiveType,
@@ -100,45 +127,65 @@ export class QuestService {
     );
 
     const completed: UserQuest[] = [];
+    const command = this.commandMap[objectiveType];
 
     for (const uq of activeQuests) {
-      const command = this.commandMap[objectiveType];
-      const progressed = command.execute(uq, context);
-      if (!progressed) continue;
-
-      if (uq.currentCount >= uq.quest.requiredCount) {
-        uq.completedAt = new Date();
-        await this.grantReward(userKey, uq.quest);
-        completed.push(uq);
-
-        this.logger.log(
-          {
-            event: "quest.complete.succeeded",
-            userKey,
-            questId: uq.quest.id.toString(),
-            rewardType: uq.quest.rewardType,
-            rewardAmount: uq.quest.rewardAmount,
-          },
-          "퀘스트 완료",
-        );
-      }
-    }
-
-    if (activeQuests.length > 0) {
-      await this.userQuestRepository.flush();
-    }
-
-    if (completed.length > 0) {
-      const metaCompleted = await this.recordAction(
-        userKey,
-        ObjectiveType.QUEST_COMPLETED,
-        {},
-        depth + 1,
-      );
-      completed.push(...metaCompleted);
+      if (!command.execute(uq, context)) continue;
+      const result = await this.completeIfFulfilled(userKey, uq);
+      if (result) completed.push(result);
     }
 
     return completed;
+  }
+
+  private async processMetaQuests(
+    userKey: number,
+    completed: UserQuest[],
+    todayStart: Date,
+    weekStart: Date,
+  ): Promise<UserQuest[]> {
+    if (completed.length === 0) return [];
+
+    const metaQuests = await this.userQuestRepository.findActiveByObjective(
+      userKey,
+      ObjectiveType.QUEST_COMPLETED,
+      todayStart,
+      weekStart,
+    );
+
+    const completedIds = completed.map((uq) => uq.id);
+    const metaCompleted: UserQuest[] = [];
+
+    for (const uq of metaQuests) {
+      this.executeQuestCompleted(uq, { completedQuestIds: completedIds });
+      const result = await this.completeIfFulfilled(userKey, uq);
+      if (result) metaCompleted.push(result);
+    }
+
+    return metaCompleted;
+  }
+
+  private async completeIfFulfilled(
+    userKey: number,
+    uq: UserQuest,
+  ): Promise<UserQuest | null> {
+    if (uq.currentCount < uq.quest.requiredCount) return null;
+
+    uq.completedAt = new Date();
+    await this.grantReward(userKey, uq.quest);
+
+    this.logger.log(
+      {
+        event: "quest.complete.succeeded",
+        userKey,
+        questId: uq.quest.id.toString(),
+        rewardType: uq.quest.rewardType,
+        rewardAmount: uq.quest.rewardAmount,
+      },
+      "퀘스트 완료",
+    );
+
+    return uq;
   }
 
   private async assignQuests(
@@ -182,8 +229,11 @@ export class QuestService {
     return true;
   }
 
-  private executeQuestCompleted(userQuest: UserQuest): boolean {
-    userQuest.currentCount += 1;
+  private executeQuestCompleted(
+    userQuest: UserQuest,
+    context: QuestCompletedAction,
+  ): boolean {
+    userQuest.currentCount += context.completedQuestIds.length;
     return true;
   }
 
