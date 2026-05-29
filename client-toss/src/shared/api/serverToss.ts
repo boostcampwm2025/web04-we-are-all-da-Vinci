@@ -13,6 +13,7 @@ import {
   ChargeResponseSchema,
   LoginResponseSchema,
   MyChanceResponseSchema,
+  MyQuestsResponseSchema,
   PromptResponseSchema,
   SimilarityResponseSchema,
   SubmitDrawingResponseSchema,
@@ -219,5 +220,10 @@ export const serverTossApi = {
         source: "share",
         sdkPayload,
       }),
+    ),
+
+  getMyQuests: async (options?: RequestOptions) =>
+    MyQuestsResponseSchema.parse(
+      await request<unknown>("GET", "/quests/me", undefined, options),
     ),
 };

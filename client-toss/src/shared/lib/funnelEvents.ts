@@ -21,6 +21,8 @@ export const FUNNEL_EVENTS = {
   rankingDetailView: "ranking_detail_view",
   rankingItemClick: "ranking_item_click",
 
+  questView: "quest_view",
+
   shareScoreSelected: "share_score_selected",
   shareInviteSelected: "share_invite_selected",
   shareInviteFailed: "share_invite_failed",

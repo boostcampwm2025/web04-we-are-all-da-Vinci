@@ -2,4 +2,5 @@
 // Zod 스키마로 정의하여 런타임 검증 + 타입 추론 동시 제공
 export * from "./schemas/chance.schema";
 export * from "./schemas/drawing.schema";
+export * from "./schemas/quest.schema";
 export * from "./schemas/user.schema";
