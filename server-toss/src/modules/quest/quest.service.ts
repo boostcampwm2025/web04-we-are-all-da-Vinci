@@ -1,3 +1,4 @@
+import { Transactional } from "@mikro-orm/decorators/legacy";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable, Logger } from "@nestjs/common";
 import { getSeoulDayRange, getSeoulWeekStart } from "src/common/util/time.util";
@@ -54,6 +55,15 @@ export class QuestService {
 
     if (existing.length > 0) return existing;
 
+    return this.assignNewQuests(userKey, todayStart, weekStart);
+  }
+
+  @Transactional()
+  async assignNewQuests(
+    userKey: number,
+    todayStart: Date,
+    weekStart: Date,
+  ): Promise<UserQuest[]> {
     const dailyQuests = await this.assignQuests(
       userKey,
       QuestPeriod.DAILY,
@@ -85,6 +95,7 @@ export class QuestService {
     return all;
   }
 
+  @Transactional()
   async recordAction(
     userKey: number,
     objectiveType: Exclude<ObjectiveType, ObjectiveType.QUEST_COMPLETED>,
