@@ -14,3 +14,15 @@ export const getSeoulDayRange = (reference = new Date()) => {
 
   return { start, end };
 };
+
+export const getSeoulWeekStart = (reference = new Date()): Date => {
+  const seoulNow = new Date(reference.getTime() + SEOUL_TIMEZONE_OFFSET_MS);
+  const dayOfWeek = seoulNow.getUTCDay();
+  const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const mondayTime = Date.UTC(
+    seoulNow.getUTCFullYear(),
+    seoulNow.getUTCMonth(),
+    seoulNow.getUTCDate() - diffToMonday,
+  );
+  return new Date(mondayTime - SEOUL_TIMEZONE_OFFSET_MS);
+};
