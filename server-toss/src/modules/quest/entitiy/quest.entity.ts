@@ -1,4 +1,5 @@
 import type { Opt } from "@mikro-orm/core";
+import { EntityRepositoryType } from "@mikro-orm/core";
 import {
   Entity,
   Enum,
@@ -6,6 +7,7 @@ import {
   Property,
 } from "@mikro-orm/decorators/legacy";
 import { BaseEntity } from "src/common/entitiy/base.entity";
+import { QuestRepository } from "../repository/quest.repository";
 
 export enum QuestPeriod {
   DAILY = "daily",
@@ -23,8 +25,10 @@ export enum RewardType {
   CHANCE = "chance",
 }
 
-@Entity({ tableName: "quests" })
+@Entity({ tableName: "quests", repository: () => QuestRepository })
 export class Quest extends BaseEntity {
+  [EntityRepositoryType]?: QuestRepository;
+
   @PrimaryKey({ type: "bigint" })
   id!: bigint;
 

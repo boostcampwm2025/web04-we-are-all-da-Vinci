@@ -1,4 +1,5 @@
 import type { Opt, Rel } from "@mikro-orm/core";
+import { EntityRepositoryType } from "@mikro-orm/core";
 import {
   Entity,
   ManyToOne,
@@ -8,9 +9,12 @@ import {
 import { BaseEntity } from "src/common/entitiy/base.entity";
 import { User } from "src/modules/user/user.entity";
 import { Quest } from "./quest.entity";
+import { UserQuestRepository } from "../repository/user-quest.repository";
 
-@Entity({ tableName: "user_quests" })
+@Entity({ tableName: "user_quests", repository: () => UserQuestRepository })
 export class UserQuest extends BaseEntity {
+  [EntityRepositoryType]?: UserQuestRepository;
+
   @PrimaryKey({ type: "bigint" })
   id!: bigint;
 
