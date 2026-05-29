@@ -93,13 +93,14 @@ describe("QuestService", () => {
 
   describe("myQuests", () => {
     describe("배정된 퀘스트가 있으면", () => {
-      it("기존 퀘스트 목록을 반환한다", async () => {
+      it("기존 퀘스트 목록을 DTO로 변환하여 반환한다", async () => {
         const existing = [buildUserQuest()];
         userQuestRepository.findCurrentQuests.mockResolvedValue(existing);
 
         const result = await service.myQuests(1234);
 
-        expect(result).toBe(existing);
+        expect(result.dailyQuests).toHaveLength(1);
+        expect(result.dailyQuests[0].title).toBe("테스트 퀘스트");
         expect(userQuestRepository.flush).not.toHaveBeenCalled();
       });
     });
@@ -114,7 +115,9 @@ describe("QuestService", () => {
 
         expect(userQuestRepository.createForUser).toHaveBeenCalled();
         expect(userQuestRepository.flush).toHaveBeenCalled();
-        expect(result.length).toBeGreaterThan(0);
+        expect(
+          result.dailyQuests.length + result.weeklyQuests.length,
+        ).toBeGreaterThan(0);
       });
 
       it("고정 퀘스트와 랜덤 퀘스트를 합산하여 배정한다", async () => {

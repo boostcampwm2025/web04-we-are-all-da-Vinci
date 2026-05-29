@@ -18,6 +18,7 @@ import type {
 } from "./quest.types";
 import type { QuestRepository } from "./repository/quest.repository";
 import type { UserQuestRepository } from "./repository/user-quest.repository";
+import { MyQuestsResponseDto } from "./dto/my-quests-response.dto";
 
 const DAILY_RANDOM_COUNT = 2;
 const WEEKLY_RANDOM_COUNT = 2;
@@ -43,19 +44,49 @@ export class QuestService {
     };
   }
 
-  async myQuests(userKey: number): Promise<UserQuest[]> {
+  async myQuests(userKey: number): Promise<MyQuestsResponseDto> {
     const { start: todayStart } = getSeoulDayRange();
     const weekStart = getSeoulWeekStart();
 
-    const existing = await this.userQuestRepository.findCurrentQuests(
+    let quests = await this.userQuestRepository.findCurrentQuests(
       userKey,
       todayStart,
       weekStart,
     );
 
-    if (existing.length > 0) return existing;
+    if (quests.length === 0) {
+      quests = await this.assignNewQuests(userKey, todayStart, weekStart);
+    }
 
-    return this.assignNewQuests(userKey, todayStart, weekStart);
+    return this.toMyQuestsResponse(quests);
+  }
+
+  private toMyQuestsResponse(quests: UserQuest[]): MyQuestsResponseDto {
+    const dailyQuests = quests
+      .filter((uq) => uq.quest.period === QuestPeriod.DAILY)
+      .map((uq) => ({
+        userQuestId: uq.id,
+        questId: uq.quest.id,
+        title: uq.quest.title,
+        currentCount: uq.currentCount,
+        requiredCount: uq.quest.requiredCount,
+        rewardType: uq.quest.rewardType,
+        rewardAmount: uq.quest.rewardAmount,
+      }));
+
+    const weeklyQuests = quests
+      .filter((uq) => uq.quest.period === QuestPeriod.WEEKLY)
+      .map((uq) => ({
+        userQuestId: uq.id,
+        questId: uq.quest.id,
+        title: uq.quest.title,
+        currentCount: uq.currentCount,
+        requiredCount: uq.quest.requiredCount,
+        rewardType: uq.quest.rewardType,
+        rewardAmount: uq.quest.rewardAmount,
+      }));
+
+    return { dailyQuests, weeklyQuests };
   }
 
   @Transactional()

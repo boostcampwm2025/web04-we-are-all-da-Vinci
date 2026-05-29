@@ -16,6 +16,7 @@ import { PlayModule } from "./modules/play/play.module";
 import { PromptModule } from "./modules/prompt/prompt.module";
 import { RankingModule } from "./modules/ranking/ranking.module";
 import { UserModule } from "./modules/user/user.module";
+import { QuestModule } from "./modules/quest/quest.module";
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { UserModule } from "./modules/user/user.module";
     PlayModule,
     ChanceModule,
     RankingModule,
+    QuestModule,
   ],
 })
 export class AppModule implements NestModule {
