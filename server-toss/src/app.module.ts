@@ -9,6 +9,7 @@ import { RequestContextHelper } from "./common/middleware/request-context-helper
 import { HealthModule } from "./health/health.module";
 import config from "./mikro-orm.config";
 import { AuthModule } from "./modules/auth/auth.module";
+import { ArchiveModule } from "./modules/archive/archive.module";
 import { ChanceModule } from "./modules/chance/chance.module";
 import { DrawingModule } from "./modules/drawing/drawing.module";
 import { PointModule } from "./modules/point/point.module";
@@ -38,6 +39,7 @@ import { UserModule } from "./modules/user/user.module";
     ScheduleModule.forRoot(),
     MikroOrmModule.forRoot(config),
     AuthModule,
+    ArchiveModule,
     UserModule,
     DrawingModule,
     PromptModule,
