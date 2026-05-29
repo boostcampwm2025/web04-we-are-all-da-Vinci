@@ -17,7 +17,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import InfoTicker from "./InfoTicker";
 
-const RANKING_PATH = "/ranking";
+const TAB_PATHS = ["/", "/ranking", "/quest"] as const;
 type PlayStartSource = "auto" | "cta" | "retry";
 
 const getErrorMessage = (error: unknown): string =>
@@ -50,7 +50,10 @@ const DashboardView = () => {
     () => getCachedNickname() ?? "",
   );
 
-  const selectedTab = location.pathname === RANKING_PATH ? 1 : 0;
+  const selectedTab = Math.max(
+    0,
+    TAB_PATHS.indexOf(location.pathname as (typeof TAB_PATHS)[number]),
+  );
 
   useEffect(() => {
     if (nickname) return;
@@ -283,9 +286,10 @@ const DashboardView = () => {
       />
 
       <div className="shrink-0 bg-(--color-page)">
-        <Tab onChange={(index) => navigate(index === 1 ? RANKING_PATH : "/")}>
+        <Tab onChange={(index) => navigate(TAB_PATHS[index] ?? "/")}>
           <Tab.Item selected={selectedTab === 0}>오늘 그린 그림</Tab.Item>
           <Tab.Item selected={selectedTab === 1}>오늘의 다빈치</Tab.Item>
+          <Tab.Item selected={selectedTab === 2}>오늘의 퀘스트</Tab.Item>
         </Tab>
         <InfoTicker />
       </div>

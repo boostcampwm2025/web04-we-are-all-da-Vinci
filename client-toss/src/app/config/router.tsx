@@ -1,5 +1,6 @@
 import AnalyticsTracker from "@/app/config/AnalyticsTracker";
 import { DashboardView, MyDrawingsPanel } from "@/views/dashboard";
+import { QuestView } from "@/views/quest";
 import { Drawing } from "@/views/drawing";
 import { LoginView } from "@/views/login";
 import { Memorize } from "@/views/memorize";
@@ -29,6 +30,7 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <MyDrawingsPanel /> },
           { path: "ranking", element: <RankingView /> },
+          { path: "quest", element: <QuestView /> },
         ],
       },
       { path: "/submitted", element: <SubmittedView /> },
