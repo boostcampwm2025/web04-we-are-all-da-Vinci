@@ -1,8 +1,8 @@
 import { EntityRepository } from "@mikro-orm/mysql";
 import { User } from "src/modules/user/user.entity";
-import { ObjectiveType, QuestPeriod } from "../entitiy/quest.entity";
-import type { Quest } from "../entitiy/quest.entity";
-import { UserQuest } from "../entitiy/user-quest.entity";
+import { ObjectiveType, QuestPeriod } from "../entity/quest.entity";
+import type { Quest } from "../entity/quest.entity";
+import { UserQuest } from "../entity/user-quest.entity";
 
 export class UserQuestRepository extends EntityRepository<UserQuest> {
   async findCurrentQuests(

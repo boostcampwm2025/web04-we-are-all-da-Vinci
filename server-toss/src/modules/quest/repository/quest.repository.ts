@@ -1,5 +1,5 @@
 import { EntityRepository } from "@mikro-orm/mysql";
-import { Quest, QuestPeriod } from "../entitiy/quest.entity";
+import { Quest, QuestPeriod } from "../entity/quest.entity";
 
 export class QuestRepository extends EntityRepository<Quest> {
   async findFixed(period: QuestPeriod): Promise<Quest[]> {

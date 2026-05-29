@@ -7,8 +7,8 @@ import {
   Quest,
   QuestPeriod,
   RewardType,
-} from "./entitiy/quest.entity";
-import { UserQuest } from "./entitiy/user-quest.entity";
+} from "./entity/quest.entity";
+import { UserQuest } from "./entity/user-quest.entity";
 import type {
   ActionContext,
   DrawingAction,

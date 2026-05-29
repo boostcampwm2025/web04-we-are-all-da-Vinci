@@ -1,4 +1,4 @@
-import type { UserQuest } from "./entitiy/user-quest.entity";
+import type { UserQuest } from "./entity/user-quest.entity";
 
 export type DrawingAction = {
   drawingId?: bigint;
