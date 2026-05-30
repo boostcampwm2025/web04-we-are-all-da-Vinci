@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
 import { PointService } from "src/modules/point/point.service";
+import { QuestService } from "src/modules/quest/quest.service";
 import { UserService } from "src/modules/user/user.service";
 import { PromptService } from "../../prompt/prompt.service";
 import { Drawing } from "../drawing.entity";
@@ -31,6 +32,7 @@ export class DrawingService {
     private readonly userService: UserService,
     private readonly promptService: PromptService,
     private readonly pointService: PointService,
+    private readonly questService: QuestService,
     @InjectRepository(Drawing)
     private readonly drawingRepository: DrawingRepository,
     private readonly saveDrawingService: SaveDrawingService,
@@ -121,6 +123,12 @@ export class DrawingService {
 
     const promotionGranted =
       await this.pointService.grantDrawingPromotionIfEligible(user.userKey);
+
+    await this.questService.onDrawingSubmitted(userKey, {
+      drawingId: drawing.id,
+      score: similarity.score,
+      penalty: similarity.penalty,
+    });
 
     return { drawingId: Number(drawing.id), similarity, promotionGranted };
   }
