@@ -122,7 +122,7 @@ describe("QuestService", () => {
         const existing = [buildUserQuest()];
         userQuestRepository.findCurrentQuests.mockResolvedValue(existing);
 
-        const result = await service.assignQuests(1234);
+        const result = await service.assignOrGetQuests(1234);
 
         expect(result.dailyQuests).toHaveLength(1);
         expect(userQuestRepository.flush).not.toHaveBeenCalled();
@@ -135,7 +135,14 @@ describe("QuestService", () => {
         questRepository.findFixed.mockResolvedValue([fixedQuest]);
         questRepository.findRandom.mockResolvedValue([]);
 
-        const result = await service.assignQuests(1234);
+        const assigned = [buildUserQuest({ quest: fixedQuest })];
+        // ensureQuestsAssigned 내 findCurrentQuests → 빈 배열 → 할당 실행
+        // assignOrGetQuests 내 findCurrentQuests → 할당된 퀘스트 반환
+        userQuestRepository.findCurrentQuests
+          .mockResolvedValueOnce([])
+          .mockResolvedValueOnce(assigned);
+
+        const result = await service.assignOrGetQuests(1234);
 
         expect(userQuestRepository.createForUser).toHaveBeenCalled();
         expect(userQuestRepository.flush).toHaveBeenCalled();
@@ -157,7 +164,10 @@ describe("QuestService", () => {
           random3,
         ]);
 
-        await service.assignQuests(1234);
+        // ensureQuestsAssigned → 빈 배열, assignOrGetQuests → 빈 배열 (createForUser 호출 검증용)
+        userQuestRepository.findCurrentQuests.mockResolvedValue([]);
+
+        await service.assignOrGetQuests(1234);
 
         const dailyCalls = userQuestRepository.createForUser.mock.calls.filter(
           (call: unknown[]) =>

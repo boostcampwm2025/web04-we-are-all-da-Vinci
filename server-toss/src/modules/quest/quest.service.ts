@@ -73,32 +73,34 @@ export class QuestService {
     const { start: todayStart } = getSeoulDayRange();
     const weekStart = getSeoulWeekStart();
 
+    await this.ensureQuestsAssigned(userKey, todayStart, weekStart);
+
+    const quests = await this.userQuestRepository.findCurrentQuests(
+      userKey,
+      todayStart,
+      weekStart,
+    );
+    return this.toMyQuestsResponse(quests);
+  }
+
+  private async ensureQuestsAssigned(
+    userKey: number,
+    todayStart: Date,
+    weekStart: Date,
+  ): Promise<void> {
     const existing = await this.userQuestRepository.findCurrentQuests(
       userKey,
       todayStart,
       weekStart,
     );
+    if (existing.length > 0) return;
 
-    if (existing.length > 0) {
-      return this.toMyQuestsResponse(existing);
-    }
-
-    let newQuests;
     try {
-      newQuests = await this.assignNewQuests(userKey, todayStart, weekStart);
+      await this.assignNewQuests(userKey, todayStart, weekStart);
     } catch (err) {
-      if (this.isDuplicateKeyError(err)) {
-        this.em.clear();
-        newQuests = await this.userQuestRepository.findCurrentQuests(
-          userKey,
-          todayStart,
-          weekStart,
-        );
-      } else {
-        throw err;
-      }
+      if (!this.isDuplicateKeyError(err)) throw err;
+      // 동시 요청으로 이미 배정됨 — 무시
     }
-    return this.toMyQuestsResponse(newQuests);
   }
 
   private isDuplicateKeyError(err: unknown): boolean {
@@ -118,6 +120,8 @@ export class QuestService {
     const weekStart = getSeoulWeekStart();
 
     const context = await this.buildDrawingContext(userKey, event, todayStart);
+
+    await this.ensureQuestsAssigned(userKey, todayStart, weekStart);
 
     const activeQuests = await this.userQuestRepository.findActiveDrawingQuests(
       userKey,
