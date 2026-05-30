@@ -6,6 +6,8 @@ import {
 import { FUNNEL_EVENTS, trackScreen } from "@/shared/lib";
 import { useEffect } from "react";
 import { useMyQuests } from "@/entities/questCard";
+import { BannerAd } from "@/shared/ui/bannerAd";
+import { AD_GROUP_IDS } from "@/shared/config";
 
 const QuestView = () => {
   const { dailyQuests, weeklyQuests, isLoading } = useMyQuests();
@@ -21,6 +23,7 @@ const QuestView = () => {
   return (
     <div className="space-y-6 pb-4">
       <QuestSection quests={dailyQuests} section={QUEST_SECTIONS.daily} />
+      <BannerAd adGroupId={AD_GROUP_IDS.BANNER_LIST} />
       <QuestSection quests={weeklyQuests} section={QUEST_SECTIONS.weekly} />
     </div>
   );
