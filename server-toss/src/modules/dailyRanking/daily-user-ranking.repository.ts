@@ -43,6 +43,42 @@ export class DailyUserRankingRepository extends EntityRepository<DailyUserRankin
     return count > 0;
   }
 
+  async findByUserKeyAndDateKeys(
+    userKey: number,
+    dateKeys: string[],
+  ): Promise<
+    {
+      rankingDate: Date | string;
+      drawingId: bigint;
+      score: number;
+      rank: number;
+      participantCount: number;
+    }[]
+  > {
+    if (dateKeys.length === 0) {
+      return [];
+    }
+
+    return this.find(
+      {
+        userKey,
+        rankingDate: {
+          $in: dateKeys.map((dateKey) => new Date(`${dateKey}T00:00:00.000Z`)),
+        },
+      },
+      {
+        fields: [
+          "rankingDate",
+          "drawingId",
+          "score",
+          "rank",
+          "participantCount",
+        ],
+        disableIdentityMap: true,
+      },
+    );
+  }
+
   async saveSnapshots(snapshots: DailyUserRankingSnapshot[]): Promise<void> {
     if (snapshots.length === 0) {
       return;

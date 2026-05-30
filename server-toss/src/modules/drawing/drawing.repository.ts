@@ -70,6 +70,26 @@ export class DrawingRepository extends EntityRepository<Drawing> {
     ];
   }
 
+  async findArchivedDrawingsByUser(
+    userKey: number,
+    reference = new Date(),
+  ): Promise<{ id: bigint; score: number; createdAt: Date }[]> {
+    const { start } = getSeoulDayRange(reference);
+
+    return this.em.find(
+      Drawing,
+      {
+        user: userKey,
+        createdAt: { $lt: start },
+      },
+      {
+        fields: ["id", "score", "createdAt"],
+        orderBy: [{ createdAt: QueryOrder.DESC }],
+        disableIdentityMap: true,
+      },
+    );
+  }
+
   async findDrawingsByCreatedAtRange(
     start: Date,
     end: Date,
