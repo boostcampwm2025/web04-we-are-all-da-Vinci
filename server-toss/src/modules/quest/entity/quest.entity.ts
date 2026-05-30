@@ -17,6 +17,9 @@ export enum QuestPeriod {
 export enum ObjectiveType {
   SUBMIT = "submit",
   SCORE = "score",
+  PENALTY = "penalty",
+  DAILY_SUBMIT = "daily_submit",
+  DAILY_SCORE = "daily_score",
   QUEST_COMPLETED = "quest_completed",
 }
 

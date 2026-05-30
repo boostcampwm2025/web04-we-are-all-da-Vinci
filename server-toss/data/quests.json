@@ -53,7 +53,7 @@
     "title": "주간 70점 이상 3번 받기",
     "period": "weekly",
     "isFixed": false,
-    "objectiveType": "score",
+    "objectiveType": "daily_score",
     "requiredCount": 3,
     "threshold": 80,
     "rewardType": "point",
