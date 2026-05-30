@@ -13,7 +13,7 @@ import { Quest } from "./quest.entity";
 import { UserQuestRepository } from "../repository/user-quest.repository";
 
 @Entity({ tableName: "user_quests", repository: () => UserQuestRepository })
-@Unique({ properties: ["user", "quest", "createdAt"] })
+@Unique({ properties: ["user", "createdAt", "quest"] })
 export class UserQuest extends BaseEntity {
   [EntityRepositoryType]?: UserQuestRepository;
 

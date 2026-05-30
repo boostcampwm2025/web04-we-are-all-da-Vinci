@@ -16,7 +16,7 @@ export class Migration20260529134622 extends Migration {
       `alter table \`user_quests\` add index \`user_quests_quest_id_index\` (\`quest_id\`);`,
     );
     this.addSql(
-      `alter table \`user_quests\` add unique index \`user_quests_user_key_quest_id_created_at_unique\` (\`user_key\`, \`quest_id\`, \`created_at\`);`,
+      `alter table \`user_quests\` add unique index \`user_quests_user_key_created_at_quest_id_unique\` (\`user_key\`, \`created_at\`, \`quest_id\`);`,
     );
 
     this.addSql(
