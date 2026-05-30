@@ -14,7 +14,7 @@ export interface DailyUserRankingSnapshot {
 }
 
 export class DailyUserRankingRepository extends EntityRepository<DailyUserRanking> {
-  async findExistingDateKeys(dateKeys: string[]): Promise<Set<string>> {
+  async findExistingDates(dateKeys: string[]): Promise<Set<string>> {
     if (dateKeys.length === 0) {
       return new Set();
     }
@@ -43,7 +43,8 @@ export class DailyUserRankingRepository extends EntityRepository<DailyUserRankin
     return count > 0;
   }
 
-  async findByUserKeyAndDateKeys(
+  // 특정 사용자의 특정 날짜들 최종 랭킹 조회
+  async findUserRankingsByDates(
     userKey: number,
     dateKeys: string[],
   ): Promise<
@@ -65,6 +66,25 @@ export class DailyUserRankingRepository extends EntityRepository<DailyUserRankin
         rankingDate: {
           $in: dateKeys.map((dateKey) => new Date(`${dateKey}T00:00:00.000Z`)),
         },
+      },
+      {
+        fields: [
+          "rankingDate",
+          "drawingId",
+          "score",
+          "rank",
+          "participantCount",
+        ],
+        disableIdentityMap: true,
+      },
+    );
+  }
+
+  async findUserRankingByDate(userKey: number, dateKey: string) {
+    return this.findOne(
+      {
+        userKey,
+        rankingDate: new Date(`${dateKey}T00:00:00.000Z`),
       },
       {
         fields: [

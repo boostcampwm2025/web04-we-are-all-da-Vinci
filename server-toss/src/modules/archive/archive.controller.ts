@@ -1,6 +1,12 @@
-import { Controller, Get, UseGuards } from "@nestjs/common";
+import { Controller, Get, Param, UseGuards } from "@nestjs/common";
 import { ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
-import type { ArchiveSummaryResponse } from "@toss/shared";
+import {
+  ArchiveDateParamSchema,
+  type ArchiveDateParam,
+  type ArchiveDayResponse,
+  type ArchiveSummaryResponse,
+} from "@toss/shared";
+import { ZodValidationPipe } from "src/common/zod-validation.pipe";
 import {
   CurrentUser,
   type CurrentUserPayload,
@@ -27,5 +33,22 @@ export class ArchiveController {
     @CurrentUser() user: CurrentUserPayload,
   ): Promise<ArchiveSummaryResponse> {
     return this.archiveService.findSummary(user.userKey);
+  }
+
+  @Get("days/:date")
+  @ApiOperation({
+    summary: "내 그림 아카이브 날짜별 상세 조회",
+    description:
+      "KST 기준 어제까지의 특정 날짜 제시그림, 내 그림, 최종 등수를 조회합니다.",
+  })
+  @ApiOkResponse({
+    description: "아카이브 날짜별 상세",
+  })
+  async findDay(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param(new ZodValidationPipe(ArchiveDateParamSchema))
+    { date }: ArchiveDateParam,
+  ): Promise<ArchiveDayResponse> {
+    return this.archiveService.findDay(user.userKey, date);
   }
 }

@@ -74,7 +74,7 @@ describe("일별 랭킹 스냅샷 서비스", () => {
   describe("backfillMissingSnapshots 메소드는", () => {
     it("이미 스냅샷이 있는 날짜는 건너뛰고 누락 날짜만 저장한다", async () => {
       const drawingRepository = {
-        findCompletedDrawingDateKeys: jest
+        findPastSubmissionDates: jest
           .fn()
           .mockResolvedValue(["2026-05-26", "2026-05-27"]),
         findDrawingsByCreatedAtRange: jest.fn().mockResolvedValue([
@@ -88,9 +88,7 @@ describe("일별 랭킹 스냅샷 서비스", () => {
       };
       const saveSnapshots = jest.fn().mockResolvedValue(undefined);
       const dailyUserRankingRepository = {
-        findExistingDateKeys: jest
-          .fn()
-          .mockResolvedValue(new Set(["2026-05-26"])),
+        findExistingDates: jest.fn().mockResolvedValue(new Set(["2026-05-26"])),
         hasSnapshotForDate: jest.fn().mockResolvedValue(false),
         saveSnapshots,
       };

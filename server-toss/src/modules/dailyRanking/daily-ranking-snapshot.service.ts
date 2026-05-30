@@ -37,9 +37,9 @@ export class DailyRankingSnapshotService {
     savedRankingCount: number;
   }> {
     const dateKeys =
-      await this.drawingRepository.findCompletedDrawingDateKeys(reference);
+      await this.drawingRepository.findPastSubmissionDates(reference);
     const existingDateKeys =
-      await this.dailyUserRankingRepository.findExistingDateKeys(dateKeys);
+      await this.dailyUserRankingRepository.findExistingDates(dateKeys);
     const missingDateKeys = dateKeys.filter(
       (dateKey) => !existingDateKeys.has(dateKey),
     );

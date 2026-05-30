@@ -50,9 +50,8 @@ export class DrawingRepository extends EntityRepository<Drawing> {
     );
   }
 
-  async findCompletedDrawingDateKeys(
-    reference = new Date(),
-  ): Promise<string[]> {
+  // backfill 시 스냅샷을 만들어야 할 과거 날짜 목록
+  async findPastSubmissionDates(reference = new Date()): Promise<string[]> {
     const { start } = getSeoulDayRange(reference);
 
     const drawings = await this.em.find(
@@ -84,6 +83,34 @@ export class DrawingRepository extends EntityRepository<Drawing> {
       },
       {
         fields: ["id", "score", "createdAt"],
+        orderBy: [{ createdAt: QueryOrder.DESC }],
+        disableIdentityMap: true,
+      },
+    );
+  }
+
+  // 특정 사용자의 특정 날짜 범위 drawing 목록
+  async findUserDrawingsInRange(
+    userKey: number,
+    start: Date,
+    end: Date,
+  ): Promise<
+    {
+      id: bigint;
+      strokes: string;
+      similarity: string;
+      score: number;
+      createdAt: Date;
+    }[]
+  > {
+    return this.em.find(
+      Drawing,
+      {
+        user: userKey,
+        createdAt: { $gte: start, $lt: end },
+      },
+      {
+        fields: ["id", "strokes", "similarity", "score", "createdAt"],
         orderBy: [{ createdAt: QueryOrder.DESC }],
         disableIdentityMap: true,
       },
