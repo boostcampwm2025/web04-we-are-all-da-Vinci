@@ -15,7 +15,7 @@
     "isFixed": false,
     "objectiveType": "score",
     "requiredCount": 1,
-    "threshold": 80,
+    "threshold": 70,
     "rewardType": "point",
     "rewardAmount": 2
   },
@@ -25,8 +25,8 @@
     "isFixed": false,
     "objectiveType": "score",
     "requiredCount": 1,
-    "threshold": 90,
-    "rewardType": "chance",
+    "threshold": 80,
+    "rewardType": "point",
     "rewardAmount": 2
   },
   {
