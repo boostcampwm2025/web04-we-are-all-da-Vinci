@@ -55,7 +55,7 @@
     "isFixed": false,
     "objectiveType": "daily_score",
     "requiredCount": 3,
-    "threshold": 80,
+    "threshold": 70,
     "rewardType": "point",
     "rewardAmount": 2
   }
