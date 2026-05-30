@@ -31,9 +31,5 @@ export class Migration20260529134622 extends Migration {
 
     this.addSql(`drop table if exists \`quests\`;`);
     this.addSql(`drop table if exists \`user_quests\`;`);
-
-    this.addSql(
-      `alter table \`rankings\` drop index \`idx_ranking_score_submit_nickname\`;`,
-    );
   }
 }

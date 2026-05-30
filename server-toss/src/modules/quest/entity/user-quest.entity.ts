@@ -5,6 +5,7 @@ import {
   ManyToOne,
   PrimaryKey,
   Property,
+  Unique,
 } from "@mikro-orm/decorators/legacy";
 import { BaseEntity } from "src/common/entitiy/base.entity";
 import { User } from "src/modules/user/user.entity";
@@ -12,6 +13,7 @@ import { Quest } from "./quest.entity";
 import { UserQuestRepository } from "../repository/user-quest.repository";
 
 @Entity({ tableName: "user_quests", repository: () => UserQuestRepository })
+@Unique({ properties: ["user", "quest", "createdAt"] })
 export class UserQuest extends BaseEntity {
   [EntityRepositoryType]?: UserQuestRepository;
 
