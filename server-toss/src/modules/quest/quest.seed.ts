@@ -127,7 +127,7 @@ export class QuestSeedService {
           quest.isFixed = def.isFixed;
           quest.objectiveType = def.objectiveType;
           quest.requiredCount = def.requiredCount;
-          quest.threshold = def.threshold;
+          quest.threshold = def.threshold ?? undefined;
           quest.rewardType = def.rewardType;
           quest.rewardAmount = def.rewardAmount;
           txEm.persist(quest);
@@ -163,8 +163,8 @@ export class QuestSeedService {
       quest.requiredCount = def.requiredCount;
       changed = true;
     }
-    if (quest.threshold !== def.threshold) {
-      quest.threshold = def.threshold;
+    if (quest.threshold !== (def.threshold ?? undefined)) {
+      quest.threshold = def.threshold ?? undefined;
       changed = true;
     }
     if (quest.rewardType !== def.rewardType) {
