@@ -222,7 +222,9 @@ export class PointService {
         `프로모션 지급 실패 (재시도 불필요): ${err instanceof Error ? err.message : String(err)}`,
       );
     } else {
-      request.retry();
+      // DB 에러
+      await this.recordGrantSucceeded(request);
+      return;
     }
 
     await this.em.flush();
