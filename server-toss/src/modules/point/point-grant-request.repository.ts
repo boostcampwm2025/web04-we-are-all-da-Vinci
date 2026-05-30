@@ -83,7 +83,7 @@ export class PointGrantRequestRepository extends EntityRepository<PointGrantRequ
       },
       {
         orderBy: { createdAt: "ASC" },
-        limit: batchSize - retryRequests.length,
+        limit: batchSize - (staleRequests.length + retryRequests.length),
         lockMode: LockMode.PESSIMISTIC_PARTIAL_WRITE,
       },
     );
