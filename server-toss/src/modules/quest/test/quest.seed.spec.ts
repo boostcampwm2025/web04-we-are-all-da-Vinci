@@ -15,7 +15,7 @@ const buildQuest = (overrides: Partial<Quest> = {}): Quest =>
     isFixed: true,
     objectiveType: ObjectiveType.SUBMIT,
     requiredCount: 1,
-    threshold: null,
+    threshold: undefined,
     rewardType: RewardType.POINT,
     rewardAmount: 10,
     ...overrides,

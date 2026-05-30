@@ -1,8 +1,16 @@
+import { EntityManager } from "@mikro-orm/core";
 import { Transactional } from "@mikro-orm/decorators/legacy";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable, Logger } from "@nestjs/common";
 import { getSeoulDayRange, getSeoulWeekStart } from "src/common/util/time.util";
+import { Drawing } from "src/modules/drawing/drawing.entity";
 import { PointService } from "src/modules/point/point.service";
+import { DailyScoreCommand } from "./command/daily-score.command";
+import { DailySubmitCommand } from "./command/daily-submit.command";
+import { PenaltyCommand } from "./command/penalty.command";
+import { ScoreCommand } from "./command/score.command";
+import { SubmitCommand } from "./command/submit.command";
+import { MyQuestsResponseDto } from "./dto/my-quests-response.dto";
 import {
   ObjectiveType,
   Quest,
@@ -12,13 +20,13 @@ import {
 import { UserQuest } from "./entity/user-quest.entity";
 import type {
   ActionContext,
-  DrawingAction,
+  DrawingContext,
+  DrawingSubmittedEvent,
   QuestCommand,
   QuestCompletedAction,
 } from "./quest.types";
 import type { QuestRepository } from "./repository/quest.repository";
 import type { UserQuestRepository } from "./repository/user-quest.repository";
-import { MyQuestsResponseDto } from "./dto/my-quests-response.dto";
 
 const DAILY_RANDOM_COUNT = 2;
 const WEEKLY_RANDOM_COUNT = 2;
@@ -37,10 +45,14 @@ export class QuestService {
     @InjectRepository(UserQuest)
     private readonly userQuestRepository: UserQuestRepository,
     private readonly pointService: PointService,
+    private readonly em: EntityManager,
   ) {
     this.commandMap = {
-      [ObjectiveType.SUBMIT]: { execute: this.executeSubmit.bind(this) },
-      [ObjectiveType.SCORE]: { execute: this.executeScore.bind(this) },
+      [ObjectiveType.SUBMIT]: new SubmitCommand(),
+      [ObjectiveType.SCORE]: new ScoreCommand(),
+      [ObjectiveType.PENALTY]: new PenaltyCommand(),
+      [ObjectiveType.DAILY_SUBMIT]: new DailySubmitCommand(),
+      [ObjectiveType.DAILY_SCORE]: new DailyScoreCommand(),
     };
   }
 
@@ -61,32 +73,73 @@ export class QuestService {
     return this.toMyQuestsResponse(quests);
   }
 
-  private toMyQuestsResponse(quests: UserQuest[]): MyQuestsResponseDto {
-    const dailyQuests = quests
-      .filter((uq) => uq.quest.period === QuestPeriod.DAILY)
-      .map((uq) => ({
-        userQuestId: uq.id,
-        questId: uq.quest.id,
-        title: uq.quest.title,
-        currentCount: uq.currentCount,
-        requiredCount: uq.quest.requiredCount,
-        rewardType: uq.quest.rewardType,
-        rewardAmount: uq.quest.rewardAmount,
-      }));
+  @Transactional()
+  async onDrawingSubmitted(
+    userKey: number,
+    event: DrawingSubmittedEvent,
+  ): Promise<UserQuest[]> {
+    const { start: todayStart } = getSeoulDayRange();
+    const weekStart = getSeoulWeekStart();
 
-    const weeklyQuests = quests
-      .filter((uq) => uq.quest.period === QuestPeriod.WEEKLY)
-      .map((uq) => ({
-        userQuestId: uq.id,
-        questId: uq.quest.id,
-        title: uq.quest.title,
-        currentCount: uq.currentCount,
-        requiredCount: uq.quest.requiredCount,
-        rewardType: uq.quest.rewardType,
-        rewardAmount: uq.quest.rewardAmount,
-      }));
+    const context = await this.buildDrawingContext(userKey, event, todayStart);
 
-    return { dailyQuests, weeklyQuests };
+    const activeQuests = await this.userQuestRepository.findActiveDrawingQuests(
+      userKey,
+      todayStart,
+      weekStart,
+    );
+
+    const completed: UserQuest[] = [];
+    for (const uq of activeQuests) {
+      const command =
+        this.commandMap[
+          uq.quest.objectiveType as Exclude<
+            ObjectiveType,
+            ObjectiveType.QUEST_COMPLETED
+          >
+        ];
+      if (!command?.execute(uq, context)) continue;
+      if (this.completeIfFulfilled(uq)) completed.push(uq);
+    }
+
+    await this.grantRewards(userKey, completed);
+    const metaCompleted = await this.processMetaQuests(
+      userKey,
+      completed,
+      todayStart,
+      weekStart,
+    );
+    await this.userQuestRepository.flush();
+
+    return [...completed, ...metaCompleted];
+  }
+
+  @Transactional()
+  async recordAction(
+    userKey: number,
+    objectiveType: Exclude<ObjectiveType, ObjectiveType.QUEST_COMPLETED>,
+    context: ActionContext,
+  ): Promise<UserQuest[]> {
+    const { start: todayStart } = getSeoulDayRange();
+    const weekStart = getSeoulWeekStart();
+
+    const completed = await this.progressQuests(
+      userKey,
+      objectiveType,
+      context,
+      todayStart,
+      weekStart,
+    );
+    const metaCompleted = await this.processMetaQuests(
+      userKey,
+      completed,
+      todayStart,
+      weekStart,
+    );
+
+    await this.userQuestRepository.flush();
+
+    return [...completed, ...metaCompleted];
   }
 
   @Transactional()
@@ -126,32 +179,58 @@ export class QuestService {
     return all;
   }
 
-  @Transactional()
-  async recordAction(
+  private async buildDrawingContext(
     userKey: number,
-    objectiveType: Exclude<ObjectiveType, ObjectiveType.QUEST_COMPLETED>,
-    context: ActionContext,
-  ): Promise<UserQuest[]> {
-    const { start: todayStart } = getSeoulDayRange();
-    const weekStart = getSeoulWeekStart();
-
-    const completed = await this.progressQuests(
-      userKey,
-      objectiveType,
-      context,
-      todayStart,
-      weekStart,
-    );
-    const metaCompleted = await this.processMetaQuests(
-      userKey,
-      completed,
-      todayStart,
-      weekStart,
+    event: DrawingSubmittedEvent,
+    todayStart: Date,
+  ): Promise<DrawingContext> {
+    const { end: todayEnd } = getSeoulDayRange();
+    const todayDrawings: Pick<Drawing, "score">[] = await this.em.find(
+      Drawing,
+      {
+        user: userKey,
+        createdAt: { $gte: todayStart, $lt: todayEnd },
+        id: { $ne: event.drawingId },
+      },
+      { fields: ["score"] },
     );
 
-    await this.userQuestRepository.flush();
+    return {
+      ...event,
+      isFirstOfDay: todayDrawings.length === 0,
+      todayMaxScore:
+        todayDrawings.length > 0
+          ? Math.max(...todayDrawings.map((d) => d.score))
+          : undefined,
+    };
+  }
 
-    return [...completed, ...metaCompleted];
+  private toMyQuestsResponse(quests: UserQuest[]): MyQuestsResponseDto {
+    const dailyQuests = quests
+      .filter((uq) => uq.quest.period === QuestPeriod.DAILY)
+      .map((uq) => ({
+        userQuestId: uq.id,
+        questId: uq.quest.id,
+        title: uq.quest.title,
+        currentCount: uq.currentCount,
+        requiredCount: uq.quest.requiredCount,
+        rewardType: uq.quest.rewardType,
+        rewardAmount: uq.quest.rewardAmount,
+      }));
+
+    const weeklyQuests = quests
+      .filter((uq) => uq.quest.period === QuestPeriod.WEEKLY)
+      .map((uq) => ({
+        userQuestId: uq.id,
+        questId: uq.quest.id,
+        title: uq.quest.title,
+        currentCount: uq.currentCount,
+        requiredCount: uq.quest.requiredCount,
+        rewardType: uq.quest.rewardType,
+        rewardAmount: uq.quest.rewardAmount,
+      }));
+
+    return { dailyQuests, weeklyQuests };
   }
 
   private async progressQuests(
@@ -257,23 +336,6 @@ export class QuestService {
   private pickRandom<T>(items: T[], count: number): T[] {
     const shuffled = [...items].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, count);
-  }
-
-  private executeSubmit(userQuest: UserQuest): boolean {
-    userQuest.currentCount += 1;
-    return true;
-  }
-
-  private executeScore(userQuest: UserQuest, context: DrawingAction): boolean {
-    if (context.score == null) return false;
-    if (
-      userQuest.quest.threshold != null &&
-      context.score < userQuest.quest.threshold
-    ) {
-      return false;
-    }
-    userQuest.currentCount += 1;
-    return true;
   }
 
   private applyQuestCompleted(

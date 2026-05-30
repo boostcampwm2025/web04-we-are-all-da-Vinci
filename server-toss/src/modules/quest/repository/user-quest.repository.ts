@@ -49,6 +49,25 @@ export class UserQuestRepository extends EntityRepository<UserQuest> {
     return uq;
   }
 
+  async findActiveDrawingQuests(
+    userKey: number,
+    todayStart: Date,
+    weekStart: Date,
+  ): Promise<UserQuest[]> {
+    return this.find(
+      {
+        user: { userKey },
+        completedAt: null,
+        quest: { objectiveType: { $ne: ObjectiveType.QUEST_COMPLETED } },
+        $or: [
+          { quest: { period: QuestPeriod.DAILY }, createdAt: todayStart },
+          { quest: { period: QuestPeriod.WEEKLY }, createdAt: weekStart },
+        ],
+      },
+      { populate: ["quest"] },
+    );
+  }
+
   async flush(): Promise<void> {
     await this.getEntityManager().flush();
   }
