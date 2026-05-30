@@ -1,0 +1,62 @@
+[
+  {
+    "title": "패널티 없이 그림 1번 제출하기",
+    "period": "daily",
+    "isFixed": false,
+    "objectiveType": "penalty",
+    "requiredCount": 1,
+    "threshold": 0,
+    "rewardType": "point",
+    "rewardAmount": 2
+  },
+  {
+    "title": "70점 이상 받기",
+    "period": "daily",
+    "isFixed": false,
+    "objectiveType": "score",
+    "requiredCount": 1,
+    "threshold": 80,
+    "rewardType": "point",
+    "rewardAmount": 2
+  },
+  {
+    "title": "80점 이상 받기",
+    "period": "daily",
+    "isFixed": false,
+    "objectiveType": "score",
+    "requiredCount": 1,
+    "threshold": 90,
+    "rewardType": "chance",
+    "rewardAmount": 2
+  },
+  {
+    "title": "일일 퀘스트 7개 완료하기",
+    "period": "weekly",
+    "isFixed": true,
+    "objectiveType": "quest_completed",
+    "requiredCount": 7,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 2
+  },
+  {
+    "title": "서로 다른 3일에 그림 제출하기",
+    "period": "weekly",
+    "isFixed": false,
+    "objectiveType": "daily_submit",
+    "requiredCount": 3,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 2
+  },
+  {
+    "title": "주간 70점 이상 3번 받기",
+    "period": "weekly",
+    "isFixed": false,
+    "objectiveType": "score",
+    "requiredCount": 3,
+    "threshold": 80,
+    "rewardType": "point",
+    "rewardAmount": 2
+  }
+]

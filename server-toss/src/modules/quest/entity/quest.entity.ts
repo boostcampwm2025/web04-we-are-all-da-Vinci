@@ -48,7 +48,7 @@ export class Quest extends BaseEntity {
   requiredCount!: number;
 
   @Property({ name: "threshold", type: "int", nullable: true })
-  threshold?: Opt<number | null>;
+  threshold?: Opt<number>;
 
   @Enum({ items: () => RewardType, name: "reward_type" })
   rewardType!: RewardType;

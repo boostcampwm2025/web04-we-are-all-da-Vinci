@@ -91,7 +91,8 @@ src/
 2. CORS / Swagger(`/docs`) 세팅
 3. **비-프로덕션**에서만 `orm.migrator.up()` 실행
 4. `PromptSeedService.run()` — `prompts`/`daily_prompts`가 둘 다 빈 경우에만 시드
-5. `app.listen(PORT)`
+5. `QuestSeedService.run()` — `data/quests.json`에서 퀘스트 마스터 데이터 동기화 (title 기준 upsert, user_quest 있는 퀘스트 보존)
+6. `app.listen(PORT)`
 
 시드는 `data/promptStrokes.json`의 `{ date, strokes }[]`를 읽어 `prompts`에 insert → `daily_prompts`에 JSON의 `date`를 그대로 `prompt_date`로 배정. 날짜가 명시적이라 배열 순서에 의존하지 않는다.
 
@@ -165,13 +166,13 @@ throw new BadGatewayException("Toss API 오류가 발생했어요.");
 
 ### 메타 필드 권장
 
-| 필드         | 용도                                                                   |
-| ------------ | ---------------------------------------------------------------------- |
-| `userKey`    | 행위자 식별                                                            |
-| `durationMs` | 외부 호출/계산 소요 시간                                               |
+| 필드         | 용도                                                                    |
+| ------------ | ----------------------------------------------------------------------- |
+| `userKey`    | 행위자 식별                                                             |
+| `durationMs` | 외부 호출/계산 소요 시간                                                |
 | `reason`     | 거부/실패 사유 (snake_case: `whitelist_miss`, `daily_cap`, `no_chance`) |
-| `err`        | 에러 객체 그대로                                                       |
-| `statusCode` | 외부 HTTP 호출 응답 코드                                               |
+| `err`        | 에러 객체 그대로                                                        |
+| `statusCode` | 외부 HTTP 호출 응답 코드                                                |
 
 ## 테스트
 
@@ -184,16 +185,16 @@ throw new BadGatewayException("Toss API 오류가 발생했어요.");
 
 단일 소스는 `.env.example`. 동작에 영향을 주는 주요 변수:
 
-| 변수 | 설명 |
-| ---- | ---- |
-| `PORT` | 서버 포트. `.env.example`은 `3000` (client-toss Vite 프록시도 3000 가정). 미설정 시 코드 폴백은 `3001` |
-| `NODE_ENV` | `production`이 아니면 부팅 시 마이그레이션 자동 실행 + MikroORM debug. `test`면 `allowGlobalContext` 활성 |
-| `CORS_ORIGIN` | 허용 오리진 (쉼표 구분) |
-| `LOG_LEVEL` | pino 로그 레벨 |
-| `MYSQL_HOST`·`MYSQL_PORT`·`MYSQL_USER`·`MYSQL_PASSWORD`·`MYSQL_DATABASE` | MySQL 접속 정보 |
-| `DISABLE_PROMPT_CACHE` | `"true"`면 `PromptService` 메모리 캐시 우회 |
-| `TOSS_API_BASE_URL`·`TOSS_API_KEY`·`TOSS_DECRYPT_KEY`·`TOSS_DECRYPT_AAD`·`TOSS_CLIENT_CERT_PATH`·`TOSS_CLIENT_KEY_PATH` | 토스 API 연동·페이로드 복호화·클라이언트 인증서 |
-| `JWT_SECRET` | JWT 서명 키 (32자 이상) |
-| `PROMOTION_CODE` | 프로모션 코드 |
-| `SHARE_DAILY_CHARGE_LIMIT` | 공유 적립 일일 캡 (기본 5, KST 자정 리셋, contactsViral + share 폴백 합산. 광고는 캡 없음) |
-| `AD_GROUP_ID_WHITELIST`·`SHARE_MODULE_ID_WHITELIST` | 콘솔에 등록한 광고 그룹 ID / 공유 리워드 모듈 ID 화이트리스트 (콤마 구분) |
+| 변수                                                                                                                    | 설명                                                                                                      |
+| ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `PORT`                                                                                                                  | 서버 포트. `.env.example`은 `3000` (client-toss Vite 프록시도 3000 가정). 미설정 시 코드 폴백은 `3001`    |
+| `NODE_ENV`                                                                                                              | `production`이 아니면 부팅 시 마이그레이션 자동 실행 + MikroORM debug. `test`면 `allowGlobalContext` 활성 |
+| `CORS_ORIGIN`                                                                                                           | 허용 오리진 (쉼표 구분)                                                                                   |
+| `LOG_LEVEL`                                                                                                             | pino 로그 레벨                                                                                            |
+| `MYSQL_HOST`·`MYSQL_PORT`·`MYSQL_USER`·`MYSQL_PASSWORD`·`MYSQL_DATABASE`                                                | MySQL 접속 정보                                                                                           |
+| `DISABLE_PROMPT_CACHE`                                                                                                  | `"true"`면 `PromptService` 메모리 캐시 우회                                                               |
+| `TOSS_API_BASE_URL`·`TOSS_API_KEY`·`TOSS_DECRYPT_KEY`·`TOSS_DECRYPT_AAD`·`TOSS_CLIENT_CERT_PATH`·`TOSS_CLIENT_KEY_PATH` | 토스 API 연동·페이로드 복호화·클라이언트 인증서                                                           |
+| `JWT_SECRET`                                                                                                            | JWT 서명 키 (32자 이상)                                                                                   |
+| `PROMOTION_CODE`                                                                                                        | 프로모션 코드                                                                                             |
+| `SHARE_DAILY_CHARGE_LIMIT`                                                                                              | 공유 적립 일일 캡 (기본 5, KST 자정 리셋, contactsViral + share 폴백 합산. 광고는 캡 없음)                |
+| `AD_GROUP_ID_WHITELIST`·`SHARE_MODULE_ID_WHITELIST`                                                                     | 콘솔에 등록한 광고 그룹 ID / 공유 리워드 모듈 ID 화이트리스트 (콤마 구분)                                 |
