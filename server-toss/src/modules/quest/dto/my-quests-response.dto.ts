@@ -1,6 +1,6 @@
 export interface MyQuest {
-  userQuestId: bigint;
-  questId: bigint;
+  userQuestId: number;
+  questId: number;
   title: string;
   currentCount: number;
   requiredCount: number;

@@ -2,7 +2,7 @@
   {
     "title": "패널티 없이 그림 1번 제출하기",
     "period": "daily",
-    "isFixed": false,
+    "isFixed": true,
     "objectiveType": "penalty",
     "requiredCount": 1,
     "threshold": 0,

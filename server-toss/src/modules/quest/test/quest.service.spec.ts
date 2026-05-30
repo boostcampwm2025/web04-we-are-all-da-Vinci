@@ -106,12 +106,36 @@ describe("QuestService", () => {
     });
 
     describe("배정된 퀘스트가 없으면", () => {
+      it("빈 목록을 반환한다", async () => {
+        const result = await service.myQuests(1234);
+
+        expect(result.dailyQuests).toHaveLength(0);
+        expect(result.weeklyQuests).toHaveLength(0);
+        expect(userQuestRepository.flush).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe("assignOrGetQuests", () => {
+    describe("이미 배정된 퀘스트가 있으면", () => {
+      it("기존 퀘스트를 반환한다", async () => {
+        const existing = [buildUserQuest()];
+        userQuestRepository.findCurrentQuests.mockResolvedValue(existing);
+
+        const result = await service.assignQuests(1234);
+
+        expect(result.dailyQuests).toHaveLength(1);
+        expect(userQuestRepository.flush).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("배정된 퀘스트가 없으면", () => {
       it("새로운 퀘스트를 배정한다", async () => {
         const fixedQuest = buildQuest({ isFixed: true });
         questRepository.findFixed.mockResolvedValue([fixedQuest]);
         questRepository.findRandom.mockResolvedValue([]);
 
-        const result = await service.myQuests(1234);
+        const result = await service.assignQuests(1234);
 
         expect(userQuestRepository.createForUser).toHaveBeenCalled();
         expect(userQuestRepository.flush).toHaveBeenCalled();
@@ -133,7 +157,7 @@ describe("QuestService", () => {
           random3,
         ]);
 
-        await service.myQuests(1234);
+        await service.assignQuests(1234);
 
         const dailyCalls = userQuestRepository.createForUser.mock.calls.filter(
           (call: unknown[]) =>

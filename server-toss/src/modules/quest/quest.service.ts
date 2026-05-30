@@ -29,7 +29,7 @@ import type { QuestRepository } from "./repository/quest.repository";
 import type { UserQuestRepository } from "./repository/user-quest.repository";
 
 const DAILY_RANDOM_COUNT = 2;
-const WEEKLY_RANDOM_COUNT = 2;
+const WEEKLY_RANDOM_COUNT = 1;
 
 @Injectable()
 export class QuestService {
@@ -60,17 +60,53 @@ export class QuestService {
     const { start: todayStart } = getSeoulDayRange();
     const weekStart = getSeoulWeekStart();
 
-    let quests = await this.userQuestRepository.findCurrentQuests(
+    const quests = await this.userQuestRepository.findCurrentQuests(
       userKey,
       todayStart,
       weekStart,
     );
 
-    if (quests.length === 0) {
-      quests = await this.assignNewQuests(userKey, todayStart, weekStart);
+    return this.toMyQuestsResponse(quests);
+  }
+
+  async assignOrGetQuests(userKey: number): Promise<MyQuestsResponseDto> {
+    const { start: todayStart } = getSeoulDayRange();
+    const weekStart = getSeoulWeekStart();
+
+    const existing = await this.userQuestRepository.findCurrentQuests(
+      userKey,
+      todayStart,
+      weekStart,
+    );
+
+    if (existing.length > 0) {
+      return this.toMyQuestsResponse(existing);
     }
 
-    return this.toMyQuestsResponse(quests);
+    let newQuests;
+    try {
+      newQuests = await this.assignNewQuests(userKey, todayStart, weekStart);
+    } catch (err) {
+      if (this.isDuplicateKeyError(err)) {
+        this.em.clear();
+        newQuests = await this.userQuestRepository.findCurrentQuests(
+          userKey,
+          todayStart,
+          weekStart,
+        );
+      } else {
+        throw err;
+      }
+    }
+    return this.toMyQuestsResponse(newQuests);
+  }
+
+  private isDuplicateKeyError(err: unknown): boolean {
+    return (
+      err instanceof Error &&
+      "code" in err &&
+      (err as { code: string }).code === "ER_DUP_ENTRY"
+    );
   }
 
   @Transactional()
@@ -209,8 +245,8 @@ export class QuestService {
     const dailyQuests = quests
       .filter((uq) => uq.quest.period === QuestPeriod.DAILY)
       .map((uq) => ({
-        userQuestId: uq.id,
-        questId: uq.quest.id,
+        userQuestId: Number(uq.id),
+        questId: Number(uq.quest.id),
         title: uq.quest.title,
         currentCount: uq.currentCount,
         requiredCount: uq.quest.requiredCount,
@@ -221,8 +257,8 @@ export class QuestService {
     const weeklyQuests = quests
       .filter((uq) => uq.quest.period === QuestPeriod.WEEKLY)
       .map((uq) => ({
-        userQuestId: uq.id,
-        questId: uq.quest.id,
+        userQuestId: Number(uq.id),
+        questId: Number(uq.quest.id),
         title: uq.quest.title,
         currentCount: uq.currentCount,
         requiredCount: uq.quest.requiredCount,

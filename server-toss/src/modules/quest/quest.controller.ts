@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, UseGuards } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { QuestService } from "./quest.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -22,5 +22,15 @@ export class QuestController {
     @CurrentUser() user: CurrentUserPayload,
   ): Promise<MyQuestsResponseDto> {
     return this.questService.myQuests(user.userKey);
+  }
+
+  @Post("/quests/me")
+  @ApiOperation({ summary: "오늘의 퀘스트 할당" })
+  @ApiResponse({ status: 201, description: "퀘스트 할당 완료" })
+  @ApiResponse({ status: 401, description: "인증 실패" })
+  async assignMyQuests(
+    @CurrentUser() user: CurrentUserPayload,
+  ): Promise<MyQuestsResponseDto> {
+    return this.questService.assignOrGetQuests(user.userKey);
   }
 }

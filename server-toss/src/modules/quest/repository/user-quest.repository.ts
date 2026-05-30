@@ -45,7 +45,7 @@ export class UserQuestRepository extends EntityRepository<UserQuest> {
   createForUser(userKey: number, quest: Quest, periodStart: Date): UserQuest {
     const userRef = this.getEntityManager().getReference(User, userKey);
     const uq = this.create({ user: userRef, quest, createdAt: periodStart });
-    this.getEntityManager().persist(uq);
+    this.em.persist(uq);
     return uq;
   }
 
