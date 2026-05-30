@@ -6,7 +6,6 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
-import { PointService } from "src/modules/point/point.service";
 import { UserService } from "src/modules/user/user.service";
 import { PromptService } from "../../prompt/prompt.service";
 import { Drawing } from "../drawing.entity";
@@ -30,7 +29,6 @@ export class DrawingService {
   constructor(
     private readonly userService: UserService,
     private readonly promptService: PromptService,
-    private readonly pointService: PointService,
     @InjectRepository(Drawing)
     private readonly drawingRepository: DrawingRepository,
     private readonly saveDrawingService: SaveDrawingService,
