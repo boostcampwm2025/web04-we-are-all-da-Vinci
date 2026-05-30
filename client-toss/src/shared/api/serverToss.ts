@@ -226,4 +226,9 @@ export const serverTossApi = {
     MyQuestsResponseSchema.parse(
       await request<unknown>("GET", "/quests/me", undefined, options),
     ),
+
+  assignMyQuests: async (options?: RequestOptions) =>
+    MyQuestsResponseSchema.parse(
+      await request<unknown>("POST", "/quests/me", undefined, options),
+    ),
 };
