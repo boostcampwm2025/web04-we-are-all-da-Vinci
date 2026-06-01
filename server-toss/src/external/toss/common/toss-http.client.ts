@@ -5,7 +5,7 @@ import https from "https";
 import {
   TossApiError,
   TossTransportError,
-} from "src/modules/auth/errors/toss.errors";
+} from "src/external/toss/common/toss.errors";
 
 export class TossHttpClient {
   private readonly logger = new Logger(TossHttpClient.name);
