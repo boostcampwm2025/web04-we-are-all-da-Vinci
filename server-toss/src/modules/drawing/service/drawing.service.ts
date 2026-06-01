@@ -6,7 +6,6 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
-import { PointService } from "src/modules/point/point.service";
 import { UserService } from "src/modules/user/user.service";
 import { PromptService } from "../../prompt/prompt.service";
 import { Drawing } from "../drawing.entity";
@@ -30,7 +29,6 @@ export class DrawingService {
   constructor(
     private readonly userService: UserService,
     private readonly promptService: PromptService,
-    private readonly pointService: PointService,
     @InjectRepository(Drawing)
     private readonly drawingRepository: DrawingRepository,
     private readonly saveDrawingService: SaveDrawingService,
@@ -102,10 +100,11 @@ export class DrawingService {
     const playerPreprocessed = preprocessStrokes(playerStrokes);
     const similarity = scoreFinalSimilarity(preprocessed, playerPreprocessed);
 
-    const drawing = await this.saveDrawingService.saveDrawingWithRanking(
-      user,
-      new SaveDrawingDto(promptId, playerStrokes, similarity),
-    );
+    const { drawing, promotionGranted } =
+      await this.saveDrawingService.saveDrawingWithRanking(
+        user,
+        new SaveDrawingDto(promptId, playerStrokes, similarity),
+      );
 
     this.logger.log(
       {
@@ -119,10 +118,11 @@ export class DrawingService {
       "최종 드로잉 제출 성공",
     );
 
-    const promotionGranted =
-      await this.pointService.grantDrawingPromotionIfEligible(user.userKey);
-
-    return { drawingId: Number(drawing.id), similarity, promotionGranted };
+    return {
+      drawingId: Number(drawing.id),
+      similarity,
+      promotionGranted,
+    };
   }
 
   async getMyDrawings(userKey: number) {
