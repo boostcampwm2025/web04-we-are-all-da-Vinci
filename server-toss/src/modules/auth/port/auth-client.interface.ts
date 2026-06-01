@@ -1,5 +1,5 @@
-import { LoginDto } from "./dto/login.dto";
-import { TossUserInfo } from "./toss-api.client";
+import { LoginDto } from "../dto/login.dto";
+import { TossUserInfo } from "../toss-api.client";
 
 export interface AuthClient {
   generateToken(dto: LoginDto): Promise<string>;
