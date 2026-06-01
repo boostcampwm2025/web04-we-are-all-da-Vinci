@@ -43,8 +43,10 @@ const buildPointGrantRequestRepository = () => {
   };
 };
 
-const buildTossApiClient = () => ({
+const buildPointGrantKeyIssuer = () => ({
   getPromotionKey: jest.fn(async () => "promotion-key"),
+});
+const buildPointGrantExectuer = () => ({
   executePromotion: jest.fn(async () => undefined),
 });
 
@@ -78,18 +80,21 @@ const buildRequest = ({
 const buildService = ({
   entityManager = buildEntityManager(),
   pointGrantRequestRepository = buildPointGrantRequestRepository(),
-  tossApiClient = buildTossApiClient(),
+  pointGrantExectuer = buildPointGrantExectuer(),
+  pointKeyIssuer = buildPointGrantKeyIssuer(),
 }: {
   entityManager?: ReturnType<typeof buildEntityManager>;
   pointGrantRequestRepository?: ReturnType<
     typeof buildPointGrantRequestRepository
   >;
-  tossApiClient?: ReturnType<typeof buildTossApiClient>;
+  pointGrantExectuer?: ReturnType<typeof buildPointGrantExectuer>;
+  pointKeyIssuer?: ReturnType<typeof buildPointGrantKeyIssuer>;
 } = {}) =>
   new PointService(
     pointGrantRequestRepository as never,
     entityManager as never,
-    tossApiClient as never,
+    pointKeyIssuer as never,
+    pointGrantExectuer as never,
   );
 
 describe("PointService", () => {
@@ -542,43 +547,6 @@ describe("PointService", () => {
         expect(request2.processing).toHaveBeenCalledTimes(1);
         expect(repository.__flush).toHaveBeenCalledTimes(1);
         expect(result).toEqual([request1, request2]);
-      });
-    });
-  });
-
-  describe("grantDrawingPromotion", () => {
-    describe("개발 환경에서 지급 API를 호출하는 경우", () => {
-      it("TEST_ prefix가 적용된 promotionCode로 지급 호출한다", async () => {
-        const tossApiClient = buildTossApiClient();
-        const service = buildService({ tossApiClient });
-        const request = buildRequest();
-
-        await service.grantDrawingPromotion(request as never, "promotion-key");
-
-        expect(tossApiClient.executePromotion).toHaveBeenCalledWith(
-          1234,
-          "promotion-key",
-          "TEST_PROMOTION",
-          2,
-        );
-      });
-    });
-
-    describe("운영 환경에서 지급 API를 호출하는 경우", () => {
-      it("원본 promotionCode로 지급 호출한다", async () => {
-        const tossApiClient = buildTossApiClient();
-        const configService = buildConfigService("production", "PROMOTION");
-        const service = buildService({ tossApiClient, configService });
-        const request = buildRequest({ userKey: 4321 });
-
-        await service.grantDrawingPromotion(request as never, "promotion-key");
-
-        expect(tossApiClient.executePromotion).toHaveBeenCalledWith(
-          4321,
-          "promotion-key",
-          "PROMOTION",
-          2,
-        );
       });
     });
   });

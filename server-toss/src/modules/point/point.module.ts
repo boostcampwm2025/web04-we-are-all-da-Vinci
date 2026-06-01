@@ -5,13 +5,8 @@ import { PointLog } from "./entity/point-log.entity";
 import { PointService } from "./point.service";
 import { PointGrantPurgeScheduler } from "./scheduler/point-grant-purge.scheduler";
 import { PointGrantScheduler } from "./scheduler/point-grant.scheduler";
-import { ExternalModule } from "src/external/external.module";
-
 @Module({
-  imports: [
-    MikroOrmModule.forFeature([PointLog, PointGrantRequest]),
-    ExternalModule.register(),
-  ],
+  imports: [MikroOrmModule.forFeature([PointLog, PointGrantRequest])],
   providers: [PointService, PointGrantScheduler, PointGrantPurgeScheduler],
   exports: [PointService],
 })
