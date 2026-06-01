@@ -11,3 +11,8 @@ export interface UserInfo {
   nationality?: string;
   email?: string | null;
 }
+
+export interface AuthLoginRequest {
+  authorizationCode: string;
+  referrer: "DEFAULT" | "SANDBOX";
+}

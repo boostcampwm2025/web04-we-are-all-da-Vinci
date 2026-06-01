@@ -1,14 +1,16 @@
 import { Injectable } from "@nestjs/common";
-import type { LoginDto } from "src/modules/auth/dto/login.dto";
 import { AuthClient } from "src/modules/auth/port/auth-client.interface";
-import type { UserInfo } from "src/modules/auth/types/auth.types";
+import type {
+  AuthLoginRequest,
+  UserInfo,
+} from "src/modules/auth/types/auth.types";
 
 @Injectable()
 export class MockAuthClient extends AuthClient {
   private userKeyCounter = 1;
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  generateToken(dto: LoginDto): Promise<string> {
+  generateToken(request: AuthLoginRequest): Promise<string> {
     return Promise.resolve("mock-access-token");
   }
 
