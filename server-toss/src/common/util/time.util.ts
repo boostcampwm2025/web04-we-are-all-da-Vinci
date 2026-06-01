@@ -26,3 +26,7 @@ export const getSeoulWeekStart = (reference = new Date()): Date => {
   );
   return new Date(mondayTime - SEOUL_TIMEZONE_OFFSET_MS);
 };
+
+export const getSeoulDateTime = (date: Date = new Date()) => {
+  return new Date(date.getTime() + SEOUL_TIMEZONE_OFFSET_MS);
+};

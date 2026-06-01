@@ -4,13 +4,16 @@ const { User } = require("./dist/modules/user/user.entity");
 const { Drawing } = require("./dist/modules/drawing/drawing.entity");
 const { Prompt } = require("./dist/modules/prompt/prompt.entity");
 const { DailyPrompt } = require("./dist/modules/prompt/daily-prompt.entity");
-const { PointLog } = require("./dist/modules/point/point-log.entity");
+const { PointLog } = require("./dist/modules/point/entity/point-log.entity");
 const { AdView } = require("./dist/modules/chance/ad-view.entity");
 const { Ranking } = require("./dist/modules/ranking/ranking.entity");
 const { PlayChance } = require("./dist/modules/chance/play-chance.entity");
 const { ShareLog } = require("./dist/modules/chance/share-log.entity");
 const { Quest } = require("./dist/modules/quest/entity/quest.entity");
 const { UserQuest } = require("./dist/modules/quest/entity/user-quest.entity");
+const {
+  PointGrantRequest,
+} = require("./dist/modules/point/entity/point-grant-request.entity");
 
 const { Migrator } = require("@mikro-orm/migrations");
 const { SeedManager } = require("@mikro-orm/seeder");
@@ -34,6 +37,7 @@ module.exports = defineConfig({
     ShareLog,
     Quest,
     UserQuest,
+    PointGrantRequest,
   ],
   debug: process.env.NODE_ENV !== "production",
   forceUtcTimezone: true, // UTC로 시간 설정 고정
