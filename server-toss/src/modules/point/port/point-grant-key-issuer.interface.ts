@@ -1,3 +1,3 @@
-export interface PointGrantKeyIssuer {
-  getPromotionKey(userKey: number): Promise<string>;
+export abstract class PointGrantKeyIssuer {
+  abstract getPromotionKey(userKey: number): Promise<string>;
 }

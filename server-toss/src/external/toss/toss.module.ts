@@ -11,6 +11,11 @@ import { TossPointGrantExecuter } from "./point/toss-point-grant.executer";
     TossPointGrantExecuter,
     TossPointGrantKeyIssuer,
   ],
-  exports: [TossAuthClient, TossPointGrantExecuter, TossPointGrantKeyIssuer],
+  exports: [
+    TossHttpClient,
+    TossAuthClient,
+    TossPointGrantExecuter,
+    TossPointGrantKeyIssuer,
+  ],
 })
 export class TossModule {}

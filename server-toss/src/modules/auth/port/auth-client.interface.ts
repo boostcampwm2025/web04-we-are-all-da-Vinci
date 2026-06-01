@@ -1,8 +1,8 @@
 import { LoginDto } from "../dto/login.dto";
-import { TossUserInfo } from "../toss-api.client";
+import { TossUserInfo } from "../types/toss-api.types";
 
-export interface AuthClient {
-  generateToken(dto: LoginDto): Promise<string>;
-  removeAccessByUserKey(userKey: number): Promise<void>;
-  getUserInfo(accessToken: string): Promise<TossUserInfo>;
+export abstract class AuthClient {
+  abstract generateToken(dto: LoginDto): Promise<string>;
+  abstract removeAccessByUserKey(userKey: number): Promise<void>;
+  abstract getUserInfo(accessToken: string): Promise<TossUserInfo>;
 }

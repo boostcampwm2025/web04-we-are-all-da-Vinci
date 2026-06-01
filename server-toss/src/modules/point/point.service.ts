@@ -10,8 +10,7 @@ import { getSeoulDateTime, getSeoulDayRange } from "src/common/util/time.util";
 import {
   TossPromotionError,
   TossTransportError,
-} from "src/modules/auth/errors/toss.errors";
-import { TossApiClient } from "src/modules/auth/toss-api.client";
+} from "src/external/toss/common/toss.errors";
 import { User } from "src/modules/user/user.entity";
 import {
   PointGrantRequest,
@@ -29,6 +28,8 @@ import {
   SUCCEEDED_RETENTION_DAYS,
 } from "./point.contants";
 import { GrantEligibilityDecision } from "./point.types";
+import { PointGrantExecuter } from "./port/point-grant-executer.interface";
+import { PointGrantKeyIssuer } from "./port/point-grant-key-issuer.interface";
 
 @Injectable()
 export class PointService {
@@ -39,7 +40,8 @@ export class PointService {
     @InjectRepository(PointGrantRequest)
     private readonly pointGrantRequestRepository: PointGrantRequestRepository,
     private readonly em: EntityManager,
-    private readonly tossApiClient: TossApiClient,
+    private readonly pointGrantKeyIssuer: PointGrantKeyIssuer,
+    private readonly pointGrantExecuter: PointGrantExecuter,
     private readonly configService: ConfigService,
   ) {
     const promotionCode =
@@ -189,7 +191,7 @@ export class PointService {
   async issueAndSavePromotionKey(request: PointGrantRequest) {
     const { user } = request;
 
-    const key = await this.tossApiClient.getPromotionKey(user.userKey);
+    const key = await this.pointGrantKeyIssuer.getPromotionKey(user.userKey);
 
     await this.savePointIdempotencyKey(request, key);
 
@@ -247,7 +249,7 @@ export class PointService {
   ): Promise<void> {
     const { user, pointAmount } = request;
 
-    await this.tossApiClient.executePromotion(
+    await this.pointGrantExecuter.executePromotion(
       user.userKey,
       key,
       this.promotionCode,

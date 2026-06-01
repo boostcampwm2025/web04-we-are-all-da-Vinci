@@ -2,9 +2,9 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { TOSS_API_ENDPOINTS } from "src/external/toss/common/toss-api.constants";
 import { LoginDto } from "src/modules/auth/dto/login.dto";
 import { AuthClient } from "src/modules/auth/port/auth-client.interface";
-import { TossUserInfo } from "src/modules/auth/toss-api.client";
 import {
   TossTokenResponse,
+  TossUserInfo,
   TossUserResponse,
 } from "src/modules/auth/types/toss-api.types";
 import { TossHttpClient } from "../common/toss-http.client";

@@ -2,7 +2,7 @@ import { describe, expect, it, jest } from "@jest/globals";
 import {
   TossPromotionError,
   TossTransportError,
-} from "src/modules/auth/errors/toss.errors";
+} from "src/external/toss/common/toss.errors";
 import { PointGrantStatus } from "./entity/point-grant-request.entity";
 import { PointReason } from "./entity/point-log.entity";
 import { PointService } from "./point.service";

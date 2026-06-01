@@ -8,14 +8,14 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { createDecipheriv } from "crypto";
-import type { LoginResponseDto } from "src/modules/auth/dto/login-response.dto";
-import type { LoginDto } from "src/modules/auth/dto/login.dto";
 import {
   TossApiError,
   TossTransportError,
-} from "src/modules/auth/errors/toss.errors";
-import { TossApiClient } from "src/modules/auth/toss-api.client";
+} from "src/external/toss/common/toss.errors";
+import type { LoginResponseDto } from "src/modules/auth/dto/login-response.dto";
+import type { LoginDto } from "src/modules/auth/dto/login.dto";
 import { UserService } from "src/modules/user/user.service";
+import { AuthClient } from "./port/auth-client.interface";
 
 @Injectable()
 export class AuthService {
@@ -25,7 +25,7 @@ export class AuthService {
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly tossApiClient: TossApiClient,
+    private readonly authClient: AuthClient,
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
   ) {
@@ -36,11 +36,11 @@ export class AuthService {
 
   async login(dto: LoginDto): Promise<LoginResponseDto> {
     let accessToken: string;
-    let userInfo: Awaited<ReturnType<TossApiClient["getUserInfo"]>>;
+    let userInfo: Awaited<ReturnType<AuthClient["getUserInfo"]>>;
 
     try {
-      accessToken = await this.tossApiClient.generateToken(dto);
-      userInfo = await this.tossApiClient.getUserInfo(accessToken);
+      accessToken = await this.authClient.generateToken(dto);
+      userInfo = await this.authClient.getUserInfo(accessToken);
     } catch (err) {
       if (err instanceof TossTransportError) {
         this.logger.error(
@@ -116,7 +116,7 @@ export class AuthService {
 
   async logout(userKey: number): Promise<void> {
     try {
-      await this.tossApiClient.removeAccessByUserKey(userKey);
+      await this.authClient.removeAccessByUserKey(userKey);
     } catch (err) {
       if (err instanceof TossTransportError) {
         this.logger.error(

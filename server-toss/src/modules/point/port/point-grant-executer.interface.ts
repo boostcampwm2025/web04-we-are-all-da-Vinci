@@ -1,5 +1,5 @@
-export interface PointGrantExecuter {
-  executePromotion(
+export abstract class PointGrantExecuter {
+  abstract executePromotion(
     userKey: number,
     key: string,
     promotionCode: string,
