@@ -16,8 +16,8 @@ import { User } from "src/modules/user/user.entity";
 import {
   PointGrantRequest,
   PointGrantStatus,
-} from "./entitiy/point-grant-request.entity";
-import { PointLog, PointReason } from "./entitiy/point-log.entity";
+} from "./entity/point-grant-request.entity";
+import { PointLog, PointReason } from "./entity/point-log.entity";
 import { PointGrantRequestRepository } from "./point-grant-request.repository";
 import {
   DAILY_DRAWING_PROMOTION_LIMIT,

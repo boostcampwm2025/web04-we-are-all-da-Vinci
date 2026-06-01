@@ -3,7 +3,7 @@ import { EntityRepository, LockMode } from "@mikro-orm/mysql";
 import {
   PointGrantRequest,
   PointGrantStatus,
-} from "./entitiy/point-grant-request.entity";
+} from "./entity/point-grant-request.entity";
 import { getSeoulDateTime } from "src/common/util/time.util";
 
 export class PointGrantRequestRepository extends EntityRepository<PointGrantRequest> {
