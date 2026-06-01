@@ -1,4 +1,4 @@
-import { UnauthorizedException } from "@nestjs/common";
+import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { TOSS_API_ENDPOINTS } from "src/external/toss/common/toss-api.constants";
 import { LoginDto } from "src/modules/auth/dto/login.dto";
 import { AuthClient } from "src/modules/auth/port/auth-client.interface";
@@ -9,6 +9,7 @@ import {
 } from "src/modules/auth/types/toss-api.types";
 import { TossHttpClient } from "../common/toss-http.client";
 
+@Injectable()
 export class TossAuthClient implements AuthClient {
   constructor(private readonly tossHttpClient: TossHttpClient) {}
 

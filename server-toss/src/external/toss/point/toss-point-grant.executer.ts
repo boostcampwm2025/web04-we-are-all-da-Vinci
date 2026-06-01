@@ -3,7 +3,9 @@ import { PointGrantExecuter } from "src/modules/point/port/point-grant-executer.
 import { TOSS_API_ENDPOINTS } from "../common/toss-api.constants";
 import { TossHttpClient } from "../common/toss-http.client";
 import { TossPromotionError } from "../common/toss.errors";
+import { Injectable } from "@nestjs/common";
 
+@Injectable()
 export class TossPointGrantExecuter implements PointGrantExecuter {
   constructor(private readonly tossHttpClient: TossHttpClient) {}
 

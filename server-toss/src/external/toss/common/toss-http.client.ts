@@ -1,4 +1,4 @@
-import { Logger } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { readFileSync } from "fs";
 import https from "https";
@@ -7,6 +7,7 @@ import {
   TossTransportError,
 } from "src/external/toss/common/toss.errors";
 
+@Injectable()
 export class TossHttpClient {
   private readonly logger = new Logger(TossHttpClient.name);
   private readonly baseUrl: string;
