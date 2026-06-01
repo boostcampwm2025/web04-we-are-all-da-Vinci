@@ -3,8 +3,8 @@ import {
   TossPromotionError,
   TossTransportError,
 } from "src/modules/auth/errors/toss.errors";
-import { PointGrantStatus } from "./entitiy/point-grant-request.entity";
-import { PointReason } from "./entitiy/point-log.entity";
+import { PointGrantStatus } from "./entity/point-grant-request.entity";
+import { PointReason } from "./entity/point-log.entity";
 import { PointService } from "./point.service";
 
 const FIXED_NOW = new Date("2026-05-25T00:00:00.000Z");
