@@ -5,7 +5,6 @@ import { UserModule } from "src/modules/user/user.module";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
-import { ExternalModule } from "src/external/external.module";
 
 @Global()
 @Module({
@@ -20,7 +19,6 @@ import { ExternalModule } from "src/external/external.module";
         signOptions: { expiresIn: "1d" },
       }),
     }),
-    ExternalModule.register(),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtAuthGuard],
