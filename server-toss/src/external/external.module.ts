@@ -15,7 +15,7 @@ import { TossModule } from "./toss/toss.module";
 @Module({})
 export class ExternalModule {
   static register(): DynamicModule {
-    const useMock = process.env.EXTERNAL_API === "mock";
+    const useMock = process.env.EXTERNAL_API !== "toss";
 
     const providers: Provider[] = useMock
       ? [
