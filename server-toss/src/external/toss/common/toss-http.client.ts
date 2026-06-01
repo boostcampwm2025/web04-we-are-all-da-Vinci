@@ -11,12 +11,10 @@ import {
 export class TossHttpClient {
   private readonly logger = new Logger(TossHttpClient.name);
   private readonly baseUrl: string;
-  private readonly apiKey: string;
   private readonly httpsAgent: https.Agent;
 
   constructor(private readonly configService: ConfigService) {
     this.baseUrl = this.configService.getOrThrow<string>("TOSS_API_BASE_URL");
-    this.apiKey = this.configService.getOrThrow<string>("TOSS_API_KEY");
 
     const certPath = this.configService.getOrThrow<string>(
       "TOSS_CLIENT_CERT_PATH",
@@ -75,11 +73,7 @@ export class TossHttpClient {
           hostname: url.hostname,
           path: url.pathname,
           method,
-          headers: {
-            ...headers,
-            authorization: `Bearer ${this.apiKey}`,
-            "content-type": "application/json",
-          },
+          headers,
           agent: this.httpsAgent,
           timeout: 10000,
         },

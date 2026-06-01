@@ -9,11 +9,14 @@ import { TossPromotionError } from "../common/toss.errors";
 @Injectable()
 export class TossPointGrantExecuter implements PointGrantExecuter {
   private readonly promotionCode: string;
+  private readonly apiKey: string;
 
   constructor(
     private readonly tossHttpClient: TossHttpClient,
     private readonly configService: ConfigService,
   ) {
+    this.apiKey = this.configService.getOrThrow<string>("TOSS_API_KEY");
+
     const promotionCode =
       this.configService.getOrThrow<string>("PROMOTION_CODE");
     const isProduction =
@@ -32,6 +35,8 @@ export class TossPointGrantExecuter implements PointGrantExecuter {
         "POST",
         TOSS_API_ENDPOINTS.EXECUTE_PROMOTION,
         {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`,
           "x-toss-user-key": String(userKey),
         },
         JSON.stringify({ promotionCode: this.promotionCode, key, amount }),

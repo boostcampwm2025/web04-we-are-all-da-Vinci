@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { TOSS_API_ENDPOINTS } from "src/external/toss/common/toss-api.constants";
 import {
   TossTokenResponse,
@@ -11,13 +12,23 @@ import { TossHttpClient } from "../common/toss-http.client";
 
 @Injectable()
 export class TossAuthClient implements AuthClient {
-  constructor(private readonly tossHttpClient: TossHttpClient) {}
+  private readonly apiKey: string;
+
+  constructor(
+    private readonly tossHttpClient: TossHttpClient,
+    private readonly configService: ConfigService,
+  ) {
+    this.apiKey = this.configService.getOrThrow<string>("TOSS_API_KEY");
+  }
 
   async generateToken(request: AuthLoginRequest): Promise<string> {
     const data = await this.tossHttpClient.request<TossTokenResponse>(
       "POST",
       TOSS_API_ENDPOINTS.GENERATE_TOKEN,
-      {},
+      {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+      },
       JSON.stringify({
         authorizationCode: request.authorizationCode,
         referrer: request.referrer,
@@ -41,7 +52,10 @@ export class TossAuthClient implements AuthClient {
     }>(
       "POST",
       TOSS_API_ENDPOINTS.REMOVE_BY_USER_KEY,
-      {},
+      {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+      },
       JSON.stringify({ userKey }),
     );
 
