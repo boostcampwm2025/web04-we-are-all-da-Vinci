@@ -1,8 +1,8 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import {
-  TossPromotionError,
-  TossTransportError,
-} from "src/external/toss/common/toss.errors";
+  ExternalPromotionError,
+  ExternalTransportError,
+} from "src/common/errors/external.errors";
 import { PointGrantStatus } from "./entity/point-grant-request.entity";
 import { PointReason } from "./entity/point-log.entity";
 import { PointService } from "./point.service";
@@ -441,7 +441,7 @@ describe("PointService", () => {
   });
 
   describe("recordGrantOutcomeFromError", () => {
-    describe("TossPromotionError 4113이 발생한 경우", () => {
+    describe("ExternalPromotionError 4113이 발생한 경우", () => {
       it("지급 성공으로 처리한다", async () => {
         const service = buildService();
         const request = buildRequest();
@@ -451,14 +451,14 @@ describe("PointService", () => {
 
         await service.recordGrantOutcomeFromError(
           request as never,
-          new TossPromotionError("4113", "이미 지급됨"),
+          new ExternalPromotionError("4113", "이미 지급됨"),
         );
 
         expect(succeededSpy).toHaveBeenCalledTimes(1);
       });
     });
 
-    describe("TossTransportError가 발생한 경우", () => {
+    describe("ExternalTransportError가 발생한 경우", () => {
       it("retry를 호출한다", async () => {
         const em = buildEntityManager();
         const service = buildService({ entityManager: em });
@@ -466,7 +466,7 @@ describe("PointService", () => {
 
         await service.recordGrantOutcomeFromError(
           request as never,
-          new TossTransportError("timeout"),
+          new ExternalTransportError("timeout"),
         );
 
         expect(request.retry).toHaveBeenCalledTimes(1);
@@ -475,7 +475,7 @@ describe("PointService", () => {
       });
     });
 
-    describe("재시도 가능한 TossPromotionError(4110)가 발생한 경우", () => {
+    describe("재시도 가능한 ExternalPromotionError(4110)가 발생한 경우", () => {
       it("retry를 호출한다", async () => {
         const em = buildEntityManager();
         const service = buildService({ entityManager: em });
@@ -483,7 +483,7 @@ describe("PointService", () => {
 
         await service.recordGrantOutcomeFromError(
           request as never,
-          new TossPromotionError("4110", "internal"),
+          new ExternalPromotionError("4110", "internal"),
         );
 
         expect(request.retry).toHaveBeenCalledTimes(1);
@@ -492,7 +492,7 @@ describe("PointService", () => {
       });
     });
 
-    describe("재시도 불가능한 TossPromotionError가 발생한 경우", () => {
+    describe("재시도 불가능한 ExternalPromotionError가 발생한 경우", () => {
       it("failed를 호출한다", async () => {
         const em = buildEntityManager();
         const service = buildService({ entityManager: em });
@@ -500,7 +500,7 @@ describe("PointService", () => {
 
         await service.recordGrantOutcomeFromError(
           request as never,
-          new TossPromotionError("4109", "promotion ended"),
+          new ExternalPromotionError("4109", "promotion ended"),
         );
 
         expect(request.retry).not.toHaveBeenCalled();

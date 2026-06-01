@@ -7,9 +7,9 @@ import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable, Logger } from "@nestjs/common";
 import { getSeoulDateTime, getSeoulDayRange } from "src/common/util/time.util";
 import {
-  TossPromotionError,
-  TossTransportError,
-} from "src/external/toss/common/toss.errors";
+  ExternalPromotionError,
+  ExternalTransportError,
+} from "src/common/errors/external.errors";
 import { User } from "src/modules/user/user.entity";
 import {
   PointGrantRequest,
@@ -210,15 +210,15 @@ export class PointService {
 
   @Transactional()
   async recordGrantOutcomeFromError(request: PointGrantRequest, err: unknown) {
-    if (err instanceof TossPromotionError && err.errorCode === "4113") {
+    if (err instanceof ExternalPromotionError && err.errorCode === "4113") {
       await this.recordGrantSucceeded(request);
       return;
     } else if (
-      err instanceof TossTransportError ||
-      (err instanceof TossPromotionError && err.errorCode === "4110")
+      err instanceof ExternalTransportError ||
+      (err instanceof ExternalPromotionError && err.errorCode === "4110")
     ) {
       request.retry();
-    } else if (err instanceof TossPromotionError) {
+    } else if (err instanceof ExternalPromotionError) {
       request.failed(err.message);
 
       this.logger.warn(

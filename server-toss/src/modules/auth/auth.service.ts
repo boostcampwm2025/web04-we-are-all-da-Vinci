@@ -9,9 +9,9 @@ import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { createDecipheriv } from "crypto";
 import {
-  TossApiError,
-  TossTransportError,
-} from "src/external/toss/common/toss.errors";
+  ExternalApiError,
+  ExternalTransportError,
+} from "src/common/errors/external.errors";
 import type { LoginResponseDto } from "src/modules/auth/dto/login-response.dto";
 import type { LoginDto } from "src/modules/auth/dto/login.dto";
 import { UserService } from "src/modules/user/user.service";
@@ -42,14 +42,14 @@ export class AuthService {
       accessToken = await this.authClient.generateToken(dto);
       userInfo = await this.authClient.getUserInfo(accessToken);
     } catch (err) {
-      if (err instanceof TossTransportError) {
+      if (err instanceof ExternalTransportError) {
         this.logger.error(
           { event: "auth.login.toss_transport_failed", err },
           "Toss API 통신 오류",
         );
         throw new ServiceUnavailableException("Toss API에 연결할 수 없어요.");
       }
-      if (err instanceof TossApiError) {
+      if (err instanceof ExternalApiError) {
         this.logger.error(
           {
             event: "auth.login.toss_api_failed",
@@ -118,14 +118,14 @@ export class AuthService {
     try {
       await this.authClient.removeAccessByUserKey(userKey);
     } catch (err) {
-      if (err instanceof TossTransportError) {
+      if (err instanceof ExternalTransportError) {
         this.logger.error(
           { event: "auth.logout.toss_transport_failed", userKey, err },
           "Toss 로그아웃 통신 오류",
         );
         throw new ServiceUnavailableException("Toss API에 연결할 수 없어요.");
       }
-      if (err instanceof TossApiError) {
+      if (err instanceof ExternalApiError) {
         this.logger.error(
           {
             event: "auth.logout.toss_api_failed",

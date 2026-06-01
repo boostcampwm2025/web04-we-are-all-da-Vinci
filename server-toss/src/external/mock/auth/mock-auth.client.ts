@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import type { LoginDto } from "src/modules/auth/dto/login.dto";
 import { AuthClient } from "src/modules/auth/port/auth-client.interface";
-import type { TossUserInfo } from "src/external/toss/common/toss-api.types";
+import type { UserInfo } from "src/modules/auth/types/auth.types";
 
 @Injectable()
 export class MockAuthClient extends AuthClient {
@@ -13,7 +13,7 @@ export class MockAuthClient extends AuthClient {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getUserInfo(accessToken: string): Promise<TossUserInfo> {
+  getUserInfo(accessToken: string): Promise<UserInfo> {
     const userKey = this.userKeyCounter++;
     return Promise.resolve({
       userKey,
