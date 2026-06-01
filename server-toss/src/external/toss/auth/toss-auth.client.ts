@@ -6,7 +6,7 @@ import {
   TossTokenResponse,
   TossUserInfo,
   TossUserResponse,
-} from "src/modules/auth/types/toss-api.types";
+} from "src/external/toss/common/toss-api.types";
 import { TossHttpClient } from "../common/toss-http.client";
 
 @Injectable()

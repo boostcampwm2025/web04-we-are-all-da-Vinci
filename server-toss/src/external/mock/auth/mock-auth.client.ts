@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import type { LoginDto } from "src/modules/auth/dto/login.dto";
 import { AuthClient } from "src/modules/auth/port/auth-client.interface";
-import type { TossUserInfo } from "src/modules/auth/types/toss-api.types";
+import type { TossUserInfo } from "src/external/toss/common/toss-api.types";
 
 @Injectable()
 export class MockAuthClient extends AuthClient {

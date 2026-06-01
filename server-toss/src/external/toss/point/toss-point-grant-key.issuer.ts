@@ -1,4 +1,4 @@
-import { TossPromotionKeyResponse } from "src/modules/auth/types/toss-api.types";
+import { TossPromotionKeyResponse } from "src/external/toss/common/toss-api.types";
 import { PointGrantKeyIssuer } from "src/modules/point/port/point-grant-key-issuer.interface";
 import { TOSS_API_ENDPOINTS } from "../common/toss-api.constants";
 import { TossHttpClient } from "../common/toss-http.client";

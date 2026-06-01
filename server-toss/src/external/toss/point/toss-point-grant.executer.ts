@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { TossPromotionExecuteResponse } from "src/modules/auth/types/toss-api.types";
+import { TossPromotionExecuteResponse } from "src/external/toss/common/toss-api.types";
 import { PointGrantExecuter } from "src/modules/point/port/point-grant-executer.interface";
 import { TOSS_API_ENDPOINTS } from "../common/toss-api.constants";
 import { TossHttpClient } from "../common/toss-http.client";
