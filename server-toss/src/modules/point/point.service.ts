@@ -99,7 +99,18 @@ export class PointService {
     const requests = await this.lockAndFetchEligibleGrants();
 
     for (const request of requests) {
-      await this.settleGrantRequest(request);
+      try {
+        await this.settleGrantRequest(request);
+      } catch (err) {
+        this.logger.error(
+          {
+            event: "point_grant.settle.failed",
+            requestId: request.id,
+            err,
+          },
+          "개별 포인트 지급 실패",
+        );
+      }
     }
   }
 

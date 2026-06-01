@@ -83,7 +83,6 @@ export class PointGrantRequest extends BaseEntity {
   succeeded() {
     this.status = PointGrantStatus.SUCCEEDED;
     this.processedAt = getSeoulDateTime();
-    this.pointIdempotencyKey = undefined;
   }
 
   retry() {
@@ -97,7 +96,6 @@ export class PointGrantRequest extends BaseEntity {
     this.nextRetryAt = new Date(
       getSeoulDateTime().getTime() + this.calculateBackOff(this.attemptCount),
     );
-    this.pointIdempotencyKey = undefined;
   }
 
   failed(errorMessage?: string) {
