@@ -6,7 +6,7 @@ import { Drawing } from "src/modules/drawing/drawing.entity";
 import {
   PointLog,
   PointReason,
-} from "src/modules/point/entitiy/point-log.entity";
+} from "src/modules/point/entity/point-log.entity";
 import { DailyPrompt } from "src/modules/prompt/daily-prompt.entity";
 import { Prompt } from "src/modules/prompt/prompt.entity";
 import { Ranking } from "src/modules/ranking/ranking.entity";
