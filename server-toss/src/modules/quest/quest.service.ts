@@ -27,6 +27,7 @@ import type {
 } from "./quest.types";
 import type { QuestRepository } from "./repository/quest.repository";
 import type { UserQuestRepository } from "./repository/user-quest.repository";
+import { PointReason } from "../point/entity/point-log.entity";
 
 const DAILY_RANDOM_COUNT = 2;
 const WEEKLY_RANDOM_COUNT = 1;
@@ -388,7 +389,10 @@ export class QuestService {
   private async grantReward(userKey: number, quest: Quest): Promise<void> {
     switch (quest.rewardType) {
       case RewardType.POINT:
-        await this.pointService.grantDrawingPromotionIfEligible(userKey);
+        await this.pointService.savePointGrantRequest(
+          userKey,
+          PointReason.QUEST,
+        );
         break;
       case RewardType.CHANCE:
         break;

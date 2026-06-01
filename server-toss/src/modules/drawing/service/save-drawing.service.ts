@@ -7,7 +7,7 @@ import { DrawingRepository } from "../drawing.repository";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Transactional } from "@mikro-orm/decorators/legacy";
 import { PointService } from "src/modules/point/point.service";
-import { PointReason } from "src/modules/point/entitiy/point-log.entity";
+import { PointReason } from "src/modules/point/entity/point-log.entity";
 
 @Injectable()
 export class SaveDrawingService {
@@ -36,7 +36,7 @@ export class SaveDrawingService {
     await this.rankingService.updateRanking(user, drawing);
 
     const promotionGranted = await this.pointService.savePointGrantRequest(
-      user,
+      user.userKey,
       PointReason.DRAWING,
     );
 

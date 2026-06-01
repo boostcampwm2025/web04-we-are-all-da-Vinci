@@ -16,8 +16,8 @@ import { User } from "src/modules/user/user.entity";
 import {
   PointGrantRequest,
   PointGrantStatus,
-} from "./entitiy/point-grant-request.entity";
-import { PointLog, PointReason } from "./entitiy/point-log.entity";
+} from "./entity/point-grant-request.entity";
+import { PointLog, PointReason } from "./entity/point-log.entity";
 import { PointGrantRequestRepository } from "./point-grant-request.repository";
 import {
   DAILY_DRAWING_PROMOTION_LIMIT,
@@ -62,14 +62,16 @@ export class PointService {
 
   @Transactional()
   async savePointGrantRequest(
-    user: User,
+    userKey: number,
     reason: PointReason,
   ): Promise<boolean> {
-    const promotionGranted = await this.canGrantTodayPromotion(user.userKey);
+    const promotionGranted = await this.canGrantTodayPromotion(userKey);
 
     if (!promotionGranted) {
       return false;
     }
+    const user = this.em.getReference(User, userKey);
+
     this.pointGrantRequestRepository.create({
       user,
       reason,

@@ -1,7 +1,7 @@
 import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Module } from "@nestjs/common";
-import { PointGrantRequest } from "./entitiy/point-grant-request.entity";
-import { PointLog } from "./entitiy/point-log.entity";
+import { PointGrantRequest } from "./entity/point-grant-request.entity";
+import { PointLog } from "./entity/point-log.entity";
 import { PointService } from "./point.service";
 import { PointGrantScheduler } from "./scheduler/point-grant.scheduler";
 import { PointGrantPurgeScheduler } from "./scheduler/point-grant-purge.scheduler";
