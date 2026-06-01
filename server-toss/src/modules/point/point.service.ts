@@ -5,7 +5,6 @@ import {
 } from "@mikro-orm/decorators/legacy";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { getSeoulDateTime, getSeoulDayRange } from "src/common/util/time.util";
 import {
   TossPromotionError,
@@ -34,7 +33,6 @@ import { PointGrantKeyIssuer } from "./port/point-grant-key-issuer.interface";
 @Injectable()
 export class PointService {
   private readonly logger = new Logger(PointService.name);
-  private readonly promotionCode: string;
 
   constructor(
     @InjectRepository(PointGrantRequest)
@@ -42,15 +40,7 @@ export class PointService {
     private readonly em: EntityManager,
     private readonly pointGrantKeyIssuer: PointGrantKeyIssuer,
     private readonly pointGrantExecuter: PointGrantExecuter,
-    private readonly configService: ConfigService,
-  ) {
-    const promotionCode =
-      this.configService.getOrThrow<string>("PROMOTION_CODE");
-    const isProduction =
-      this.configService.get<string>("NODE_ENV") === "production";
-
-    this.promotionCode = isProduction ? promotionCode : `TEST_${promotionCode}`;
-  }
+  ) {}
 
   async canGrantTodayPromotion(userKey: number): Promise<boolean> {
     const { start, end } = getSeoulDayRange();
@@ -252,7 +242,6 @@ export class PointService {
     await this.pointGrantExecuter.executePromotion(
       user.userKey,
       key,
-      this.promotionCode,
       pointAmount,
     );
   }

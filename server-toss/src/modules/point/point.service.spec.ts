@@ -48,14 +48,6 @@ const buildTossApiClient = () => ({
   executePromotion: jest.fn(async () => undefined),
 });
 
-const buildConfigService = (nodeEnv = "test", promotionCode = "PROMOTION") => ({
-  get: jest.fn((key: string) => (key === "NODE_ENV" ? nodeEnv : undefined)),
-  getOrThrow: jest.fn((key: string) => {
-    if (key === "PROMOTION_CODE") return promotionCode;
-    throw new Error(`Missing config: ${key}`);
-  }),
-});
-
 const buildUser = (userKey = 1234) =>
   ({ userKey, name: "테스트유저" }) as never;
 
@@ -87,20 +79,17 @@ const buildService = ({
   entityManager = buildEntityManager(),
   pointGrantRequestRepository = buildPointGrantRequestRepository(),
   tossApiClient = buildTossApiClient(),
-  configService = buildConfigService(),
 }: {
   entityManager?: ReturnType<typeof buildEntityManager>;
   pointGrantRequestRepository?: ReturnType<
     typeof buildPointGrantRequestRepository
   >;
   tossApiClient?: ReturnType<typeof buildTossApiClient>;
-  configService?: ReturnType<typeof buildConfigService>;
 } = {}) =>
   new PointService(
     pointGrantRequestRepository as never,
     entityManager as never,
     tossApiClient as never,
-    configService as never,
   );
 
 describe("PointService", () => {
