@@ -90,6 +90,38 @@ export class RankingRepository extends EntityRepository<Ranking> {
     await this.em.flush();
   }
 
+  /**
+   * 트리거 사용자가 oldScore → newScore로 올랐을 때 추월된 사용자 목록.
+   * 범위: oldScore <= score < newScore. 정렬: 영향 큰 순서로 score DESC.
+   * case 1(신규 진입)은 oldScore = -1로 호출.
+   * TOP100 안 식별: limit으로 잘라낸다.
+   */
+  async findOvertakenUserKeys(input: {
+    oldScore: number;
+    newScore: number;
+    excludeUserKey: number;
+    limit: number;
+  }): Promise<number[]> {
+    const { start, end } = getSeoulDayRange();
+    const rows = await this.em.execute<{ user_key: number }[]>(
+      "select user_key from rankings " +
+        "where submitted_at >= ? and submitted_at < ? " +
+        "and score < ? and score >= ? " +
+        "and user_key != ? " +
+        "order by score desc, submitted_at asc " +
+        "limit ?",
+      [
+        start,
+        end,
+        input.newScore,
+        input.oldScore,
+        input.excludeUserKey,
+        input.limit,
+      ],
+    );
+    return rows.map((row) => row.user_key);
+  }
+
   async cleanupRanking() {
     const { start } = getSeoulDayRange();
     await this.nativeDelete({

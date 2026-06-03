@@ -179,7 +179,7 @@ describe("SaveDrawingService", () => {
 
         expect(afterDrawingCount).toBe(beforeDrawingCount + 1);
         expect(afterRankingCount).toBe(beforeRankingCount + 1);
-        expect(savedRanking.drawingId).toBe(saved.id);
+        expect(savedRanking.drawingId).toBe(saved.drawing.id);
         expect(savedRanking.score).toBe(sampleSimilarity.score);
       });
     });
