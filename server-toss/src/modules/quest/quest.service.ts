@@ -4,12 +4,11 @@ import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable, Logger } from "@nestjs/common";
 import { getSeoulDayRange, getSeoulWeekStart } from "src/common/util/time.util";
 import { Drawing } from "src/modules/drawing/drawing.entity";
-import type { MyQuest } from "./dto/my-quests-response.dto";
 import { MyQuestsResponseDto } from "./dto/my-quests-response.dto";
-import type { TutorialCategoryDto } from "./dto/tutorial-category.dto";
 import { ObjectiveType, Quest, QuestPeriod } from "./entity/quest.entity";
 import { UserQuest } from "./entity/user-quest.entity";
 import { QuestProcessor } from "./quest.processor";
+import { QuestMapper } from "./quest.mapper";
 import type {
   CycleResult,
   DrawingContext,
@@ -23,12 +22,6 @@ const WEEKLY_RANDOM_COUNT = 1;
 
 /** 튜토리얼 퀘스트의 고정 createdAt — 사용자당 1행 보장 */
 const TUTORIAL_EPOCH = new Date("2026-01-01T00:00:00.000Z");
-
-const TUTORIAL_CATEGORY_LABELS: Record<string, string> = {
-  drawing: "그리기",
-  explore: "둘러보기",
-  share: "공유",
-};
 
 @Injectable()
 export class QuestService {
@@ -57,7 +50,7 @@ export class QuestService {
     const tutorialQuests =
       await this.userQuestRepository.findTutorialQuests(userKey);
 
-    return this.toMyQuestsResponse(quests, tutorialQuests);
+    return QuestMapper.toResponse(quests, tutorialQuests);
   }
 
   async assignOrGetQuests(userKey: number): Promise<MyQuestsResponseDto> {
@@ -75,7 +68,7 @@ export class QuestService {
     const tutorialQuests =
       await this.userQuestRepository.findTutorialQuests(userKey);
 
-    return this.toMyQuestsResponse(quests, tutorialQuests);
+    return QuestMapper.toResponse(quests, tutorialQuests);
   }
 
   // ─── daily/weekly 할당 ───
@@ -274,79 +267,6 @@ export class QuestService {
     await this.userQuestRepository.flush();
 
     return result;
-  }
-
-  // ─── 응답 매핑 ───
-
-  private toMyQuestsResponse(
-    quests: UserQuest[],
-    tutorialQuests: UserQuest[] = [],
-  ): MyQuestsResponseDto {
-    const toMyQuest = (uq: UserQuest): MyQuest => ({
-      userQuestId: Number(uq.id),
-      questId: Number(uq.quest.id),
-      title: uq.quest.title,
-      currentCount: uq.currentCount,
-      requiredCount: uq.quest.requiredCount,
-      rewardType: uq.quest.rewardType,
-      rewardAmount: uq.quest.rewardAmount,
-    });
-
-    const dailyQuests = quests
-      .filter((uq) => uq.quest.period === QuestPeriod.DAILY)
-      .map(toMyQuest);
-
-    const weeklyQuests = quests
-      .filter((uq) => uq.quest.period === QuestPeriod.WEEKLY)
-      .map(toMyQuest);
-
-    const tutorialCategories = this.buildTutorialCategories(tutorialQuests);
-
-    return { dailyQuests, weeklyQuests, tutorialCategories };
-  }
-
-  private buildTutorialCategories(
-    tutorialQuests: UserQuest[],
-  ): TutorialCategoryDto[] {
-    if (tutorialQuests.length === 0) return [];
-
-    const metaByCategory = new Map<string, UserQuest>();
-    const questsByCategory = new Map<string, UserQuest[]>();
-
-    for (const uq of tutorialQuests) {
-      const category = uq.quest.category;
-      if (!category) continue;
-
-      if (uq.quest.objectiveType === ObjectiveType.TUTORIAL_COMPLETED) {
-        metaByCategory.set(category, uq);
-      } else {
-        const list = questsByCategory.get(category) ?? [];
-        list.push(uq);
-        questsByCategory.set(category, list);
-      }
-    }
-
-    const categories: TutorialCategoryDto[] = [];
-    for (const [category, quests] of questsByCategory) {
-      const meta = metaByCategory.get(category);
-      categories.push({
-        category,
-        label: TUTORIAL_CATEGORY_LABELS[category] ?? category,
-        rewardAmount: meta?.quest.rewardAmount ?? 0,
-        isCompleted: meta?.completedAt != null,
-        quests: quests.map((uq) => ({
-          userQuestId: Number(uq.id),
-          questId: Number(uq.quest.id),
-          title: uq.quest.title,
-          currentCount: uq.currentCount,
-          requiredCount: uq.quest.requiredCount,
-          rewardType: uq.quest.rewardType,
-          rewardAmount: uq.quest.rewardAmount,
-        })),
-      });
-    }
-
-    return categories;
   }
 
   // ─── 유틸 ───
