@@ -11,7 +11,6 @@ import { ObjectiveType, Quest, QuestPeriod } from "./entity/quest.entity";
 import { UserQuest } from "./entity/user-quest.entity";
 import { QuestProcessor } from "./quest.processor";
 import type {
-  ActionContext,
   CycleResult,
   DrawingContext,
   DrawingSubmittedEvent,
@@ -275,42 +274,6 @@ export class QuestService {
     await this.userQuestRepository.flush();
 
     return result;
-  }
-
-  // ─── 범용 액션 (기존 daily/weekly용) ───
-
-  @Transactional()
-  async recordAction(
-    userKey: number,
-    objectiveType: Exclude<ObjectiveType, ObjectiveType.QUEST_COMPLETED>,
-    context: ActionContext,
-  ): Promise<UserQuest[]> {
-    const { start: todayStart } = getSeoulDayRange();
-    const weekStart = getSeoulWeekStart();
-
-    const activeQuests = await this.userQuestRepository.findActiveByObjective(
-      userKey,
-      objectiveType,
-      todayStart,
-      weekStart,
-    );
-    const metaQuests = await this.userQuestRepository.findActiveByObjective(
-      userKey,
-      ObjectiveType.QUEST_COMPLETED,
-      todayStart,
-      weekStart,
-    );
-
-    const result = await this.processor.executeProgressCycle(
-      userKey,
-      activeQuests,
-      metaQuests,
-      context,
-    );
-
-    await this.userQuestRepository.flush();
-
-    return [...result.completed, ...result.metaCompleted];
   }
 
   // ─── 응답 매핑 ───

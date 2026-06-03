@@ -202,24 +202,33 @@ describe("QuestService", () => {
     });
   });
 
-  describe("recordAction", () => {
+  describe("onQuestAction", () => {
+    // onQuestAction은 할당 보장 후 전 period 퀘스트를 처리한다.
+    // 할당을 건너뛰기 위해 각 테스트에서 findCurrentQuests, findTutorialQuests를 non-empty로 설정.
+    const skipAssignment = () => {
+      userQuestRepository.findCurrentQuests.mockResolvedValue([
+        buildUserQuest(),
+      ]);
+      userQuestRepository.findTutorialQuests.mockResolvedValue([
+        buildUserQuest(),
+      ]);
+    };
+
     describe("활성 퀘스트가 없으면", () => {
-      it("빈 배열을 반환한다", async () => {
-        userQuestRepository.findActiveByObjective.mockResolvedValue([]);
+      it("빈 결과를 반환한다", async () => {
+        skipAssignment();
 
-        const result = await service.recordAction(
-          1234,
-          ObjectiveType.SUBMIT,
-          {},
-        );
+        const result = await service.onQuestAction(1234, ObjectiveType.SUBMIT);
 
-        expect(result).toEqual([]);
+        expect(result.completed).toEqual([]);
+        expect(result.metaCompleted).toEqual([]);
         expect(userQuestRepository.flush).toHaveBeenCalled();
       });
     });
 
     describe("SUBMIT 액션으로 퀘스트가 진행되면", () => {
       it("currentCount를 1 증가시킨다", async () => {
+        skipAssignment();
         const uq = buildUserQuest({
           quest: buildQuest({
             objectiveType: ObjectiveType.SUBMIT,
@@ -229,41 +238,7 @@ describe("QuestService", () => {
         });
         userQuestRepository.findActiveByObjective.mockResolvedValue([uq]);
 
-        await service.recordAction(1234, ObjectiveType.SUBMIT, {});
-
-        expect(uq.currentCount).toBe(1);
-      });
-    });
-
-    describe("SCORE 액션", () => {
-      it("점수가 threshold 미만이면 퀘스트를 진행하지 않는다", async () => {
-        const uq = buildUserQuest({
-          quest: buildQuest({
-            objectiveType: ObjectiveType.SCORE,
-            requiredCount: 3,
-            threshold: 80,
-          }),
-          currentCount: 0,
-        });
-        userQuestRepository.findActiveByObjective.mockResolvedValue([uq]);
-
-        await service.recordAction(1234, ObjectiveType.SCORE, { score: 50 });
-
-        expect(uq.currentCount).toBe(0);
-      });
-
-      it("점수가 threshold 이상이면 currentCount를 1 증가시킨다", async () => {
-        const uq = buildUserQuest({
-          quest: buildQuest({
-            objectiveType: ObjectiveType.SCORE,
-            requiredCount: 3,
-            threshold: 80,
-          }),
-          currentCount: 0,
-        });
-        userQuestRepository.findActiveByObjective.mockResolvedValue([uq]);
-
-        await service.recordAction(1234, ObjectiveType.SCORE, { score: 90 });
+        await service.onQuestAction(1234, ObjectiveType.SUBMIT);
 
         expect(uq.currentCount).toBe(1);
       });
@@ -271,6 +246,7 @@ describe("QuestService", () => {
 
     describe("퀘스트가 완료되면", () => {
       it("completedAt을 설정하고 보상을 지급한다", async () => {
+        skipAssignment();
         const uq = buildUserQuest({
           quest: buildQuest({
             objectiveType: ObjectiveType.SUBMIT,
@@ -281,21 +257,18 @@ describe("QuestService", () => {
         });
         userQuestRepository.findActiveByObjective.mockResolvedValue([uq]);
 
-        const result = await service.recordAction(
-          1234,
-          ObjectiveType.SUBMIT,
-          {},
-        );
+        const result = await service.onQuestAction(1234, ObjectiveType.SUBMIT);
 
         expect(uq.completedAt).not.toBeNull();
         expect(pointService.savePointGrantRequest).toHaveBeenCalledWith(
           1234,
           expect.anything(),
         );
-        expect(result).toContain(uq);
+        expect(result.completed).toContain(uq);
       });
 
       it("메타퀘스트의 카운트를 완료 건수만큼 증가시킨다", async () => {
+        skipAssignment();
         const uq = buildUserQuest({
           id: BigInt(10),
           quest: buildQuest({
@@ -318,14 +291,15 @@ describe("QuestService", () => {
           .mockResolvedValueOnce([uq])
           .mockResolvedValueOnce([metaUq]);
 
-        await service.recordAction(1234, ObjectiveType.SUBMIT, {});
+        await service.onQuestAction(1234, ObjectiveType.SUBMIT);
 
         expect(metaUq.currentCount).toBe(1);
       });
     });
 
     describe("메타퀘스트도 완료되면", () => {
-      it("완료 배열에 메타퀘스트도 포함한다", async () => {
+      it("완료 결과에 메타퀘스트도 포함한다", async () => {
+        skipAssignment();
         const uq = buildUserQuest({
           id: BigInt(10),
           quest: buildQuest({
@@ -348,20 +322,17 @@ describe("QuestService", () => {
           .mockResolvedValueOnce([uq])
           .mockResolvedValueOnce([metaUq]);
 
-        const result = await service.recordAction(
-          1234,
-          ObjectiveType.SUBMIT,
-          {},
-        );
+        const result = await service.onQuestAction(1234, ObjectiveType.SUBMIT);
 
-        expect(result).toContain(uq);
-        expect(result).toContain(metaUq);
+        expect(result.completed).toContain(uq);
+        expect(result.metaCompleted).toContain(metaUq);
         expect(metaUq.completedAt).not.toBeNull();
       });
     });
 
     describe("두 개의 퀘스트가 동시에 완료되면", () => {
       it("메타퀘스트 카운트가 2 증가한다", async () => {
+        skipAssignment();
         const uq1 = buildUserQuest({
           id: BigInt(10),
           quest: buildQuest({
@@ -394,7 +365,7 @@ describe("QuestService", () => {
           .mockResolvedValueOnce([uq1, uq2])
           .mockResolvedValueOnce([metaUq]);
 
-        await service.recordAction(1234, ObjectiveType.SUBMIT, {});
+        await service.onQuestAction(1234, ObjectiveType.SUBMIT);
 
         expect(metaUq.currentCount).toBe(2);
       });
