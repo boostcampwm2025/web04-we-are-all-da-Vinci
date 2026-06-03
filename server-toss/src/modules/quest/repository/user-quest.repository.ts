@@ -58,11 +58,68 @@ export class UserQuestRepository extends EntityRepository<UserQuest> {
       {
         user: { userKey },
         completedAt: null,
-        quest: { objectiveType: { $ne: ObjectiveType.QUEST_COMPLETED } },
+        quest: {
+          objectiveType: {
+            $nin: [
+              ObjectiveType.QUEST_COMPLETED,
+              ObjectiveType.TUTORIAL_COMPLETED,
+            ],
+          },
+        },
         $or: [
           { quest: { period: QuestPeriod.DAILY }, createdAt: todayStart },
           { quest: { period: QuestPeriod.WEEKLY }, createdAt: weekStart },
+          {
+            quest: {
+              period: QuestPeriod.TUTORIAL,
+              objectiveType: {
+                $in: [
+                  ObjectiveType.SUBMIT,
+                  ObjectiveType.SCORE,
+                  ObjectiveType.RETRY,
+                ],
+              },
+            },
+          },
         ],
+      },
+      { populate: ["quest"] },
+    );
+  }
+
+  async findTutorialQuests(userKey: number): Promise<UserQuest[]> {
+    return this.find(
+      {
+        user: { userKey },
+        quest: { period: QuestPeriod.TUTORIAL },
+      },
+      { populate: ["quest"] },
+    );
+  }
+
+  async findActiveTutorialByObjective(
+    userKey: number,
+    objectiveType: ObjectiveType,
+  ): Promise<UserQuest[]> {
+    return this.find(
+      {
+        user: { userKey },
+        completedAt: null,
+        quest: { period: QuestPeriod.TUTORIAL, objectiveType },
+      },
+      { populate: ["quest"] },
+    );
+  }
+
+  async findActiveTutorialMeta(userKey: number): Promise<UserQuest[]> {
+    return this.find(
+      {
+        user: { userKey },
+        completedAt: null,
+        quest: {
+          period: QuestPeriod.TUTORIAL,
+          objectiveType: ObjectiveType.TUTORIAL_COMPLETED,
+        },
       },
       { populate: ["quest"] },
     );

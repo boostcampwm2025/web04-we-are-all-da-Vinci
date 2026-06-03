@@ -9,4 +9,8 @@ export class QuestRepository extends EntityRepository<Quest> {
   async findRandom(period: QuestPeriod): Promise<Quest[]> {
     return this.find({ period, isFixed: false });
   }
+
+  async findTutorial(): Promise<Quest[]> {
+    return this.find({ period: QuestPeriod.TUTORIAL });
+  }
 }
