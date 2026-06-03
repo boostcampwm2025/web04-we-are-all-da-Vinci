@@ -7,18 +7,9 @@ import {
   type CurrentUserPayload,
 } from "../auth/decorators/current-user.decorator";
 import { MyQuestsResponseDto } from "./dto/my-quests-response.dto";
-import { ObjectiveType } from "./entity/quest.entity";
+import { ACTION_TYPE_TO_OBJECTIVE } from "./quest.constants";
 import { ZodValidationPipe } from "src/common/zod-validation.pipe";
 import { QuestActionSchema, type QuestAction } from "@toss/shared";
-
-const ACTION_TYPE_TO_OBJECTIVE: Record<string, ObjectiveType> = {
-  visit_ranking: ObjectiveType.VISIT_RANKING,
-  visit_podium: ObjectiveType.VISIT_PODIUM,
-  visit_quest_tab: ObjectiveType.VISIT_QUEST_TAB,
-  visit_drawing_detail: ObjectiveType.VISIT_DRAWING_DETAIL,
-  share: ObjectiveType.SHARE,
-  retry: ObjectiveType.RETRY,
-};
 
 @ApiTags("Quest")
 @UseGuards(JwtAuthGuard)

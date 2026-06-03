@@ -7,8 +7,13 @@ import { Drawing } from "src/modules/drawing/drawing.entity";
 import { MyQuestsResponseDto } from "./dto/my-quests-response.dto";
 import { ObjectiveType, Quest, QuestPeriod } from "./entity/quest.entity";
 import { UserQuest } from "./entity/user-quest.entity";
-import { QuestProcessor } from "./quest.processor";
+import {
+  DAILY_RANDOM_COUNT,
+  TUTORIAL_EPOCH,
+  WEEKLY_RANDOM_COUNT,
+} from "./quest.constants";
 import { QuestMapper } from "./quest.mapper";
+import { QuestProcessor } from "./quest.processor";
 import type {
   CycleResult,
   DrawingContext,
@@ -16,12 +21,6 @@ import type {
 } from "./quest.types";
 import type { QuestRepository } from "./repository/quest.repository";
 import type { UserQuestRepository } from "./repository/user-quest.repository";
-
-const DAILY_RANDOM_COUNT = 2;
-const WEEKLY_RANDOM_COUNT = 1;
-
-/** 튜토리얼 퀘스트의 고정 createdAt — 사용자당 1행 보장 */
-const TUTORIAL_EPOCH = new Date("2026-01-01T00:00:00.000Z");
 
 @Injectable()
 export class QuestService {
