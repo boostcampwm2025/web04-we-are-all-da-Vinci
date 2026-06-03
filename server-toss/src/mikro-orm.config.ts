@@ -5,6 +5,8 @@ import { AdView } from "./modules/chance/ad-view.entity";
 import { PlayChance } from "./modules/chance/play-chance.entity";
 import { ShareLog } from "./modules/chance/share-log.entity";
 import { Drawing } from "./modules/drawing/drawing.entity";
+import { NotificationAgreement } from "./modules/notification/notification-agreement.entity";
+import { SentNotification } from "./modules/notification/sent-notification.entity";
 import { PointLog } from "./modules/point/point-log.entity";
 import { DailyPrompt } from "./modules/prompt/daily-prompt.entity";
 import { Prompt } from "./modules/prompt/prompt.entity";
@@ -27,6 +29,8 @@ export default defineConfig({
     Ranking,
     PlayChance,
     ShareLog,
+    SentNotification,
+    NotificationAgreement,
   ],
   debug: process.env.NODE_ENV !== "production",
   forceUtcTimezone: true, // UTC로 시간 설정 고정

@@ -22,7 +22,29 @@ const validateWhitelist = (key: string, value: unknown): void => {
   throw new Error(`환경변수 검증 실패: ${key}: ${detail}`);
 };
 
-// ConfigModule validate 단계에서는 chance whitelist 두 키만 검사한다.
+const NonEmptyStringSchema = z.string().trim().min(1, "필수 환경변수예요.");
+
+const validateNonEmpty = (key: string, value: unknown): void => {
+  const parsed = NonEmptyStringSchema.safeParse(value);
+  if (parsed.success) return;
+
+  const detail = parsed.error.issues.map((issue) => issue.message).join(", ");
+  throw new Error(`환경변수 검증 실패: ${key}: ${detail}`);
+};
+
+const OptionalBooleanStringSchema = z
+  .enum(["true", "false"])
+  .optional()
+  .or(z.literal("").transform(() => undefined));
+
+const validateOptionalBoolean = (key: string, value: unknown): void => {
+  const parsed = OptionalBooleanStringSchema.safeParse(value);
+  if (parsed.success) return;
+
+  throw new Error(`환경변수 검증 실패: ${key}: true 또는 false만 허용돼요.`);
+};
+
+// ConfigModule validate 단계에서 검사하는 필수 env 모음.
 export const validateChanceWhitelistEnv = (
   config: Record<string, unknown>,
 ): Record<string, unknown> => {
@@ -31,5 +53,30 @@ export const validateChanceWhitelistEnv = (
     "SHARE_MODULE_ID_WHITELIST",
     config.SHARE_MODULE_ID_WHITELIST,
   );
+  validateOptionalBoolean(
+    "DAILY_PROMPT_NOTIFICATION_ENABLED",
+    config.DAILY_PROMPT_NOTIFICATION_ENABLED,
+  );
+  if (config.DAILY_PROMPT_NOTIFICATION_ENABLED === "true") {
+    validateNonEmpty(
+      "TOSS_TEMPLATE_DAILY_PROMPT",
+      config.TOSS_TEMPLATE_DAILY_PROMPT,
+    );
+    validateNonEmpty(
+      "TOSS_TEMPLATE_DAILY_PROMPT_AGREEMENT_CODE",
+      config.TOSS_TEMPLATE_DAILY_PROMPT_AGREEMENT_CODE,
+    );
+  }
+  validateOptionalBoolean(
+    "OVERTAKEN_NOTIFICATION_ENABLED",
+    config.OVERTAKEN_NOTIFICATION_ENABLED,
+  );
+  if (config.OVERTAKEN_NOTIFICATION_ENABLED === "true") {
+    validateNonEmpty("TOSS_TEMPLATE_OVERTAKEN", config.TOSS_TEMPLATE_OVERTAKEN);
+    validateNonEmpty(
+      "TOSS_TEMPLATE_OVERTAKEN_AGREEMENT_CODE",
+      config.TOSS_TEMPLATE_OVERTAKEN_AGREEMENT_CODE,
+    );
+  }
   return config;
 };
