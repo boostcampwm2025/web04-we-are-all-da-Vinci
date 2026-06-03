@@ -57,11 +57,15 @@ describe("QuestService", () => {
     questRepository = {
       findFixed: jest.fn(async () => []),
       findRandom: jest.fn(async () => []),
+      findTutorial: jest.fn(async () => []),
     };
 
     userQuestRepository = {
       findCurrentQuests: jest.fn(async () => []),
       findActiveByObjective: jest.fn(async () => []),
+      findTutorialQuests: jest.fn(async () => []),
+      findActiveTutorialByObjective: jest.fn(async () => []),
+      findActiveTutorialMeta: jest.fn(async () => []),
       createForUser: jest.fn((_userKey, quest, periodStart) => {
         return buildUserQuest({ quest, createdAt: periodStart });
       }),
@@ -137,6 +141,9 @@ describe("QuestService", () => {
       it("기존 퀘스트를 반환한다", async () => {
         const existing = [buildUserQuest()];
         userQuestRepository.findCurrentQuests.mockResolvedValue(existing);
+        userQuestRepository.findTutorialQuests.mockResolvedValue([
+          buildUserQuest(),
+        ]);
 
         const result = await service.assignOrGetQuests(1234);
 

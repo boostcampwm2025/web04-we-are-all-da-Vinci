@@ -8,7 +8,16 @@ export interface MyQuest {
   rewardAmount: number;
 }
 
+export interface TutorialCategoryDto {
+  category: string;
+  label: string;
+  rewardAmount: number;
+  isCompleted: boolean;
+  quests: MyQuest[];
+}
+
 export class MyQuestsResponseDto {
   dailyQuests!: MyQuest[];
   weeklyQuests!: MyQuest[];
+  tutorialCategories!: TutorialCategoryDto[];
 }

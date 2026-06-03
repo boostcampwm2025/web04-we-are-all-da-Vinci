@@ -12,9 +12,33 @@ export const QuestItemSchema = z.object({
 });
 export type QuestItem = z.infer<typeof QuestItemSchema>;
 
+// 튜토리얼 카테고리
+export const TutorialCategorySchema = z.object({
+  category: z.string(),
+  label: z.string(),
+  rewardAmount: z.number().int(),
+  isCompleted: z.boolean(),
+  quests: z.array(QuestItemSchema),
+});
+export type TutorialCategory = z.infer<typeof TutorialCategorySchema>;
+
 // GET /quests/me 응답
 export const MyQuestsResponseSchema = z.object({
   dailyQuests: z.array(QuestItemSchema),
   weeklyQuests: z.array(QuestItemSchema),
+  tutorialCategories: z.array(TutorialCategorySchema),
 });
 export type MyQuestsResponse = z.infer<typeof MyQuestsResponseSchema>;
+
+// POST /quests/action 요청
+export const QuestActionSchema = z.object({
+  actionType: z.enum([
+    "visit_ranking",
+    "visit_podium",
+    "visit_quest_tab",
+    "visit_drawing_detail",
+    "share",
+    "retry",
+  ]),
+});
+export type QuestAction = z.infer<typeof QuestActionSchema>;
