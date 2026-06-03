@@ -58,5 +58,126 @@
     "threshold": 70,
     "rewardType": "point",
     "rewardAmount": 2
+  },
+  {
+    "title": "첫 그림 그리기",
+    "period": "tutorial",
+    "isFixed": true,
+    "objectiveType": "submit",
+    "requiredCount": 1,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 0,
+    "category": "drawing"
+  },
+  {
+    "title": "70점 이상 달성하기",
+    "period": "tutorial",
+    "isFixed": true,
+    "objectiveType": "score",
+    "requiredCount": 1,
+    "threshold": 70,
+    "rewardType": "point",
+    "rewardAmount": 0,
+    "category": "drawing"
+  },
+  {
+    "title": "한번 더 도전하기",
+    "period": "tutorial",
+    "isFixed": true,
+    "objectiveType": "retry",
+    "requiredCount": 1,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 0,
+    "category": "drawing"
+  },
+  {
+    "title": "내 순위 확인하기",
+    "period": "tutorial",
+    "isFixed": true,
+    "objectiveType": "visit_ranking",
+    "requiredCount": 1,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 0,
+    "category": "explore"
+  },
+  {
+    "title": "오늘의 다빈치 구경하기",
+    "period": "tutorial",
+    "isFixed": true,
+    "objectiveType": "visit_podium",
+    "requiredCount": 1,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 0,
+    "category": "explore"
+  },
+  {
+    "title": "퀘스트 탭 확인하기",
+    "period": "tutorial",
+    "isFixed": true,
+    "objectiveType": "visit_quest_tab",
+    "requiredCount": 1,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 0,
+    "category": "explore"
+  },
+  {
+    "title": "그림 분석 보기",
+    "period": "tutorial",
+    "isFixed": true,
+    "objectiveType": "visit_drawing_detail",
+    "requiredCount": 1,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 0,
+    "category": "explore"
+  },
+  {
+    "title": "친구에게 공유하기",
+    "period": "tutorial",
+    "isFixed": true,
+    "objectiveType": "share",
+    "requiredCount": 1,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 0,
+    "category": "share"
+  },
+  {
+    "title": "그리기 튜토리얼 완료",
+    "period": "tutorial",
+    "isFixed": true,
+    "objectiveType": "tutorial_completed",
+    "requiredCount": 3,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 2,
+    "category": "drawing"
+  },
+  {
+    "title": "둘러보기 튜토리얼 완료",
+    "period": "tutorial",
+    "isFixed": true,
+    "objectiveType": "tutorial_completed",
+    "requiredCount": 4,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 2,
+    "category": "explore"
+  },
+  {
+    "title": "공유 튜토리얼 완료",
+    "period": "tutorial",
+    "isFixed": true,
+    "objectiveType": "tutorial_completed",
+    "requiredCount": 1,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 2,
+    "category": "share"
   }
 ]

@@ -19,7 +19,8 @@ const QuestDefinitionSchema = z.object({
   requiredCount: z.number().int().positive(),
   threshold: z.number().int().nullable().default(null),
   rewardType: z.enum(RewardType),
-  rewardAmount: z.number().int().positive(),
+  rewardAmount: z.number().int().min(0),
+  category: z.string().max(20).nullable().default(null),
 });
 
 const QuestsFileSchema = z
@@ -130,6 +131,7 @@ export class QuestSeedService {
           quest.threshold = def.threshold ?? undefined;
           quest.rewardType = def.rewardType;
           quest.rewardAmount = def.rewardAmount;
+          quest.category = def.category ?? undefined;
           txEm.persist(quest);
           added++;
           this.logger.log(
@@ -173,6 +175,10 @@ export class QuestSeedService {
     }
     if (quest.rewardAmount !== def.rewardAmount) {
       quest.rewardAmount = def.rewardAmount;
+      changed = true;
+    }
+    if (quest.category !== (def.category ?? undefined)) {
+      quest.category = def.category ?? undefined;
       changed = true;
     }
     return changed;
