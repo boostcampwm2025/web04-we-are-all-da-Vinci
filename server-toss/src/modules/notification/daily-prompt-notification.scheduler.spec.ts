@@ -8,7 +8,6 @@ import type { SentNotificationRepository } from "./sent-notification.repository"
 
 const buildScheduler = (opts: {
   enabled?: boolean;
-  agreementTemplateCode?: string;
   promptImpl?: jest.Mocked<PromptService>["getPromptByDate"];
   templateSetCode?: string;
   userKeys?: number[] | (() => Promise<number[]>);
@@ -25,9 +24,6 @@ const buildScheduler = (opts: {
     getOrThrow: jest.fn((key: string) => {
       if (key === "TOSS_TEMPLATE_DAILY_PROMPT") {
         return opts.templateSetCode ?? "daily_prompt_v1";
-      }
-      if (key === "TOSS_TEMPLATE_DAILY_PROMPT_AGREEMENT_CODE") {
-        return opts.agreementTemplateCode ?? "daily_prompt_agreement_v1";
       }
       throw new Error(`unexpected key: ${key}`);
     }),
@@ -160,7 +156,7 @@ describe("DailyPromptNotificationScheduler.run", () => {
       expect.objectContaining({
         type: NOTIFICATION_TYPE.DAILY_PROMPT,
         referenceId: "2026-05-26",
-        agreementTemplateCode: "daily_prompt_agreement_v1",
+        agreementTemplateCode: "daily_prompt_v1",
       }),
     );
     expect(notificationService.send).toHaveBeenCalledTimes(3);

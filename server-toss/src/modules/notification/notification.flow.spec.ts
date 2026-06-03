@@ -137,9 +137,6 @@ const buildFlow = (opts: {
     }),
     getOrThrow: jest.fn((key: string) => {
       if (key === "TOSS_TEMPLATE_DAILY_PROMPT") return "daily_prompt_v1";
-      if (key === "TOSS_TEMPLATE_DAILY_PROMPT_AGREEMENT_CODE") {
-        return "daily_prompt_agreement_v1";
-      }
       throw new Error(`unexpected key: ${key}`);
     }),
   } as unknown as jest.Mocked<ConfigService>;

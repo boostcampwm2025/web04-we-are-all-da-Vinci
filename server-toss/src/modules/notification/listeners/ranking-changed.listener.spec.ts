@@ -18,9 +18,6 @@ const buildListener = (opts?: {
     }),
     getOrThrow: jest.fn((key: string) => {
       if (key === "TOSS_TEMPLATE_OVERTAKEN") return "overtaken_v1";
-      if (key === "TOSS_TEMPLATE_OVERTAKEN_AGREEMENT_CODE") {
-        return "overtaken_agreement_v1";
-      }
       throw new Error(`unexpected key: ${key}`);
     }),
   } as unknown as jest.Mocked<ConfigService>;
@@ -141,7 +138,7 @@ describe("RankingChangedListener", () => {
     ).toHaveBeenCalledWith({
       userKeys: [101, 202, 303],
       type: NOTIFICATION_TYPE.OVERTAKEN,
-      templateCode: "overtaken_agreement_v1",
+      templateCode: "overtaken_v1",
     });
     expect(notificationService.send).toHaveBeenCalledTimes(1);
     expect(notificationService.send).toHaveBeenCalledWith(

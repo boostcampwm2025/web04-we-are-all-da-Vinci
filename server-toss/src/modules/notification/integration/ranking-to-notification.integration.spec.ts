@@ -184,7 +184,6 @@ class InMemoryNotificationAgreementRepository {
 }
 
 const OVERTAKEN_TEMPLATE = "overtaken_v1";
-const OVERTAKEN_AGREEMENT_TEMPLATE = "overtaken_agreement_v1";
 
 const buildIntegration = (opts: {
   enabled?: boolean;
@@ -202,9 +201,6 @@ const buildIntegration = (opts: {
     }),
     getOrThrow: jest.fn((key: string) => {
       if (key === "TOSS_TEMPLATE_OVERTAKEN") return OVERTAKEN_TEMPLATE;
-      if (key === "TOSS_TEMPLATE_OVERTAKEN_AGREEMENT_CODE") {
-        return OVERTAKEN_AGREEMENT_TEMPLATE;
-      }
       throw new Error(`unexpected key: ${key}`);
     }),
   } as unknown as jest.Mocked<ConfigService>;
@@ -216,7 +212,7 @@ const buildIntegration = (opts: {
       opts.agreements.map((a) => ({
         userKey: a.userKey,
         type: NOTIFICATION_TYPE.OVERTAKEN,
-        templateCode: OVERTAKEN_AGREEMENT_TEMPLATE,
+        templateCode: OVERTAKEN_TEMPLATE,
         status: a.status,
       })),
     );

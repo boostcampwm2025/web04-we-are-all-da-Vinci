@@ -71,15 +71,12 @@ export class RankingChangedListener {
     const templateSetCode = this.configService.getOrThrow<string>(
       "TOSS_TEMPLATE_OVERTAKEN",
     );
-    const agreementTemplateCode = this.configService.getOrThrow<string>(
-      "TOSS_TEMPLATE_OVERTAKEN_AGREEMENT_CODE",
-    );
 
     const agreedUserKeys =
       await this.notificationAgreementRepository.findAgreedUserKeysAmong({
         userKeys: [...event.overtakenUserKeys],
         type: NOTIFICATION_TYPE.OVERTAKEN,
-        templateCode: agreementTemplateCode,
+        templateCode: templateSetCode,
       });
 
     if (agreedUserKeys.length === 0) {

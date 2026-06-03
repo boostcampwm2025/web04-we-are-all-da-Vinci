@@ -15,9 +15,9 @@ type Props = {
 };
 
 const DAILY_PROMPT_TEMPLATE_CODE =
-  import.meta.env.VITE_TOSS_DAILY_PROMPT_AGREEMENT_TEMPLATE_CODE?.trim();
+  import.meta.env.VITE_TOSS_TEMPLATE_DAILY_PROMPT?.trim();
 const OVERTAKEN_TEMPLATE_CODE =
-  import.meta.env.VITE_TOSS_OVERTAKEN_AGREEMENT_TEMPLATE_CODE?.trim();
+  import.meta.env.VITE_TOSS_TEMPLATE_OVERTAKEN?.trim();
 
 // 알림 동의 토글 시트. 알림 목록 노출은 폐지 — 토글만 다룬다.
 // 시트 크기는 ShareSheet 패턴과 동일하게 BottomSheet 기본(콘텐츠 높이 자동).

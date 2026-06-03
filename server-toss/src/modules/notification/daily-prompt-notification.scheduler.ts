@@ -55,9 +55,7 @@ export class DailyPromptNotificationScheduler {
     const templateSetCode = this.configService.getOrThrow<string>(
       "TOSS_TEMPLATE_DAILY_PROMPT",
     );
-    const agreementTemplateCode = this.configService.getOrThrow<string>(
-      "TOSS_TEMPLATE_DAILY_PROMPT_AGREEMENT_CODE",
-    );
+    const agreementTemplateCode = templateSetCode;
     const todayRange = getSeoulDayRange();
     const referenceId = formatKstDate(todayRange.start);
 

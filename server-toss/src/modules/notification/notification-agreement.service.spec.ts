@@ -7,13 +7,13 @@ import {
   NOTIFICATION_TYPE,
 } from "./notification.constants";
 
-const AGREEMENT_TEMPLATE_CODE = "daily_prompt_agreement_v1";
+const TEMPLATE_CODE = "daily_prompt_v1";
 
 const buildService = () => {
   const configService = {
     getOrThrow: jest.fn((key: string) => {
-      if (key === "TOSS_TEMPLATE_DAILY_PROMPT_AGREEMENT_CODE") {
-        return AGREEMENT_TEMPLATE_CODE;
+      if (key === "TOSS_TEMPLATE_DAILY_PROMPT") {
+        return TEMPLATE_CODE;
       }
       throw new Error(`unexpected key: ${key}`);
     }),
@@ -52,7 +52,7 @@ describe("NotificationAgreementService", () => {
 
     expect(result).toEqual({
       status: "unknown",
-      templateCode: AGREEMENT_TEMPLATE_CODE,
+      templateCode: TEMPLATE_CODE,
       agreedAt: null,
       rejectedAt: null,
       lastEventAt: null,
@@ -62,7 +62,7 @@ describe("NotificationAgreementService", () => {
     ).toHaveBeenCalledWith({
       userKey: 123,
       type: NOTIFICATION_TYPE.DAILY_PROMPT,
-      templateCode: AGREEMENT_TEMPLATE_CODE,
+      templateCode: TEMPLATE_CODE,
     });
   });
 
@@ -74,7 +74,7 @@ describe("NotificationAgreementService", () => {
       notificationAgreementRepository.upsertStatus.mockResolvedValue({
         userKey: 123,
         type: NOTIFICATION_TYPE.DAILY_PROMPT,
-        templateCode: AGREEMENT_TEMPLATE_CODE,
+        templateCode: TEMPLATE_CODE,
         status: NOTIFICATION_AGREEMENT_STATUS.AGREED,
         agreedAt: now,
         rejectedAt: null,
@@ -90,7 +90,7 @@ describe("NotificationAgreementService", () => {
         {
           userKey: 123,
           type: NOTIFICATION_TYPE.DAILY_PROMPT,
-          templateCode: AGREEMENT_TEMPLATE_CODE,
+          templateCode: TEMPLATE_CODE,
           status: NOTIFICATION_AGREEMENT_STATUS.AGREED,
           agreedAt: now,
           rejectedAt: undefined,
@@ -108,7 +108,7 @@ describe("NotificationAgreementService", () => {
     notificationAgreementRepository.upsertStatus.mockResolvedValue({
       userKey: 123,
       type: NOTIFICATION_TYPE.DAILY_PROMPT,
-      templateCode: AGREEMENT_TEMPLATE_CODE,
+      templateCode: TEMPLATE_CODE,
       status: NOTIFICATION_AGREEMENT_STATUS.REJECTED,
       agreedAt: null,
       rejectedAt: now,
@@ -123,7 +123,7 @@ describe("NotificationAgreementService", () => {
     expect(notificationAgreementRepository.upsertStatus).toHaveBeenCalledWith({
       userKey: 123,
       type: NOTIFICATION_TYPE.DAILY_PROMPT,
-      templateCode: AGREEMENT_TEMPLATE_CODE,
+      templateCode: TEMPLATE_CODE,
       status: NOTIFICATION_AGREEMENT_STATUS.REJECTED,
       agreedAt: undefined,
       rejectedAt: now,

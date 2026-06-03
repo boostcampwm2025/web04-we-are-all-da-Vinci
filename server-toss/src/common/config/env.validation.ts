@@ -62,10 +62,6 @@ export const validateChanceWhitelistEnv = (
       "TOSS_TEMPLATE_DAILY_PROMPT",
       config.TOSS_TEMPLATE_DAILY_PROMPT,
     );
-    validateNonEmpty(
-      "TOSS_TEMPLATE_DAILY_PROMPT_AGREEMENT_CODE",
-      config.TOSS_TEMPLATE_DAILY_PROMPT_AGREEMENT_CODE,
-    );
   }
   validateOptionalBoolean(
     "OVERTAKEN_NOTIFICATION_ENABLED",
@@ -73,10 +69,6 @@ export const validateChanceWhitelistEnv = (
   );
   if (config.OVERTAKEN_NOTIFICATION_ENABLED === "true") {
     validateNonEmpty("TOSS_TEMPLATE_OVERTAKEN", config.TOSS_TEMPLATE_OVERTAKEN);
-    validateNonEmpty(
-      "TOSS_TEMPLATE_OVERTAKEN_AGREEMENT_CODE",
-      config.TOSS_TEMPLATE_OVERTAKEN_AGREEMENT_CODE,
-    );
   }
   return config;
 };

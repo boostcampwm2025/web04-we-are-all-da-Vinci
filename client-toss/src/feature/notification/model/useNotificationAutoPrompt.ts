@@ -3,9 +3,9 @@ import { formatLocalDate } from "@/shared/lib";
 import { useEffect, useState } from "react";
 
 const DAILY_PROMPT_TEMPLATE_CODE =
-  import.meta.env.VITE_TOSS_DAILY_PROMPT_AGREEMENT_TEMPLATE_CODE?.trim();
+  import.meta.env.VITE_TOSS_TEMPLATE_DAILY_PROMPT?.trim();
 const OVERTAKEN_TEMPLATE_CODE =
-  import.meta.env.VITE_TOSS_OVERTAKEN_AGREEMENT_TEMPLATE_CODE?.trim();
+  import.meta.env.VITE_TOSS_TEMPLATE_OVERTAKEN?.trim();
 
 // 게임 완료 후, 아직 응답하지 않은(unknown) 알림 동의가 하나라도 있으면 동의 시트를
 // 하루 1회 자동 노출한다.

@@ -44,7 +44,7 @@ export class NotificationAgreementService {
     return this.getAgreement(
       userKey,
       NOTIFICATION_TYPE.DAILY_PROMPT,
-      "TOSS_TEMPLATE_DAILY_PROMPT_AGREEMENT_CODE",
+      "TOSS_TEMPLATE_DAILY_PROMPT",
     );
   }
 
@@ -55,7 +55,7 @@ export class NotificationAgreementService {
     return this.saveAgreement({
       ...input,
       type: NOTIFICATION_TYPE.DAILY_PROMPT,
-      configKey: "TOSS_TEMPLATE_DAILY_PROMPT_AGREEMENT_CODE",
+      configKey: "TOSS_TEMPLATE_DAILY_PROMPT",
     });
   }
 
@@ -65,7 +65,7 @@ export class NotificationAgreementService {
     return this.getAgreement(
       userKey,
       NOTIFICATION_TYPE.OVERTAKEN,
-      "TOSS_TEMPLATE_OVERTAKEN_AGREEMENT_CODE",
+      "TOSS_TEMPLATE_OVERTAKEN",
     );
   }
 
@@ -76,7 +76,7 @@ export class NotificationAgreementService {
     return this.saveAgreement({
       ...input,
       type: NOTIFICATION_TYPE.OVERTAKEN,
-      configKey: "TOSS_TEMPLATE_OVERTAKEN_AGREEMENT_CODE",
+      configKey: "TOSS_TEMPLATE_OVERTAKEN",
     });
   }
 
