@@ -1,4 +1,8 @@
 import { useMyDrawings } from "@/entities/myScoreCard";
+import {
+  NotificationCenterSheet,
+  useNotificationAutoPrompt,
+} from "@/feature/notification";
 import { useFullScreenAd, usePlayChanceContext } from "@/feature/playChance";
 import {
   getCachedNickname,
@@ -29,6 +33,7 @@ const DashboardView = () => {
   const { state: locationState } = location;
   const { showDialog, setShowDialog, exit } = useExitGuard();
   const [isStartingGame, setIsStartingGame] = useState(false);
+  const [playedToday, setPlayedToday] = useState(false);
   const [toastOpen, setToastOpen] = useState(false);
   const [toastText, setToastText] = useState("일시적 오류가 발생했어요");
   const anonymousHashRef = useRef<string>("local");
@@ -52,6 +57,7 @@ const DashboardView = () => {
   );
 
   const selectedTab = location.pathname === RANKING_PATH ? 1 : 0;
+  const notificationAutoPrompt = useNotificationAutoPrompt(playedToday);
 
   useEffect(() => {
     if (nickname) return;
@@ -132,6 +138,12 @@ const DashboardView = () => {
       const hash = await getAnonymousHash();
       anonymousHashRef.current = hash;
 
+      // 자동시작 플래그(게임 시작 시 기록)에서 "오늘 플레이함"을 파생 — 알림 자동 시트 게이트.
+      // 모든 경로(첫 방문/제출 복귀/재방문)에서 분기보다 먼저 일관되게 세팅한다.
+      const today = formatLocalDate();
+      const lastPlayed = localStorage.getItem(`lastPlayed_${hash}`);
+      setPlayedToday(lastPlayed === today);
+
       if (fromSubmitted) {
         // state를 즉시 제거하여 재마운트 시 토스트 재표시 방지
         window.history.replaceState({}, "");
@@ -151,9 +163,6 @@ const DashboardView = () => {
         setInitialLoading(false);
         return;
       }
-
-      const today = formatLocalDate();
-      const lastPlayed = localStorage.getItem(`lastPlayed_${hash}`);
 
       if (lastPlayed === today) {
         setInitialLoading(false);
@@ -332,7 +341,7 @@ const DashboardView = () => {
             disabled={isStartingGame}
             onClick={() => startGame("cta")}
           >
-            광고 없이 {chanceCount}번 도전
+            {`광고 없이 ${chanceCount}번 도전`}
           </Button>
         ) : (
           <Button
@@ -346,6 +355,11 @@ const DashboardView = () => {
           </Button>
         )}
       </section>
+
+      <NotificationCenterSheet
+        open={notificationAutoPrompt.open}
+        onClose={notificationAutoPrompt.close}
+      />
 
       <ConfirmDialog
         open={showDialog}

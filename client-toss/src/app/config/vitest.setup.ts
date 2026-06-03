@@ -327,6 +327,21 @@ vi.mock("@toss/tds-mobile", () => ({
         createElement("span", { "aria-hidden": true, ...props }),
     },
   ),
+  Switch: ({
+    checked,
+    onChange,
+    ...props
+  }: Record<string, unknown> & {
+    checked?: boolean;
+    onChange?: () => void;
+  }) =>
+    createElement("input", {
+      type: "checkbox",
+      role: "switch",
+      checked: Boolean(checked),
+      onChange: onChange ?? (() => {}),
+      ...props,
+    }),
 }));
 
 vi.mock("@toss/tds-mobile-ait", () => ({
@@ -367,6 +382,7 @@ vi.mock("@apps-in-toss/web-framework", () => ({
   contactsViral: Object.assign(vi.fn().mockReturnValue(vi.fn()), {
     isSupported: vi.fn().mockReturnValue(false),
   }),
+  requestNotificationAgreement: vi.fn().mockReturnValue(vi.fn()),
   partner: {
     addAccessoryButton: vi.fn(),
   },
