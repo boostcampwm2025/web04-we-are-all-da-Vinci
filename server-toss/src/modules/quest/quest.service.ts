@@ -4,20 +4,18 @@ import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable, Logger } from "@nestjs/common";
 import { getSeoulDayRange, getSeoulWeekStart } from "src/common/util/time.util";
 import { Drawing } from "src/modules/drawing/drawing.entity";
-import type {
-  MyQuest,
-  TutorialCategoryDto,
-} from "./dto/my-quests-response.dto";
+import type { MyQuest } from "./dto/my-quests-response.dto";
 import { MyQuestsResponseDto } from "./dto/my-quests-response.dto";
+import type { TutorialCategoryDto } from "./dto/tutorial-category.dto";
 import { ObjectiveType, Quest, QuestPeriod } from "./entity/quest.entity";
 import { UserQuest } from "./entity/user-quest.entity";
+import { QuestProcessor } from "./quest.processor";
 import type {
   ActionContext,
   CycleResult,
   DrawingContext,
   DrawingSubmittedEvent,
 } from "./quest.types";
-import { QuestProcessor } from "./quest.processor";
 import type { QuestRepository } from "./repository/quest.repository";
 import type { UserQuestRepository } from "./repository/user-quest.repository";
 
@@ -232,25 +230,45 @@ export class QuestService {
     return [...result.completed, ...result.metaCompleted];
   }
 
-  // ─── 튜토리얼 액션 (방문/공유/재시도) ───
+  // ─── 퀘스트 액션 (방문/공유/재시도 등 — 전 period 대상) ───
 
   @Transactional()
-  async onTutorialAction(
+  async onQuestAction(
     userKey: number,
     objectiveType: ObjectiveType,
   ): Promise<CycleResult> {
+    const { start: todayStart } = getSeoulDayRange();
+    const weekStart = getSeoulWeekStart();
+
+    await this.ensureQuestsAssigned(userKey, todayStart, weekStart);
     await this.ensureTutorialAssigned(userKey);
 
-    const active = await this.userQuestRepository.findActiveTutorialByObjective(
+    const dailyWeeklyActive =
+      await this.userQuestRepository.findActiveByObjective(
+        userKey,
+        objectiveType,
+        todayStart,
+        weekStart,
+      );
+    const tutorialActive =
+      await this.userQuestRepository.findActiveTutorialByObjective(
+        userKey,
+        objectiveType,
+      );
+
+    const weeklyMeta = await this.userQuestRepository.findActiveByObjective(
       userKey,
-      objectiveType,
+      ObjectiveType.QUEST_COMPLETED,
+      todayStart,
+      weekStart,
     );
-    const meta = await this.userQuestRepository.findActiveTutorialMeta(userKey);
+    const tutorialMeta =
+      await this.userQuestRepository.findActiveTutorialMeta(userKey);
 
     const result = await this.processor.executeProgressCycle(
       userKey,
-      active,
-      meta,
+      [...dailyWeeklyActive, ...tutorialActive],
+      [...weeklyMeta, ...tutorialMeta],
       {},
     );
 

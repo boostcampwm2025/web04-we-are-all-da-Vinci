@@ -76,6 +76,6 @@ export class QuestController {
     const objectiveType = ACTION_TYPE_TO_OBJECTIVE[body.actionType];
     if (!objectiveType) return;
 
-    await this.questService.onTutorialAction(user.userKey, objectiveType);
+    await this.questService.onQuestAction(user.userKey, objectiveType);
   }
 }

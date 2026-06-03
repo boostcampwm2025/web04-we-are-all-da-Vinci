@@ -1,3 +1,5 @@
+import type { TutorialCategoryDto } from "./tutorial-category.dto";
+
 export interface MyQuest {
   userQuestId: number;
   questId: number;
@@ -6,14 +8,6 @@ export interface MyQuest {
   requiredCount: number;
   rewardType: string;
   rewardAmount: number;
-}
-
-export interface TutorialCategoryDto {
-  category: string;
-  label: string;
-  rewardAmount: number;
-  isCompleted: boolean;
-  quests: MyQuest[];
 }
 
 export class MyQuestsResponseDto {
