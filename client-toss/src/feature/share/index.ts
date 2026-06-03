@@ -1,1 +1,1 @@
-export { default as ShareSheet } from "./ui/ShareSheet";
+export { default as ShareFloatingButton } from "./ui/ShareFloatingButton";

@@ -1,12 +1,10 @@
 import { usePlayChanceContext } from "@/feature/playChance";
 import { FUNNEL_EVENTS, trackClick } from "@/shared/lib";
-import { partner, tdsEvent } from "@apps-in-toss/web-framework";
 import { BottomSheet, ListRow, Toast } from "@toss/tds-mobile";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { shareMyScore } from "../lib/handleShare";
 import { useInviteFriend } from "../model/useInviteFriend";
 
-const ACCESSORY_BUTTON_ID = "share";
 const TOAST_DURATION_MS = 2500;
 
 const OptionIcon = ({ emoji }: { emoji: string }) => (
@@ -45,12 +43,17 @@ const ShareOption = ({ emoji, top, bottom, onSelect }: ShareOptionProps) => (
   </div>
 );
 
+interface ShareSheetProps {
+  open: boolean;
+  onClose: () => void;
+}
+
 /**
- * 네비게이션 바 공유 버튼 하나로 통합된 공유 진입점.
- * 액세서리 버튼을 누르면 바텀시트로 "점수 자랑" / "친구 초대" 중 하나를 고른다.
+ * 공유 종류 선택 바텀시트. open/onClose로 제어되는 컨트롤드 컴포넌트이며,
+ * 트리거(우하단 공유 FAB)는 `ShareFloatingButton`이 보유한다.
+ * 시트에서 "점수 자랑" / "친구 초대" 중 하나를 고른다.
  */
-const ShareSheet = () => {
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+const ShareSheet = ({ open, onClose }: ShareSheetProps) => {
   const [toast, setToast] = useState<{ open: boolean; message: string }>({
     open: false,
     message: "",
@@ -73,29 +76,9 @@ const ShareSheet = () => {
     },
   });
 
-  useEffect(() => {
-    partner.addAccessoryButton({
-      id: ACCESSORY_BUTTON_ID,
-      title: "공유",
-      icon: {
-        name: "icon-share-dots-thin-mono",
-      },
-    });
-
-    const cleanup = tdsEvent.addEventListener("navigationAccessoryEvent", {
-      onEvent: ({ id }) => {
-        if (id === ACCESSORY_BUTTON_ID) {
-          setIsSheetOpen(true);
-        }
-      },
-    });
-
-    return cleanup;
-  }, []);
-
   const handleScoreShare = () => {
     trackClick(FUNNEL_EVENTS.shareScoreSelected);
-    setIsSheetOpen(false);
+    onClose();
     shareMyScore().catch((error) => {
       console.error(error);
       showToast("공유에 실패했어요. 잠시 후 다시 시도해주세요.");
@@ -104,15 +87,15 @@ const ShareSheet = () => {
 
   const handleInviteShare = () => {
     trackClick(FUNNEL_EVENTS.shareInviteSelected);
-    setIsSheetOpen(false);
+    onClose();
     startInvite();
   };
 
   return (
     <>
       <BottomSheet
-        open={isSheetOpen}
-        onClose={() => setIsSheetOpen(false)}
+        open={open}
+        onClose={onClose}
         header={<BottomSheet.Header>공유하기</BottomSheet.Header>}
       >
         <div className="flex flex-col pb-[env(safe-area-inset-bottom)]">
