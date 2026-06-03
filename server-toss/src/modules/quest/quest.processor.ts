@@ -4,6 +4,7 @@ import { DailyScoreCommand } from "./command/daily-score.command";
 import { DailySubmitCommand } from "./command/daily-submit.command";
 import { PenaltyCommand } from "./command/penalty.command";
 import { ScoreCommand } from "./command/score.command";
+import { SimpleActionCommand } from "./command/simple-action.command";
 import { SubmitCommand } from "./command/submit.command";
 import { ObjectiveType, Quest, RewardType } from "./entity/quest.entity";
 import { UserQuest } from "./entity/user-quest.entity";
@@ -13,18 +14,23 @@ import { PointReason } from "../point/entity/point-log.entity";
 @Injectable()
 export class QuestProcessor {
   private readonly logger = new Logger(QuestProcessor.name);
-  private readonly commandMap: Record<
-    Exclude<ObjectiveType, ObjectiveType.QUEST_COMPLETED>,
-    QuestCommand
-  >;
+  private readonly commandMap: Partial<Record<ObjectiveType, QuestCommand>>;
 
   constructor(private readonly pointService: PointService) {
+    const simpleAction = new SimpleActionCommand();
+
     this.commandMap = {
       [ObjectiveType.SUBMIT]: new SubmitCommand(),
       [ObjectiveType.SCORE]: new ScoreCommand(),
       [ObjectiveType.PENALTY]: new PenaltyCommand(),
       [ObjectiveType.DAILY_SUBMIT]: new DailySubmitCommand(),
       [ObjectiveType.DAILY_SCORE]: new DailyScoreCommand(),
+      [ObjectiveType.VISIT_RANKING]: simpleAction,
+      [ObjectiveType.VISIT_PODIUM]: simpleAction,
+      [ObjectiveType.VISIT_QUEST_TAB]: simpleAction,
+      [ObjectiveType.VISIT_DRAWING_DETAIL]: simpleAction,
+      [ObjectiveType.SHARE]: simpleAction,
+      [ObjectiveType.RETRY]: simpleAction,
     };
   }
 
@@ -51,13 +57,7 @@ export class QuestProcessor {
     const completed: UserQuest[] = [];
 
     for (const uq of activeQuests) {
-      const command =
-        this.commandMap[
-          uq.quest.objectiveType as Exclude<
-            ObjectiveType,
-            ObjectiveType.QUEST_COMPLETED
-          >
-        ];
+      const command = this.commandMap[uq.quest.objectiveType];
       if (!command?.execute(uq, context)) continue;
       if (this.completeIfFulfilled(uq)) completed.push(uq);
     }
@@ -72,7 +72,14 @@ export class QuestProcessor {
     const metaCompleted: UserQuest[] = [];
 
     for (const mq of metaQuests) {
-      mq.currentCount += completed.length;
+      const category = mq.quest.category;
+      // category가 있으면 → 같은 카테고리의 완료 수만 카운트 (튜토리얼)
+      // category가 없으면 → 전체 완료 수 카운트 (일일/주간 메타)
+      const relevantCount = category
+        ? completed.filter((c) => c.quest.category === category).length
+        : completed.length;
+
+      mq.currentCount += relevantCount;
       if (this.completeIfFulfilled(mq)) metaCompleted.push(mq);
     }
 
@@ -90,6 +97,7 @@ export class QuestProcessor {
     completed: UserQuest[],
   ): Promise<void> {
     for (const uq of completed) {
+      if (uq.quest.rewardAmount === 0) continue;
       await this.grantReward(userKey, uq.quest);
 
       this.logger.log(
