@@ -4,30 +4,17 @@ import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable, Logger } from "@nestjs/common";
 import { getSeoulDayRange, getSeoulWeekStart } from "src/common/util/time.util";
 import { Drawing } from "src/modules/drawing/drawing.entity";
-import { PointService } from "src/modules/point/point.service";
-import { DailyScoreCommand } from "./command/daily-score.command";
-import { DailySubmitCommand } from "./command/daily-submit.command";
-import { PenaltyCommand } from "./command/penalty.command";
-import { ScoreCommand } from "./command/score.command";
-import { SubmitCommand } from "./command/submit.command";
 import { MyQuestsResponseDto } from "./dto/my-quests-response.dto";
-import {
-  ObjectiveType,
-  Quest,
-  QuestPeriod,
-  RewardType,
-} from "./entity/quest.entity";
+import { ObjectiveType, Quest, QuestPeriod } from "./entity/quest.entity";
 import { UserQuest } from "./entity/user-quest.entity";
 import type {
   ActionContext,
   DrawingContext,
   DrawingSubmittedEvent,
-  QuestCommand,
-  QuestCompletedAction,
 } from "./quest.types";
+import { QuestProcessor } from "./quest.processor";
 import type { QuestRepository } from "./repository/quest.repository";
 import type { UserQuestRepository } from "./repository/user-quest.repository";
-import { PointReason } from "../point/entity/point-log.entity";
 
 const DAILY_RANDOM_COUNT = 2;
 const WEEKLY_RANDOM_COUNT = 1;
@@ -35,27 +22,15 @@ const WEEKLY_RANDOM_COUNT = 1;
 @Injectable()
 export class QuestService {
   private readonly logger = new Logger(QuestService.name);
-  private readonly commandMap: Record<
-    Exclude<ObjectiveType, ObjectiveType.QUEST_COMPLETED>,
-    QuestCommand
-  >;
 
   constructor(
     @InjectRepository(Quest)
     private readonly questRepository: QuestRepository,
     @InjectRepository(UserQuest)
     private readonly userQuestRepository: UserQuestRepository,
-    private readonly pointService: PointService,
+    private readonly processor: QuestProcessor,
     private readonly em: EntityManager,
-  ) {
-    this.commandMap = {
-      [ObjectiveType.SUBMIT]: new SubmitCommand(),
-      [ObjectiveType.SCORE]: new ScoreCommand(),
-      [ObjectiveType.PENALTY]: new PenaltyCommand(),
-      [ObjectiveType.DAILY_SUBMIT]: new DailySubmitCommand(),
-      [ObjectiveType.DAILY_SCORE]: new DailyScoreCommand(),
-    };
-  }
+  ) {}
 
   async myQuests(userKey: number): Promise<MyQuestsResponseDto> {
     const { start: todayStart } = getSeoulDayRange();
@@ -129,30 +104,23 @@ export class QuestService {
       todayStart,
       weekStart,
     );
-
-    const completed: UserQuest[] = [];
-    for (const uq of activeQuests) {
-      const command =
-        this.commandMap[
-          uq.quest.objectiveType as Exclude<
-            ObjectiveType,
-            ObjectiveType.QUEST_COMPLETED
-          >
-        ];
-      if (!command?.execute(uq, context)) continue;
-      if (this.completeIfFulfilled(uq)) completed.push(uq);
-    }
-
-    await this.grantRewards(userKey, completed);
-    const metaCompleted = await this.processMetaQuests(
+    const metaQuests = await this.userQuestRepository.findActiveByObjective(
       userKey,
-      completed,
+      ObjectiveType.QUEST_COMPLETED,
       todayStart,
       weekStart,
     );
+
+    const result = await this.processor.executeProgressCycle(
+      userKey,
+      activeQuests,
+      metaQuests,
+      context,
+    );
+
     await this.userQuestRepository.flush();
 
-    return [...completed, ...metaCompleted];
+    return [...result.completed, ...result.metaCompleted];
   }
 
   @Transactional()
@@ -164,23 +132,29 @@ export class QuestService {
     const { start: todayStart } = getSeoulDayRange();
     const weekStart = getSeoulWeekStart();
 
-    const completed = await this.progressQuests(
+    const activeQuests = await this.userQuestRepository.findActiveByObjective(
       userKey,
       objectiveType,
-      context,
       todayStart,
       weekStart,
     );
-    const metaCompleted = await this.processMetaQuests(
+    const metaQuests = await this.userQuestRepository.findActiveByObjective(
       userKey,
-      completed,
+      ObjectiveType.QUEST_COMPLETED,
       todayStart,
       weekStart,
+    );
+
+    const result = await this.processor.executeProgressCycle(
+      userKey,
+      activeQuests,
+      metaQuests,
+      context,
     );
 
     await this.userQuestRepository.flush();
 
-    return [...completed, ...metaCompleted];
+    return [...result.completed, ...result.metaCompleted];
   }
 
   @Transactional()
@@ -274,87 +248,6 @@ export class QuestService {
     return { dailyQuests, weeklyQuests };
   }
 
-  private async progressQuests(
-    userKey: number,
-    objectiveType: Exclude<ObjectiveType, ObjectiveType.QUEST_COMPLETED>,
-    context: ActionContext,
-    todayStart: Date,
-    weekStart: Date,
-  ): Promise<UserQuest[]> {
-    const activeQuests = await this.userQuestRepository.findActiveByObjective(
-      userKey,
-      objectiveType,
-      todayStart,
-      weekStart,
-    );
-
-    const completed: UserQuest[] = [];
-    const command = this.commandMap[objectiveType];
-
-    for (const uq of activeQuests) {
-      if (!command.execute(uq, context)) continue;
-      if (this.completeIfFulfilled(uq)) completed.push(uq);
-    }
-
-    await this.grantRewards(userKey, completed);
-
-    return completed;
-  }
-
-  private async processMetaQuests(
-    userKey: number,
-    completed: UserQuest[],
-    todayStart: Date,
-    weekStart: Date,
-  ): Promise<UserQuest[]> {
-    if (completed.length === 0) return [];
-
-    const metaQuests = await this.userQuestRepository.findActiveByObjective(
-      userKey,
-      ObjectiveType.QUEST_COMPLETED,
-      todayStart,
-      weekStart,
-    );
-
-    const completedIds = completed.map((uq) => uq.id);
-    const metaCompleted: UserQuest[] = [];
-
-    for (const uq of metaQuests) {
-      this.applyQuestCompleted(uq, { completedQuestIds: completedIds });
-      if (this.completeIfFulfilled(uq)) metaCompleted.push(uq);
-    }
-
-    await this.grantRewards(userKey, metaCompleted);
-
-    return metaCompleted;
-  }
-
-  private completeIfFulfilled(uq: UserQuest): boolean {
-    if (uq.currentCount < uq.quest.requiredCount) return false;
-    uq.completedAt = new Date();
-    return true;
-  }
-
-  private async grantRewards(
-    userKey: number,
-    completed: UserQuest[],
-  ): Promise<void> {
-    for (const uq of completed) {
-      await this.grantReward(userKey, uq.quest);
-
-      this.logger.log(
-        {
-          event: "quest.complete.succeeded",
-          userKey,
-          questId: uq.quest.id.toString(),
-          rewardType: uq.quest.rewardType,
-          rewardAmount: uq.quest.rewardAmount,
-        },
-        "퀘스트 완료",
-      );
-    }
-  }
-
   private async assignQuests(
     userKey: number,
     period: QuestPeriod,
@@ -377,25 +270,5 @@ export class QuestService {
   private pickRandom<T>(items: T[], count: number): T[] {
     const shuffled = [...items].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, count);
-  }
-
-  private applyQuestCompleted(
-    userQuest: UserQuest,
-    context: QuestCompletedAction,
-  ): void {
-    userQuest.currentCount += context.completedQuestIds.length;
-  }
-
-  private async grantReward(userKey: number, quest: Quest): Promise<void> {
-    switch (quest.rewardType) {
-      case RewardType.POINT:
-        await this.pointService.savePointGrantRequest(
-          userKey,
-          PointReason.QUEST,
-        );
-        break;
-      case RewardType.CHANCE:
-        break;
-    }
   }
 }

@@ -8,6 +8,7 @@ jest.mock("src/common/util/time.util", () => ({
 
 import { Test } from "@nestjs/testing";
 import { QuestService } from "../quest.service";
+import { QuestProcessor } from "../quest.processor";
 import { PointService } from "src/modules/point/point.service";
 import {
   ObjectiveType,
@@ -19,6 +20,7 @@ import { UserQuest } from "../entity/user-quest.entity";
 
 const QUEST_REPO_TOKEN = "QuestRepository";
 const USER_QUEST_REPO_TOKEN = "UserQuestRepository";
+const ENTITY_MANAGER_TOKEN = "EntityManager";
 
 const buildQuest = (overrides: Partial<Quest> = {}): Quest =>
   ({
@@ -67,20 +69,34 @@ describe("QuestService", () => {
     };
 
     pointService = {
-      grantDrawingPromotionIfEligible: jest.fn(async () => true),
+      savePointGrantRequest: jest.fn(async () => undefined),
     };
 
     const module = await Test.createTestingModule({
       providers: [
         {
           provide: QuestService,
-          useFactory: (questRepo, userQuestRepo, pointSvc) =>
-            new QuestService(questRepo, userQuestRepo, pointSvc),
-          inject: [QUEST_REPO_TOKEN, USER_QUEST_REPO_TOKEN, PointService],
+          useFactory: (questRepo, userQuestRepo, processor, em) =>
+            new QuestService(questRepo, userQuestRepo, processor, em),
+          inject: [
+            QUEST_REPO_TOKEN,
+            USER_QUEST_REPO_TOKEN,
+            QuestProcessor,
+            ENTITY_MANAGER_TOKEN,
+          ],
         },
         { provide: QUEST_REPO_TOKEN, useValue: questRepository },
         { provide: USER_QUEST_REPO_TOKEN, useValue: userQuestRepository },
+        {
+          provide: QuestProcessor,
+          useFactory: (pointSvc: PointService) => new QuestProcessor(pointSvc),
+          inject: [PointService],
+        },
         { provide: PointService, useValue: pointService },
+        {
+          provide: ENTITY_MANAGER_TOKEN,
+          useValue: { find: jest.fn(async () => []) },
+        },
       ],
     }).compile();
 
@@ -265,9 +281,10 @@ describe("QuestService", () => {
         );
 
         expect(uq.completedAt).not.toBeNull();
-        expect(
-          pointService.grantDrawingPromotionIfEligible,
-        ).toHaveBeenCalledWith(1234);
+        expect(pointService.savePointGrantRequest).toHaveBeenCalledWith(
+          1234,
+          expect.anything(),
+        );
         expect(result).toContain(uq);
       });
 

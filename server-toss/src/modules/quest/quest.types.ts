@@ -20,3 +20,8 @@ export type ActionContext = DrawingContext | QuestCompletedAction;
 export interface QuestCommand {
   execute(userQuest: UserQuest, context: ActionContext): boolean;
 }
+
+export interface CycleResult {
+  completed: UserQuest[];
+  metaCompleted: UserQuest[];
+}
