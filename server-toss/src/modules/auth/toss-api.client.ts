@@ -9,6 +9,12 @@ import {
   TossPromotionError,
   TossTransportError,
 } from "src/modules/auth/errors/toss.errors";
+import {
+  type BulkSendMessageInput,
+  type SendMessageInput,
+  type TossMessengerResponse,
+  TossMessengerResponseSchema,
+} from "src/modules/auth/schemas/toss-messenger.schema";
 import type {
   TossPromotionExecuteResponse,
   TossPromotionKeyResponse,
@@ -126,6 +132,55 @@ export class TossApiClient {
     }
 
     return data.success.key;
+  }
+
+  async sendMessage(input: SendMessageInput): Promise<TossMessengerResponse> {
+    const { userKey, templateSetCode, context } = input;
+
+    const raw = await this.request<unknown>(
+      "POST",
+      TOSS_API_ENDPOINTS.SEND_MESSAGE,
+      {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+        "x-toss-user-key": String(userKey),
+      },
+      JSON.stringify({ templateSetCode, context }),
+    );
+
+    const parsed = TossMessengerResponseSchema.safeParse(raw);
+    if (!parsed.success) {
+      throw new TossTransportError(
+        `Toss 메신저 응답 형식이 올바르지 않아요: ${parsed.error.message}`,
+      );
+    }
+
+    return parsed.data;
+  }
+
+  async sendBulkMessage(
+    input: BulkSendMessageInput,
+  ): Promise<TossMessengerResponse> {
+    const { templateSetCode, contextList } = input;
+
+    const raw = await this.request<unknown>(
+      "POST",
+      TOSS_API_ENDPOINTS.SEND_BULK_MESSAGE,
+      {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+      JSON.stringify({ templateSetCode, contextList }),
+    );
+
+    const parsed = TossMessengerResponseSchema.safeParse(raw);
+    if (!parsed.success) {
+      throw new TossTransportError(
+        `Toss 메신저 응답 형식이 올바르지 않아요: ${parsed.error.message}`,
+      );
+    }
+
+    return parsed.data;
   }
 
   async executePromotion(
