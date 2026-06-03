@@ -12,6 +12,7 @@ import { QuestRepository } from "../repository/quest.repository";
 export enum QuestPeriod {
   DAILY = "daily",
   WEEKLY = "weekly",
+  TUTORIAL = "tutorial",
 }
 
 export enum ObjectiveType {
@@ -21,6 +22,13 @@ export enum ObjectiveType {
   DAILY_SUBMIT = "daily_submit",
   DAILY_SCORE = "daily_score",
   QUEST_COMPLETED = "quest_completed",
+  VISIT_RANKING = "visit_ranking",
+  VISIT_PODIUM = "visit_podium",
+  VISIT_QUEST_TAB = "visit_quest_tab",
+  VISIT_DRAWING_DETAIL = "visit_drawing_detail",
+  SHARE = "share",
+  RETRY = "retry",
+  TUTORIAL_COMPLETED = "tutorial_completed",
 }
 
 export enum RewardType {
@@ -58,4 +66,7 @@ export class Quest extends BaseEntity {
 
   @Property({ name: "reward_amount", type: "int" })
   rewardAmount!: number;
+
+  @Property({ name: "category", type: "varchar(20)", nullable: true })
+  category?: Opt<string>;
 }

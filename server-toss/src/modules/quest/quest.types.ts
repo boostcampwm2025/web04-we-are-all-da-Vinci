@@ -15,7 +15,12 @@ export type QuestCompletedAction = {
   completedQuestIds: bigint[];
 };
 
-export type ActionContext = DrawingContext | QuestCompletedAction;
+export type TutorialActionContext = Record<string, never>;
+
+export type ActionContext =
+  | DrawingContext
+  | QuestCompletedAction
+  | TutorialActionContext;
 
 export interface QuestCommand {
   execute(userQuest: UserQuest, context: ActionContext): boolean;
