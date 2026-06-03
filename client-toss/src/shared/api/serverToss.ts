@@ -5,6 +5,7 @@ import type {
   AdSdkPayload,
   MyDrawingResponse,
   MyDrawingsResponse,
+  type NotificationAgreementRequest,
   ShareSdkPayload,
   Stroke,
   SubmitStrokesRequest,
@@ -13,6 +14,7 @@ import {
   ChargeResponseSchema,
   LoginResponseSchema,
   MyChanceResponseSchema,
+  NotificationAgreementResponseSchema,
   PromptResponseSchema,
   SimilarityResponseSchema,
   SubmitDrawingResponseSchema,
@@ -203,6 +205,48 @@ export const serverTossApi = {
   getMyChance: async (options?: RequestOptions) =>
     MyChanceResponseSchema.parse(
       await request<unknown>("GET", "/chances/me", undefined, options),
+    ),
+
+  getDailyPromptNotificationAgreement: async (options?: RequestOptions) =>
+    NotificationAgreementResponseSchema.parse(
+      await request<unknown>(
+        "GET",
+        "/notifications/daily-prompt/agreement",
+        undefined,
+        options,
+      ),
+    ),
+
+  saveDailyPromptNotificationAgreement: async (
+    body: NotificationAgreementRequest,
+  ) =>
+    NotificationAgreementResponseSchema.parse(
+      await request<unknown>(
+        "POST",
+        "/notifications/daily-prompt/agreement",
+        body,
+      ),
+    ),
+
+  getOvertakenNotificationAgreement: async (options?: RequestOptions) =>
+    NotificationAgreementResponseSchema.parse(
+      await request<unknown>(
+        "GET",
+        "/notifications/overtaken/agreement",
+        undefined,
+        options,
+      ),
+    ),
+
+  saveOvertakenNotificationAgreement: async (
+    body: NotificationAgreementRequest,
+  ) =>
+    NotificationAgreementResponseSchema.parse(
+      await request<unknown>(
+        "POST",
+        "/notifications/overtaken/agreement",
+        body,
+      ),
     ),
 
   chargeChanceByAd: async (sdkPayload: AdSdkPayload) =>
