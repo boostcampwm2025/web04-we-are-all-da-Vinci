@@ -8,6 +8,7 @@ import { InjectRepository } from "@mikro-orm/nestjs";
 import { Transactional } from "@mikro-orm/decorators/legacy";
 import { PointService } from "src/modules/point/point.service";
 import { PointReason } from "src/modules/point/entity/point-log.entity";
+import { QuestService } from "src/modules/quest/quest.service";
 
 @Injectable()
 export class SaveDrawingService {
@@ -16,6 +17,7 @@ export class SaveDrawingService {
     private readonly drawingRepository: DrawingRepository,
     private readonly rankingService: RankingService,
     private readonly pointService: PointService,
+    private readonly questService: QuestService,
   ) {}
 
   @Transactional()
@@ -39,6 +41,12 @@ export class SaveDrawingService {
       user.userKey,
       PointReason.DRAWING,
     );
+
+    await this.questService.onDrawingSubmitted(user.userKey, {
+      drawingId: drawing.id,
+      score: similarity.score,
+      penalty: similarity.penalty,
+    });
 
     return { drawing, promotionGranted };
   }

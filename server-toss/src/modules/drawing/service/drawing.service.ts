@@ -6,7 +6,6 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
-import { QuestService } from "src/modules/quest/quest.service";
 import { UserService } from "src/modules/user/user.service";
 import { PromptService } from "../../prompt/prompt.service";
 import { Drawing } from "../drawing.entity";
@@ -30,7 +29,6 @@ export class DrawingService {
   constructor(
     private readonly userService: UserService,
     private readonly promptService: PromptService,
-    private readonly questService: QuestService,
     @InjectRepository(Drawing)
     private readonly drawingRepository: DrawingRepository,
     private readonly saveDrawingService: SaveDrawingService,
@@ -119,12 +117,6 @@ export class DrawingService {
       },
       "최종 드로잉 제출 성공",
     );
-
-    await this.questService.onDrawingSubmitted(userKey, {
-      drawingId: drawing.id,
-      score: similarity.score,
-      penalty: similarity.penalty,
-    });
 
     return {
       drawingId: Number(drawing.id),
