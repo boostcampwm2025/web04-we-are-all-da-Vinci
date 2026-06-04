@@ -1,6 +1,7 @@
 import { MyScoreCard, useDrawing } from "@/entities/myScoreCard";
 import { PhaseHeader } from "@/entities/phaseHeader";
 import { AD_GROUP_IDS } from "@/shared/config";
+import { useQuestAction } from "@/shared/hooks/useQuestAction";
 import { FUNNEL_EVENTS, trackScreen } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";
@@ -21,6 +22,8 @@ const RankingDetailView = () => {
       rank != null ? { rank } : undefined,
     );
   }, [rank]);
+
+  useQuestAction("visit_drawing_detail");
 
   const renderBody = () => {
     if (isLoading) {

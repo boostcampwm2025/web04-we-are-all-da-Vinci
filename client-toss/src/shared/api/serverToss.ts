@@ -231,4 +231,7 @@ export const serverTossApi = {
     MyQuestsResponseSchema.parse(
       await request<unknown>("POST", "/quests/me", undefined, options),
     ),
+
+  reportQuestAction: (actionType: string) =>
+    request<void>("POST", "/quests/action", { actionType }),
 };

@@ -1,6 +1,7 @@
 import { Podium } from "@/entities/podium";
 import { RankingList } from "@/entities/ranking";
 import { AD_GROUP_IDS } from "@/shared/config";
+import { useQuestAction } from "@/shared/hooks/useQuestAction";
 import { FUNNEL_EVENTS, trackScreen } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { ListHeader } from "@toss/tds-mobile";
@@ -10,6 +11,9 @@ const RankingView = () => {
   useEffect(() => {
     trackScreen(FUNNEL_EVENTS.rankingView);
   }, []);
+
+  useQuestAction("visit_ranking");
+  useQuestAction("visit_podium");
 
   return (
     <div className="pb-2">

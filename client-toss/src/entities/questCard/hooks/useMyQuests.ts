@@ -10,7 +10,11 @@ const fetchOrAssignQuests = async ({
 }): Promise<MyQuestsResponse> => {
   const result = await serverTossApi.getMyQuests({ signal });
 
-  if (result.dailyQuests.length === 0 && result.weeklyQuests.length === 0) {
+  if (
+    result.dailyQuests.length === 0 &&
+    result.weeklyQuests.length === 0 &&
+    result.tutorialCategories.length === 0
+  ) {
     return serverTossApi.assignMyQuests({ signal });
   }
 
@@ -26,6 +30,7 @@ const useMyQuests = () => {
   return {
     dailyQuests: data?.dailyQuests ?? [],
     weeklyQuests: data?.weeklyQuests ?? [],
+    tutorialCategories: data?.tutorialCategories ?? [],
     isLoading,
     refetch,
   };
