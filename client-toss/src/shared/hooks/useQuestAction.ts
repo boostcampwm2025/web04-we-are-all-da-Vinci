@@ -1,4 +1,5 @@
 import { serverTossApi } from "@/shared/api";
+import type { QuestAction } from "@toss/shared";
 import { useEffect, useRef } from "react";
 
 /**
@@ -6,7 +7,7 @@ import { useEffect, useRef } from "react";
  * sessionStorage로 세션 내 중복 호출을 방지하고,
  * 서버 측에서도 이미 완료된 퀘스트는 무시하므로 멱등하다.
  */
-const useQuestAction = (actionType: string) => {
+const useQuestAction = (actionType: QuestAction["actionType"]) => {
   const reported = useRef(false);
 
   useEffect(() => {

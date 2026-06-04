@@ -5,6 +5,7 @@ import type {
   AdSdkPayload,
   MyDrawingResponse,
   MyDrawingsResponse,
+  QuestAction,
   ShareSdkPayload,
   Stroke,
   SubmitStrokesRequest,
@@ -232,6 +233,6 @@ export const serverTossApi = {
       await request<unknown>("POST", "/quests/me", undefined, options),
     ),
 
-  reportQuestAction: (actionType: string) =>
+  reportQuestAction: (actionType: QuestAction["actionType"]) =>
     request<void>("POST", "/quests/action", { actionType }),
 };

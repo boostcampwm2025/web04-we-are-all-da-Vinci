@@ -4,7 +4,7 @@ import {
   QUEST_SECTIONS,
   TutorialQuestSection,
 } from "@/entities/questCard";
-import { useQuestAction } from "@/shared/hooks/useQuestAction";
+import { useQuestAction } from "@/shared/hooks";
 import { FUNNEL_EVENTS, trackScreen } from "@/shared/lib";
 import { useEffect } from "react";
 import { useMyQuests } from "@/entities/questCard";

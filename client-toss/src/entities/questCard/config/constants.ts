@@ -12,7 +12,7 @@ export const QUEST_SECTIONS = {
 export type QuestSectionConfig =
   (typeof QUEST_SECTIONS)[keyof typeof QUEST_SECTIONS];
 
-export const REWARD_LABEL: Record<string, string> = {
+export const REWARD_LABEL = {
   point: "P",
   chance: "회",
-};
+} as const satisfies Record<"point" | "chance", string>;
