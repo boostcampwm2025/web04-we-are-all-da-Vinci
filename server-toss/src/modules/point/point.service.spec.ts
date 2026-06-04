@@ -129,9 +129,8 @@ describe("PointService", () => {
         });
         jest.spyOn(service, "canGrantTodayPromotion").mockResolvedValue(true);
 
-        const user = buildUser(1234);
         const result = await service.savePointGrantRequest(
-          user,
+          1234,
           PointReason.DRAWING,
         );
 
@@ -150,7 +149,7 @@ describe("PointService", () => {
         jest.spyOn(service, "canGrantTodayPromotion").mockResolvedValue(false);
 
         const result = await service.savePointGrantRequest(
-          buildUser(1234),
+          1234,
           PointReason.DRAWING,
         );
 

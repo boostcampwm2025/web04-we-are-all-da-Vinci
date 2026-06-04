@@ -206,7 +206,7 @@ describe("SaveDrawingService", () => {
         expect(savedRanking.drawingId).toBe(saved.id);
         expect(savedRanking.score).toBe(sampleSimilarity.score);
         expect(pointService.savePointGrantRequest).toHaveBeenCalledWith(
-          user,
+          user.userKey,
           PointReason.DRAWING,
         );
       });
