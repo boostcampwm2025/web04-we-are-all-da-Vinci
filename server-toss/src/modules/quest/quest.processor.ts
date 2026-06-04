@@ -5,7 +5,6 @@ import { DailySubmitCommand } from "./command/daily-submit.command";
 import { PenaltyCommand } from "./command/penalty.command";
 import { ScoreCommand } from "./command/score.command";
 import { SimpleActionCommand } from "./command/simple-action.command";
-import { SubmitCommand } from "./command/submit.command";
 import {
   ObjectiveType,
   Quest,
@@ -25,7 +24,7 @@ export class QuestProcessor {
     const simpleAction = new SimpleActionCommand();
 
     this.commandMap = {
-      [ObjectiveType.SUBMIT]: new SubmitCommand(),
+      [ObjectiveType.SUBMIT]: simpleAction,
       [ObjectiveType.SCORE]: new ScoreCommand(),
       [ObjectiveType.PENALTY]: new PenaltyCommand(),
       [ObjectiveType.DAILY_SUBMIT]: new DailySubmitCommand(),
