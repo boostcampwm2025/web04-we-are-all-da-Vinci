@@ -50,7 +50,7 @@ const TutorialQuestSection = ({
             </ListHeader.TitleParagraph>
           }
           right={
-            <span className="text-(--color-grey)">
+            <span className="pr-(--page-px) text-(--color-grey)">
               <ChevronIcon isOpen={isOpen} />
             </span>
           }
