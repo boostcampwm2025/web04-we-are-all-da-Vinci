@@ -13,12 +13,12 @@ import { UserQuest } from "./entity/user-quest.entity";
 
 const QuestDefinitionSchema = z.object({
   title: z.string().min(1).max(50),
-  period: z.nativeEnum(QuestPeriod),
+  period: z.enum(QuestPeriod),
   isFixed: z.boolean(),
-  objectiveType: z.nativeEnum(ObjectiveType),
+  objectiveType: z.enum(ObjectiveType),
   requiredCount: z.number().int().positive(),
   threshold: z.number().int().nullable().default(null),
-  rewardType: z.nativeEnum(RewardType),
+  rewardType: z.enum(RewardType),
   rewardAmount: z.number().int().min(0),
   category: z.string().max(20).nullable().default(null),
 });
