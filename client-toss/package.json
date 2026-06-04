@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "granite dev",
+    "dev": "node scripts/dev.js",
     "build": "ait build",
     "lint": "eslint .",
     "preview": "vite preview",
