@@ -1,8 +1,8 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import {
-  TossPromotionError,
-  TossTransportError,
-} from "src/modules/auth/errors/toss.errors";
+  ExternalPromotionError,
+  ExternalTransportError,
+} from "src/common/errors/external.errors";
 import { PointGrantStatus } from "./entity/point-grant-request.entity";
 import { PointReason } from "./entity/point-log.entity";
 import { PointService } from "./point.service";
@@ -43,17 +43,11 @@ const buildPointGrantRequestRepository = () => {
   };
 };
 
-const buildTossApiClient = () => ({
+const buildPointGrantKeyIssuer = () => ({
   getPromotionKey: jest.fn(async () => "promotion-key"),
-  executePromotion: jest.fn(async () => undefined),
 });
-
-const buildConfigService = (nodeEnv = "test", promotionCode = "PROMOTION") => ({
-  get: jest.fn((key: string) => (key === "NODE_ENV" ? nodeEnv : undefined)),
-  getOrThrow: jest.fn((key: string) => {
-    if (key === "PROMOTION_CODE") return promotionCode;
-    throw new Error(`Missing config: ${key}`);
-  }),
+const buildPointGrantExectuer = () => ({
+  executePromotion: jest.fn(async () => undefined),
 });
 
 const buildUser = (userKey = 1234) =>
@@ -86,21 +80,21 @@ const buildRequest = ({
 const buildService = ({
   entityManager = buildEntityManager(),
   pointGrantRequestRepository = buildPointGrantRequestRepository(),
-  tossApiClient = buildTossApiClient(),
-  configService = buildConfigService(),
+  pointGrantExectuer = buildPointGrantExectuer(),
+  pointKeyIssuer = buildPointGrantKeyIssuer(),
 }: {
   entityManager?: ReturnType<typeof buildEntityManager>;
   pointGrantRequestRepository?: ReturnType<
     typeof buildPointGrantRequestRepository
   >;
-  tossApiClient?: ReturnType<typeof buildTossApiClient>;
-  configService?: ReturnType<typeof buildConfigService>;
+  pointGrantExectuer?: ReturnType<typeof buildPointGrantExectuer>;
+  pointKeyIssuer?: ReturnType<typeof buildPointGrantKeyIssuer>;
 } = {}) =>
   new PointService(
     pointGrantRequestRepository as never,
     entityManager as never,
-    tossApiClient as never,
-    configService as never,
+    pointKeyIssuer as never,
+    pointGrantExectuer as never,
   );
 
 describe("PointService", () => {
@@ -447,7 +441,7 @@ describe("PointService", () => {
   });
 
   describe("recordGrantOutcomeFromError", () => {
-    describe("TossPromotionError 4113이 발생한 경우", () => {
+    describe("ExternalPromotionError 4113이 발생한 경우", () => {
       it("지급 성공으로 처리한다", async () => {
         const service = buildService();
         const request = buildRequest();
@@ -457,14 +451,14 @@ describe("PointService", () => {
 
         await service.recordGrantOutcomeFromError(
           request as never,
-          new TossPromotionError("4113", "이미 지급됨"),
+          new ExternalPromotionError("4113", "이미 지급됨"),
         );
 
         expect(succeededSpy).toHaveBeenCalledTimes(1);
       });
     });
 
-    describe("TossTransportError가 발생한 경우", () => {
+    describe("ExternalTransportError가 발생한 경우", () => {
       it("retry를 호출한다", async () => {
         const em = buildEntityManager();
         const service = buildService({ entityManager: em });
@@ -472,7 +466,7 @@ describe("PointService", () => {
 
         await service.recordGrantOutcomeFromError(
           request as never,
-          new TossTransportError("timeout"),
+          new ExternalTransportError("timeout"),
         );
 
         expect(request.retry).toHaveBeenCalledTimes(1);
@@ -481,7 +475,7 @@ describe("PointService", () => {
       });
     });
 
-    describe("재시도 가능한 TossPromotionError(4110)가 발생한 경우", () => {
+    describe("재시도 가능한 ExternalPromotionError(4110)가 발생한 경우", () => {
       it("retry를 호출한다", async () => {
         const em = buildEntityManager();
         const service = buildService({ entityManager: em });
@@ -489,7 +483,7 @@ describe("PointService", () => {
 
         await service.recordGrantOutcomeFromError(
           request as never,
-          new TossPromotionError("4110", "internal"),
+          new ExternalPromotionError("4110", "internal"),
         );
 
         expect(request.retry).toHaveBeenCalledTimes(1);
@@ -498,7 +492,7 @@ describe("PointService", () => {
       });
     });
 
-    describe("재시도 불가능한 TossPromotionError가 발생한 경우", () => {
+    describe("재시도 불가능한 ExternalPromotionError가 발생한 경우", () => {
       it("failed를 호출한다", async () => {
         const em = buildEntityManager();
         const service = buildService({ entityManager: em });
@@ -506,7 +500,7 @@ describe("PointService", () => {
 
         await service.recordGrantOutcomeFromError(
           request as never,
-          new TossPromotionError("4109", "promotion ended"),
+          new ExternalPromotionError("4109", "promotion ended"),
         );
 
         expect(request.retry).not.toHaveBeenCalled();
@@ -553,43 +547,6 @@ describe("PointService", () => {
         expect(request2.processing).toHaveBeenCalledTimes(1);
         expect(repository.__flush).toHaveBeenCalledTimes(1);
         expect(result).toEqual([request1, request2]);
-      });
-    });
-  });
-
-  describe("grantDrawingPromotion", () => {
-    describe("개발 환경에서 지급 API를 호출하는 경우", () => {
-      it("TEST_ prefix가 적용된 promotionCode로 지급 호출한다", async () => {
-        const tossApiClient = buildTossApiClient();
-        const service = buildService({ tossApiClient });
-        const request = buildRequest();
-
-        await service.grantDrawingPromotion(request as never, "promotion-key");
-
-        expect(tossApiClient.executePromotion).toHaveBeenCalledWith(
-          1234,
-          "promotion-key",
-          "TEST_PROMOTION",
-          2,
-        );
-      });
-    });
-
-    describe("운영 환경에서 지급 API를 호출하는 경우", () => {
-      it("원본 promotionCode로 지급 호출한다", async () => {
-        const tossApiClient = buildTossApiClient();
-        const configService = buildConfigService("production", "PROMOTION");
-        const service = buildService({ tossApiClient, configService });
-        const request = buildRequest({ userKey: 4321 });
-
-        await service.grantDrawingPromotion(request as never, "promotion-key");
-
-        expect(tossApiClient.executePromotion).toHaveBeenCalledWith(
-          4321,
-          "promotion-key",
-          "PROMOTION",
-          2,
-        );
       });
     });
   });
