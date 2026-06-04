@@ -42,7 +42,8 @@ const DashboardView = () => {
     startPlay,
     refresh: refreshChance,
   } = usePlayChanceContext();
-  const { isAdLoaded, showAd, adGroupId } = useFullScreenAd();
+  const { adStatus, isAdLoaded, showAd, reloadAd, adGroupId } =
+    useFullScreenAd();
 
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -206,6 +207,13 @@ const DashboardView = () => {
           });
           throw err;
         }
+      } else {
+        // 버튼은 adStatus가 "ready"일 때만 handleRetry를 연결하므로 정상 흐름엔 도달하지 않는 방어 가드.
+        trackClick(FUNNEL_EVENTS.adRewardFailed, {
+          ad_group_id: adGroupId,
+          reason: "ad_not_ready",
+        });
+        return;
       }
       const prompt = await startPlay();
       if (!prompt) {
@@ -251,6 +259,17 @@ const DashboardView = () => {
       setIsStartingGame(false);
     }
   };
+
+  // 잔여 기회가 없을 때의 광고 보상 버튼 — 광고 로드 상태에 따라 라벨·동작이 달라진다.
+  const adButton = {
+    loading: { label: "광고 준비 중이에요", onClick: undefined, busy: true },
+    failed: { label: "광고 다시 불러오기", onClick: reloadAd, busy: false },
+    ready: {
+      label: "5초 광고 보고 도전하기",
+      onClick: handleRetry,
+      busy: false,
+    },
+  }[adStatus];
 
   if (initialLoading) {
     return (
@@ -323,11 +342,11 @@ const DashboardView = () => {
           <Button
             color="primary"
             display="block"
-            loading={isStartingGame}
-            disabled={isStartingGame}
-            onClick={handleRetry}
+            loading={isStartingGame || adButton.busy}
+            disabled={isStartingGame || adButton.busy}
+            onClick={adButton.onClick}
           >
-            5초 광고 보고 도전하기
+            {adButton.label}
           </Button>
         )}
       </section>
