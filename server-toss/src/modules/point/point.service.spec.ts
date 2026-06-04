@@ -29,12 +29,14 @@ const buildEntityManager = (countResult: number | number[] = 0) => {
     create: jest.fn((_entity, data) => data),
     persist: jest.fn(),
     flush: jest.fn(async () => undefined),
+    getReference: jest.fn(),
   };
 };
 
 const buildPointGrantRequestRepository = () => {
   const flush = jest.fn(async () => undefined);
   return {
+    getReference: jest.fn(),
     create: jest.fn(),
     findEligibleGrantsWithLock: jest.fn(async () => []),
     purgeByStatusBefore: jest.fn(async () => 0),
