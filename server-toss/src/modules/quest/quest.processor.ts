@@ -6,7 +6,12 @@ import { PenaltyCommand } from "./command/penalty.command";
 import { ScoreCommand } from "./command/score.command";
 import { SimpleActionCommand } from "./command/simple-action.command";
 import { SubmitCommand } from "./command/submit.command";
-import { ObjectiveType, Quest, RewardType } from "./entity/quest.entity";
+import {
+  ObjectiveType,
+  Quest,
+  QuestPeriod,
+  RewardType,
+} from "./entity/quest.entity";
 import { UserQuest } from "./entity/user-quest.entity";
 import type { ActionContext, CycleResult, QuestCommand } from "./quest.types";
 import { PointReason } from "../point/entity/point-log.entity";
@@ -74,10 +79,10 @@ export class QuestProcessor {
     for (const mq of metaQuests) {
       const category = mq.quest.category;
       // category가 있으면 → 같은 카테고리의 완료 수만 카운트 (튜토리얼)
-      // category가 없으면 → 전체 완료 수 카운트 (일일/주간 메타)
+      // category가 없으면 → 일일 퀘스트 완료 수 카운트 (일일/주간 메타)
       const relevantCount = category
         ? completed.filter((c) => c.quest.category === category).length
-        : completed.length;
+        : completed.filter((c) => c.quest.period === QuestPeriod.DAILY).length;
 
       mq.currentCount += relevantCount;
       if (this.completeIfFulfilled(mq)) metaCompleted.push(mq);
