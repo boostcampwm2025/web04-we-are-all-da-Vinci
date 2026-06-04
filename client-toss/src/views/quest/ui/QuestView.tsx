@@ -2,7 +2,7 @@ import {
   QuestCardSkeleton,
   QuestSection,
   QUEST_SECTIONS,
-  TutorialCategorySection,
+  TutorialQuestSection,
 } from "@/entities/questCard";
 import { useQuestAction } from "@/shared/hooks/useQuestAction";
 import { FUNNEL_EVENTS, trackScreen } from "@/shared/lib";
@@ -29,17 +29,23 @@ const QuestView = () => {
     tutorialCategories.length > 0 &&
     tutorialCategories.every((cat) => cat.isCompleted);
 
-  const tutorialSection = tutorialCategories.map((cat) => (
-    <TutorialCategorySection key={cat.category} category={cat} />
-  ));
-
   return (
     <div className="space-y-6 pb-4">
-      {!allTutorialCompleted && tutorialSection}
+      {!allTutorialCompleted && (
+        <TutorialQuestSection
+          categories={tutorialCategories}
+          defaultOpen={true}
+        />
+      )}
       <QuestSection quests={dailyQuests} section={QUEST_SECTIONS.daily} />
       <BannerAd adGroupId={AD_GROUP_IDS.BANNER_LIST} />
       <QuestSection quests={weeklyQuests} section={QUEST_SECTIONS.weekly} />
-      {allTutorialCompleted && tutorialSection}
+      {allTutorialCompleted && (
+        <TutorialQuestSection
+          categories={tutorialCategories}
+          defaultOpen={false}
+        />
+      )}
     </div>
   );
 };
