@@ -14,6 +14,10 @@ export class Migration20260604000000 extends Migration {
   }
 
   override down(): void | Promise<void> {
+    this.addSql(
+      `delete from \`user_quests\` where \`quest_id\` in (select \`id\` from \`quests\` where \`period\` = 'tutorial');`,
+    );
+    this.addSql(`delete from \`quests\` where \`period\` = 'tutorial';`);
     this.addSql(`alter table \`quests\` drop column \`category\`;`);
     this.addSql(
       `alter table \`quests\` modify \`objective_type\` enum('submit','score','penalty','daily_submit','daily_score','quest_completed') not null;`,
