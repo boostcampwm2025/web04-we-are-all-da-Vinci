@@ -78,27 +78,20 @@ const buildSaveDrawingService = () => ({
   saveDrawingWithRanking: jest.fn(),
 });
 
-const buildQuestService = () => ({
-  onDrawingSubmitted: jest.fn(async () => []),
-});
-
 const buildService = ({
   userService = buildUserService(),
   promptService = buildPromptService(),
-  questService = buildQuestService(),
   drawingRepository = buildDrawingRepository(),
   saveDrawingService = buildSaveDrawingService(),
 }: {
   userService?: ReturnType<typeof buildUserService>;
   promptService?: ReturnType<typeof buildPromptService>;
-  questService?: ReturnType<typeof buildQuestService>;
   drawingRepository?: ReturnType<typeof buildDrawingRepository>;
   saveDrawingService?: ReturnType<typeof buildSaveDrawingService>;
 }) =>
   new DrawingService(
     userService as never,
     promptService as never,
-    questService as never,
     drawingRepository as never,
     saveDrawingService as never,
   );
