@@ -46,22 +46,30 @@ vi.mock("@/shared/ui/bannerAd", () => ({
 }));
 
 const mockShowAd = vi.fn().mockResolvedValue(undefined);
-const mockUseFullScreenAd = vi.fn(() => ({
-  isAdLoaded: false as boolean,
+const mockReloadAd = vi.fn();
+type AdStatus = "loading" | "ready" | "failed";
+const fullScreenAd = (adStatus: AdStatus) => ({
+  adStatus,
+  isAdLoaded: adStatus === "ready",
   showAd: mockShowAd,
-}));
+  reloadAd: mockReloadAd,
+  adGroupId: "test-ad-group",
+});
+const mockUseFullScreenAd = vi.fn(() => fullScreenAd("ready"));
+const playChance = (hasChance: boolean) => ({
+  chanceCount: hasChance ? 1 : 0,
+  hasChance,
+  isLoading: false,
+  error: null,
+  refresh: vi.fn(),
+  chargeByAd: mockChargeByAd,
+  chargeByShare: vi.fn(),
+  startPlay: mockStartPlay,
+});
+const mockUsePlayChanceContext = vi.fn(() => playChance(true));
 vi.mock("@/feature/playChance", () => ({
   useFullScreenAd: () => mockUseFullScreenAd(),
-  usePlayChanceContext: () => ({
-    chanceCount: 1,
-    hasChance: true,
-    isLoading: false,
-    error: null,
-    refresh: vi.fn(),
-    chargeByAd: mockChargeByAd,
-    chargeByShare: vi.fn(),
-    startPlay: mockStartPlay,
-  }),
+  usePlayChanceContext: () => mockUsePlayChanceContext(),
 }));
 
 const mockRouteState = {
@@ -94,10 +102,8 @@ describe("SubmittedView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
-    mockUseFullScreenAd.mockImplementation(() => ({
-      isAdLoaded: false,
-      showAd: mockShowAd,
-    }));
+    mockUseFullScreenAd.mockImplementation(() => fullScreenAd("ready"));
+    mockUsePlayChanceContext.mockImplementation(() => playChance(true));
   });
 
   it("점수와 완성 텍스트가 렌더링된다", () => {
@@ -254,10 +260,7 @@ describe("SubmittedView", () => {
 
   it("hasChance가 있으면 광고가 로드되어도 광고/chargeByAd 없이 startPlay만 호출한다", async () => {
     vi.useRealTimers();
-    mockUseFullScreenAd.mockImplementation(() => ({
-      isAdLoaded: true,
-      showAd: mockShowAd,
-    }));
+    mockUseFullScreenAd.mockImplementation(() => fullScreenAd("ready"));
     const user = userEvent.setup();
     mockStartPlay.mockResolvedValueOnce({
       promptId: 7,
@@ -281,8 +284,9 @@ describe("SubmittedView", () => {
     );
   });
 
-  it("광고가 로드되지 않은 경우 다시하기 시 광고/chargeByAd 없이 startPlay만 호출한다", async () => {
+  it("hasChance가 있으면 광고가 로드되지 않아도 광고/chargeByAd 없이 startPlay만 호출한다", async () => {
     vi.useRealTimers();
+    mockUseFullScreenAd.mockImplementation(() => fullScreenAd("loading"));
     const user = userEvent.setup();
     mockStartPlay.mockResolvedValueOnce({
       promptId: 8,
@@ -298,5 +302,49 @@ describe("SubmittedView", () => {
     });
     expect(mockShowAd).not.toHaveBeenCalled();
     expect(mockChargeByAd).not.toHaveBeenCalled();
+  });
+
+  describe("잔여 기회 없음 — 광고 로드 상태별 재도전 버튼", () => {
+    beforeEach(() => {
+      mockUsePlayChanceContext.mockImplementation(() => playChance(false));
+    });
+
+    it("광고 로드 중이면 '게임 준비 중' 버튼이 비활성으로 표시된다", () => {
+      mockUseFullScreenAd.mockImplementation(() => fullScreenAd("loading"));
+
+      renderWithState();
+
+      expect(screen.getByText("게임 준비 중")).toBeDisabled();
+    });
+
+    it("광고 로드 실패 시 '다시시작하기'를 누르면 reloadAd만 호출한다", async () => {
+      vi.useRealTimers();
+      mockUseFullScreenAd.mockImplementation(() => fullScreenAd("failed"));
+      const user = userEvent.setup();
+
+      renderWithState();
+
+      await user.click(screen.getByText("다시시작하기"));
+
+      expect(mockReloadAd).toHaveBeenCalled();
+      expect(mockStartPlay).not.toHaveBeenCalled();
+    });
+
+    it("광고 로드 완료 시 '등록 없이 재도전'을 누르면 광고 흐름을 진행한다", async () => {
+      vi.useRealTimers();
+      mockUseFullScreenAd.mockImplementation(() => fullScreenAd("ready"));
+      mockStartPlay.mockResolvedValueOnce({ promptId: 9, strokes: [] });
+      const user = userEvent.setup();
+
+      renderWithState();
+
+      await user.click(screen.getByText("등록 없이 재도전"));
+
+      await waitFor(() => {
+        expect(mockShowAd).toHaveBeenCalled();
+        expect(mockChargeByAd).toHaveBeenCalled();
+        expect(mockStartPlay).toHaveBeenCalled();
+      });
+    });
   });
 });

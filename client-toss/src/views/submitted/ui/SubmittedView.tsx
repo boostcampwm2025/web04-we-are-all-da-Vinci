@@ -40,7 +40,8 @@ const SubmittedView = () => {
     trackScreen(FUNNEL_EVENTS.submittedView);
   }, [routeState]);
   const { hasChance, chargeByAd, startPlay } = usePlayChanceContext();
-  const { isAdLoaded, showAd, adGroupId } = useFullScreenAd();
+  const { adStatus, isAdLoaded, showAd, reloadAd, adGroupId } =
+    useFullScreenAd();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isReplaying, setIsReplaying] = useState(false);
@@ -107,6 +108,14 @@ const SubmittedView = () => {
           });
           throw err;
         }
+      } else if (!hasChance) {
+        // 버튼은 adStatus가 "ready"일 때만 handleReplay를 연결하므로 정상 흐름엔 도달하지 않는 방어 가드.
+        trackClick(FUNNEL_EVENTS.adRewardFailed, {
+          ad_group_id: adGroupId,
+          reason: "ad_not_ready",
+        });
+        setIsReplaying(false);
+        return;
       }
       const prompt = await startPlay();
       if (!prompt) {
@@ -147,6 +156,27 @@ const SubmittedView = () => {
   if (!routeState) return null;
 
   const score = routeState.similarity?.score ?? 0;
+
+  // 재도전 버튼 — 잔여 기회가 있으면 광고 면제, 없으면 광고 로드 상태에 따라 라벨·동작이 달라진다.
+  const replayButton = hasChance
+    ? { label: "광고·등록 없이 재도전", onClick: handleReplay, busy: false }
+    : {
+        loading: {
+          label: "게임 준비 중",
+          onClick: undefined,
+          busy: true,
+        },
+        failed: {
+          label: "다시시작하기",
+          onClick: reloadAd,
+          busy: false,
+        },
+        ready: {
+          label: "등록 없이 재도전",
+          onClick: handleReplay,
+          busy: false,
+        },
+      }[adStatus];
 
   return (
     <div className="flex h-full flex-col bg-(--color-page)">
@@ -189,11 +219,11 @@ const SubmittedView = () => {
                 color="primary"
                 variant="weak"
                 display="block"
-                loading={isReplaying}
-                disabled={isReplaying || isSubmitting}
-                onClick={handleReplay}
+                loading={isReplaying || replayButton.busy}
+                disabled={isReplaying || isSubmitting || replayButton.busy}
+                onClick={replayButton.onClick}
               >
-                {hasChance ? "광고·등록 없이 재도전" : "등록 없이 재도전"}
+                {replayButton.label}
               </Button>
             </div>
             <div className="flex-1">

@@ -5,13 +5,11 @@ import {
 } from "@mikro-orm/decorators/legacy";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { getSeoulDateTime, getSeoulDayRange } from "src/common/util/time.util";
 import {
-  TossPromotionError,
-  TossTransportError,
-} from "src/modules/auth/errors/toss.errors";
-import { TossApiClient } from "src/modules/auth/toss-api.client";
+  ExternalPromotionError,
+  ExternalTransportError,
+} from "src/common/errors/external.errors";
 import { User } from "src/modules/user/user.entity";
 import {
   PointGrantRequest,
@@ -29,26 +27,20 @@ import {
   SUCCEEDED_RETENTION_DAYS,
 } from "./point.contants";
 import { GrantEligibilityDecision } from "./point.types";
+import { PointGrantExecuter } from "./port/point-grant-executer.interface";
+import { PointGrantKeyIssuer } from "./port/point-grant-key-issuer.interface";
 
 @Injectable()
 export class PointService {
   private readonly logger = new Logger(PointService.name);
-  private readonly promotionCode: string;
 
   constructor(
     @InjectRepository(PointGrantRequest)
     private readonly pointGrantRequestRepository: PointGrantRequestRepository,
     private readonly em: EntityManager,
-    private readonly tossApiClient: TossApiClient,
-    private readonly configService: ConfigService,
-  ) {
-    const promotionCode =
-      this.configService.getOrThrow<string>("PROMOTION_CODE");
-    const isProduction =
-      this.configService.get<string>("NODE_ENV") === "production";
-
-    this.promotionCode = isProduction ? promotionCode : `TEST_${promotionCode}`;
-  }
+    private readonly pointGrantKeyIssuer: PointGrantKeyIssuer,
+    private readonly pointGrantExecuter: PointGrantExecuter,
+  ) {}
 
   async canGrantTodayPromotion(userKey: number): Promise<boolean> {
     const { start, end } = getSeoulDayRange();
@@ -189,7 +181,7 @@ export class PointService {
   async issueAndSavePromotionKey(request: PointGrantRequest) {
     const { user } = request;
 
-    const key = await this.tossApiClient.getPromotionKey(user.userKey);
+    const key = await this.pointGrantKeyIssuer.getPromotionKey(user.userKey);
 
     await this.savePointIdempotencyKey(request, key);
 
@@ -218,15 +210,15 @@ export class PointService {
 
   @Transactional()
   async recordGrantOutcomeFromError(request: PointGrantRequest, err: unknown) {
-    if (err instanceof TossPromotionError && err.errorCode === "4113") {
+    if (err instanceof ExternalPromotionError && err.errorCode === "4113") {
       await this.recordGrantSucceeded(request);
       return;
     } else if (
-      err instanceof TossTransportError ||
-      (err instanceof TossPromotionError && err.errorCode === "4110")
+      err instanceof ExternalTransportError ||
+      (err instanceof ExternalPromotionError && err.errorCode === "4110")
     ) {
       request.retry();
-    } else if (err instanceof TossPromotionError) {
+    } else if (err instanceof ExternalPromotionError) {
       request.failed(err.message);
 
       this.logger.warn(
@@ -247,10 +239,9 @@ export class PointService {
   ): Promise<void> {
     const { user, pointAmount } = request;
 
-    await this.tossApiClient.executePromotion(
+    await this.pointGrantExecuter.executePromotion(
       user.userKey,
       key,
-      this.promotionCode,
       pointAmount,
     );
   }

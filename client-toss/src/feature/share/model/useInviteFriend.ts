@@ -38,12 +38,11 @@ export const useInviteFriend = ({
     [],
   );
 
+  // 트래킹은 호출 지점별로 명시한다 — 초대 실패와 적립 실패가 한 함수에서 섞여
+  // 이중 집계되지 않도록, handleError는 onError 전파와 로깅만 담당한다.
   const handleError = useCallback(
     (err: unknown, fallback: string) => {
       const error = toError(err, fallback);
-      trackClick(FUNNEL_EVENTS.shareInviteFailed, {
-        reason: error.message,
-      });
       onError?.(error);
       console.error(`[useInviteFriend] ${fallback}`, error);
     },
@@ -87,7 +86,11 @@ export const useInviteFriend = ({
           }
         },
         onError: (err) => {
-          handleError(err, "공유 화면을 여는 중 오류가 났어요.");
+          const error = toError(err, "공유 화면을 여는 중 오류가 났어요.");
+          trackClick(FUNNEL_EVENTS.shareInviteFailed, {
+            reason: error.message,
+          });
+          handleError(error, "공유 화면을 여는 중 오류가 났어요.");
           cleanupRef.current?.();
           cleanupRef.current = null;
           setIsInviting(false);
@@ -103,6 +106,9 @@ export const useInviteFriend = ({
     if (!moduleId) {
       // VITE_CONTACTS_VIRAL_MODULE_ID가 빌드에 주입되지 않은 운영 사고 신호.
       // 사용자에게는 일반 메시지, 콘솔에는 명시적인 사유를 남겨 빠르게 감지한다.
+      trackClick(FUNNEL_EVENTS.shareInviteFailed, {
+        reason: "missing_module_id",
+      });
       handleError(
         "MISSING_MODULE_ID",
         "친구 초대 기능 설정에 문제가 있어요. 잠시 후 다시 시도해주세요.",
@@ -110,6 +116,9 @@ export const useInviteFriend = ({
       return;
     }
     if (!isContactsViralAvailable()) {
+      trackClick(FUNNEL_EVENTS.shareInviteFailed, {
+        reason: "unsupported",
+      });
       handleError(
         "UNSUPPORTED",
         "이 환경에서는 친구 초대 적립이 지원되지 않아요.",
@@ -120,7 +129,9 @@ export const useInviteFriend = ({
     try {
       startContactsViral(moduleId);
     } catch (err) {
-      handleError(err, "친구에게 공유하는 중 오류가 났어요.");
+      const error = toError(err, "친구에게 공유하는 중 오류가 났어요.");
+      trackClick(FUNNEL_EVENTS.shareInviteFailed, { reason: error.message });
+      handleError(error, "친구에게 공유하는 중 오류가 났어요.");
       setIsInviting(false);
     }
   }, [handleError, isInviting, moduleId, startContactsViral]);

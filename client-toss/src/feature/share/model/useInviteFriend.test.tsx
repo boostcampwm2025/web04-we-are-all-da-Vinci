@@ -1,5 +1,6 @@
 /// <reference types="@testing-library/jest-dom/vitest" />
 import { serverTossApi } from "@/shared/api";
+import { FUNNEL_EVENTS, trackClick } from "@/shared/lib";
 import { contactsViral } from "@apps-in-toss/web-framework";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -11,6 +12,12 @@ vi.mock("@/shared/api", () => ({
   },
 }));
 
+vi.mock("@/shared/lib", async () => {
+  const actual =
+    await vi.importActual<typeof import("@/shared/lib")>("@/shared/lib");
+  return { ...actual, trackClick: vi.fn() };
+});
+
 describe("useInviteFriend", () => {
   const mockedContactsViral = contactsViral as unknown as ReturnType<
     typeof vi.fn
@@ -19,6 +26,7 @@ describe("useInviteFriend", () => {
   };
   const mockedCharge =
     serverTossApi.chargeChanceByShare as unknown as ReturnType<typeof vi.fn>;
+  const mockedTrackClick = vi.mocked(trackClick);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -53,6 +61,14 @@ describe("useInviteFriend", () => {
       expect(mockedContactsViral).not.toHaveBeenCalled();
       expect(onCharged).not.toHaveBeenCalled();
       expect(result.current.isInviting).toBe(false);
+      expect(mockedTrackClick).toHaveBeenCalledWith(
+        FUNNEL_EVENTS.shareInviteFailed,
+        { reason: "missing_module_id" },
+      );
+      expect(mockedTrackClick).not.toHaveBeenCalledWith(
+        FUNNEL_EVENTS.shareInviteRewardFailed,
+        expect.anything(),
+      );
     });
 
     it("moduleId는 있지만 contactsViral.isSupported false면 UNSUPPORTED 메시지로 차단된다", async () => {
@@ -144,6 +160,56 @@ describe("useInviteFriend", () => {
         });
         expect(onCharged).toHaveBeenCalledWith(2);
       });
+    });
+
+    it("적립 실패 시 shareInviteRewardFailed만 기록하고 shareInviteFailed는 기록하지 않는다", async () => {
+      mockedCharge.mockRejectedValueOnce(new Error("적립 서버 오류"));
+      let capturedOnEvent:
+        | ((event: {
+            type: string;
+            data: { rewardAmount: number; rewardUnit: string };
+          }) => void)
+        | undefined;
+      mockedContactsViral.mockImplementation(
+        ({
+          onEvent,
+        }: {
+          onEvent: (event: {
+            type: string;
+            data: { rewardAmount: number; rewardUnit: string };
+          }) => void;
+        }) => {
+          capturedOnEvent = onEvent;
+          return vi.fn();
+        },
+      );
+
+      const { result } = renderHook(() =>
+        useInviteFriend({ onError: vi.fn() }),
+      );
+
+      await act(async () => {
+        result.current.start();
+      });
+
+      await act(async () => {
+        capturedOnEvent?.({
+          type: "sendViral",
+          data: { rewardAmount: 1, rewardUnit: "그리기 기회" },
+        });
+      });
+
+      await waitFor(() => {
+        expect(mockedTrackClick).toHaveBeenCalledWith(
+          FUNNEL_EVENTS.shareInviteRewardFailed,
+          expect.objectContaining({ reason: "적립 서버 오류" }),
+        );
+      });
+      // 적립 실패 경로에서 초대 실패 이벤트가 함께 집계되면 퍼널 지표가 왜곡된다.
+      expect(mockedTrackClick).not.toHaveBeenCalledWith(
+        FUNNEL_EVENTS.shareInviteFailed,
+        expect.anything(),
+      );
     });
   });
 });

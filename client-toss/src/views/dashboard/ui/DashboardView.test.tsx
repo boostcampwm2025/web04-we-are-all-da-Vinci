@@ -36,21 +36,31 @@ vi.mock("@/shared/api", () => ({
   setCachedNickname: vi.fn(),
 }));
 
+const mockShowAd = vi.fn().mockResolvedValue(undefined);
+const mockReloadAd = vi.fn();
+type AdStatus = "loading" | "ready" | "failed";
+const fullScreenAd = (adStatus: AdStatus) => ({
+  adStatus,
+  isAdLoaded: adStatus === "ready",
+  showAd: mockShowAd,
+  reloadAd: mockReloadAd,
+  adGroupId: "test-ad-group",
+});
+const mockUseFullScreenAd = vi.fn(() => fullScreenAd("ready"));
+const playChance = (hasChance: boolean) => ({
+  chanceCount: hasChance ? 1 : 0,
+  hasChance,
+  isLoading: false,
+  error: null,
+  refresh: mockRefresh,
+  chargeByAd: mockChargeByAd,
+  chargeByShare: vi.fn(),
+  startPlay: mockStartPlay,
+});
+const mockUsePlayChanceContext = vi.fn(() => playChance(true));
 vi.mock("@/feature/playChance", () => ({
-  useFullScreenAd: () => ({
-    isAdLoaded: false,
-    showAd: vi.fn().mockResolvedValue(undefined),
-  }),
-  usePlayChanceContext: () => ({
-    chanceCount: 1,
-    hasChance: true,
-    isLoading: false,
-    error: null,
-    refresh: mockRefresh,
-    chargeByAd: mockChargeByAd,
-    chargeByShare: vi.fn(),
-    startPlay: mockStartPlay,
-  }),
+  useFullScreenAd: () => mockUseFullScreenAd(),
+  usePlayChanceContext: () => mockUsePlayChanceContext(),
 }));
 
 vi.mock("@/entities/myScoreCard", () => ({
@@ -100,6 +110,8 @@ describe("DashboardView", () => {
     vi.clearAllMocks();
     localStorage.clear();
     vi.mocked(getDeviceId).mockResolvedValue({ deviceId: "test-device" });
+    mockUseFullScreenAd.mockImplementation(() => fullScreenAd("ready"));
+    mockUsePlayChanceContext.mockImplementation(() => playChance(true));
   });
 
   it("첫 방문 시 getPrompt 호출 후 /memorize로 이동한다", async () => {
@@ -234,6 +246,58 @@ describe("DashboardView", () => {
 
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith("/memorize", expect.anything());
+    });
+  });
+
+  describe("잔여 기회 없음 — 광고 로드 상태별 도전 버튼", () => {
+    beforeEach(() => {
+      mockUsePlayChanceContext.mockImplementation(() => playChance(false));
+      localStorage.setItem("lastPlayed_test-device", formatLocalDate());
+    });
+
+    it("광고 로드 중이면 '광고 준비 중이에요' 버튼이 비활성으로 표시된다", async () => {
+      mockUseFullScreenAd.mockImplementation(() => fullScreenAd("loading"));
+
+      renderDashboard();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("my-ranking-section")).toBeInTheDocument();
+      });
+      expect(screen.getByText("광고 준비 중이에요")).toBeDisabled();
+    });
+
+    it("광고 로드 실패 시 '광고 다시 불러오기'를 누르면 reloadAd만 호출한다", async () => {
+      mockUseFullScreenAd.mockImplementation(() => fullScreenAd("failed"));
+      const user = userEvent.setup();
+
+      renderDashboard();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("my-ranking-section")).toBeInTheDocument();
+      });
+      await user.click(screen.getByText("광고 다시 불러오기"));
+
+      expect(mockReloadAd).toHaveBeenCalled();
+      expect(mockStartPlay).not.toHaveBeenCalled();
+    });
+
+    it("광고 로드 완료 시 '5초 광고 보고 도전하기'를 누르면 광고 흐름을 진행한다", async () => {
+      mockUseFullScreenAd.mockImplementation(() => fullScreenAd("ready"));
+      mockStartPlay.mockResolvedValueOnce({ promptId: 11, strokes: [] });
+      const user = userEvent.setup();
+
+      renderDashboard();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("my-ranking-section")).toBeInTheDocument();
+      });
+      await user.click(screen.getByText("5초 광고 보고 도전하기"));
+
+      await waitFor(() => {
+        expect(mockShowAd).toHaveBeenCalled();
+        expect(mockChargeByAd).toHaveBeenCalled();
+        expect(mockStartPlay).toHaveBeenCalled();
+      });
     });
   });
 });
