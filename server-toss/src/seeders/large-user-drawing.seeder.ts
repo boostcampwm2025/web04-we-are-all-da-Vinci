@@ -12,14 +12,14 @@ const DEFAULT_BATCH_SIZE = 200;
 
 export class LargeUserDrawingSeeder extends Seeder {
   async run(em: EntityManager): Promise<void> {
-    const totalUsers = DEFAULT_TOTAL_USERS;
+    const totalUsers = parseInt(
+      process.env.SEED_DRAWING_USER_COUNT || String(DEFAULT_TOTAL_USERS),
+      10,
+    );
     const batchSize = DEFAULT_BATCH_SIZE;
 
     const prompt = await loadPromptOne(em);
     const strokes = await loadStrokesOne();
-    em.persist(prompt);
-    await em.flush();
-    em.clear();
 
     for (let start = 0; start < totalUsers; start += batchSize) {
       const end = Math.min(start + batchSize, totalUsers);
