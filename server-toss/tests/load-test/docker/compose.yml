@@ -9,6 +9,8 @@ services:
       MYSQL_ALLOW_EMPTY_PASSWORD: true
       MYSQL_DATABASE: load_test
       TZ: UTC
+    command:
+      - --performance-schema=OFF
     cpus: 1.0
     mem_limit: 1g
     networks:
@@ -43,6 +45,8 @@ services:
       OTEL_LOGS_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
       OTEL_ENABLED: true
+      OTEL_TRACES_SAMPLER: traceidratio
+      OTEL_TRACES_SAMPLER_ARG: "0.05"
     env_file:
       - ./env/.env
     depends_on:
@@ -52,6 +56,7 @@ services:
         condition: service_started
     cpus: 1.0
     mem_limit: 1g
+
   davinci-jaeger:
     image: jaegertracing/all-in-one
     container_name: davinci-jaeger
@@ -62,6 +67,12 @@ services:
       - 4318:4318
     environment:
       - COLLECTOR_OTLP_ENABLED=true
+      - SPAN_STORAGE_TYPE=badger
+      - BADGER_EPHEMERAL=false
+      - BADGER_DIRECTORY_VALUE=/badger/data
+      - BADGER_DIRECTORY_KEY=/badger/key
+    volumes:
+      - ./jaeger/data:/badger
 
 networks:
   load-net:

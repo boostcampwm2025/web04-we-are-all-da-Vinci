@@ -1,8 +1,13 @@
 docker/mysql/data
-docker/mysql/data/* 
+docker/mysql/data/*
 docker/mysql/data/**/*
+
+docker/jaeger/data
+docker/jaeger/data/**/*
 
 docker/env/.env.*
 docker/env/.env
 **/.env
 **/.env.*
+
+results/

@@ -1,41 +1,17 @@
 import http from "k6/http";
-import { check, sleep } from "k6";
+import { check, group, sleep } from "k6";
 import { SharedArray } from "k6/data";
+import { textSummary } from "https://jslib.k6.io/k6-summary/0.1.0/index.js";
+import { generateHtmlReport } from "./report-template.js";
 
 const BASE_URL = __ENV.BASE_URL || "http://localhost:3000";
 const TEST_AD_GROUP_ID = __ENV.TEST_AD_GROUP_ID || "TEST_AD_GROUP";
-const STAGES = [
-  { duration: "1m", target: 20 },
-  { duration: "1m", target: 50 },
-  { duration: "1m", target: 70 },
-  { duration: "1m", target: 90 },
-  { duration: "1m", target: 100 },
-  { duration: "2m", target: 100 },
-  { duration: "1m", target: 0 },
-];
 
+const optionsConfig = JSON.parse(open("./options.json"));
+const STAGES = optionsConfig.scenarios.baseline.stages;
 const MAX_VUS = Math.max(...STAGES.map((stage) => stage.target));
 
-export const options = {
-  scenarios: {
-    memory_probe: {
-      executor: "ramping-vus",
-      stages: STAGES,
-    },
-  },
-  thresholds: {
-    http_req_failed: ["rate<0.01"],
-    http_req_duration: ["p(95)<1000", "p(99)<1500"],
-    "http_req_duration{api:myDrawings}": ["p(95)<500"],
-    "http_req_duration{api:podium}": ["p(95)<500"],
-    "http_req_duration{api:start}": ["p(95)<500"],
-    "http_req_duration{api:strokes}": ["p(95)<300"],
-    "http_req_duration{api:submit}": ["p(95)<1000"],
-    "http_req_duration{api:myRanking}": ["p(95)<500"],
-    "http_req_duration{api:rankings}": ["p(95)<500"],
-    "http_req_duration{api:chargeChancesByAd}": ["p(95)<500"],
-  },
-};
+export const options = optionsConfig;
 
 const users = new SharedArray("users", function () {
   return JSON.parse(open("../fixtures/tokens.json"));
@@ -73,94 +49,151 @@ const sendStroke = ({ user, strokesPayload }) => {
 export default function () {
   const user = getUser();
 
-  const myDrawingRes = http.get(`${BASE_URL}/drawing/me`, {
-    headers: authHeaders(user),
-    tags: { api: "myDrawings" },
-  });
-
-  check(myDrawingRes, {
-    "my drawing success": (r) => r.status === 200,
-  });
-
-  const podiumRes = http.get(`${BASE_URL}/rankings/podium`, {
-    headers: authHeaders(user),
-    tags: { api: "podium" },
-  });
-  check(podiumRes, {
-    "podium success": (r) => r.status === 200,
-  });
-
-  const startRes = http.post(`${BASE_URL}/plays/start`, "", {
-    headers: authHeaders(user),
-    tags: { api: "start" },
-  });
-
-  check(startRes, {
-    "start success": (r) => r.status === 200 || r.status === 201,
-  });
-
-  const promptJson = startRes.json();
-
-  const strokes = promptJson.strokes;
-
-  const strokesPayload = JSON.stringify({ strokes });
-
-  for (let i = 0; i < 20; ++i) {
-    sendStroke({
-      user,
-      strokesPayload,
+  // --- 홈 화면 진입 ---
+  group("home", () => {
+    const myDrawingRes = http.get(`${BASE_URL}/drawing/me`, {
+      headers: authHeaders(user),
+      tags: { api: "myDrawings" },
     });
 
-    sleep(randomBetween(0.4, 1.0));
+    check(myDrawingRes, {
+      "my drawing success": (r) => r.status === 200,
+    });
+
+    const podiumRes = http.get(`${BASE_URL}/rankings/podium`, {
+      headers: authHeaders(user),
+      tags: { api: "podium" },
+    });
+    check(podiumRes, {
+      "podium success": (r) => r.status === 200,
+    });
+  });
+
+  sleep(randomBetween(1, 3));
+
+  // --- 게임 시작 + 드로잉 ---
+  group("draw", () => {
+    const startRes = http.post(`${BASE_URL}/plays/start`, "", {
+      headers: authHeaders(user),
+      tags: { api: "start" },
+    });
+
+    const startOk = check(startRes, {
+      "start success": (r) => r.status === 200 || r.status === 201,
+    });
+
+    if (!startOk) {
+      return;
+    }
+
+    const promptJson = startRes.json();
+    const strokes = promptJson.strokes;
+
+    if (!strokes) {
+      return;
+    }
+
+    const strokesPayload = JSON.stringify({ strokes });
+
+    for (let i = 0; i < 20; ++i) {
+      sendStroke({
+        user,
+        strokesPayload,
+      });
+
+      sleep(randomBetween(0.5, 3.0));
+    }
+
+    const submitRes = http.post(`${BASE_URL}/drawing`, strokesPayload, {
+      headers: authHeaders(user),
+      tags: { api: "submit" },
+    });
+
+    check(submitRes, {
+      "submit success": (r) => r.status === 201 || r.status === 200,
+    });
+  });
+
+  sleep(randomBetween(1, 2));
+
+  // --- 결과 확인 ---
+  group("results", () => {
+    const responses = http.batch([
+      [
+        "GET",
+        `${BASE_URL}/drawing/me`,
+        null,
+        { headers: authHeaders(user), tags: { api: "myDrawings" } },
+      ],
+      [
+        "GET",
+        `${BASE_URL}/rankings/podium`,
+        null,
+        { headers: authHeaders(user), tags: { api: "podium" } },
+      ],
+      [
+        "GET",
+        `${BASE_URL}/rankings`,
+        null,
+        { headers: authHeaders(user), tags: { api: "rankings" } },
+      ],
+      [
+        "GET",
+        `${BASE_URL}/rankings/me`,
+        null,
+        { headers: authHeaders(user), tags: { api: "myRanking" } },
+      ],
+    ]);
+
+    check(responses[0], { "my drawing success": (r) => r.status === 200 });
+    check(responses[1], { "podium success": (r) => r.status === 200 });
+    check(responses[2], { "rankings success": (r) => r.status === 200 });
+    check(responses[3], { "my ranking success": (r) => r.status === 200 });
+  });
+
+  sleep(randomBetween(1, 2));
+
+  // --- 광고 보고 기회 충전 ---
+  group("charge", () => {
+    const chargeChancesByAdPayload = JSON.stringify({
+      source: "ad",
+      sdkPayload: {
+        adGroupId: TEST_AD_GROUP_ID,
+        unitType: "point",
+        unitAmount: 1,
+      },
+    });
+    const chargeRes = http.post(
+      `${BASE_URL}/chances/charge`,
+      chargeChancesByAdPayload,
+      {
+        headers: authHeaders(user),
+        tags: { api: "chargeChancesByAd" },
+      },
+    );
+
+    check(chargeRes, {
+      "charge success": (r) => r.status === 201 || r.status === 200,
+    });
+  });
+
+  sleep(randomBetween(2, 10));
+}
+
+export function handleSummary(data) {
+  const resultDir = __ENV.RESULT_DIR;
+  const outputs = {
+    stdout: textSummary(data, { indent: " ", enableColors: true }),
+  };
+
+  if (resultDir) {
+    outputs[`${resultDir}/summary.json`] = JSON.stringify(data, null, 2);
+    outputs[`${resultDir}/report.html`] = generateHtmlReport(data, {
+      maxVUs: MAX_VUS,
+      stages: STAGES,
+      thresholds: optionsConfig.thresholds,
+    });
   }
 
-  const submitRes = http.post(`${BASE_URL}/drawing`, strokesPayload, {
-    headers: authHeaders(user),
-    tags: { api: "submit" },
-  });
-
-  check(submitRes, {
-    "submit success": (r) => r.status === 201 || r.status === 200,
-  });
-
-  http.get(`${BASE_URL}/drawing/me`, {
-    headers: authHeaders(user),
-    tags: { api: "myDrawing" },
-  });
-
-  http.get(`${BASE_URL}/rankings/podium`, {
-    headers: authHeaders(user),
-    tags: { api: "podium" },
-  });
-
-  http.get(`${BASE_URL}/rankings`, {
-    headers: authHeaders(user),
-    tags: { api: "rankings" },
-  });
-
-  http.get(`${BASE_URL}/rankings/me`, {
-    headers: authHeaders(user),
-    tags: { api: "myRanking" },
-  });
-
-  const chargeChancesByAdPayload = JSON.stringify({
-    source: "ad",
-    sdkPayload: {
-      adGroupId: TEST_AD_GROUP_ID,
-      unitType: "point",
-      unitAmount: 1, // 리워드 수량
-    },
-  });
-  const chargeRes = http.post(
-    `${BASE_URL}/chances/charge`,
-    chargeChancesByAdPayload,
-    {
-      headers: authHeaders(user),
-      tags: { api: "chargeChancesByAd" },
-    },
-  );
-
-  check(chargeRes, {
-    "charge success": (r) => r.status === 201 || r.status === 200,
-  });
+  return outputs;
 }

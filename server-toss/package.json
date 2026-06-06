@@ -36,6 +36,11 @@
     "load-test:docker:run": "docker compose -f tests/load-test/docker/compose.yml up -d --build",
     "load-test:docker:stop": "docker compose -f tests/load-test/docker/compose.yml down",
     "load-test:docker:logs": "docker compose -f tests/load-test/docker/compose.yml logs -f",
+    "load-test:seed": "npx mikro-orm seeder:run --class LoadTestSeeder",
+    "load-test:prepare": "bash tests/load-test/scripts/prepare-test.sh",
+    "load-test:run": "bash tests/load-test/scripts/run-test.sh",
+    "load-test:compare": "node tests/load-test/scripts/compare-results.js",
+    "load-test:clean": "docker compose -f tests/load-test/docker/compose.yml down -v",
     "tokens:generate": "node ./tests/load-test/scripts/generate-test-tokens.js"
   },
   "dependencies": {
