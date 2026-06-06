@@ -29,6 +29,7 @@ import {
 import { GrantEligibilityDecision } from "./point.types";
 import { PointGrantExecuter } from "./port/point-grant-executer.interface";
 import { PointGrantKeyIssuer } from "./port/point-grant-key-issuer.interface";
+import { Trace } from "src/common/observability/trace.decorator";
 
 @Injectable()
 export class PointService {
@@ -86,6 +87,7 @@ export class PointService {
     return requests;
   }
 
+  @Trace()
   @CreateRequestContext()
   async settleGrantRequests() {
     const requests = await this.lockAndFetchEligibleGrants();

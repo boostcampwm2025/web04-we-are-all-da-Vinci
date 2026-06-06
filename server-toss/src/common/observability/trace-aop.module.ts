@@ -1,4 +1,4 @@
-import { Module, OnModuleInit } from "@nestjs/common";
+import { Logger, Module, OnModuleInit } from "@nestjs/common";
 import {
   DiscoveryModule,
   DiscoveryService,
@@ -13,6 +13,7 @@ type Method = (this: unknown, ...args: unknown[]) => unknown;
   imports: [DiscoveryModule],
 })
 export class TraceAopModule implements OnModuleInit {
+  private readonly logger = new Logger(TraceAopModule.name);
   constructor(
     private readonly discoveryService: DiscoveryService,
     private readonly metadataScanner: MetadataScanner,
@@ -30,6 +31,8 @@ export class TraceAopModule implements OnModuleInit {
       }
 
       const prototype = Object.getPrototypeOf(instance) as object;
+      const isClassTraceTarget = this.isClassTraceTarget(provider);
+
       this.metadataScanner
         .getAllMethodNames(prototype)
         .forEach((methodName) => {
@@ -38,8 +41,14 @@ export class TraceAopModule implements OnModuleInit {
           if (!this.isMethod(originalMethod)) {
             return;
           }
+          const isMethodTraceTarget = this.isMethodTraceTarget(originalMethod);
+
+          if (!isClassTraceTarget && !isMethodTraceTarget) {
+            return;
+          }
 
           const spanName = `${provider.name}.${methodName}`;
+          this.logger.log(spanName);
 
           instance[methodName] = this.wrapAsyncMethod(originalMethod, spanName);
         });
@@ -47,21 +56,26 @@ export class TraceAopModule implements OnModuleInit {
   }
 
   private isMethod(value: unknown): value is Method {
-    return typeof value !== "function";
+    return typeof value === "function";
   }
 
   private getProviders(): InstanceWrapper[] {
     return this.discoveryService
       .getProviders()
-      .filter((wrapper) => this.isTraceTarget(wrapper));
+      .filter((wrapper) => wrapper.isDependencyTreeStatic())
+      .filter(({ instance }) => instance && Object.getPrototypeOf(instance));
   }
 
-  private isTraceTarget(wrapper: InstanceWrapper) {
+  private isClassTraceTarget(wrapper: InstanceWrapper): boolean {
     if (!wrapper.metatype) {
       return false;
     }
 
     return Reflect.hasMetadata(TRACE_TARGET_METADATA, wrapper.metatype);
+  }
+
+  private isMethodTraceTarget(method: Method): boolean {
+    return Reflect.hasMetadata(TRACE_TARGET_METADATA, method);
   }
 
   private wrapAsyncMethod(originMethod: Method, spanName: string) {
