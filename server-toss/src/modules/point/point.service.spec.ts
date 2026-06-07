@@ -120,7 +120,7 @@ describe("PointService", () => {
     });
   });
 
-  describe("savePointGrantRequest", () => {
+  describe("savePointGrantRequestForDrawing", () => {
     describe("오늘 프로모션 지급이 가능한 경우", () => {
       it("PENDING 요청을 생성하고 true를 반환한다", async () => {
         const repository = buildPointGrantRequestRepository();
@@ -129,7 +129,7 @@ describe("PointService", () => {
         });
         jest.spyOn(service, "canGrantTodayPromotion").mockResolvedValue(true);
 
-        const result = await service.savePointGrantRequest(
+        const result = await service.savePointGrantRequestForDrawing(
           1234,
           PointReason.DRAWING,
         );
@@ -148,7 +148,7 @@ describe("PointService", () => {
         });
         jest.spyOn(service, "canGrantTodayPromotion").mockResolvedValue(false);
 
-        const result = await service.savePointGrantRequest(
+        const result = await service.savePointGrantRequestForDrawing(
           1234,
           PointReason.DRAWING,
         );

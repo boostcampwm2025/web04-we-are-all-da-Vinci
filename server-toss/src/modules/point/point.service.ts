@@ -53,7 +53,7 @@ export class PointService {
   }
 
   @Transactional()
-  async savePointGrantRequest(
+  async savePointGrantRequestForDrawing(
     userKey: number,
     reason: PointReason,
   ): Promise<boolean> {
@@ -75,6 +75,25 @@ export class PointService {
 
     await this.pointGrantRequestRepository.getEntityManager().flush();
     return true;
+  }
+
+  @Transactional()
+  async savePointGrantRequest(
+    userKey: number,
+    reason: PointReason,
+  ): Promise<void> {
+    const user = this.em.getReference(User, userKey);
+
+    this.pointGrantRequestRepository.create({
+      user,
+      reason,
+      pointAmount: PROMOTION_AMOUNT,
+      status: PointGrantStatus.PENDING,
+      maxAttemptCount: PROMOTION_MAX_RETRIES,
+      attemptCount: 0,
+    });
+
+    await this.pointGrantRequestRepository.getEntityManager().flush();
   }
 
   @Transactional()

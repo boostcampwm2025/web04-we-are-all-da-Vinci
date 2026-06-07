@@ -37,10 +37,11 @@ export class SaveDrawingService {
 
     await this.rankingService.updateRanking(user, drawing);
 
-    const promotionGranted = await this.pointService.savePointGrantRequest(
-      user.userKey,
-      PointReason.DRAWING,
-    );
+    const promotionGranted =
+      await this.pointService.savePointGrantRequestForDrawing(
+        user.userKey,
+        PointReason.DRAWING,
+      );
 
     await this.questService.onDrawingSubmitted(user.userKey, {
       drawingId: drawing.id,
