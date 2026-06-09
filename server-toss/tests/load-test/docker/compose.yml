@@ -41,38 +41,62 @@ services:
       MYSQL_HOST: davinci-mysql
       MYSQL_PORT: 3306
       OTEL_SERVICE_NAME: davinci-app-1
-      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://davinci-jaeger:4318/v1/traces
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://davinci-otel-collector:4318/v1/traces
       OTEL_LOGS_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
       OTEL_ENABLED: true
       OTEL_TRACES_SAMPLER: traceidratio
-      OTEL_TRACES_SAMPLER_ARG: "0.05"
+      OTEL_TRACES_SAMPLER_ARG: "1.0"
+      EXTERNAL_API: flaky
     env_file:
       - ./env/.env
     depends_on:
       davinci-mysql:
         condition: service_healthy
-      davinci-jaeger:
+      davinci-otel-collector:
         condition: service_started
     cpus: 1.0
     mem_limit: 1g
 
-  davinci-jaeger:
-    image: jaegertracing/all-in-one
-    container_name: davinci-jaeger
+  davinci-otel-collector:
+    container_name: davinci-otel-collector
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel/config.yml"]
     networks:
       - load-net
-    ports:
-      - 16686:16686
-      - 4318:4318
-    environment:
-      - COLLECTOR_OTLP_ENABLED=true
-      - SPAN_STORAGE_TYPE=badger
-      - BADGER_EPHEMERAL=false
-      - BADGER_DIRECTORY_VALUE=/badger/data
-      - BADGER_DIRECTORY_KEY=/badger/key
     volumes:
-      - ./jaeger/data:/badger
+      - ./otel/otel-collector.yml:/etc/otel/config.yml
+    ports:
+      - "4318:4318"
+    mem_limit: 640m
+    depends_on:
+      - davinci-tempo
+
+  davinci-tempo:
+    container_name: davinci-tempo
+    image: grafana/tempo:latest
+    command: ["-config.file=/etc/tempo.yml"]
+    networks:
+      - load-net
+    volumes:
+      - ./tempo/tempo.yml:/etc/tempo.yml
+      - ./tempo/data:/var/tempo
+    mem_limit: 640m
+
+  davinci-grafana:
+    container_name: davinci-grafana
+    image: grafana/grafana:latest
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: true
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    networks:
+      - load-net
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3100:3000"
+    depends_on:
+      - davinci-tempo
 
 networks:
   load-net:

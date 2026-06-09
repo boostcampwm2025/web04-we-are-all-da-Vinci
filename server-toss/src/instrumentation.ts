@@ -14,9 +14,7 @@ if (process.env.OTEL_ENABLED !== "true") {
 } else {
   diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.WARN);
 
-  const samplerRatio = parseFloat(
-    process.env.OTEL_TRACES_SAMPLER_ARG || "0.05",
-  );
+  const samplerRatio = parseFloat(process.env.OTEL_TRACES_SAMPLER_ARG || "1.0");
 
   const sdk = new NodeSDK({
     resource: resourceFromAttributes({

@@ -104,6 +104,5 @@ fi
 if [[ -f "$RESULT_DIR/dashboard.html" ]]; then
   log "대시보드 열기: open $RESULT_DIR/dashboard.html"
 fi
-log "Jaeger 트레이스: http://localhost:16686"
 
 exit $K6_EXIT

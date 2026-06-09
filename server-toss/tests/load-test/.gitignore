@@ -9,5 +9,9 @@ docker/env/.env.*
 docker/env/.env
 **/.env
 **/.env.*
+!docker/env/.env.async
+!docker/env/.env.sync
+
+docker/tempo/data
 
 results/
