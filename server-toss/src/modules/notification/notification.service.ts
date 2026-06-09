@@ -3,14 +3,14 @@ import { exponentialBackoff, withRetry } from "src/common/util/retry.util";
 import {
   TossApiError,
   TossTransportError,
-} from "src/modules/auth/errors/toss.errors";
-import type { TossMessengerResponse } from "src/modules/auth/schemas/toss-messenger.schema";
-import { TossApiClient } from "src/modules/auth/toss-api.client";
+} from "src/external/toss/common/toss.errors";
 import {
   BULK_MESSAGE_MIN_RECIPIENTS,
   SENT_NOTIFICATION_STATUS,
   type NotificationType,
 } from "./notification.constants";
+import { NotificationSender } from "./port/notification-sender.interface";
+import type { TossMessengerResponse } from "./schemas/toss-messenger.schema";
 import type { SentNotification } from "./sent-notification.entity";
 import { SentNotificationRepository } from "./sent-notification.repository";
 
@@ -86,7 +86,7 @@ export class NotificationService {
 
   constructor(
     private readonly sentNotificationRepository: SentNotificationRepository,
-    private readonly tossApiClient: TossApiClient,
+    private readonly notificationSender: NotificationSender,
   ) {}
 
   async send(input: SendNotificationInput): Promise<SendNotificationResult> {
@@ -270,7 +270,7 @@ export class NotificationService {
     // record는 status 추적용. transport error는 throw → withRetry가 재시도.
     // 비즈니스 실패(resultType≠SUCCESS)는 throw 안 함 → 재시도 안 됨.
     const response: TossMessengerResponse =
-      await this.tossApiClient.sendMessage({
+      await this.notificationSender.sendMessage({
         userKey: input.targetUserKey,
         templateSetCode: input.templateSetCode,
         context: input.context,
@@ -403,7 +403,7 @@ export class NotificationService {
     try {
       response = await withRetry(
         () =>
-          this.tossApiClient.sendBulkMessage({
+          this.notificationSender.sendBulkMessage({
             templateSetCode: input.templateSetCode,
             contextList: reservedTargets.map((target) => ({
               userKey: target.userKey,

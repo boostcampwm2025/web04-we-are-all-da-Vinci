@@ -1,8 +1,8 @@
 import type { ConfigService } from "@nestjs/config";
 import { EventEmitter2 } from "@nestjs/event-emitter";
-import { TossTransportError } from "src/modules/auth/errors/toss.errors";
-import type { TossMessengerResponse } from "src/modules/auth/schemas/toss-messenger.schema";
-import type { TossApiClient } from "src/modules/auth/toss-api.client";
+import { TossTransportError } from "src/external/toss/common/toss.errors";
+import type { TossMessengerResponse } from "../schemas/toss-messenger.schema";
+import type { NotificationSender } from "../port/notification-sender.interface";
 import {
   RankingChangedEvent,
   RANKING_CHANGED_EVENT,
@@ -217,10 +217,10 @@ const buildIntegration = (opts: {
       })),
     );
 
-  const tossApiClient = {
+  const notificationSender = {
     sendMessage: jest.fn().mockResolvedValue(okResponse()),
     sendBulkMessage: jest.fn().mockResolvedValue(okResponse()),
-  } as unknown as jest.Mocked<TossApiClient>;
+  } as unknown as jest.Mocked<NotificationSender>;
 
   const counterMock = () => ({
     labels: jest.fn().mockReturnValue({ inc: jest.fn() }),
@@ -231,7 +231,7 @@ const buildIntegration = (opts: {
 
   const notificationService = new NotificationService(
     sentNotificationRepository as unknown as SentNotificationRepository,
-    tossApiClient,
+    notificationSender,
     counterMock() as never,
     histogramMock() as never,
     counterMock() as never,
@@ -258,7 +258,7 @@ const buildIntegration = (opts: {
     eventEmitter,
     sentNotificationRepository,
     notificationAgreementRepository,
-    tossApiClient,
+    notificationSender,
     configService,
   };
 };
@@ -275,7 +275,7 @@ const triggerRankingChange = (
 
 describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름", () => {
   it("추월된 동의자 모두에게 알림이 발송되고 status=DELIVERED로 끝나요", async () => {
-    const { eventEmitter, sentNotificationRepository, tossApiClient } =
+    const { eventEmitter, sentNotificationRepository, notificationSender } =
       buildIntegration({
         agreements: [
           {
@@ -291,15 +291,15 @@ describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름",
 
     await triggerRankingChange(eventEmitter, [101, 202]);
 
-    expect(tossApiClient.sendMessage).toHaveBeenCalledTimes(2);
-    expect(tossApiClient.sendMessage).toHaveBeenCalledWith(
+    expect(notificationSender.sendMessage).toHaveBeenCalledTimes(2);
+    expect(notificationSender.sendMessage).toHaveBeenCalledWith(
       expect.objectContaining({
         userKey: 101,
         templateSetCode: OVERTAKEN_TEMPLATE,
         context: { day: "2026-05-29", newRank: 1 },
       }),
     );
-    expect(tossApiClient.sendMessage).toHaveBeenCalledWith(
+    expect(notificationSender.sendMessage).toHaveBeenCalledWith(
       expect.objectContaining({ userKey: 202 }),
     );
 
@@ -316,7 +316,7 @@ describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름",
   });
 
   it("추월된 사용자 중 동의자만 발송돼요", async () => {
-    const { eventEmitter, sentNotificationRepository, tossApiClient } =
+    const { eventEmitter, sentNotificationRepository, notificationSender } =
       buildIntegration({
         agreements: [
           {
@@ -333,8 +333,8 @@ describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름",
 
     await triggerRankingChange(eventEmitter, [101, 202, 303]);
 
-    expect(tossApiClient.sendMessage).toHaveBeenCalledTimes(1);
-    expect(tossApiClient.sendMessage).toHaveBeenCalledWith(
+    expect(notificationSender.sendMessage).toHaveBeenCalledTimes(1);
+    expect(notificationSender.sendMessage).toHaveBeenCalledWith(
       expect.objectContaining({ userKey: 202 }),
     );
     // 비동의자는 reserve도 안 됨 (UNIQUE 게이트 이전 단계)
@@ -346,7 +346,7 @@ describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름",
   it("토스 transport timeout이면 재시도 후 DELIVERED로 복구돼요", async () => {
     jest.useFakeTimers();
     try {
-      const { eventEmitter, sentNotificationRepository, tossApiClient } =
+      const { eventEmitter, sentNotificationRepository, notificationSender } =
         buildIntegration({
           agreements: [
             {
@@ -356,7 +356,7 @@ describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름",
           ],
         });
 
-      tossApiClient.sendMessage = jest
+      notificationSender.sendMessage = jest
         .fn()
         .mockRejectedValueOnce(new TossTransportError("타임아웃"))
         .mockResolvedValueOnce(okResponse());
@@ -365,7 +365,7 @@ describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름",
       await jest.runAllTimersAsync();
       await promise;
 
-      expect(tossApiClient.sendMessage).toHaveBeenCalledTimes(2);
+      expect(notificationSender.sendMessage).toHaveBeenCalledTimes(2);
       expect(
         sentNotificationRepository.countByStatus(
           SENT_NOTIFICATION_STATUS.DELIVERED,
@@ -377,7 +377,7 @@ describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름",
   });
 
   it("같은 day에 같은 사용자가 두 번째로 추월되어도 중복 발송 안 돼요", async () => {
-    const { eventEmitter, sentNotificationRepository, tossApiClient } =
+    const { eventEmitter, sentNotificationRepository, notificationSender } =
       buildIntegration({
         agreements: [
           {
@@ -392,7 +392,7 @@ describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름",
 
     // 두 번째 트리거에서도 listener는 호출되지만 reserve가 false 반환 → already_sent
     // 첫 번째 호출만 토스에 도달함.
-    expect(tossApiClient.sendMessage).toHaveBeenCalledTimes(1);
+    expect(notificationSender.sendMessage).toHaveBeenCalledTimes(1);
     expect(sentNotificationRepository.findByUser(101)).toHaveLength(1);
     expect(
       sentNotificationRepository.countByStatus(
@@ -405,7 +405,7 @@ describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름",
     const {
       eventEmitter,
       sentNotificationRepository,
-      tossApiClient,
+      notificationSender,
       notificationAgreementRepository,
     } = buildIntegration({
       enabled: false,
@@ -424,7 +424,7 @@ describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름",
     await triggerRankingChange(eventEmitter, [101]);
 
     expect(findAgreedSpy).not.toHaveBeenCalled();
-    expect(tossApiClient.sendMessage).not.toHaveBeenCalled();
+    expect(notificationSender.sendMessage).not.toHaveBeenCalled();
     expect(sentNotificationRepository.records.size).toBe(0);
   });
 });

@@ -7,7 +7,8 @@ import { ShareLog } from "./modules/chance/share-log.entity";
 import { Drawing } from "./modules/drawing/drawing.entity";
 import { NotificationAgreement } from "./modules/notification/notification-agreement.entity";
 import { SentNotification } from "./modules/notification/sent-notification.entity";
-import { PointLog } from "./modules/point/point-log.entity";
+import { PointGrantRequest } from "./modules/point/entity/point-grant-request.entity";
+import { PointLog } from "./modules/point/entity/point-log.entity";
 import { DailyPrompt } from "./modules/prompt/daily-prompt.entity";
 import { Prompt } from "./modules/prompt/prompt.entity";
 import { Ranking } from "./modules/ranking/ranking.entity";
@@ -25,6 +26,7 @@ export default defineConfig({
     Prompt,
     DailyPrompt,
     PointLog,
+    PointGrantRequest,
     AdView,
     Ranking,
     PlayChance,

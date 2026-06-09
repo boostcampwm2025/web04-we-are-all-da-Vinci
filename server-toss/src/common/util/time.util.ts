@@ -20,3 +20,7 @@ export const formatKstDate = (date: Date = new Date()): string => {
   const seoul = new Date(date.getTime() + SEOUL_TIMEZONE_OFFSET_MS);
   return seoul.toISOString().slice(0, 10);
 };
+
+export const getSeoulDateTime = (date: Date = new Date()) => {
+  return new Date(date.getTime() + SEOUL_TIMEZONE_OFFSET_MS);
+};

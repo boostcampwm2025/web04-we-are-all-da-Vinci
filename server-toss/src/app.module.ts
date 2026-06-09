@@ -7,6 +7,7 @@ import { LoggerModule } from "nestjs-pino";
 import { validateChanceWhitelistEnv } from "./common/config/env.validation";
 import { createLoggerParams } from "./common/logging/logger.config";
 import { RequestContextHelper } from "./common/middleware/request-context-helper.middleware";
+import { ExternalModule } from "./external/external.module";
 import { HealthModule } from "./health/health.module";
 import config from "./mikro-orm.config";
 import { AuthModule } from "./modules/auth/auth.module";
@@ -43,6 +44,7 @@ import { UserModule } from "./modules/user/user.module";
     // 이벤트는 손실되는 한계 존재 — 큐 도입 시점에 BullMQ로 이행 호환.
     EventEmitterModule.forRoot(),
     MikroOrmModule.forRoot(config),
+    ExternalModule.register(),
     AuthModule,
     UserModule,
     DrawingModule,

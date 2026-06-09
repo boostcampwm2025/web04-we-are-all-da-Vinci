@@ -1,7 +1,7 @@
 import type { ConfigService } from "@nestjs/config";
 import type { PromptService } from "../prompt/prompt.service";
-import type { TossMessengerResponse } from "src/modules/auth/schemas/toss-messenger.schema";
-import type { TossApiClient } from "src/modules/auth/toss-api.client";
+import type { NotificationSender } from "./port/notification-sender.interface";
+import type { TossMessengerResponse } from "./schemas/toss-messenger.schema";
 import { DailyPromptNotificationScheduler } from "./daily-prompt-notification.scheduler";
 import {
   NOTIFICATION_TYPE,
@@ -141,11 +141,11 @@ const buildFlow = (opts: {
     }),
   } as unknown as jest.Mocked<ConfigService>;
 
-  const tossApiClient = {
+  const notificationSender = {
     sendMessage: jest
       .fn()
       .mockImplementation(async () => opts.responses?.shift() ?? okResponse()),
-  } as unknown as jest.Mocked<TossApiClient>;
+  } as unknown as jest.Mocked<NotificationSender>;
 
   const sentNotificationRepository = new InMemorySentNotificationRepository(
     opts.userKeys,
@@ -160,7 +160,7 @@ const buildFlow = (opts: {
 
   const notificationService = new NotificationService(
     sentNotificationRepository as unknown as SentNotificationRepository,
-    tossApiClient,
+    notificationSender,
     counterMock() as never,
     histogramMock() as never,
     counterMock() as never,
@@ -176,7 +176,7 @@ const buildFlow = (opts: {
     promptService,
   );
 
-  return { scheduler, sentNotificationRepository, tossApiClient };
+  return { scheduler, sentNotificationRepository, notificationSender };
 };
 
 describe("알림 로컬 검증 흐름", () => {
@@ -190,21 +190,22 @@ describe("알림 로컬 검증 흐름", () => {
   });
 
   it("대상 조회부터 Toss payload와 발송 기록 멱등성까지 검증해요", async () => {
-    const { scheduler, sentNotificationRepository, tossApiClient } = buildFlow({
-      userKeys: [101, 202],
-    });
+    const { scheduler, sentNotificationRepository, notificationSender } =
+      buildFlow({
+        userKeys: [101, 202],
+      });
 
     await scheduler.run();
     await scheduler.run();
 
     // 두 사용자 각각 1번 호출. 두 번째 run은 UNIQUE 차단으로 skip.
-    expect(tossApiClient.sendMessage).toHaveBeenCalledTimes(2);
-    expect(tossApiClient.sendMessage).toHaveBeenNthCalledWith(1, {
+    expect(notificationSender.sendMessage).toHaveBeenCalledTimes(2);
+    expect(notificationSender.sendMessage).toHaveBeenNthCalledWith(1, {
       userKey: 101,
       templateSetCode: "daily_prompt_v1",
       context: {},
     });
-    expect(tossApiClient.sendMessage).toHaveBeenNthCalledWith(2, {
+    expect(notificationSender.sendMessage).toHaveBeenNthCalledWith(2, {
       userKey: 202,
       templateSetCode: "daily_prompt_v1",
       context: {},
@@ -218,15 +219,16 @@ describe("알림 로컬 검증 흐름", () => {
   });
 
   it("Toss 실패 응답은 row를 보존(status=FAILED)해서 다음 실행에서 UNIQUE로 차단해요", async () => {
-    const { scheduler, sentNotificationRepository, tossApiClient } = buildFlow({
-      userKeys: [303],
-      responses: [failResponse, okResponse()],
-    });
+    const { scheduler, sentNotificationRepository, notificationSender } =
+      buildFlow({
+        userKeys: [303],
+        responses: [failResponse, okResponse()],
+      });
 
     await scheduler.run();
 
     // 실패해도 row는 남고 status는 FAILED. 다음 cron에서 UNIQUE로 차단.
-    expect(tossApiClient.sendMessage).toHaveBeenCalledTimes(1);
+    expect(notificationSender.sendMessage).toHaveBeenCalledTimes(1);
     expect(sentNotificationRepository.size).toBe(1);
     expect(
       sentNotificationRepository.countByStatus(SENT_NOTIFICATION_STATUS.FAILED),
@@ -236,7 +238,7 @@ describe("알림 로컬 검증 흐름", () => {
 
     // UNIQUE 차단으로 두 번째 cron에서는 토스 호출 안 일어남.
     // = 같은 사용자에게 중복 발송 안 됨.
-    expect(tossApiClient.sendMessage).toHaveBeenCalledTimes(1);
+    expect(notificationSender.sendMessage).toHaveBeenCalledTimes(1);
     expect(sentNotificationRepository.size).toBe(1);
   });
 

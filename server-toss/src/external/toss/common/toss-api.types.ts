@@ -1,3 +1,5 @@
+import { UserInfo } from "src/modules/auth/types/auth.types";
+
 interface TossBaseResponse {
   resultType: "SUCCESS" | "FAIL";
   error?: {
@@ -32,7 +34,7 @@ export interface TossUserResponse extends TossBaseResponse {
   };
 }
 
-export type TossUserInfo = NonNullable<TossUserResponse["success"]>;
+export type TossUserInfo = UserInfo;
 
 export interface TossPromotionKeyResponse extends TossBaseResponse {
   success?: { key: string };

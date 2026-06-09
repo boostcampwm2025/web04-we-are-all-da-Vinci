@@ -1,13 +1,13 @@
 import {
   TossApiError,
   TossTransportError,
-} from "src/modules/auth/errors/toss.errors";
-import type { TossMessengerResponse } from "src/modules/auth/schemas/toss-messenger.schema";
-import type { TossApiClient } from "src/modules/auth/toss-api.client";
+} from "src/external/toss/common/toss.errors";
 import {
   NOTIFICATION_TYPE,
   SENT_NOTIFICATION_STATUS,
 } from "./notification.constants";
+import type { NotificationSender } from "./port/notification-sender.interface";
+import type { TossMessengerResponse } from "./schemas/toss-messenger.schema";
 import { NotificationService } from "./notification.service";
 import type { SentNotification } from "./sent-notification.entity";
 import type { SentNotificationRepository } from "./sent-notification.repository";
@@ -55,17 +55,17 @@ const buildService = () => {
     getEntityManager: jest.fn().mockReturnValue({ clear: jest.fn() }),
   } as unknown as jest.Mocked<SentNotificationRepository>;
 
-  const tossApiClient = {
+  const notificationSender = {
     sendMessage: jest.fn(),
     sendBulkMessage: jest.fn(),
-  } as unknown as jest.Mocked<TossApiClient>;
+  } as unknown as jest.Mocked<NotificationSender>;
 
   const service = new NotificationService(
     sentNotificationRepository,
-    tossApiClient,
+    notificationSender,
   );
 
-  return { service, sentNotificationRepository, tossApiClient };
+  return { service, sentNotificationRepository, notificationSender };
 };
 
 const baseInput = {
@@ -78,23 +78,23 @@ const baseInput = {
 
 describe("NotificationService.send", () => {
   it("이미 발송된 알림이면 토스 호출 없이 already_sent를 반환해요", async () => {
-    const { service, sentNotificationRepository, tossApiClient } =
+    const { service, sentNotificationRepository, notificationSender } =
       buildService();
     sentNotificationRepository.tryInsert.mockResolvedValueOnce(false);
 
     const result = await service.send(baseInput);
 
     expect(result).toEqual({ sent: false, reason: "already_sent" });
-    expect(tossApiClient.sendMessage).not.toHaveBeenCalled();
+    expect(notificationSender.sendMessage).not.toHaveBeenCalled();
     expect(sentNotificationRepository.updateStatus).not.toHaveBeenCalled();
   });
 
   it("정상 발송 시 status를 DELIVERED로 바꿔요", async () => {
-    const { service, sentNotificationRepository, tossApiClient } =
+    const { service, sentNotificationRepository, notificationSender } =
       buildService();
     const record = { id: 1n } as SentNotification;
     sentNotificationRepository.tryInsert.mockResolvedValueOnce(record);
-    tossApiClient.sendMessage.mockResolvedValueOnce(okResponse());
+    notificationSender.sendMessage.mockResolvedValueOnce(okResponse());
 
     const result = await service.send(baseInput);
 
@@ -107,11 +107,11 @@ describe("NotificationService.send", () => {
   });
 
   it("일부 채널 도달 실패가 있어도 DELIVERED로 처리해요", async () => {
-    const { service, sentNotificationRepository, tossApiClient } =
+    const { service, sentNotificationRepository, notificationSender } =
       buildService();
     const record = { id: 1n } as SentNotification;
     sentNotificationRepository.tryInsert.mockResolvedValueOnce(record);
-    tossApiClient.sendMessage.mockResolvedValueOnce(
+    notificationSender.sendMessage.mockResolvedValueOnce(
       okResponse({
         failPush: [{ contentId: "x", reachFailReason: "PERMISSION_DENIED" }],
       }),
@@ -127,11 +127,11 @@ describe("NotificationService.send", () => {
   });
 
   it("resultType FAIL이면 status를 FAILED로 바꿔요 (롤백 안 함)", async () => {
-    const { service, sentNotificationRepository, tossApiClient } =
+    const { service, sentNotificationRepository, notificationSender } =
       buildService();
     const record = { id: 1n } as SentNotification;
     sentNotificationRepository.tryInsert.mockResolvedValueOnce(record);
-    tossApiClient.sendMessage.mockResolvedValueOnce(failResponse);
+    notificationSender.sendMessage.mockResolvedValueOnce(failResponse);
 
     const result = await service.send(baseInput);
 
@@ -144,15 +144,15 @@ describe("NotificationService.send", () => {
   });
 
   it("4xx 에러는 재시도하지 않고 즉시 FAILED + throw해요", async () => {
-    const { service, sentNotificationRepository, tossApiClient } =
+    const { service, sentNotificationRepository, notificationSender } =
       buildService();
     const record = { id: 1n } as SentNotification;
     sentNotificationRepository.tryInsert.mockResolvedValueOnce(record);
     const error = new TossApiError(400, "bad request");
-    tossApiClient.sendMessage.mockRejectedValueOnce(error);
+    notificationSender.sendMessage.mockRejectedValueOnce(error);
 
     await expect(service.send(baseInput)).rejects.toBe(error);
-    expect(tossApiClient.sendMessage).toHaveBeenCalledTimes(1);
+    expect(notificationSender.sendMessage).toHaveBeenCalledTimes(1);
     expect(sentNotificationRepository.updateStatus).toHaveBeenCalledWith(
       record,
       SENT_NOTIFICATION_STATUS.FAILED,
@@ -162,12 +162,12 @@ describe("NotificationService.send", () => {
   it("transport timeout이면 재시도 후 성공 시 DELIVERED로 처리해요", async () => {
     jest.useFakeTimers();
     try {
-      const { service, sentNotificationRepository, tossApiClient } =
+      const { service, sentNotificationRepository, notificationSender } =
         buildService();
       const record = { id: 1n } as SentNotification;
       sentNotificationRepository.tryInsert.mockResolvedValueOnce(record);
 
-      tossApiClient.sendMessage
+      notificationSender.sendMessage
         .mockRejectedValueOnce(new TossTransportError("타임아웃"))
         .mockResolvedValueOnce(okResponse());
 
@@ -176,7 +176,7 @@ describe("NotificationService.send", () => {
       const result = await promise;
 
       expect(result).toEqual({ sent: true });
-      expect(tossApiClient.sendMessage).toHaveBeenCalledTimes(2);
+      expect(notificationSender.sendMessage).toHaveBeenCalledTimes(2);
       expect(sentNotificationRepository.updateStatus).toHaveBeenCalledWith(
         record,
         SENT_NOTIFICATION_STATUS.DELIVERED,
@@ -189,13 +189,13 @@ describe("NotificationService.send", () => {
   it("transport 재시도 모두 실패하면 FAILED + throw해요", async () => {
     jest.useFakeTimers();
     try {
-      const { service, sentNotificationRepository, tossApiClient } =
+      const { service, sentNotificationRepository, notificationSender } =
         buildService();
       const record = { id: 1n } as SentNotification;
       sentNotificationRepository.tryInsert.mockResolvedValueOnce(record);
 
       const error = new TossTransportError("타임아웃");
-      tossApiClient.sendMessage.mockRejectedValue(error);
+      notificationSender.sendMessage.mockRejectedValue(error);
 
       const promise = service.send(baseInput);
       // rejection을 미리 잡아 unhandled로 안 새도록.
@@ -203,7 +203,7 @@ describe("NotificationService.send", () => {
       await jest.runAllTimersAsync();
       await rejectionAssertion;
 
-      expect(tossApiClient.sendMessage).toHaveBeenCalledTimes(3);
+      expect(notificationSender.sendMessage).toHaveBeenCalledTimes(3);
       expect(sentNotificationRepository.updateStatus).toHaveBeenCalledWith(
         record,
         SENT_NOTIFICATION_STATUS.FAILED,
@@ -216,12 +216,12 @@ describe("NotificationService.send", () => {
   it("5xx도 재시도 대상이에요", async () => {
     jest.useFakeTimers();
     try {
-      const { service, sentNotificationRepository, tossApiClient } =
+      const { service, sentNotificationRepository, notificationSender } =
         buildService();
       const record = { id: 1n } as SentNotification;
       sentNotificationRepository.tryInsert.mockResolvedValueOnce(record);
 
-      tossApiClient.sendMessage
+      notificationSender.sendMessage
         .mockRejectedValueOnce(new TossApiError(503, "service unavailable"))
         .mockResolvedValueOnce(okResponse());
 
@@ -230,7 +230,7 @@ describe("NotificationService.send", () => {
       const result = await promise;
 
       expect(result).toEqual({ sent: true });
-      expect(tossApiClient.sendMessage).toHaveBeenCalledTimes(2);
+      expect(notificationSender.sendMessage).toHaveBeenCalledTimes(2);
     } finally {
       jest.useRealTimers();
     }
@@ -239,14 +239,14 @@ describe("NotificationService.send", () => {
 
 describe("NotificationService.sendBulk", () => {
   it("50명 이상이면 대량 발송 API를 호출하고 status를 DELIVERED로 바꿔요", async () => {
-    const { service, sentNotificationRepository, tossApiClient } =
+    const { service, sentNotificationRepository, notificationSender } =
       buildService();
     let id = 0n;
     sentNotificationRepository.tryInsert.mockImplementation(async () => {
       id += 1n;
       return { id } as SentNotification;
     });
-    tossApiClient.sendBulkMessage.mockResolvedValueOnce(okResponse());
+    notificationSender.sendBulkMessage.mockResolvedValueOnce(okResponse());
 
     const targets = Array.from({ length: 50 }, (_, index) => ({
       userKey: index + 1,
@@ -267,7 +267,7 @@ describe("NotificationService.sendBulk", () => {
       bulkRequestCount: 1,
       singleFallbackCount: 0,
     });
-    expect(tossApiClient.sendBulkMessage).toHaveBeenCalledWith({
+    expect(notificationSender.sendBulkMessage).toHaveBeenCalledWith({
       templateSetCode: "daily_prompt_v1",
       contextList: targets,
     });
@@ -279,13 +279,13 @@ describe("NotificationService.sendBulk", () => {
   });
 
   it("중복 제외 후 50명 미만이면 단건 fallback으로 보내고 각 row를 DELIVERED로 바꿔요", async () => {
-    const { service, sentNotificationRepository, tossApiClient } =
+    const { service, sentNotificationRepository, notificationSender } =
       buildService();
     sentNotificationRepository.tryInsert
       .mockResolvedValueOnce({ id: 1n } as SentNotification)
       .mockResolvedValueOnce(false)
       .mockResolvedValueOnce({ id: 2n } as SentNotification);
-    tossApiClient.sendMessage.mockResolvedValue(okResponse());
+    notificationSender.sendMessage.mockResolvedValue(okResponse());
 
     const result = await service.sendBulk({
       targets: [
@@ -305,20 +305,20 @@ describe("NotificationService.sendBulk", () => {
       bulkRequestCount: 0,
       singleFallbackCount: 2,
     });
-    expect(tossApiClient.sendBulkMessage).not.toHaveBeenCalled();
-    expect(tossApiClient.sendMessage).toHaveBeenCalledTimes(2);
+    expect(notificationSender.sendBulkMessage).not.toHaveBeenCalled();
+    expect(notificationSender.sendMessage).toHaveBeenCalledTimes(2);
     expect(sentNotificationRepository.updateStatus).toHaveBeenCalledTimes(2);
   });
 
   it("대량 발송이 비즈니스 실패면 모든 row를 FAILED로 바꿔요", async () => {
-    const { service, sentNotificationRepository, tossApiClient } =
+    const { service, sentNotificationRepository, notificationSender } =
       buildService();
     let id = 0n;
     sentNotificationRepository.tryInsert.mockImplementation(async () => {
       id += 1n;
       return { id } as SentNotification;
     });
-    tossApiClient.sendBulkMessage.mockResolvedValueOnce(failResponse);
+    notificationSender.sendBulkMessage.mockResolvedValueOnce(failResponse);
 
     const result = await service.sendBulk({
       targets: Array.from({ length: 50 }, (_, index) => ({
@@ -349,14 +349,14 @@ describe("NotificationService.sendBulk", () => {
   it("대량 transport error는 재시도 후 exhausted되면 FAILED로 마킹해요", async () => {
     jest.useFakeTimers();
     try {
-      const { service, sentNotificationRepository, tossApiClient } =
+      const { service, sentNotificationRepository, notificationSender } =
         buildService();
       let id = 0n;
       sentNotificationRepository.tryInsert.mockImplementation(async () => {
         id += 1n;
         return { id } as SentNotification;
       });
-      tossApiClient.sendBulkMessage.mockRejectedValue(
+      notificationSender.sendBulkMessage.mockRejectedValue(
         new TossTransportError("타임아웃"),
       );
 
@@ -373,7 +373,7 @@ describe("NotificationService.sendBulk", () => {
       const result = await promise;
 
       expect(result.failedCount).toBe(50);
-      expect(tossApiClient.sendBulkMessage).toHaveBeenCalledTimes(3);
+      expect(notificationSender.sendBulkMessage).toHaveBeenCalledTimes(3);
       expect(sentNotificationRepository.updateStatusMany).toHaveBeenCalledWith(
         expect.any(Array),
         SENT_NOTIFICATION_STATUS.FAILED,

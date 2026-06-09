@@ -8,7 +8,6 @@ import {
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
 import { formatKstDate } from "src/common/util/time.util";
-import { PointService } from "src/modules/point/point.service";
 import {
   RankingChangedEvent,
   RANKING_CHANGED_EVENT,
@@ -36,7 +35,6 @@ export class DrawingService {
   constructor(
     private readonly userService: UserService,
     private readonly promptService: PromptService,
-    private readonly pointService: PointService,
     @InjectRepository(Drawing)
     private readonly drawingRepository: DrawingRepository,
     private readonly saveDrawingService: SaveDrawingService,
@@ -109,14 +107,11 @@ export class DrawingService {
     const playerPreprocessed = preprocessStrokes(playerStrokes);
     const similarity = scoreFinalSimilarity(preprocessed, playerPreprocessed);
 
-    const { drawing, rankingChange } =
+    const { drawing, rankingChange, promotionGranted } =
       await this.saveDrawingService.saveDrawingWithRanking(
         user,
         new SaveDrawingDto(promptId, playerStrokes, similarity),
       );
-
-    const promotionGranted =
-      await this.pointService.grantDrawingPromotionIfEligible(user.userKey);
 
     this.logger.log(
       {
