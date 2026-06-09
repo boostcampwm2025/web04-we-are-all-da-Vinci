@@ -2,17 +2,17 @@
 
 ### 테스트 환경 (Docker)
 
-| 서비스       | 스펙                 | 포트                    |
-| ------------ | -------------------- | ----------------------- |
-| App (NestJS) | 1 vCPU, 1GB, Node 22 | 3000                    |
-| MySQL 8.4    | 1 vCPU, 1GB          | 3306                    |
-| Jaeger       | all-in-one           | 16686 (UI), 4318 (OTLP) |
-
-> 컨테이너로 실행하는 이유: CPU/Memory 자원 제한을 두기 위함.
+| 서비스                  | 스펙                 | 포트           |
+| ----------------------- | -------------------- | -------------- |
+| App (NestJS)            | 1 vCPU, 1GB, Node 22 | 3000           |
+| MySQL 8.4               | 1 vCPU, 1GB          | 3306           |
+| OpenTelemetry Collector | 640MB                | 4318(receiver) |
+| Tempo                   | 640MB                | 4317(receiver) |
+| Grafana                 | 1GB                  | 3100           |
 
 ### 준비물
 
-- Docker (Compose V2)
+- Docker (Compose)
 - [k6](https://grafana.com/docs/k6/latest/set-up/install-k6/)
 - pnpm
 - `docker/env/.env` 파일 (DB 접속 정보, JWT_SECRET 등)
@@ -21,7 +21,7 @@
 
 ```bash
 # 1. 전체 준비 (Docker up + 시드 + 토큰 생성)
-pnpm load-test:prepare
+pnpm load-test:prepare --token-count 500
 
 # 2. 부하 테스트 실행
 pnpm load-test:run
@@ -103,10 +103,10 @@ node tests/load-test/scripts/compare-results.js results/run1 results/run2 --mark
 
 ### 트레이싱
 
-OpenTelemetry + Jaeger로 트레이스 수집. 테스트 중/후에 Jaeger UI에서 확인:
+OpenTelemetry + OpenTelemetry Collector + Tempo 트레이스 수집. 테스트 중/후에 Grafana UI에서 확인:
 
 ```
-http://localhost:16686
+http://localhost:3100
 ```
 
 서비스명: `davinci-app-1`

@@ -2,16 +2,12 @@ docker/mysql/data
 docker/mysql/data/*
 docker/mysql/data/**/*
 
-docker/jaeger/data
-docker/jaeger/data/**/*
-
 docker/env/.env.*
 docker/env/.env
 **/.env
 **/.env.*
-!docker/env/.env.async
-!docker/env/.env.sync
 
 docker/tempo/data
+docker/tempo/data/*
 
 results/

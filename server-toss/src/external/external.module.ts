@@ -5,6 +5,7 @@ import { PointGrantKeyIssuer } from "src/modules/point/port/point-grant-key-issu
 import { MockAuthClient } from "./mock/auth/mock-auth.client";
 import { MockModule } from "./mock/mock.module";
 import { MockPointGrantKeyIssuer } from "./mock/point/mock-point-grant-key.issuer";
+import { FlakyPointGrantExecuter } from "./mock/point/flaky-point-grant.executer";
 import { MockPointGrantExecuter } from "./mock/point/mock-point-grant.executer";
 import { TossAuthClient } from "./toss/auth/toss-auth.client";
 import { TossHttpClient } from "./toss/common/toss-http.client";
@@ -15,25 +16,31 @@ import { TossModule } from "./toss/toss.module";
 @Module({})
 export class ExternalModule {
   static register(): DynamicModule {
-    const useMock = process.env.EXTERNAL_API !== "toss";
+    const apiMode = process.env.EXTERNAL_API ?? "mock";
+    const useToss = apiMode === "toss";
+    const useFlaky = apiMode === "flaky";
 
-    const providers: Provider[] = useMock
+    const executerClass = useFlaky
+      ? FlakyPointGrantExecuter
+      : MockPointGrantExecuter;
+
+    const providers: Provider[] = useToss
       ? [
-          { provide: AuthClient, useClass: MockAuthClient },
-          { provide: PointGrantKeyIssuer, useClass: MockPointGrantKeyIssuer },
-          { provide: PointGrantExecuter, useClass: MockPointGrantExecuter },
-        ]
-      : [
           TossHttpClient,
           { provide: AuthClient, useClass: TossAuthClient },
           { provide: PointGrantKeyIssuer, useClass: TossPointGrantKeyIssuer },
           { provide: PointGrantExecuter, useClass: TossPointGrantExecuter },
+        ]
+      : [
+          { provide: AuthClient, useClass: MockAuthClient },
+          { provide: PointGrantKeyIssuer, useClass: MockPointGrantKeyIssuer },
+          { provide: PointGrantExecuter, useClass: executerClass },
         ];
 
     return {
       module: ExternalModule,
       global: true,
-      imports: useMock ? [MockModule] : [TossModule],
+      imports: useToss ? [TossModule] : [MockModule],
       providers,
       exports: [AuthClient, PointGrantKeyIssuer, PointGrantExecuter],
     };

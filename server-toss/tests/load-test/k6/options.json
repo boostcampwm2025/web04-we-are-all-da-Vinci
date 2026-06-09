@@ -4,10 +4,10 @@
       "executor": "ramping-vus",
       "startVUs": 0,
       "stages": [
-        { "duration": "1m", "target": 150 },
-        { "duration": "2m", "target": 300 },
-        { "duration": "5m", "target": 300 },
-        { "duration": "1m", "target": 0 }
+        { "duration": "1m", "target": 250 },
+        { "duration": "2m", "target": 500 },
+        { "duration": "5m", "target": 500 },
+        { "duration": "2m", "target": 0 }
       ]
     }
   },
