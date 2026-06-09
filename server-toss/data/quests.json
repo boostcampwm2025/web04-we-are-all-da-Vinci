@@ -1,43 +1,43 @@
 [
   {
-    "title": "패널티 없이 그림 1번 제출하기",
+    "title": "감점 없이 그림 1번 제출하기",
     "period": "daily",
     "isFixed": true,
     "objectiveType": "penalty",
     "requiredCount": 1,
     "threshold": 0,
     "rewardType": "point",
-    "rewardAmount": 2
+    "rewardAmount": 5
   },
   {
-    "title": "70점 이상 받기",
+    "title": "70점 이상 도전하기",
     "period": "daily",
     "isFixed": false,
     "objectiveType": "score",
     "requiredCount": 1,
     "threshold": 70,
     "rewardType": "point",
-    "rewardAmount": 2
+    "rewardAmount": 5
   },
   {
-    "title": "80점 이상 받기",
+    "title": "80점 이상 도전하기",
     "period": "daily",
     "isFixed": false,
     "objectiveType": "score",
     "requiredCount": 1,
     "threshold": 80,
     "rewardType": "point",
-    "rewardAmount": 2
+    "rewardAmount": 5
   },
   {
-    "title": "일일 퀘스트 7개 완료하기",
+    "title": "일일 미션 7개 완료하기",
     "period": "weekly",
     "isFixed": true,
     "objectiveType": "quest_completed",
     "requiredCount": 7,
     "threshold": null,
     "rewardType": "point",
-    "rewardAmount": 2
+    "rewardAmount": 5
   },
   {
     "title": "서로 다른 3일에 그림 제출하기",
@@ -47,17 +47,17 @@
     "requiredCount": 3,
     "threshold": null,
     "rewardType": "point",
-    "rewardAmount": 2
+    "rewardAmount": 5
   },
   {
-    "title": "주간 70점 이상 3번 받기",
+    "title": "주간 70점 이상 3번 달성하기",
     "period": "weekly",
     "isFixed": false,
     "objectiveType": "daily_score",
     "requiredCount": 3,
     "threshold": 70,
     "rewardType": "point",
-    "rewardAmount": 2
+    "rewardAmount": 5
   },
   {
     "title": "첫 그림 그리기",
@@ -155,7 +155,7 @@
     "requiredCount": 3,
     "threshold": null,
     "rewardType": "point",
-    "rewardAmount": 2,
+    "rewardAmount": 5,
     "category": "drawing"
   },
   {
@@ -166,7 +166,7 @@
     "requiredCount": 4,
     "threshold": null,
     "rewardType": "point",
-    "rewardAmount": 2,
+    "rewardAmount": 5,
     "category": "explore"
   },
   {
@@ -177,7 +177,7 @@
     "requiredCount": 1,
     "threshold": null,
     "rewardType": "point",
-    "rewardAmount": 2,
+    "rewardAmount": 5,
     "category": "share"
   }
 ]
