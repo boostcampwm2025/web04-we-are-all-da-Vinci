@@ -12,6 +12,9 @@ const { ShareLog } = require("./dist/modules/chance/share-log.entity");
 const {
   SentNotification,
 } = require("./dist/modules/notification/sent-notification.entity");
+const {
+  NotificationAgreement,
+} = require("./dist/modules/notification/notification-agreement.entity");
 
 const { Migrator } = require("@mikro-orm/migrations");
 const { SeedManager } = require("@mikro-orm/seeder");
@@ -34,6 +37,7 @@ module.exports = defineConfig({
     PlayChance,
     ShareLog,
     SentNotification,
+    NotificationAgreement,
   ],
   debug: process.env.NODE_ENV !== "production",
   forceUtcTimezone: true, // UTC로 시간 설정 고정

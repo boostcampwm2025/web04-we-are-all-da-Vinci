@@ -33,6 +33,10 @@ export class SentNotificationRepository extends EntityRepository<SentNotificatio
       return entity;
     } catch (err) {
       if (err instanceof UniqueConstraintViolationException) {
+        // 실패한 entity를 수동으로 UoW에서 빼낼 필요 없음: MikroORM v7의 flush()→
+        // UnitOfWork.commit()은 finally에서 postCommitCleanup()으로 persist stack을
+        // 비우므로(insert 실패 시에도), 같은 RequestContext의 다음 flush가 이 entity를
+        // 재삽입하지 않는다. (sendBulk 청크 루프에서 연쇄 실패가 생기지 않음)
         return false;
       }
       throw err;

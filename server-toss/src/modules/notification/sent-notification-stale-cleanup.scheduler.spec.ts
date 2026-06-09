@@ -32,7 +32,7 @@ const buildScheduler = (opts?: {
   return { scheduler, sentNotificationRepository, configService };
 };
 
-describe("SentNotificationStaleCleanupScheduler", () => {
+describe("IN_FLIGHT 정리 스케줄러", () => {
   it("기본 임계는 60분이고 그보다 오래된 IN_FLIGHT만 정리해요", async () => {
     const { scheduler, sentNotificationRepository } = buildScheduler({
       affected: 0,

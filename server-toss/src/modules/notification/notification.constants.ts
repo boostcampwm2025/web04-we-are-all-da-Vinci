@@ -25,3 +25,7 @@ export const SENT_NOTIFICATION_STATUS = {
 
 export type SentNotificationStatus =
   (typeof SENT_NOTIFICATION_STATUS)[keyof typeof SENT_NOTIFICATION_STATUS];
+
+// 토스 대량 발송 위임 최소 인원. 이 값 미만이면 단건으로 보낸다.
+// 스케줄러(위임 판단)와 서비스(실제 발송)가 같은 기준을 쓰도록 단일 소스로 둔다.
+export const BULK_MESSAGE_MIN_RECIPIENTS = 50;

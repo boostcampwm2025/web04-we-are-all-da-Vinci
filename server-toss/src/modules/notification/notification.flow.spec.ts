@@ -179,7 +179,7 @@ const buildFlow = (opts: {
   return { scheduler, sentNotificationRepository, tossApiClient };
 };
 
-describe("notification local verification flow", () => {
+describe("알림 로컬 검증 흐름", () => {
   beforeEach(() => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date("2026-05-26T03:00:00.000Z"));

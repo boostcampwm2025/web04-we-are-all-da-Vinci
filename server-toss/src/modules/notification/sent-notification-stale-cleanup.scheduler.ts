@@ -57,7 +57,8 @@ export class SentNotificationStaleCleanupScheduler {
       } else {
         this.logger.debug(
           {
-            event: "notification.stale_cleanup.no_stale",
+            event: "notification.stale_cleanup.skipped",
+            reason: "no_stale",
             thresholdMinutes,
           },
           "정리할 IN_FLIGHT 잔존 row가 없어요.",

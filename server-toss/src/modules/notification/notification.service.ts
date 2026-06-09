@@ -7,6 +7,7 @@ import {
 import type { TossMessengerResponse } from "src/modules/auth/schemas/toss-messenger.schema";
 import { TossApiClient } from "src/modules/auth/toss-api.client";
 import {
+  BULK_MESSAGE_MIN_RECIPIENTS,
   SENT_NOTIFICATION_STATUS,
   type NotificationType,
 } from "./notification.constants";
@@ -52,7 +53,6 @@ const FAIL_CHANNELS = [
   "sentFriendtalk",
 ] as const;
 
-const BULK_MESSAGE_MIN_RECIPIENTS = 50;
 const BULK_MESSAGE_MAX_RECIPIENTS = 2500;
 
 // 토스 메신저는 Idempotency-Key 미지원. timeout만 재시도하면 중복 발송 위험이
@@ -128,7 +128,8 @@ export class NotificationService {
       );
       this.logger.error(
         {
-          event: "notification.send.transport_exhausted",
+          event: "notification.send.failed",
+          reason: "transport_exhausted",
           targetUserKey: input.targetUserKey,
           type: input.type,
           referenceId: input.referenceId,
@@ -278,7 +279,8 @@ export class NotificationService {
     if (response.resultType !== "SUCCESS") {
       this.logger.warn(
         {
-          event: "notification.send.fail_response",
+          event: "notification.send.failed",
+          reason: "fail_response",
           targetUserKey: input.targetUserKey,
           type: input.type,
           referenceId: input.referenceId,
@@ -300,7 +302,8 @@ export class NotificationService {
     if (reachFails.length > 0) {
       this.logger.warn(
         {
-          event: "notification.send.partial_fail",
+          event: "notification.send.succeeded",
+          reason: "partial_reach_fail",
           targetUserKey: input.targetUserKey,
           type: input.type,
           referenceId: input.referenceId,
@@ -364,7 +367,8 @@ export class NotificationService {
         failedCount += 1;
         this.logger.error(
           {
-            event: "notification.bulk.single_fallback_failed",
+            event: "notification.bulk.failed",
+            reason: "single_fallback",
             targetUserKey: target.userKey,
             type: input.type,
             referenceId: input.referenceId,
@@ -434,7 +438,8 @@ export class NotificationService {
       );
       this.logger.error(
         {
-          event: "notification.bulk.transport_exhausted",
+          event: "notification.bulk.failed",
+          reason: "transport_exhausted",
           type: input.type,
           referenceId: input.referenceId,
           targetCount: reservedTargets.length,
@@ -456,7 +461,8 @@ export class NotificationService {
       );
       this.logger.warn(
         {
-          event: "notification.bulk.fail_response",
+          event: "notification.bulk.failed",
+          reason: "fail_response",
           type: input.type,
           referenceId: input.referenceId,
           targetCount: reservedTargets.length,
@@ -482,7 +488,8 @@ export class NotificationService {
     if (reachFails.length > 0) {
       this.logger.warn(
         {
-          event: "notification.bulk.partial_fail",
+          event: "notification.bulk.succeeded",
+          reason: "partial_reach_fail",
           type: input.type,
           referenceId: input.referenceId,
           targetCount: reservedTargets.length,

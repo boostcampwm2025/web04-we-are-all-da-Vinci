@@ -1,5 +1,11 @@
 import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 import {
   NotificationAgreementRequestSchema,
   type NotificationAgreementRequest,
@@ -10,6 +16,20 @@ import type { CurrentUserPayload } from "src/modules/auth/decorators/current-use
 import { CurrentUser } from "src/modules/auth/decorators/current-user.decorator";
 import { JwtAuthGuard } from "src/modules/auth/guards/jwt-auth.guard";
 import { NotificationAgreementService } from "./notification-agreement.service";
+
+// NotificationAgreementRequestSchema(Zod)를 JSON Schema로 수동 기술. Zod→OpenAPI 자동 변환은 쓰지 않는다.
+const agreementRequestBody = {
+  schema: {
+    type: "object",
+    required: ["eventType"],
+    properties: {
+      eventType: {
+        type: "string",
+        enum: ["newAgreement", "alreadyAgreed", "agreementRejected"],
+      },
+    },
+  },
+} satisfies Parameters<typeof ApiBody>[0];
 
 @ApiTags("notifications")
 @Controller("notifications")
@@ -26,6 +46,7 @@ export class NotificationController {
     description:
       "JWT로 인증된 사용자의 매일 제시 그림 알림 동의 상태를 반환해요.",
   })
+  @ApiResponse({ status: 200, description: "동의 상태 반환" })
   getDailyPromptAgreement(
     @CurrentUser() user: CurrentUserPayload,
   ): Promise<NotificationAgreementResponse> {
@@ -40,6 +61,9 @@ export class NotificationController {
     description:
       "앱인토스 requestNotificationAgreement SDK의 이벤트 결과를 저장해요.",
   })
+  @ApiBody(agreementRequestBody)
+  @ApiResponse({ status: 201, description: "동의 결과 저장 성공" })
+  @ApiResponse({ status: 400, description: "Zod 검증 실패" })
   saveDailyPromptAgreement(
     @CurrentUser() user: CurrentUserPayload,
     @Body(new ZodValidationPipe(NotificationAgreementRequestSchema))
@@ -56,6 +80,7 @@ export class NotificationController {
     summary: "랭킹 추월 알림 동의 상태 조회",
     description: "JWT로 인증된 사용자의 랭킹 추월 알림 동의 상태를 반환해요.",
   })
+  @ApiResponse({ status: 200, description: "동의 상태 반환" })
   getOvertakenAgreement(
     @CurrentUser() user: CurrentUserPayload,
   ): Promise<NotificationAgreementResponse> {
@@ -70,6 +95,9 @@ export class NotificationController {
     description:
       "앱인토스 requestNotificationAgreement SDK의 이벤트 결과를 저장해요.",
   })
+  @ApiBody(agreementRequestBody)
+  @ApiResponse({ status: 201, description: "동의 결과 저장 성공" })
+  @ApiResponse({ status: 400, description: "Zod 검증 실패" })
   saveOvertakenAgreement(
     @CurrentUser() user: CurrentUserPayload,
     @Body(new ZodValidationPipe(NotificationAgreementRequestSchema))

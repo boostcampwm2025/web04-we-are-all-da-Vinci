@@ -80,6 +80,60 @@ describe("validateChanceWhitelistEnv", () => {
     ).toThrow("환경변수 검증 실패");
   });
 
+  it("발송 플래그가 꺼져 있으면 TOSS_TEMPLATE_OVERTAKEN이 없어도 통과한다", () => {
+    expect(
+      validateChanceWhitelistEnv({
+        AD_GROUP_ID_WHITELIST: "ad-group-1",
+        SHARE_MODULE_ID_WHITELIST: "module-1",
+      }),
+    ).toBeDefined();
+  });
+
+  it("발송 플래그가 켜져 있으면 TOSS_TEMPLATE_OVERTAKEN 누락 시 실패한다", () => {
+    expect(() =>
+      validateChanceWhitelistEnv({
+        AD_GROUP_ID_WHITELIST: "ad-group-1",
+        SHARE_MODULE_ID_WHITELIST: "module-1",
+        OVERTAKEN_NOTIFICATION_ENABLED: "true",
+      }),
+    ).toThrow("환경변수 검증 실패");
+  });
+
+  it("발송 플래그가 켜져 있고 TOSS_TEMPLATE_OVERTAKEN이 있으면 통과한다", () => {
+    expect(
+      validateChanceWhitelistEnv({
+        AD_GROUP_ID_WHITELIST: "ad-group-1",
+        SHARE_MODULE_ID_WHITELIST: "module-1",
+        TOSS_TEMPLATE_OVERTAKEN: "overtaken_v1",
+        OVERTAKEN_NOTIFICATION_ENABLED: "true",
+      }),
+    ).toBeDefined();
+  });
+
+  it("OVERTAKEN_NOTIFICATION_ENABLED는 true 또는 false만 허용한다", () => {
+    expect(
+      validateChanceWhitelistEnv({
+        ...validEnv,
+        TOSS_TEMPLATE_OVERTAKEN: "overtaken_v1",
+        OVERTAKEN_NOTIFICATION_ENABLED: "true",
+      }),
+    ).toBeDefined();
+
+    expect(
+      validateChanceWhitelistEnv({
+        ...validEnv,
+        OVERTAKEN_NOTIFICATION_ENABLED: "false",
+      }),
+    ).toBeDefined();
+
+    expect(() =>
+      validateChanceWhitelistEnv({
+        ...validEnv,
+        OVERTAKEN_NOTIFICATION_ENABLED: "yes",
+      }),
+    ).toThrow("환경변수 검증 실패");
+  });
+
   it("빈 문자열이면 실패한다", () => {
     expect(() =>
       validateChanceWhitelistEnv({

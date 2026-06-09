@@ -5,7 +5,10 @@ import { Cron } from "@nestjs/schedule";
 import { getTodayKst } from "src/common/util/today";
 import { formatKstDate, getSeoulDayRange } from "src/common/util/time.util";
 import { PromptService } from "../prompt/prompt.service";
-import { NOTIFICATION_TYPE } from "./notification.constants";
+import {
+  BULK_MESSAGE_MIN_RECIPIENTS,
+  NOTIFICATION_TYPE,
+} from "./notification.constants";
 import { NotificationService } from "./notification.service";
 import { SentNotificationRepository } from "./sent-notification.repository";
 
@@ -17,7 +20,6 @@ const DAILY_PROMPT_SEND_HOUR_KST = 18;
 const DEFAULT_DAILY_PROMPT_CRON = `0 ${DAILY_PROMPT_SEND_HOUR_KST} * * *`;
 const DAILY_PROMPT_CRON =
   process.env.DAILY_PROMPT_CRON ?? DEFAULT_DAILY_PROMPT_CRON;
-const BULK_MESSAGE_MIN_RECIPIENTS = 50;
 
 @Injectable()
 export class DailyPromptNotificationScheduler {
@@ -46,7 +48,7 @@ export class DailyPromptNotificationScheduler {
       "true"
     ) {
       this.logger.log(
-        { event: "daily_prompt.scheduler.disabled" },
+        { event: "daily_prompt.scheduler.skipped", reason: "feature_disabled" },
         "일일 제시 그림 알림 발송이 비활성화되어 스킵해요.",
       );
       return;
@@ -64,14 +66,18 @@ export class DailyPromptNotificationScheduler {
     } catch (err) {
       if (err instanceof NotFoundException) {
         this.logger.log(
-          { event: "daily_prompt.scheduler.prompt_not_found", referenceId },
+          {
+            event: "daily_prompt.scheduler.skipped",
+            reason: "prompt_not_found",
+            referenceId,
+          },
           "오늘 제시 그림이 없어 발송 스킵해요.",
         );
         return;
       }
 
       this.logger.error(
-        { event: "daily_prompt.scheduler.prompt_check_failed", err },
+        { event: "daily_prompt.scheduler.failed", reason: "prompt_check", err },
         "오늘 제시 그림 확인에 실패해 발송 스킵해요.",
       );
       return;
@@ -90,7 +96,12 @@ export class DailyPromptNotificationScheduler {
         );
     } catch (err) {
       this.logger.error(
-        { event: "daily_prompt.scheduler.query_failed", err, referenceId },
+        {
+          event: "daily_prompt.scheduler.failed",
+          reason: "target_query",
+          err,
+          referenceId,
+        },
         "발송 대상 조회에 실패했어요.",
       );
       return;
@@ -98,7 +109,11 @@ export class DailyPromptNotificationScheduler {
 
     if (userKeys.length === 0) {
       this.logger.log(
-        { event: "daily_prompt.scheduler.no_target", referenceId },
+        {
+          event: "daily_prompt.scheduler.skipped",
+          reason: "no_target",
+          referenceId,
+        },
         "오늘 미참여 사용자가 없어 발송 스킵해요.",
       );
       return;
@@ -126,7 +141,8 @@ export class DailyPromptNotificationScheduler {
       } catch (err) {
         this.logger.error(
           {
-            event: "daily_prompt.scheduler.bulk_failed",
+            event: "daily_prompt.scheduler.failed",
+            reason: "bulk",
             referenceId,
             total: userKeys.length,
             err,
@@ -159,7 +175,8 @@ export class DailyPromptNotificationScheduler {
         failedCount += 1;
         this.logger.error(
           {
-            event: "daily_prompt.scheduler.send_failed",
+            event: "daily_prompt.scheduler.failed",
+            reason: "send",
             userKey,
             referenceId,
             err,

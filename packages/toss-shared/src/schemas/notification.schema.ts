@@ -31,12 +31,11 @@ export type NotificationAgreementRequest = z.infer<
 export const NotificationAgreementResponseSchema = z.object({
   status: NotificationAgreementStatusSchema,
   templateCode: z.string().optional(),
-  agreedAt: z.string().nullable().optional(),
-  rejectedAt: z.string().nullable().optional(),
-  lastEventAt: z.string().nullable().optional(),
+  agreedAt: z.iso.datetime().nullable().optional(),
+  rejectedAt: z.iso.datetime().nullable().optional(),
+  lastEventAt: z.iso.datetime().nullable().optional(),
 });
 
 export type NotificationAgreementResponse = z.infer<
   typeof NotificationAgreementResponseSchema
 >;
-
