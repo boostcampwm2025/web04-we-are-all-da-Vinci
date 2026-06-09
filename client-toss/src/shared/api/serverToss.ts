@@ -3,6 +3,8 @@ import type { MyRankingResponse, RankingListItem } from "@/entities/ranking";
 import { appLogin } from "@apps-in-toss/web-framework";
 import type {
   AdSdkPayload,
+  ArchiveDayResponse,
+  ArchiveSummaryResponse,
   MyDrawingResponse,
   MyDrawingsResponse,
   ShareSdkPayload,
@@ -10,6 +12,8 @@ import type {
   SubmitStrokesRequest,
 } from "@toss/shared";
 import {
+  ArchiveDayResponseSchema,
+  ArchiveSummaryResponseSchema,
   ChargeResponseSchema,
   LoginResponseSchema,
   MyChanceResponseSchema,
@@ -192,6 +196,21 @@ export const serverTossApi = {
 
   getDrawing: (drawingId: string, options?: RequestOptions) =>
     get<DrawingDetailResponse>(`/drawing/${drawingId}`, options),
+
+  getArchiveSummary: async (
+    options?: RequestOptions,
+  ): Promise<ArchiveSummaryResponse> =>
+    ArchiveSummaryResponseSchema.parse(
+      await get<unknown>("/archive/summary", options),
+    ),
+
+  getArchiveDay: async (
+    date: string,
+    options?: RequestOptions,
+  ): Promise<ArchiveDayResponse> =>
+    ArchiveDayResponseSchema.parse(
+      await get<unknown>(`/archive/days/${date}`, options),
+    ),
 
   submitDrawing: async (strokes: Stroke[]) => {
     const userKey = await getCurrentUserKey();
