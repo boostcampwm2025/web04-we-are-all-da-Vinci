@@ -34,3 +34,7 @@ export const getSeoulDayRangeByDateKey = (dateKey: string) => {
     end: new Date(start.getTime() + DAY_DURATION_MS),
   };
 };
+
+export const getSeoulDateTime = (date: Date = new Date()) => {
+  return new Date(date.getTime() + SEOUL_TIMEZONE_OFFSET_MS);
+};

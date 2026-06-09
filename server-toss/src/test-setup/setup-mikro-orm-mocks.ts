@@ -34,4 +34,5 @@ jest.mock("@mikro-orm/decorators/legacy", () => ({
   Index: () => () => undefined,
   Unique: () => () => undefined,
   Transactional: () => () => undefined,
+  CreateRequestContext: () => () => undefined,
 }));

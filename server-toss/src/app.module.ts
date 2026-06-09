@@ -6,14 +6,15 @@ import { LoggerModule } from "nestjs-pino";
 import { validateChanceWhitelistEnv } from "./common/config/env.validation";
 import { createLoggerParams } from "./common/logging/logger.config";
 import { RequestContextHelper } from "./common/middleware/request-context-helper.middleware";
+import { ExternalModule } from "./external/external.module";
 import { HealthModule } from "./health/health.module";
 import config from "./mikro-orm.config";
 import { AuthModule } from "./modules/auth/auth.module";
 import { ArchiveModule } from "./modules/archive/archive.module";
 import { ChanceModule } from "./modules/chance/chance.module";
 import { DrawingModule } from "./modules/drawing/drawing.module";
-import { PointModule } from "./modules/point/point.module";
 import { PlayModule } from "./modules/play/play.module";
+import { PointModule } from "./modules/point/point.module";
 import { PromptModule } from "./modules/prompt/prompt.module";
 import { RankingModule } from "./modules/ranking/ranking.module";
 import { UserModule } from "./modules/user/user.module";
@@ -38,6 +39,7 @@ import { UserModule } from "./modules/user/user.module";
     }),
     ScheduleModule.forRoot(),
     MikroOrmModule.forRoot(config),
+    ExternalModule.register(),
     AuthModule,
     ArchiveModule,
     UserModule,
