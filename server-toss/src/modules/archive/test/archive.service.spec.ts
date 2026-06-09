@@ -1,18 +1,22 @@
 import { describe, expect, it, jest } from "@jest/globals";
+import { getSeoulDateKey, getSeoulDayRange } from "src/common/util/time.util";
 import { ArchiveService } from "../archive.service";
 
 const createService = ({
   drawingRepository = {},
   dailyUserRankingRepository = {},
+  rankingRepository = {},
   promptService = {},
 }: {
   drawingRepository?: Record<string, unknown>;
   dailyUserRankingRepository?: Record<string, unknown>;
+  rankingRepository?: Record<string, unknown>;
   promptService?: Record<string, unknown>;
 }) =>
   new ArchiveService(
     drawingRepository as never,
     dailyUserRankingRepository as never,
+    rankingRepository as never,
     promptService as never,
   );
 
@@ -112,7 +116,7 @@ describe("아카이브 서비스", () => {
       const service = createService({});
 
       await expect(service.findDay(1234, "9999-01-01")).rejects.toThrow(
-        "ARCHIVE_TODAY_NOT_ALLOWED",
+        "ARCHIVE_FUTURE_NOT_ALLOWED",
       );
     });
 
@@ -194,6 +198,61 @@ describe("아카이브 서비스", () => {
           },
         ],
       });
+    });
+
+    it("오늘 기록은 현재 랭킹 테이블 기준 등수를 반환한다", async () => {
+      const todayKey = getSeoulDateKey(getSeoulDayRange().start);
+      const findMyArchiveRanking = jest.fn().mockResolvedValue({
+        drawingId: BigInt(1),
+        score: 90,
+        rank: 1,
+        participantCount: 5,
+      });
+      const findUserRankingByDate = jest.fn();
+      const service = createService({
+        drawingRepository: {
+          findUserDrawingsInRange: jest.fn().mockResolvedValue([
+            {
+              id: BigInt(1),
+              strokes: JSON.stringify([
+                { points: [[1], [1]], color: [0, 0, 0] },
+              ]),
+              similarity: JSON.stringify({
+                score: 90,
+                shapeSimilarity: 80,
+                strokeMatchSimilarity: 95,
+                penalty: 5,
+              }),
+              score: 90,
+              createdAt: new Date(`${todayKey}T01:00:00.000Z`),
+            },
+          ]),
+        },
+        dailyUserRankingRepository: {
+          findUserRankingByDate,
+        },
+        rankingRepository: {
+          findMyArchiveRanking,
+        },
+        promptService: {
+          getPromptByDate: jest.fn().mockResolvedValue({
+            promptId: 7,
+            strokes: [{ points: [[2], [2]], color: [255, 0, 0] }],
+          }),
+        },
+      });
+
+      const result = await service.findDay(1234, todayKey);
+
+      expect(findMyArchiveRanking).toHaveBeenCalledWith(1234);
+      expect(findUserRankingByDate).not.toHaveBeenCalled();
+      expect(result.ranking).toEqual({
+        rank: 1,
+        score: 90,
+        participantCount: 5,
+        drawingId: 1,
+      });
+      expect(result.drawings[0]?.isRankedDrawing).toBe(true);
     });
   });
 });

@@ -67,6 +67,46 @@ export class RankingRepository extends EntityRepository<Ranking> {
     return ranking[0];
   }
 
+  async findMyArchiveRanking(userKey: number) {
+    const { start, end } = getSeoulDayRange();
+    const ranking = await this.createQueryBuilder("r")
+      .select([
+        "r.drawingId",
+        "r.score",
+        sql`(
+          SELECT count(*) + 1
+          FROM rankings AS r2
+          WHERE r2.submitted_at >= ${start} AND r2.submitted_at < ${end}
+            AND (r2.score > r.score
+              OR (r2.score = r.score AND r2.submitted_at < r.submitted_at)))`.as(
+          "rank",
+        ),
+        sql`(
+          SELECT count(*)
+          FROM rankings AS r3
+          WHERE r3.submitted_at >= ${start} AND r3.submitted_at < ${end}
+        )`.as("participantCount"),
+      ])
+      .where({
+        userKey,
+        submittedAt: {
+          $gte: start,
+          $lt: end,
+        },
+      })
+      .execute<
+        {
+          drawingId: bigint;
+          rank: number;
+          score: number;
+          participantCount: number;
+        }[]
+      >();
+
+    if (ranking.length < 1) return null;
+    return ranking[0];
+  }
+
   async findByUserKey(userKey: number): Promise<Ranking | null> {
     const { start, end } = getSeoulDayRange();
     return await this.em.findOne(Ranking, {

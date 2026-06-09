@@ -20,6 +20,8 @@ import { DailyUserRankingRepository } from "../dailyRanking/daily-user-ranking.r
 import { Drawing } from "../drawing/drawing.entity";
 import { DrawingRepository } from "../drawing/drawing.repository";
 import { PromptService } from "../prompt/prompt.service";
+import { Ranking } from "../ranking/ranking.entity";
+import { RankingRepository } from "../ranking/ranking.repository";
 
 @Injectable()
 export class ArchiveService {
@@ -28,6 +30,8 @@ export class ArchiveService {
     private readonly drawingRepository: DrawingRepository,
     @InjectRepository(DailyUserRanking)
     private readonly dailyUserRankingRepository: DailyUserRankingRepository,
+    @InjectRepository(Ranking)
+    private readonly rankingRepository: RankingRepository,
     private readonly promptService: PromptService,
   ) {}
 
@@ -69,11 +73,13 @@ export class ArchiveService {
       summary.bestScore = Math.max(summary.bestScore, drawing.score);
     }
 
+    const todayKey = getSeoulDateKey(getSeoulDayRange().start);
     const dateKeys = [...summaryByDate.keys()];
+    const finalizedDateKeys = dateKeys.filter((dateKey) => dateKey < todayKey);
     const rankings =
       await this.dailyUserRankingRepository.findUserRankingsByDates(
         userKey,
-        dateKeys,
+        finalizedDateKeys,
       );
     const rankingByDate = new Map(
       rankings.map((ranking) => [
@@ -81,6 +87,20 @@ export class ArchiveService {
         ranking,
       ]),
     );
+
+    if (dateKeys.includes(todayKey)) {
+      const todayRanking =
+        await this.rankingRepository.findMyArchiveRanking(userKey);
+      if (todayRanking) {
+        rankingByDate.set(todayKey, {
+          rankingDate: todayKey,
+          drawingId: todayRanking.drawingId,
+          score: todayRanking.score,
+          rank: todayRanking.rank,
+          participantCount: todayRanking.participantCount,
+        });
+      }
+    }
 
     const dates = [...summaryByDate.values()]
       .sort((a, b) => b.date.localeCompare(a.date))
@@ -94,9 +114,7 @@ export class ArchiveService {
         };
       });
 
-    const ranks = dates
-      .map((date) => date.rank)
-      .filter((rank): rank is number => rank !== null);
+    const ranks = rankings.map((ranking) => ranking.rank);
 
     return {
       dates,
@@ -110,7 +128,7 @@ export class ArchiveService {
   }
 
   async findDay(userKey: number, dateKey: string): Promise<ArchiveDayResponse> {
-    this.validateArchivedDate(dateKey);
+    this.validateArchiveDate(dateKey);
 
     const { start, end } = getSeoulDayRangeByDateKey(dateKey);
     const drawings = await this.drawingRepository.findUserDrawingsInRange(
@@ -123,11 +141,18 @@ export class ArchiveService {
       throw new NotFoundException("ARCHIVE_NOT_FOUND");
     }
 
+    const todayKey = getSeoulDateKey(getSeoulDayRange().start);
     const [prompt, ranking] = await Promise.all([
       this.promptService.getPromptByDate(new Date(`${dateKey}T00:00:00.000Z`)),
-      this.dailyUserRankingRepository.findUserRankingByDate(userKey, dateKey),
+      dateKey === todayKey
+        ? this.rankingRepository.findMyArchiveRanking(userKey)
+        : this.dailyUserRankingRepository.findUserRankingByDate(
+            userKey,
+            dateKey,
+          ),
     ]);
-    const rankedDrawingId = ranking?.drawingId;
+    const rankedDrawingId =
+      ranking?.drawingId == null ? null : String(ranking.drawingId);
 
     return {
       date: dateKey,
@@ -145,15 +170,15 @@ export class ArchiveService {
         createdAt: toIsoString(drawing.createdAt),
         strokes: JSON.parse(drawing.strokes) as Stroke[],
         similarity: JSON.parse(drawing.similarity) as SimilarityResponse,
-        isRankedDrawing: rankedDrawingId === drawing.id,
+        isRankedDrawing: rankedDrawingId === String(drawing.id),
       })),
     };
   }
 
-  private validateArchivedDate(dateKey: string) {
+  private validateArchiveDate(dateKey: string) {
     const todayKey = getSeoulDateKey(getSeoulDayRange().start);
-    if (dateKey >= todayKey) {
-      throw new BadRequestException("ARCHIVE_TODAY_NOT_ALLOWED");
+    if (dateKey > todayKey) {
+      throw new BadRequestException("ARCHIVE_FUTURE_NOT_ALLOWED");
     }
   }
 }
