@@ -1,20 +1,19 @@
 import {
   DrawingCanvasFrame,
-  ReplayDrawingCanvas,
   StaticDrawingCanvas,
 } from "@/entities/drawingCanvas";
-import { PhaseHeader } from "@/entities/phaseHeader";
 import { ScoreDetailCard } from "@/entities/scoreDetailCard";
 import { serverTossApi } from "@/shared/api";
-import { Score } from "@/shared/ui/score";
 import type { ArchiveDayResponse, ArchiveSummaryResponse } from "@toss/shared";
 import { colors } from "@toss/tds-colors";
 import {
+  Asset,
   BottomSheet,
+  Badge,
   Button,
-  ListHeader,
   Skeleton,
   TextButton,
+  Top,
 } from "@toss/tds-mobile";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
@@ -24,10 +23,42 @@ const QUICK_DATE_COUNT = 5;
 const formatScore = (score: number | null) =>
   score == null ? "-" : `${score.toFixed(2)}점`;
 
+const formatStatScore = (score: number | null) =>
+  score == null ? "-" : score.toFixed(2);
+
+const formatNumber = (value: number | null) =>
+  value == null ? "-" : new Intl.NumberFormat("ko-KR").format(value);
+
 const formatRank = (rank: number | null, participantCount: number | null) => {
   if (rank == null) return "-";
   if (participantCount == null) return `${rank}위`;
   return `${participantCount}명 중 ${rank}위`;
+};
+
+const formatSelectedDrawingMeta = (
+  createdAt: string,
+  participantCount: number | null,
+  rank: number | null,
+) => {
+  const date = new Intl.DateTimeFormat("ko-KR", {
+    month: "long",
+    day: "numeric",
+  }).format(new Date(createdAt));
+  const time = formatTime(createdAt);
+  const ranking = formatRank(rank, participantCount);
+  return `${date} ${time} · ${ranking}`;
+};
+
+const scrollToDrawing = (
+  slider: HTMLDivElement | null,
+  index: number,
+  behavior: ScrollBehavior = "smooth",
+) => {
+  if (!slider) return;
+  slider.scrollTo({
+    left: index * slider.clientWidth,
+    behavior,
+  });
 };
 
 const formatShortDateLabel = (date: string) => {
@@ -62,7 +93,25 @@ const EmptyArchive = () => (
 
 const LockedPromptCanvas = () => (
   <div className="flex aspect-square w-full items-center justify-center rounded-(--radius-inner) bg-(--color-card) px-4 text-center text-sm font-medium text-(--color-grey)">
-    오늘 그림은 내일부터 확인할 수 있어요.
+    내일부터 확인할 수 있어요
+  </div>
+);
+
+interface SummaryStatProps {
+  iconName: string;
+  label: string;
+  value: string;
+  unit: string;
+}
+
+const SummaryStat = ({ iconName, label, value, unit }: SummaryStatProps) => (
+  <div className="flex min-w-0 flex-col items-center gap-1.5 border-r border-[#E5E8EB] px-2 last:border-r-0">
+    <Asset.Icon name={iconName} size="small" shape="original" alt="" />
+    <div className="text-xs font-medium text-(--color-grey)">{label}</div>
+    <div className="min-w-0 text-(--color-black)">
+      <span className="text-xl font-bold">{value}</span>
+      {unit && <span className="text-sm font-normal">{unit}</span>}
+    </div>
   </div>
 );
 
@@ -189,42 +238,58 @@ const ArchiveView = () => {
       data-no-safe-area-bottom
       className="min-h-0 flex-1 overflow-y-auto bg-(--color-page) pb-[env(safe-area-inset-bottom)]"
     >
-      <PhaseHeader
-        title="내 그림 아카이브"
-        description="어제까지 그린 그림을 모아봤어요"
+      <Top
+        upperGap={16}
+        lowerGap={12}
+        title={<Top.TitleParagraph size={28}>내 기록 보기</Top.TitleParagraph>}
+        subtitleBottom={
+          <Top.SubtitleParagraph size={17}>
+            오늘까지의 기록을 모아봤어요
+          </Top.SubtitleParagraph>
+        }
       />
 
       <section className="px-(--page-px)">
-        <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-(--radius-inner) bg-(--color-card) px-4 py-3">
-            <div className="text-xs text-(--color-grey)">그린 날</div>
-            <div className="mt-1 text-xl font-bold text-(--color-black)">
-              {summary?.stats.playDays ?? 0}일
-            </div>
-          </div>
-          <div className="rounded-(--radius-inner) bg-(--color-card) px-4 py-3">
-            <div className="text-xs text-(--color-grey)">최고 점수</div>
-            <div className="mt-1 text-xl font-bold text-(--color-black)">
-              {formatScore(summary?.stats.bestScore ?? null)}
-            </div>
-          </div>
+        <div className="grid grid-cols-4 gap-0 rounded-(--radius-card) border border-[#E5E8EB] bg-white p-4 shadow-sm">
+          <SummaryStat
+            iconName="icon-calendar-check-yellow"
+            label="그린 날"
+            value={formatNumber(summary?.stats.playDays ?? 0)}
+            unit="일"
+          />
+          <SummaryStat
+            iconName="icon-crown-middle"
+            label="최고 점수"
+            value={formatStatScore(summary?.stats.bestScore ?? null)}
+            unit="점"
+          />
+          <SummaryStat
+            iconName="icn-trophy-color"
+            label="최고 순위"
+            value={formatNumber(summary?.stats.bestRank ?? null)}
+            unit={summary?.stats.bestRank == null ? "" : "위"}
+          />
+          <SummaryStat
+            iconName="icon-true-colors"
+            label="제출한 그림"
+            value={formatNumber(summary?.stats.totalDrawingCount ?? 0)}
+            unit="장"
+          />
         </div>
       </section>
 
       <section className="mt-5">
-        <ListHeader
-          title={
-            <ListHeader.TitleParagraph typography="t5" fontWeight="bold">
-              날짜별 기록
-            </ListHeader.TitleParagraph>
-          }
-          description={
-            <ListHeader.DescriptionParagraph>
-              오늘 기록은 내일부터 볼 수 있어요
-            </ListHeader.DescriptionParagraph>
-          }
-          descriptionPosition="bottom"
-        />
+        <div className="px-(--page-px) pb-3">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-xl font-bold text-gray-700">날짜별 기록</h2>
+            <TextButton size="small" onClick={() => setIsDatePickerOpen(true)}>
+              날짜 선택 ›
+            </TextButton>
+          </div>
+          <p className="mt-1 text-sm text-(--color-grey)">
+            오늘의 원본 그림은 내일부터 확인할 수 있어요
+          </p>
+        </div>
 
         {isSummaryLoading ? (
           <div className="px-(--page-px)">
@@ -234,47 +299,33 @@ const ArchiveView = () => {
           <EmptyArchive />
         ) : (
           <>
-            <div className="grid grid-cols-[1fr_auto] gap-2 px-(--page-px) pb-3">
-              <div className="flex min-w-0 gap-2">
-                {recentDates.map((date) => (
-                  <Button
-                    key={date.date}
-                    size="small"
-                    variant={date.date === selectedDate ? "fill" : "weak"}
-                    onClick={() => selectDate(date.date)}
-                  >
+            <div
+              className="flex gap-2 overflow-x-auto px-(--page-px) pb-3"
+              style={{ scrollbarWidth: "none" }}
+            >
+              {recentDates.map((date) => (
+                <button
+                  key={date.date}
+                  type="button"
+                  onClick={() => selectDate(date.date)}
+                  className="shrink-0 rounded-[8px]! p-2 text-base font-bold transition-colors"
+                  style={{
+                    backgroundColor:
+                      date.date === selectedDate
+                        ? "var(--color-toss-blue)"
+                        : "var(--color-card)",
+                    color:
+                      date.date === selectedDate
+                        ? "#FFFFFF"
+                        : "var(--color-grey)",
+                  }}
+                >
+                  <span className="whitespace-nowrap">
                     {formatShortDateLabel(date.date)}
-                  </Button>
-                ))}
-              </div>
-              <TextButton
-                size="xsmall"
-                variant="underline"
-                onClick={() => setIsDatePickerOpen(true)}
-              >
-                날짜 선택하기
-              </TextButton>
+                  </span>
+                </button>
+              ))}
             </div>
-
-            {selectedSummary && (
-              <div className="grid grid-cols-2 gap-2 px-(--page-px) pb-3">
-                <div className="rounded-(--radius-inner) bg-(--color-card) px-4 py-3">
-                  <div className="text-xs text-(--color-grey)">최종 순위</div>
-                  <div className="mt-1 text-base font-bold text-(--color-black)">
-                    {formatRank(
-                      selectedSummary.rank,
-                      selectedSummary.participantCount,
-                    )}
-                  </div>
-                </div>
-                <div className="rounded-(--radius-inner) bg-(--color-card) px-4 py-3">
-                  <div className="text-xs text-(--color-grey)">제출한 그림</div>
-                  <div className="mt-1 text-base font-bold text-(--color-black)">
-                    {selectedSummary.drawingCount}장
-                  </div>
-                </div>
-              </div>
-            )}
           </>
         )}
       </section>
@@ -286,27 +337,109 @@ const ArchiveView = () => {
       )}
 
       {selectedDate && (
-        <section className="mt-2">
+        <section className="mt-4 px-(--page-px)">
           {isDayLoading ? (
-            <div className="px-(--page-px)">
-              <Skeleton pattern="cardOnly" style={{ width: "100%" }} />
-            </div>
+            <Skeleton pattern="cardOnly" style={{ width: "100%" }} />
           ) : selectedDay && selectedDrawing ? (
-            <>
-              <div className="flex justify-center gap-2 py-1">
+            <div className="relative overflow-hidden rounded-(--radius-card) border border-[#E5E8EB] bg-white px-5 pt-5 pb-5 shadow-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-[30px] leading-none font-bold text-(--color-black)">
+                  {selectedDrawing.similarity.score.toFixed(2)}
+                </span>
+                <span className="text-base text-(--color-black)">점</span>
+                {selectedDrawing.isRankedDrawing && (
+                  <Badge size="small" color="yellow" variant="weak">
+                    BEST
+                  </Badge>
+                )}
+              </div>
+
+              <div className="mt-1 text-sm font-medium text-(--color-grey)">
+                {formatSelectedDrawingMeta(
+                  selectedDrawing.createdAt,
+                  selectedSummary?.participantCount ?? null,
+                  selectedSummary?.rank ?? null,
+                )}
+              </div>
+
+              {cardCount > 1 && (
+                <>
+                  <button
+                    type="button"
+                    aria-label="이전 그림 보기"
+                    disabled={activeIndex === 0}
+                    onClick={() =>
+                      scrollToDrawing(sliderRef.current, activeIndex - 1)
+                    }
+                    className="absolute top-1/2 left-2 z-10 flex size-11 -translate-y-1/2 items-center justify-center rounded-full! border border-[#E5E8EB] bg-white text-[36px]! leading-none text-(--color-grey) shadow-sm disabled:opacity-35"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="다음 그림 보기"
+                    disabled={activeIndex === cardCount - 1}
+                    onClick={() =>
+                      scrollToDrawing(sliderRef.current, activeIndex + 1)
+                    }
+                    className="absolute top-1/2 right-2 z-10 flex size-11 -translate-y-1/2 items-center justify-center rounded-full! border border-[#E5E8EB] bg-white text-[36px]! leading-none text-(--color-grey) shadow-sm disabled:opacity-35"
+                  >
+                    ›
+                  </button>
+                </>
+              )}
+
+              <div
+                ref={sliderRef}
+                className="mt-5 flex snap-x snap-mandatory overflow-x-scroll"
+                style={{ scrollbarWidth: "none" }}
+                onScroll={handleScroll}
+              >
+                {selectedDay.drawings.map((drawing) => (
+                  <div
+                    key={drawing.drawingId}
+                    className="grid w-full shrink-0 snap-start snap-always grid-cols-2 gap-3"
+                  >
+                    <div className="min-w-0">
+                      <DrawingCanvasFrame>
+                        {selectedDay.prompt ? (
+                          <StaticDrawingCanvas
+                            strokes={selectedDay.prompt.strokes}
+                            isPrompt
+                            ariaLabel="원본 그림"
+                          />
+                        ) : (
+                          <LockedPromptCanvas />
+                        )}
+                      </DrawingCanvasFrame>
+                      <div className="mt-2 text-center text-sm font-medium text-(--color-grey)">
+                        원본 그림
+                      </div>
+                    </div>
+
+                    <div className="min-w-0">
+                      <DrawingCanvasFrame>
+                        <StaticDrawingCanvas
+                          strokes={drawing.strokes}
+                          shouldScale
+                          ariaLabel="내 그림"
+                        />
+                      </DrawingCanvasFrame>
+                      <div className="mt-2 text-center text-sm font-medium text-(--color-grey)">
+                        내 그림
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="my-3 flex justify-center gap-2">
                 {Array.from({ length: cardCount }).map((_, i) => (
                   <button
                     key={i}
                     type="button"
                     aria-label={`${i + 1}번째 그림 보기`}
-                    onClick={() => {
-                      const slider = sliderRef.current;
-                      if (!slider) return;
-                      slider.scrollTo({
-                        left: i * slider.clientWidth,
-                        behavior: "smooth",
-                      });
-                    }}
+                    onClick={() => scrollToDrawing(sliderRef.current, i)}
                     className="m-0 inline-flex cursor-pointer appearance-none items-center justify-center border-0 bg-transparent p-0 leading-none"
                   >
                     <span
@@ -320,73 +453,16 @@ const ArchiveView = () => {
                 ))}
               </div>
 
-              <div
-                ref={sliderRef}
-                className="flex snap-x snap-mandatory overflow-x-scroll"
-                style={{ scrollbarWidth: "none" }}
-                onScroll={handleScroll}
+              <Button
+                variant="weak"
+                display="block"
+                size="large"
+                onClick={() => setIsScoreDetailOpen(true)}
+                className="mt-5"
               >
-                {selectedDay.drawings.map((drawing) => (
-                  <div
-                    key={drawing.drawingId}
-                    className="w-full shrink-0 snap-start snap-always px-(--card-mx)"
-                  >
-                    <DrawingCanvasFrame
-                      as="button"
-                      onClick={() => setIsScoreDetailOpen(true)}
-                      ariaLabel="점수 상세 보기"
-                    >
-                      <ReplayDrawingCanvas
-                        strokes={drawing.strokes}
-                        loop
-                        speed={0}
-                        ariaLabel="아카이브 그림"
-                      />
-                    </DrawingCanvasFrame>
-                    <div className="mt-3 flex flex-col items-center gap-1">
-                      <Score value={drawing.similarity.score} size="s" />
-                      <div className="text-xs text-(--color-grey)">
-                        {formatTime(drawing.createdAt)}
-                        {drawing.isRankedDrawing ? " · 최고 점수" : ""}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-5">
-                <ListHeader
-                  title={
-                    <ListHeader.TitleParagraph
-                      typography="t5"
-                      fontWeight="bold"
-                    >
-                      원본과 비교
-                    </ListHeader.TitleParagraph>
-                  }
-                />
-                <div className="grid grid-cols-2 gap-2 px-(--page-px)">
-                  <DrawingCanvasFrame>
-                    {selectedDay.prompt ? (
-                      <StaticDrawingCanvas
-                        strokes={selectedDay.prompt.strokes}
-                        isPrompt
-                        ariaLabel="제시그림"
-                      />
-                    ) : (
-                      <LockedPromptCanvas />
-                    )}
-                  </DrawingCanvasFrame>
-                  <DrawingCanvasFrame>
-                    <StaticDrawingCanvas
-                      strokes={selectedDrawing.strokes}
-                      shouldScale
-                      ariaLabel="내 그림"
-                    />
-                  </DrawingCanvasFrame>
-                </div>
-              </div>
-            </>
+                점수 분석 보기
+              </Button>
+            </div>
           ) : null}
         </section>
       )}
@@ -441,27 +517,51 @@ const ArchiveView = () => {
         <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto px-(--page-px) pt-1 pb-[env(safe-area-inset-bottom)]">
           <div className="flex gap-2 overflow-x-auto pb-1">
             {monthKeys.map((monthKey) => (
-              <Button
+              <button
                 key={monthKey}
-                size="small"
-                variant={monthKey === selectedMonthKey ? "fill" : "weak"}
+                type="button"
                 onClick={() => setSelectedMonthKey(monthKey)}
+                className="h-11 shrink-0 rounded-[8px]! px-3 text-[14px] font-bold transition-colors"
+                style={{
+                  backgroundColor:
+                    monthKey === selectedMonthKey
+                      ? "var(--color-toss-blue)"
+                      : "var(--color-card)",
+                  color:
+                    monthKey === selectedMonthKey
+                      ? "#FFFFFF"
+                      : "var(--color-grey)",
+                }}
               >
-                {formatMonthLabel(monthKey)}
-              </Button>
+                <span className="whitespace-nowrap">
+                  {formatMonthLabel(monthKey)}
+                </span>
+              </button>
             ))}
           </div>
 
           <div className="grid grid-cols-3 gap-2">
             {datesInSelectedMonth.map((date) => (
-              <Button
+              <button
                 key={date.date}
-                size="small"
-                variant={date.date === selectedDate ? "fill" : "weak"}
+                type="button"
                 onClick={() => selectDate(date.date)}
+                className="h-11 rounded-[8px]! px-3 text-[14px] font-bold transition-colors"
+                style={{
+                  backgroundColor:
+                    date.date === selectedDate
+                      ? "var(--color-toss-blue)"
+                      : "var(--color-card)",
+                  color:
+                    date.date === selectedDate
+                      ? "#FFFFFF"
+                      : "var(--color-grey)",
+                }}
               >
-                {formatShortDateLabel(date.date)}
-              </Button>
+                <span className="whitespace-nowrap">
+                  {formatShortDateLabel(date.date)}
+                </span>
+              </button>
             ))}
           </div>
         </div>
