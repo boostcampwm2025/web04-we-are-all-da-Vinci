@@ -1,5 +1,9 @@
 import { describe, expect, it, jest } from "@jest/globals";
-import { getSeoulDateKey, getSeoulDayRange } from "src/common/util/time.util";
+import {
+  DAY_DURATION_MS,
+  getSeoulDateKey,
+  getSeoulDayRange,
+} from "src/common/util/time.util";
 import { ArchiveService } from "../archive.service";
 
 const createService = ({
@@ -110,6 +114,71 @@ describe("아카이브 서비스", () => {
           bestRank: 3,
         },
       });
+    });
+
+    it("최고 순위는 오늘 실시간 랭킹을 제외하고 확정된 랭킹으로 계산한다", async () => {
+      const todayStart = getSeoulDayRange().start;
+      const todayKey = getSeoulDateKey(todayStart);
+      const pastDate = new Date(todayStart.getTime() - DAY_DURATION_MS);
+      const pastDateKey = getSeoulDateKey(pastDate);
+      const findUserRankingsByDates = jest.fn().mockResolvedValue([
+        {
+          rankingDate: pastDateKey,
+          drawingId: BigInt(1),
+          score: 80,
+          rank: 7,
+          participantCount: 10,
+        },
+      ]);
+      const findMyArchiveRanking = jest.fn().mockResolvedValue({
+        drawingId: BigInt(2),
+        score: 99,
+        rank: 1,
+        participantCount: 5,
+      });
+      const service = createService({
+        drawingRepository: {
+          findArchivedDrawingsByUser: jest.fn().mockResolvedValue([
+            {
+              id: BigInt(1),
+              score: 80,
+              createdAt: pastDate,
+            },
+            {
+              id: BigInt(2),
+              score: 99,
+              createdAt: todayStart,
+            },
+          ]),
+        },
+        dailyUserRankingRepository: {
+          findUserRankingsByDates,
+        },
+        rankingRepository: {
+          findMyArchiveRanking,
+        },
+      });
+
+      const result = await service.findSummary(1234);
+
+      expect(findUserRankingsByDates).toHaveBeenCalledWith(1234, [pastDateKey]);
+      expect(result.dates).toEqual([
+        {
+          date: todayKey,
+          drawingCount: 1,
+          bestScore: 99,
+          rank: 1,
+          participantCount: 5,
+        },
+        {
+          date: pastDateKey,
+          drawingCount: 1,
+          bestScore: 80,
+          rank: 7,
+          participantCount: 10,
+        },
+      ]);
+      expect(result.stats.bestRank).toBe(7);
     });
 
     it("오늘 이후 날짜는 조회하지 않는다", async () => {
