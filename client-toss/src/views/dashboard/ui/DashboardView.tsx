@@ -12,13 +12,7 @@ import {
   trackClick,
   useExitGuard,
 } from "@/shared/lib";
-import {
-  Button,
-  ConfirmDialog,
-  Tab,
-  TextButton,
-  Toast,
-} from "@toss/tds-mobile";
+import { Button, ConfirmDialog, Tab, Toast } from "@toss/tds-mobile";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import InfoTicker from "./InfoTicker";
@@ -293,11 +287,6 @@ const DashboardView = () => {
           <Tab.Item selected={selectedTab === 0}>오늘 그린 그림</Tab.Item>
           <Tab.Item selected={selectedTab === 1}>오늘의 다빈치</Tab.Item>
         </Tab>
-        <div className="flex justify-end px-(--page-px) pt-1">
-          <TextButton size="small" onClick={() => navigate("/archive")}>
-            내 그림 아카이브
-          </TextButton>
-        </div>
         <InfoTicker />
       </div>
 
