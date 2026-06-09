@@ -211,7 +211,9 @@ const NotificationSettingsRow = ({
   >
     <ListRow
       contents={<ListRow.Texts type="2RowTypeA" top={top} bottom={bottom} />}
-      right={<Switch checked={checked} onChange={() => {}} />}
+      right={
+        <Switch checked={checked} disabled={disabled} onChange={() => {}} />
+      }
     />
   </div>
 );

@@ -5,7 +5,7 @@ import type {
   AdSdkPayload,
   MyDrawingResponse,
   MyDrawingsResponse,
-  type NotificationAgreementRequest,
+  NotificationAgreementRequest,
   ShareSdkPayload,
   Stroke,
   SubmitStrokesRequest,
