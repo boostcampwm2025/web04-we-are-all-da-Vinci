@@ -19,6 +19,8 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
+const QUICK_DATE_COUNT = 5;
+
 const formatScore = (score: number | null) =>
   score == null ? "-" : `${score.toFixed(2)}점`;
 
@@ -156,7 +158,7 @@ const ArchiveView = () => {
     summary?.dates.find((date) => date.date === selectedDate) ?? null;
   const selectedDrawing = selectedDay?.drawings[activeIndex] ?? null;
   const cardCount = Math.max(selectedDay?.drawings.length ?? 0, 1);
-  const recentDates = summary?.dates.slice(0, 3) ?? [];
+  const recentDates = summary?.dates.slice(0, QUICK_DATE_COUNT) ?? [];
   const monthKeys = useMemo(() => {
     if (!summary) return [];
     return Array.from(
