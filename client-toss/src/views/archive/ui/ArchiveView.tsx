@@ -58,6 +58,12 @@ const EmptyArchive = () => (
   </div>
 );
 
+const LockedPromptCanvas = () => (
+  <div className="flex aspect-square w-full items-center justify-center rounded-(--radius-inner) bg-(--color-card) px-4 text-center text-sm font-medium text-(--color-grey)">
+    오늘 그림은 내일부터 확인할 수 있어요.
+  </div>
+);
+
 const ArchiveView = () => {
   const [summary, setSummary] = useState<ArchiveSummaryResponse | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -359,11 +365,15 @@ const ArchiveView = () => {
                 />
                 <div className="grid grid-cols-2 gap-2 px-(--page-px)">
                   <DrawingCanvasFrame>
-                    <StaticDrawingCanvas
-                      strokes={selectedDay.prompt.strokes}
-                      isPrompt
-                      ariaLabel="제시그림"
-                    />
+                    {selectedDay.prompt ? (
+                      <StaticDrawingCanvas
+                        strokes={selectedDay.prompt.strokes}
+                        isPrompt
+                        ariaLabel="제시그림"
+                      />
+                    ) : (
+                      <LockedPromptCanvas />
+                    )}
                   </DrawingCanvasFrame>
                   <DrawingCanvasFrame>
                     <StaticDrawingCanvas

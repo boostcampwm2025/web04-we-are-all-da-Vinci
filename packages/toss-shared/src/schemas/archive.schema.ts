@@ -29,10 +29,12 @@ export type ArchiveSummaryResponse = z.infer<
 
 export const ArchiveDayResponseSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  prompt: z.object({
-    promptId: z.number().int().positive(),
-    strokes: z.array(StrokeSchema),
-  }),
+  prompt: z
+    .object({
+      promptId: z.number().int().positive(),
+      strokes: z.array(StrokeSchema),
+    })
+    .nullable(),
   ranking: z
     .object({
       rank: z.number().int().min(1),

@@ -142,9 +142,14 @@ export class ArchiveService {
     }
 
     const todayKey = getSeoulDateKey(getSeoulDayRange().start);
+    const isToday = dateKey === todayKey;
     const [prompt, ranking] = await Promise.all([
-      this.promptService.getPromptByDate(new Date(`${dateKey}T00:00:00.000Z`)),
-      dateKey === todayKey
+      isToday
+        ? Promise.resolve(null)
+        : this.promptService.getPromptByDate(
+            new Date(`${dateKey}T00:00:00.000Z`),
+          ),
+      isToday
         ? this.rankingRepository.findMyArchiveRanking(userKey)
         : this.dailyUserRankingRepository.findUserRankingByDate(
             userKey,

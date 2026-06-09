@@ -278,6 +278,7 @@ describe("아카이브 서비스", () => {
         participantCount: 5,
       });
       const findUserRankingByDate = jest.fn();
+      const getPromptByDate = jest.fn();
       const service = createService({
         drawingRepository: {
           findUserDrawingsInRange: jest.fn().mockResolvedValue([
@@ -304,10 +305,7 @@ describe("아카이브 서비스", () => {
           findMyArchiveRanking,
         },
         promptService: {
-          getPromptByDate: jest.fn().mockResolvedValue({
-            promptId: 7,
-            strokes: [{ points: [[2], [2]], color: [255, 0, 0] }],
-          }),
+          getPromptByDate,
         },
       });
 
@@ -315,6 +313,8 @@ describe("아카이브 서비스", () => {
 
       expect(findMyArchiveRanking).toHaveBeenCalledWith(1234);
       expect(findUserRankingByDate).not.toHaveBeenCalled();
+      expect(getPromptByDate).not.toHaveBeenCalled();
+      expect(result.prompt).toBeNull();
       expect(result.ranking).toEqual({
         rank: 1,
         score: 90,
