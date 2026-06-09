@@ -16,6 +16,17 @@ globalThis.ResizeObserver = class ResizeObserver {
   disconnect() {}
 } as unknown as typeof ResizeObserver;
 
+// jsdom에 IntersectionObserver가 없어 기본은 no-op 목으로 둔다. 콜백을 직접 구동해야 하는
+// 테스트는 각자 vi.stubGlobal로 제어 가능한 목으로 덮어쓴다.
+globalThis.IntersectionObserver = class IntersectionObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+  takeRecords() {
+    return [];
+  }
+} as unknown as typeof IntersectionObserver;
+
 HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({
   fillStyle: "",
   strokeStyle: "",
