@@ -11,6 +11,7 @@ import { ExternalModule } from "./external/external.module";
 import { HealthModule } from "./health/health.module";
 import config from "./mikro-orm.config";
 import { AuthModule } from "./modules/auth/auth.module";
+import { ArchiveModule } from "./modules/archive/archive.module";
 import { ChanceModule } from "./modules/chance/chance.module";
 import { DrawingModule } from "./modules/drawing/drawing.module";
 import { NotificationModule } from "./modules/notification/notification.module";
@@ -46,6 +47,7 @@ import { UserModule } from "./modules/user/user.module";
     MikroOrmModule.forRoot(config),
     ExternalModule.register(),
     AuthModule,
+    ArchiveModule,
     UserModule,
     DrawingModule,
     PromptModule,
