@@ -1,1 +1,1 @@
-export { default as ShareFloatingButton } from "./ui/ShareFloatingButton";
+export { default as ShareNavItem } from "./ui/ShareNavItem";

@@ -1,6 +1,7 @@
-import { ShareFloatingButton } from "@/feature/share";
+import { ShareNavItem } from "@/feature/share";
 import { getAnalyticsInstance } from "@/shared/api";
 import { FUNNEL_EVENTS } from "@/shared/lib";
+import { BottomNav } from "@/shared/ui/bottomNav";
 import { logEvent } from "firebase/analytics";
 import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
@@ -24,7 +25,9 @@ const AnalyticsTracker = () => {
   return (
     <>
       <Outlet />
-      <ShareFloatingButton />
+      <BottomNav>
+        <ShareNavItem />
+      </BottomNav>
     </>
   );
 };

@@ -48,11 +48,6 @@ interface ShareSheetProps {
   onClose: () => void;
 }
 
-/**
- * 공유 종류 선택 바텀시트. open/onClose로 제어되는 컨트롤드 컴포넌트이며,
- * 트리거(우하단 공유 FAB)는 `ShareFloatingButton`이 보유한다.
- * 시트에서 "점수 자랑" / "친구 초대" 중 하나를 고른다.
- */
 const ShareSheet = ({ open, onClose }: ShareSheetProps) => {
   const [toast, setToast] = useState<{ open: boolean; message: string }>({
     open: false,
