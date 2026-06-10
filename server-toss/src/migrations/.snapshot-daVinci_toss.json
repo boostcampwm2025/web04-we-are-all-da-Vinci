@@ -17,7 +17,8 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "bigint"
         },
         "created_at": {
           "name": "created_at",
@@ -32,7 +33,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "datetime"
         },
         "updated_at": {
           "name": "updated_at",
@@ -47,7 +49,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "datetime"
         },
         "ad_type": {
           "name": "ad_type",
@@ -62,7 +65,10 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": ["drawing"]
+          "enumItems": [
+            "drawing"
+          ],
+          "mappedType": "enum"
         },
         "user_key": {
           "name": "user_key",
@@ -77,19 +83,24 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "integer"
         }
       },
       "indexes": [
         {
-          "columnNames": ["user_key"],
+          "columnNames": [
+            "user_key"
+          ],
           "keyName": "ad_views_user_key_index",
           "unique": false,
           "primary": false,
           "constraint": false
         },
         {
-          "columnNames": ["id"],
+          "columnNames": [
+            "id"
+          ],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -99,11 +110,15 @@
       "checks": [],
       "foreignKeys": {
         "ad_views_user_key_foreign": {
-          "columnNames": ["user_key"],
+          "columnNames": [
+            "user_key"
+          ],
           "constraintName": "ad_views_user_key_foreign",
           "localTableName": "ad_views",
           "referencedTableName": "users",
-          "referencedColumnNames": ["user_key"],
+          "referencedColumnNames": [
+            "user_key"
+          ],
           "updateRule": "no action",
           "deleteRule": "no action"
         }
@@ -127,7 +142,8 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "bigint"
         },
         "prompt_id": {
           "name": "prompt_id",
@@ -142,7 +158,8 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "bigint"
         },
         "prompt_date": {
           "name": "prompt_date",
@@ -157,26 +174,33 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "date"
         }
       },
       "indexes": [
         {
-          "columnNames": ["prompt_date"],
+          "columnNames": [
+            "prompt_date"
+          ],
           "keyName": "daily_prompts_prompt_date_unique",
           "unique": true,
           "primary": false,
           "constraint": true
         },
         {
-          "columnNames": ["prompt_id"],
+          "columnNames": [
+            "prompt_id"
+          ],
           "keyName": "daily_prompts_prompt_id_index",
           "unique": false,
           "primary": false,
           "constraint": false
         },
         {
-          "columnNames": ["id"],
+          "columnNames": [
+            "id"
+          ],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -186,11 +210,15 @@
       "checks": [],
       "foreignKeys": {
         "daily_prompts_prompt_id_foreign": {
-          "columnNames": ["prompt_id"],
+          "columnNames": [
+            "prompt_id"
+          ],
           "constraintName": "daily_prompts_prompt_id_foreign",
           "localTableName": "daily_prompts",
           "referencedTableName": "prompts",
-          "referencedColumnNames": ["id"],
+          "referencedColumnNames": [
+            "id"
+          ],
           "updateRule": "no action",
           "deleteRule": "no action"
         }
@@ -421,7 +449,8 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "bigint"
         },
         "created_at": {
           "name": "created_at",
@@ -436,7 +465,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "datetime"
         },
         "updated_at": {
           "name": "updated_at",
@@ -451,7 +481,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "datetime"
         },
         "strokes": {
           "name": "strokes",
@@ -466,7 +497,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "text"
         },
         "similarity": {
           "name": "similarity",
@@ -481,7 +513,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "text"
         },
         "prompt_id": {
           "name": "prompt_id",
@@ -496,7 +529,8 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "bigint"
         },
         "score": {
           "name": "score",
@@ -511,7 +545,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "double"
         },
         "user_key": {
           "name": "user_key",
@@ -526,26 +561,33 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "integer"
         }
       },
       "indexes": [
         {
-          "columnNames": ["prompt_id"],
+          "columnNames": [
+            "prompt_id"
+          ],
           "keyName": "drawings_prompt_id_index",
           "unique": false,
           "primary": false,
           "constraint": false
         },
         {
-          "columnNames": ["user_key"],
+          "columnNames": [
+            "user_key"
+          ],
           "keyName": "drawings_user_key_index",
           "unique": false,
           "primary": false,
           "constraint": false
         },
         {
-          "columnNames": ["id"],
+          "columnNames": [
+            "id"
+          ],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -555,20 +597,28 @@
       "checks": [],
       "foreignKeys": {
         "drawings_prompt_id_foreign": {
-          "columnNames": ["prompt_id"],
+          "columnNames": [
+            "prompt_id"
+          ],
           "constraintName": "drawings_prompt_id_foreign",
           "localTableName": "drawings",
           "referencedTableName": "prompts",
-          "referencedColumnNames": ["id"],
+          "referencedColumnNames": [
+            "id"
+          ],
           "updateRule": "no action",
           "deleteRule": "no action"
         },
         "drawings_user_key_foreign": {
-          "columnNames": ["user_key"],
+          "columnNames": [
+            "user_key"
+          ],
           "constraintName": "drawings_user_key_foreign",
           "localTableName": "drawings",
           "referencedTableName": "users",
-          "referencedColumnNames": ["user_key"],
+          "referencedColumnNames": [
+            "user_key"
+          ],
           "updateRule": "no action",
           "deleteRule": "no action"
         }
@@ -795,7 +845,8 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "integer"
         },
         "count": {
           "name": "count",
@@ -810,7 +861,8 @@
           "scale": 0,
           "default": "0",
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "integer"
         },
         "last_reset_at": {
           "name": "last_reset_at",
@@ -825,12 +877,15 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "datetime"
         }
       },
       "indexes": [
         {
-          "columnNames": ["user_key"],
+          "columnNames": [
+            "user_key"
+          ],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -858,7 +913,8 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "bigint"
         },
         "created_at": {
           "name": "created_at",
@@ -873,7 +929,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "datetime"
         },
         "updated_at": {
           "name": "updated_at",
@@ -888,7 +945,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "datetime"
         },
         "user_key": {
           "name": "user_key",
@@ -903,7 +961,8 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "integer"
         },
         "point_grant_status": {
           "name": "point_grant_status",
@@ -918,7 +977,14 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": ["pending", "processing", "retry", "failed", "succeeded"]
+          "enumItems": [
+            "pending",
+            "processing",
+            "retry",
+            "failed",
+            "succeeded"
+          ],
+          "mappedType": "enum"
         },
         "point_amount": {
           "name": "point_amount",
@@ -933,7 +999,8 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "integer"
         },
         "point_reason": {
           "name": "point_reason",
@@ -948,7 +1015,12 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": ["ad", "share", "drawing"]
+          "enumItems": [
+            "ad",
+            "share",
+            "drawing"
+          ],
+          "mappedType": "enum"
         },
         "attempt_count": {
           "name": "attempt_count",
@@ -963,7 +1035,8 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "integer"
         },
         "max_attempt_count": {
           "name": "max_attempt_count",
@@ -978,7 +1051,8 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "integer"
         },
         "next_retry_at": {
           "name": "next_retry_at",
@@ -993,7 +1067,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "datetime"
         },
         "locked_at": {
           "name": "locked_at",
@@ -1008,7 +1083,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "datetime"
         },
         "processed_at": {
           "name": "processed_at",
@@ -1023,7 +1099,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "datetime"
         },
         "failed_message": {
           "name": "failed_message",
@@ -1038,7 +1115,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "text"
         },
         "point_idempotency_key": {
           "name": "point_idempotency_key",
@@ -1053,12 +1131,16 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "string"
         }
       },
       "indexes": [
         {
-          "columnNames": ["point_grant_status", "created_at"],
+          "columnNames": [
+            "point_grant_status",
+            "created_at"
+          ],
           "keyName": "idx_pgr_status_created_at",
           "unique": false,
           "primary": false,
@@ -1066,7 +1148,10 @@
           "composite": true
         },
         {
-          "columnNames": ["point_grant_status", "locked_at"],
+          "columnNames": [
+            "point_grant_status",
+            "locked_at"
+          ],
           "keyName": "idx_pgr_status_locked_at",
           "unique": false,
           "primary": false,
@@ -1074,7 +1159,10 @@
           "composite": true
         },
         {
-          "columnNames": ["point_grant_status", "next_retry_at"],
+          "columnNames": [
+            "point_grant_status",
+            "next_retry_at"
+          ],
           "keyName": "idx_pgr_status_next_retry_at",
           "unique": false,
           "primary": false,
@@ -1082,14 +1170,18 @@
           "composite": true
         },
         {
-          "columnNames": ["user_key"],
+          "columnNames": [
+            "user_key"
+          ],
           "keyName": "point_grant_requests_user_key_index",
           "unique": false,
           "primary": false,
           "constraint": false
         },
         {
-          "columnNames": ["id"],
+          "columnNames": [
+            "id"
+          ],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -1099,11 +1191,15 @@
       "checks": [],
       "foreignKeys": {
         "point_grant_requests_user_key_foreign": {
-          "columnNames": ["user_key"],
+          "columnNames": [
+            "user_key"
+          ],
           "constraintName": "point_grant_requests_user_key_foreign",
           "localTableName": "point_grant_requests",
           "referencedTableName": "users",
-          "referencedColumnNames": ["user_key"],
+          "referencedColumnNames": [
+            "user_key"
+          ],
           "updateRule": "no action",
           "deleteRule": "no action"
         }
@@ -1127,7 +1223,8 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "bigint"
         },
         "created_at": {
           "name": "created_at",
@@ -1142,7 +1239,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "datetime"
         },
         "updated_at": {
           "name": "updated_at",
@@ -1157,7 +1255,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "datetime"
         },
         "point_reason": {
           "name": "point_reason",
@@ -1172,7 +1271,12 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": ["ad", "share", "drawing"]
+          "enumItems": [
+            "ad",
+            "share",
+            "drawing"
+          ],
+          "mappedType": "enum"
         },
         "point_amount": {
           "name": "point_amount",
@@ -1187,7 +1291,8 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "integer"
         },
         "user_key": {
           "name": "user_key",
@@ -1202,19 +1307,24 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "integer"
         }
       },
       "indexes": [
         {
-          "columnNames": ["user_key"],
+          "columnNames": [
+            "user_key"
+          ],
           "keyName": "point_logs_user_key_index",
           "unique": false,
           "primary": false,
           "constraint": false
         },
         {
-          "columnNames": ["id"],
+          "columnNames": [
+            "id"
+          ],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -1224,11 +1334,15 @@
       "checks": [],
       "foreignKeys": {
         "point_logs_user_key_foreign": {
-          "columnNames": ["user_key"],
+          "columnNames": [
+            "user_key"
+          ],
           "constraintName": "point_logs_user_key_foreign",
           "localTableName": "point_logs",
           "referencedTableName": "users",
-          "referencedColumnNames": ["user_key"],
+          "referencedColumnNames": [
+            "user_key"
+          ],
           "updateRule": "no action",
           "deleteRule": "no action"
         }
@@ -1252,7 +1366,8 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "bigint"
         },
         "strokes": {
           "name": "strokes",
@@ -1267,12 +1382,15 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "text"
         }
       },
       "indexes": [
         {
-          "columnNames": ["id"],
+          "columnNames": [
+            "id"
+          ],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -1300,7 +1418,8 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "bigint"
         },
         "created_at": {
           "name": "created_at",
@@ -1315,7 +1434,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "datetime"
         },
         "updated_at": {
           "name": "updated_at",
@@ -1330,7 +1450,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "datetime"
         },
         "nickname": {
           "name": "nickname",
@@ -1345,7 +1466,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "string"
         },
         "strokes": {
           "name": "strokes",
@@ -1360,7 +1482,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "text"
         },
         "drawing_id": {
           "name": "drawing_id",
@@ -1375,7 +1498,8 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "bigint"
         },
         "score": {
           "name": "score",
@@ -1390,7 +1514,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "double"
         },
         "submitted_at": {
           "name": "submitted_at",
@@ -1405,7 +1530,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "datetime"
         },
         "user_key": {
           "name": "user_key",
@@ -1420,12 +1546,17 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "integer"
         }
       },
       "indexes": [
         {
-          "columnNames": ["score", "submitted_at", "nickname"],
+          "columnNames": [
+            "score",
+            "submitted_at",
+            "nickname"
+          ],
           "keyName": "idx_ranking_score_submit_nickname",
           "unique": false,
           "primary": false,
@@ -1439,7 +1570,9 @@
           "composite": true
         },
         {
-          "columnNames": ["id"],
+          "columnNames": [
+            "id"
+          ],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -1650,7 +1783,8 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "bigint"
         },
         "user_key": {
           "name": "user_key",
@@ -1665,7 +1799,8 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "integer"
         },
         "channel": {
           "name": "channel",
@@ -1680,7 +1815,10 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": ["contactsViral"]
+          "enumItems": [
+            "contactsViral"
+          ],
+          "mappedType": "enum"
         },
         "module_id": {
           "name": "module_id",
@@ -1695,7 +1833,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "string"
         },
         "created_at": {
           "name": "created_at",
@@ -1710,7 +1849,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "datetime"
         },
         "updated_at": {
           "name": "updated_at",
@@ -1725,19 +1865,25 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "datetime"
         }
       },
       "indexes": [
         {
-          "columnNames": ["id"],
+          "columnNames": [
+            "id"
+          ],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
           "constraint": true
         },
         {
-          "columnNames": ["user_key", "created_at"],
+          "columnNames": [
+            "user_key",
+            "created_at"
+          ],
           "keyName": "share_logs_user_key_created_at_index",
           "unique": false,
           "primary": false,
@@ -1745,7 +1891,9 @@
           "composite": true
         },
         {
-          "columnNames": ["user_key"],
+          "columnNames": [
+            "user_key"
+          ],
           "keyName": "share_logs_user_key_index",
           "unique": false,
           "primary": false,
@@ -1755,11 +1903,15 @@
       "checks": [],
       "foreignKeys": {
         "share_logs_user_key_foreign": {
-          "columnNames": ["user_key"],
+          "columnNames": [
+            "user_key"
+          ],
           "constraintName": "share_logs_user_key_foreign",
           "localTableName": "share_logs",
           "referencedTableName": "users",
-          "referencedColumnNames": ["user_key"],
+          "referencedColumnNames": [
+            "user_key"
+          ],
           "updateRule": "no action",
           "deleteRule": "no action"
         }
@@ -1783,7 +1935,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "datetime"
         },
         "updated_at": {
           "name": "updated_at",
@@ -1798,7 +1951,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "datetime"
         },
         "user_key": {
           "name": "user_key",
@@ -1813,7 +1967,8 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "integer"
         },
         "name": {
           "name": "name",
@@ -1828,7 +1983,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "string"
         },
         "gender": {
           "name": "gender",
@@ -1843,7 +1999,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "string"
         },
         "birthday": {
           "name": "birthday",
@@ -1858,7 +2015,8 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "date"
         },
         "nickname": {
           "name": "nickname",
@@ -1873,19 +2031,24 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": []
+          "enumItems": [],
+          "mappedType": "string"
         }
       },
       "indexes": [
         {
-          "columnNames": ["user_key"],
+          "columnNames": [
+            "user_key"
+          ],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
           "constraint": true
         },
         {
-          "columnNames": ["nickname"],
+          "columnNames": [
+            "nickname"
+          ],
           "keyName": "users_nickname_unique",
           "unique": true,
           "primary": false,
