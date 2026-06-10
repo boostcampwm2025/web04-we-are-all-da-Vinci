@@ -19,6 +19,7 @@ export const getSeoulDayRange = (reference = new Date()) => {
 export const formatKstDate = (date: Date = new Date()): string => {
   const seoul = new Date(date.getTime() + SEOUL_TIMEZONE_OFFSET_MS);
   return seoul.toISOString().slice(0, 10);
+};
 
 export const getSeoulDateKey = (date: Date | string) => {
   if (typeof date === "string") {
