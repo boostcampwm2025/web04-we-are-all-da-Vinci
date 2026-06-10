@@ -16,7 +16,6 @@ import {
   Top,
 } from "@toss/tds-mobile";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 
 const QUICK_DATE_COUNT = 5;
 
@@ -236,12 +235,12 @@ const ArchiveView = () => {
   return (
     <div
       data-no-safe-area-bottom
-      className="min-h-0 flex-1 overflow-y-auto bg-(--color-page) pb-[env(safe-area-inset-bottom)]"
+      className="min-h-0 flex-1 overflow-y-auto bg-(--color-page) pb-[calc(env(safe-area-inset-bottom)+72px)]"
     >
       <Top
         upperGap={16}
         lowerGap={12}
-        title={<Top.TitleParagraph size={28}>내 기록 보기</Top.TitleParagraph>}
+        title={<Top.TitleParagraph size={28}>나의 기록</Top.TitleParagraph>}
         subtitleBottom={
           <Top.SubtitleParagraph size={17}>
             오늘까지의 기록을 모아봤어요
@@ -460,20 +459,12 @@ const ArchiveView = () => {
                 onClick={() => setIsScoreDetailOpen(true)}
                 className="mt-5"
               >
-                점수 분석 보기
+                기억력 점수 분석
               </Button>
             </div>
           ) : null}
         </section>
       )}
-
-      <div className="mt-6 px-(--page-px)">
-        <Link to="/">
-          <Button variant="weak" display="block" size="large">
-            돌아가기
-          </Button>
-        </Link>
-      </div>
 
       <BottomSheet
         open={isScoreDetailOpen && selectedDrawing != null}
@@ -483,7 +474,7 @@ const ArchiveView = () => {
         header={
           <BottomSheet.Header>
             <div className="flex w-full items-baseline justify-between">
-              <span>점수 분석</span>
+              <span>기억력 점수 상세</span>
               {selectedDrawing && (
                 <span className="font-normal">
                   <span className="text-base">총점 </span>

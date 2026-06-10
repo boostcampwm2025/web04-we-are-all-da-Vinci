@@ -69,30 +69,6 @@ describe("serverTossApi", () => {
     expect((requestInit.headers as Headers).get("x-user-id")).toBeNull();
   });
 
-  it("내 그림 조회 시 /api/drawing/me로 요청하고 x-user-id를 보내지 않는다", async () => {
-    const body = { userKey: 7, drawings: [] };
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      text: async () => JSON.stringify(body),
-      json: async () => body,
-    });
-
-    vi.stubGlobal("fetch", fetchMock);
-
-    await serverTossApi.getMyDrawings();
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/drawing/me",
-      expect.objectContaining({
-        method: "GET",
-        headers: expect.any(Headers),
-      }),
-    );
-
-    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
-    expect((requestInit.headers as Headers).get("x-user-id")).toBeNull();
-  });
-
   it("그림 상세 조회 시 /api/drawing/:drawingId로 요청한다", async () => {
     const body = {
       drawingId: 42,

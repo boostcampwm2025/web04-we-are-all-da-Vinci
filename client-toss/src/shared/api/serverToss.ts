@@ -1,4 +1,4 @@
-import type { PodiumEntry } from "@/entities/podium";
+import type { PodiumResponse } from "@/entities/podium";
 import type { MyRankingResponse, RankingListItem } from "@/entities/ranking";
 import { appLogin } from "@apps-in-toss/web-framework";
 import type {
@@ -6,7 +6,6 @@ import type {
   ArchiveDayResponse,
   ArchiveSummaryResponse,
   MyDrawingResponse,
-  MyDrawingsResponse,
   NotificationAgreementRequest,
   ShareSdkPayload,
   Stroke,
@@ -43,7 +42,6 @@ export const clearAccessToken = () => {
   localStorage.removeItem("nickname");
 };
 
-export const getCachedNickname = () => localStorage.getItem("nickname");
 export const setCachedNickname = (nickname: string) =>
   localStorage.setItem("nickname", nickname);
 
@@ -191,10 +189,7 @@ export const serverTossApi = {
   },
 
   getPodium: (options?: RequestOptions) =>
-    get<PodiumEntry[]>("/rankings/podium", options),
-
-  getMyDrawings: (options?: RequestOptions) =>
-    get<MyDrawingsResponse>("/drawing/me", options),
+    get<PodiumResponse>("/rankings/podium", options),
 
   getDrawing: (drawingId: string, options?: RequestOptions) =>
     get<DrawingDetailResponse>(`/drawing/${drawingId}`, options),

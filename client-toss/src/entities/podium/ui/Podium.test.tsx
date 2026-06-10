@@ -29,6 +29,7 @@ describe("Podium", () => {
   it("로딩 중이면 스켈레톤을 렌더링한다", () => {
     mockUsePodium.mockReturnValue({
       podium: undefined,
+      participantCount: undefined,
       isLoading: true,
     });
 
@@ -40,6 +41,7 @@ describe("Podium", () => {
   it("포디움 목록이 비어 있으면 빈 상태 문구를 렌더링한다", () => {
     mockUsePodium.mockReturnValue({
       podium: [],
+      participantCount: 0,
       isLoading: false,
     });
 
@@ -53,6 +55,7 @@ describe("Podium", () => {
   it("1명만 있으면 1등 데이터와 포디움 3칸을 렌더링한다", () => {
     mockUsePodium.mockReturnValue({
       podium: [{ nickname: "김다빈치", score: 99 }],
+      participantCount: 1,
       isLoading: false,
     });
 
@@ -69,6 +72,7 @@ describe("Podium", () => {
         { nickname: "김다빈치", score: 99 },
         { nickname: "레오", score: 88 },
       ],
+      participantCount: 2,
       isLoading: false,
     });
 
@@ -89,6 +93,7 @@ describe("Podium", () => {
         { nickname: "레오", score: 88 },
         { nickname: "모나", score: 77 },
       ],
+      participantCount: 3,
       isLoading: false,
     });
 
