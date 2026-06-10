@@ -16,7 +16,10 @@ export const PodiumItemSchema = z.object({
 
 export type PodiumItem = z.infer<typeof PodiumItemSchema>;
 
-export const PodiumResponseSchema = z.array(PodiumItemSchema);
+export const PodiumResponseSchema = z.object({
+  podium: z.array(PodiumItemSchema),
+  participantCount: z.number().int().min(0),
+});
 
 export type PodiumResponse = z.infer<typeof PodiumResponseSchema>;
 

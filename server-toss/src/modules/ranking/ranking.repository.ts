@@ -26,6 +26,17 @@ export class RankingRepository extends EntityRepository<Ranking> {
     );
   }
 
+  // 오늘(KST) 랭킹에 제출된 전체 참가자 수. podium 응답에 함께 실어 도전 전에도 노출한다.
+  async countTodayParticipants(): Promise<number> {
+    const { start, end } = getSeoulDayRange();
+    return await this.count({
+      submittedAt: {
+        $gte: start,
+        $lt: end,
+      },
+    });
+  }
+
   async findLatestUpdatedAt(): Promise<Date | null> {
     const [ranking] = await this.find(
       {},
