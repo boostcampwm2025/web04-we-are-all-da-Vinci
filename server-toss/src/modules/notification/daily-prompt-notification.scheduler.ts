@@ -3,7 +3,7 @@ import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Cron } from "@nestjs/schedule";
 import { getTodayKst } from "src/common/util/today";
-import { formatKstDate, getSeoulDayRange } from "src/common/util/time.util";
+import { getSeoulDateKey, getSeoulDayRange } from "src/common/util/time.util";
 import { PromptService } from "../prompt/prompt.service";
 import {
   BULK_MESSAGE_MIN_RECIPIENTS,
@@ -59,7 +59,7 @@ export class DailyPromptNotificationScheduler {
     );
     const agreementTemplateCode = templateSetCode;
     const todayRange = getSeoulDayRange();
-    const referenceId = formatKstDate(todayRange.start);
+    const referenceId = getSeoulDateKey(todayRange.start);
 
     try {
       await this.promptService.getPromptByDate(getTodayKst());
