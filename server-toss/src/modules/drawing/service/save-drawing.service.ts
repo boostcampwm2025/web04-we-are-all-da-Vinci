@@ -6,7 +6,7 @@ import { Injectable } from "@nestjs/common";
 import { DrawingRepository } from "../drawing.repository";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Transactional } from "@mikro-orm/decorators/legacy";
-import { QuestService } from "src/modules/quest/quest.service";
+import { QuestService } from "src/modules/quest/service/quest.service";
 
 @Injectable()
 export class SaveDrawingService {

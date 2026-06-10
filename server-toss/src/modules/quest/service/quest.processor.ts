@@ -1,19 +1,19 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PointService } from "src/modules/point/point.service";
-import { DailyScoreCommand } from "./command/daily-score.command";
-import { DailySubmitCommand } from "./command/daily-submit.command";
-import { PenaltyCommand } from "./command/penalty.command";
-import { ScoreCommand } from "./command/score.command";
-import { SimpleActionCommand } from "./command/simple-action.command";
+import { DailyScoreCommand } from "../command/daily-score.command";
+import { DailySubmitCommand } from "../command/daily-submit.command";
+import { PenaltyCommand } from "../command/penalty.command";
+import { ScoreCommand } from "../command/score.command";
+import { SimpleActionCommand } from "../command/simple-action.command";
 import {
   ObjectiveType,
   Quest,
   QuestPeriod,
   RewardType,
-} from "./entity/quest.entity";
-import { UserQuest } from "./entity/user-quest.entity";
-import type { ActionContext, CycleResult, QuestCommand } from "./quest.types";
-import { PointReason } from "../point/entity/point-log.entity";
+} from "../entity/quest.entity";
+import { UserQuest } from "../entity/user-quest.entity";
+import type { ActionContext, CycleResult, QuestCommand } from "../quest.types";
+import { PointReason } from "../../point/entity/point-log.entity";
 
 @Injectable()
 export class QuestProcessor {

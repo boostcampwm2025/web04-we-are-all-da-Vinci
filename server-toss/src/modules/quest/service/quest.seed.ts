@@ -8,8 +8,8 @@ import {
   Quest,
   QuestPeriod,
   RewardType,
-} from "./entity/quest.entity";
-import { UserQuest } from "./entity/user-quest.entity";
+} from "../entity/quest.entity";
+import { UserQuest } from "../entity/user-quest.entity";
 
 const QuestDefinitionSchema = z.object({
   title: z.string().min(1).max(50),

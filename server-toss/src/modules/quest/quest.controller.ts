@@ -1,15 +1,15 @@
 import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
-import { QuestService } from "./quest.service";
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { QuestActionSchema, type QuestAction } from "@toss/shared";
+import { ZodValidationPipe } from "src/common/zod-validation.pipe";
 import {
   CurrentUser,
   type CurrentUserPayload,
 } from "../auth/decorators/current-user.decorator";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { MyQuestsResponseDto } from "./dto/my-quests-response.dto";
 import { ACTION_TYPE_TO_OBJECTIVE } from "./quest.constants";
-import { ZodValidationPipe } from "src/common/zod-validation.pipe";
-import { QuestActionSchema, type QuestAction } from "@toss/shared";
+import { QuestService } from "./service/quest.service";
 
 @ApiTags("Quest")
 @UseGuards(JwtAuthGuard)
@@ -34,7 +34,8 @@ export class QuestController {
   async assignMyQuests(
     @CurrentUser() user: CurrentUserPayload,
   ): Promise<MyQuestsResponseDto> {
-    return this.questService.assignOrGetQuests(user.userKey);
+    await this.questService.assignQuests(user.userKey);
+    return this.questService.myQuests(user.userKey);
   }
 
   @Post("/quests/action")

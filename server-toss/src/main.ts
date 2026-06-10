@@ -7,7 +7,7 @@ import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/http-exception.filter";
 import { ZodExceptionFilter } from "./common/zod-exception.filter";
 import { PromptSeedService } from "./modules/prompt/prompt.seed";
-import { QuestSeedService } from "./modules/quest/quest.seed";
+import { QuestSeedService } from "./modules/quest/service/quest.seed";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });

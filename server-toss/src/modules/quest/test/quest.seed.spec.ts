@@ -5,7 +5,7 @@ import {
   RewardType,
 } from "../entity/quest.entity";
 import { UserQuest } from "../entity/user-quest.entity";
-import { QuestSeedService, type QuestDefinition } from "../quest.seed";
+import { QuestSeedService, type QuestDefinition } from "../service/quest.seed";
 
 const buildQuest = (overrides: Partial<Quest> = {}): Quest =>
   ({

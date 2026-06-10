@@ -23,7 +23,7 @@ import { RankingRepository } from "../../ranking/ranking.repository";
 import { RankingService } from "../../ranking/ranking.service";
 import { SaveDrawingService } from "../service/save-drawing.service";
 import { PointService } from "src/modules/point/point.service";
-import { QuestService } from "src/modules/quest/quest.service";
+import { QuestService } from "src/modules/quest/service/quest.service";
 
 describe("SaveDrawingService", () => {
   let orm: MikroORM;

@@ -7,8 +7,8 @@ jest.mock("src/common/util/time.util", () => ({
 }));
 
 import { Test } from "@nestjs/testing";
-import { QuestService } from "../quest.service";
-import { QuestProcessor } from "../quest.processor";
+import { QuestService } from "../service/quest.service";
+import { QuestProcessor } from "../service/quest.processor";
 import { PointService } from "src/modules/point/point.service";
 import {
   ObjectiveType,
