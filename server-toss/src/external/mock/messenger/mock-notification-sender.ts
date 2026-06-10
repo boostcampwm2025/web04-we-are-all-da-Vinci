@@ -13,7 +13,8 @@ export class MockNotificationSender extends NotificationSender {
   sendMessage(input: SendMessageInput): Promise<TossMessengerResponse> {
     this.logger.debug(
       {
-        event: "mock.notification.sent",
+        event: "notification.send.succeeded",
+        adapter: "mock",
         userKey: input.userKey,
         templateSetCode: input.templateSetCode,
       },
@@ -25,7 +26,8 @@ export class MockNotificationSender extends NotificationSender {
   sendBulkMessage(input: BulkSendMessageInput): Promise<TossMessengerResponse> {
     this.logger.debug(
       {
-        event: "mock.notification.bulk_sent",
+        event: "notification.bulk.succeeded",
+        adapter: "mock",
         templateSetCode: input.templateSetCode,
         targetCount: input.contextList.length,
       },
