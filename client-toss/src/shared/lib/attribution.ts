@@ -55,17 +55,3 @@ export const captureAttributionOnce = async (): Promise<void> => {
   localStorage.setItem(key, JSON.stringify(payload));
   trackScreen(FUNNEL_EVENTS.attributionFirstTouch, utm);
 };
-
-export const getFirstTouchAttribution =
-  async (): Promise<Attribution | null> => {
-    const hash = await getAnonymousHash();
-    const key = buildKey(hash);
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    try {
-      return JSON.parse(raw) as Attribution;
-    } catch {
-      localStorage.removeItem(key);
-      return null;
-    }
-  };

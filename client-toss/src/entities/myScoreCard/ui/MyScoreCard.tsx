@@ -5,6 +5,7 @@ import {
 } from "@/entities/drawingCanvas";
 import { ScoreDetailCard } from "@/entities/scoreDetailCard";
 import { AD_GROUP_IDS } from "@/shared/config";
+import { formatScore } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";
 import type { MyDrawingResponse } from "@toss/shared";
@@ -16,8 +17,6 @@ interface MyScoreCardProps {
   hideHeader?: boolean;
   hideAd?: boolean;
 }
-
-const formatScore = (score: number) => score.toFixed(2);
 
 const MyScoreCard = ({
   drawing,
@@ -83,7 +82,7 @@ const MyScoreCard = ({
         header={
           <BottomSheet.Header>
             <div className="flex w-full items-baseline justify-between">
-              <span>점수 분석</span>
+              <span>기억력 점수 분석</span>
               <span className="font-normal">
                 <span className="text-base">총점 </span>
                 <span className="text-xl font-bold text-(--color-toss-blue)">
