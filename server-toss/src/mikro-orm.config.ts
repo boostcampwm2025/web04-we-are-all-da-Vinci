@@ -4,6 +4,7 @@ import { SeedManager } from "@mikro-orm/seeder";
 import { AdView } from "./modules/chance/ad-view.entity";
 import { PlayChance } from "./modules/chance/play-chance.entity";
 import { ShareLog } from "./modules/chance/share-log.entity";
+import { DailyUserRanking } from "./modules/dailyRanking/daily-user-ranking.entity";
 import { Drawing } from "./modules/drawing/drawing.entity";
 import { PointGrantRequest } from "./modules/point/entity/point-grant-request.entity";
 import { PointLog } from "./modules/point/entity/point-log.entity";
@@ -27,6 +28,7 @@ export default defineConfig({
     PointGrantRequest,
     AdView,
     Ranking,
+    DailyUserRanking,
     PlayChance,
     ShareLog,
   ],

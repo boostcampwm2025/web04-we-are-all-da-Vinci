@@ -1,4 +1,5 @@
 import AnalyticsTracker from "@/app/config/AnalyticsTracker";
+import { ArchiveView } from "@/views/archive";
 import { DashboardView, MyDrawingsPanel } from "@/views/dashboard";
 import { Drawing } from "@/views/drawing";
 import { LoginView } from "@/views/login";
@@ -31,6 +32,7 @@ export const router = createBrowserRouter([
           { path: "ranking", element: <RankingView /> },
         ],
       },
+      { path: "/archive", element: <ArchiveView /> },
       { path: "/submitted", element: <SubmittedView /> },
       { path: "/drawing/:drawingId", element: <RankingDetailView /> },
     ],
