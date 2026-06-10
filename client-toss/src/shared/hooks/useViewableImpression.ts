@@ -24,6 +24,13 @@ const useViewableImpression = (
   const logNameRef = useRef(logName);
   const paramsRef = useRef(params);
 
+  // 옵저버 effect는 ref 변경에만 의존하므로, logName·params가 바뀌어도 재구독하지 않는다.
+  // 발화 시 최신값을 쓰도록 매 렌더 후 ref를 동기화한다.
+  useEffect(() => {
+    logNameRef.current = logName;
+    paramsRef.current = params;
+  });
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
