@@ -5,11 +5,11 @@ import {
 } from "@mikro-orm/decorators/legacy";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable, Logger } from "@nestjs/common";
-import { getSeoulDateTime, getSeoulDayRange } from "src/common/util/time.util";
 import {
   ExternalPromotionError,
   ExternalTransportError,
 } from "src/common/errors/external.errors";
+import { getSeoulDateTime } from "src/common/util/time.util";
 import { User } from "src/modules/user/user.entity";
 import {
   PointGrantRequest,
@@ -18,15 +18,12 @@ import {
 import { PointLog, PointReason } from "./entity/point-log.entity";
 import { PointGrantRequestRepository } from "./point-grant-request.repository";
 import {
-  DAILY_DRAWING_PROMOTION_LIMIT,
-  DAILY_LIMIT_EXCEEDED_MESSAGE,
   FAILED_RETENTION_DAYS,
   PROMOTION_AMOUNT,
   PROMOTION_MAX_RETRIES,
   PURGE_BATCH_SIZE,
   SUCCEEDED_RETENTION_DAYS,
 } from "./point.contants";
-import { GrantEligibilityDecision } from "./point.types";
 import { PointGrantExecuter } from "./port/point-grant-executer.interface";
 import { PointGrantKeyIssuer } from "./port/point-grant-key-issuer.interface";
 
@@ -41,41 +38,6 @@ export class PointService {
     private readonly pointGrantKeyIssuer: PointGrantKeyIssuer,
     private readonly pointGrantExecuter: PointGrantExecuter,
   ) {}
-
-  async canGrantTodayPromotion(userKey: number): Promise<boolean> {
-    const { start, end } = getSeoulDayRange();
-    const count = await this.em.count(PointLog, {
-      user: { userKey },
-      reason: PointReason.DRAWING,
-      createdAt: { $gte: start, $lt: end },
-    });
-    return count < 2;
-  }
-
-  @Transactional()
-  async savePointGrantRequestForDrawing(
-    userKey: number,
-    reason: PointReason,
-  ): Promise<boolean> {
-    const promotionGranted = await this.canGrantTodayPromotion(userKey);
-
-    if (!promotionGranted) {
-      return false;
-    }
-    const user = this.em.getReference(User, userKey);
-
-    this.pointGrantRequestRepository.create({
-      user,
-      reason,
-      pointAmount: PROMOTION_AMOUNT,
-      status: PointGrantStatus.PENDING,
-      maxAttemptCount: PROMOTION_MAX_RETRIES,
-      attemptCount: 0,
-    });
-
-    await this.pointGrantRequestRepository.getEntityManager().flush();
-    return true;
-  }
 
   @Transactional()
   async savePointGrantRequest(
@@ -128,75 +90,16 @@ export class PointService {
   }
 
   async settleGrantRequest(request: PointGrantRequest): Promise<void> {
-    const eligibilityDecision = await this.evaluateGrantEligibility(request);
-    if (await this.applyEligibilityDecision(request, eligibilityDecision)) {
-      return;
-    }
-
     try {
       const key =
         request.pointIdempotencyKey ??
         (await this.issueAndSavePromotionKey(request));
 
-      await this.grantDrawingPromotion(request, key);
+      await this.grantPromotion(request, key);
       await this.recordGrantSucceeded(request);
     } catch (err) {
       await this.recordGrantOutcomeFromError(request, err);
     }
-  }
-
-  async evaluateGrantEligibility(
-    request: PointGrantRequest,
-  ): Promise<GrantEligibilityDecision> {
-    if (request.reason !== PointReason.DRAWING) {
-      return { decision: "PROCEED" };
-    }
-
-    const { start, end } = getSeoulDayRange();
-    const userKey = request.user.userKey;
-
-    const pointLogCount = await this.em.count(PointLog, {
-      user: { userKey },
-      reason: PointReason.DRAWING,
-      createdAt: { $gte: start, $lt: end },
-    });
-
-    if (pointLogCount >= DAILY_DRAWING_PROMOTION_LIMIT) {
-      return { decision: "FAIL", reason: DAILY_LIMIT_EXCEEDED_MESSAGE };
-    }
-
-    const inFlightCount = await this.em.count(PointGrantRequest, {
-      id: { $ne: request.id },
-      user: { userKey },
-      reason: PointReason.DRAWING,
-      status: PointGrantStatus.PROCESSING,
-      createdAt: { $gte: start, $lt: end },
-    });
-
-    if (pointLogCount + inFlightCount >= DAILY_DRAWING_PROMOTION_LIMIT) {
-      return { decision: "RETRY" };
-    }
-
-    return { decision: "PROCEED" };
-  }
-
-  async applyEligibilityDecision(
-    request: PointGrantRequest,
-    decision: GrantEligibilityDecision,
-  ): Promise<boolean> {
-    if (decision.decision === "FAIL") {
-      request.failed(decision.reason);
-      await this.em.flush();
-      return true;
-    }
-
-    if (decision.decision === "RETRY") {
-      request.retry();
-      await this.em.flush();
-      return true;
-    }
-
-    return false;
   }
 
   async issueAndSavePromotionKey(request: PointGrantRequest) {
@@ -254,10 +157,7 @@ export class PointService {
     await this.em.flush();
   }
 
-  async grantDrawingPromotion(
-    request: PointGrantRequest,
-    key: string,
-  ): Promise<void> {
+  async grantPromotion(request: PointGrantRequest, key: string): Promise<void> {
     const { user, pointAmount } = request;
 
     await this.pointGrantExecuter.executePromotion(

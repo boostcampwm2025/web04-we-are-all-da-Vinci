@@ -141,15 +141,8 @@ const DashboardView = () => {
 
         refetchDrawings();
 
-        const promotionGranted = (
-          locationState as { promotionGranted?: boolean }
-        )?.promotionGranted;
-        if (promotionGranted != null) {
-          setToastText(
-            promotionGranted ? "포인트 지급이 완료됐어요" : "그림을 등록했어요",
-          );
-          setToastOpen(true);
-        }
+        setToastText("그림을 등록했어요");
+        setToastOpen(true);
 
         setInitialLoading(false);
         return;

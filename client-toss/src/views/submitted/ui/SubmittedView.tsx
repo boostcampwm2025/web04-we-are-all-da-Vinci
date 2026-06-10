@@ -57,18 +57,16 @@ const SubmittedView = () => {
         score: routeState.similarity?.score,
         stroke_count: routeState.strokes.length,
       });
-      const { promotionGranted } = await serverTossApi.submitDrawing(
-        routeState.strokes,
-      );
+      await serverTossApi.submitDrawing(routeState.strokes);
+
       trackClick(FUNNEL_EVENTS.submittedSubmitSuccess, {
-        promotion_granted: promotionGranted,
         score: routeState.similarity?.score,
         stroke_count: routeState.strokes.length,
       });
 
       navigate("/", {
         replace: true,
-        state: { fromSubmitted: true, promotionGranted },
+        state: { fromSubmitted: true },
       });
     } catch (err) {
       console.error("제출 실패:", err);

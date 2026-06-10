@@ -23,7 +23,6 @@ import { RankingRepository } from "../../ranking/ranking.repository";
 import { RankingService } from "../../ranking/ranking.service";
 import { SaveDrawingService } from "../service/save-drawing.service";
 import { PointService } from "src/modules/point/point.service";
-import { PointReason } from "src/modules/point/entity/point-log.entity";
 import { QuestService } from "src/modules/quest/quest.service";
 
 describe("SaveDrawingService", () => {
@@ -182,7 +181,7 @@ describe("SaveDrawingService", () => {
           .fork()
           .count(Ranking, { userKey: user.userKey });
 
-        const { drawing: saved } = await service.saveDrawingWithRanking(
+        const saved = await service.saveDrawingWithRanking(
           user,
           new SaveDrawingDto(
             Number(givenPrompt.id),
@@ -205,28 +204,6 @@ describe("SaveDrawingService", () => {
         expect(afterRankingCount).toBe(beforeRankingCount + 1);
         expect(savedRanking.drawingId).toBe(saved.id);
         expect(savedRanking.score).toBe(sampleSimilarity.score);
-        expect(pointService.savePointGrantRequest).toHaveBeenCalledWith(
-          user.userKey,
-          PointReason.DRAWING,
-        );
-      });
-
-      it("포인트 적립 불가면 promotionGranted가 false를 반환한다", async () => {
-        const user = givenUsers[4];
-        pointService.savePointGrantRequest.mockResolvedValueOnce(
-          false as never,
-        );
-
-        const { promotionGranted } = await service.saveDrawingWithRanking(
-          user,
-          new SaveDrawingDto(
-            Number(givenPrompt.id),
-            sampleStrokes,
-            sampleSimilarity,
-          ),
-        );
-
-        expect(promotionGranted).toBe(false);
       });
     });
 

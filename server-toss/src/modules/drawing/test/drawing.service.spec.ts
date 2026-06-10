@@ -131,8 +131,7 @@ describe("DrawingService", () => {
       };
       const saveDrawingService = buildSaveDrawingService();
       saveDrawingService.saveDrawingWithRanking.mockResolvedValue({
-        drawing: { id: BigInt(42) },
-        promotionGranted: true,
+        id: BigInt(42),
       });
 
       const service = buildService({
@@ -161,31 +160,8 @@ describe("DrawingService", () => {
       );
       expect(result).toMatchObject({
         drawingId: 42,
-        promotionGranted: true,
       });
       expect(result.similarity.score).toBe(87);
-    });
-
-    it("프로모션 지급은 PointService에 위임하고 결과를 그대로 반환한다", async () => {
-      const drawingRepository = buildDrawingRepository();
-      const saveDrawingService = buildSaveDrawingService();
-      saveDrawingService.saveDrawingWithRanking.mockResolvedValue({
-        drawing: { id: BigInt(1) },
-        promotionGranted: true,
-      });
-      drawingRepository.saveDrawing.mockResolvedValue({ id: BigInt(1) });
-
-      const service = buildService({
-        drawingRepository,
-        saveDrawingService,
-      });
-
-      const result = await service.submitDrawing(
-        1234,
-        sampleStrokes as never,
-        new Date(),
-      );
-      expect(result.promotionGranted).toBe(true);
     });
   });
 
