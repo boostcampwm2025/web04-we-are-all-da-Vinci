@@ -206,7 +206,7 @@ describe("SubmittedView", () => {
     renderWithState();
 
     expect(
-      screen.getByText(/등록하면 오늘 그린 최고 점수가 랭킹에 반영돼요/),
+      screen.getByText(/가장 높은 기억력 점수가 랭킹에 반영돼요/),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/그림의 점수도 자세히 분석해드려요/),

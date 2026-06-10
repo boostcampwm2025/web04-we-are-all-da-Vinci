@@ -8,6 +8,7 @@ import { serverTossApi } from "@/shared/api";
 import { AD_GROUP_IDS } from "@/shared/config";
 import {
   FUNNEL_EVENTS,
+  getErrorMessage,
   trackClick,
   trackScreen,
   useExitGuard,
@@ -26,9 +27,6 @@ interface SubmittedRouteState {
   similarity: SimilarityResponse | null;
   anonymousHash: string;
 }
-
-const getErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : String(error);
 
 const SubmittedView = () => {
   const navigate = useNavigate();
@@ -192,7 +190,7 @@ const SubmittedView = () => {
       <PhaseHeader
         title="완성한 그림이에요"
         description={
-          "등록하면 오늘 그린 최고 점수가 랭킹에 반영돼요\n그림의 점수도 자세히 분석해드려요"
+          "가장 높은 기억력 점수가 랭킹에 반영돼요\n그림의 점수도 자세히 분석해드려요"
         }
       />
 

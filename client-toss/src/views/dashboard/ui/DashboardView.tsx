@@ -1,31 +1,25 @@
-import { useMyDrawings } from "@/entities/myScoreCard";
 import {
   NotificationCenterSheet,
   useNotificationAutoPrompt,
 } from "@/feature/notification";
 import { useFullScreenAd, usePlayChanceContext } from "@/feature/playChance";
 import {
-  getCachedNickname,
-  serverTossApi,
-  setCachedNickname,
-} from "@/shared/api";
-import {
   FUNNEL_EVENTS,
   formatLocalDate,
   getAnonymousHash,
+  getErrorMessage,
   trackClick,
   useExitGuard,
 } from "@/shared/lib";
-import { Button, ConfirmDialog, Tab, Toast } from "@toss/tds-mobile";
+import { Button, ConfirmDialog, Toast } from "@toss/tds-mobile";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import InfoTicker from "./InfoTicker";
+import { useLocation, useNavigate } from "react-router-dom";
+import ChallengeCard from "./ChallengeCard";
+import StreakStatsCard from "./StreakStatsCard";
+import TodayDavinciCard from "./TodayDavinciCard";
+import TodayMissionCard from "./TodayMissionCard";
 
-const RANKING_PATH = "/ranking";
 type PlayStartSource = "auto" | "cta" | "retry";
-
-const getErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : String(error);
 
 const DashboardView = () => {
   const navigate = useNavigate();
@@ -38,7 +32,6 @@ const DashboardView = () => {
   const [toastText, setToastText] = useState("일시적 오류가 발생했어요");
   const anonymousHashRef = useRef<string>("local");
   const autoStartedRef = useRef(false);
-  const { myDrawings, isLoading, refetch: refetchDrawings } = useMyDrawings();
   const {
     chanceCount,
     hasChance,
@@ -52,30 +45,8 @@ const DashboardView = () => {
 
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [nickname, setNickname] = useState<string>(
-    () => getCachedNickname() ?? "",
-  );
 
-  const selectedTab = location.pathname === RANKING_PATH ? 1 : 0;
   const notificationAutoPrompt = useNotificationAutoPrompt(playedToday);
-
-  useEffect(() => {
-    if (nickname) return;
-    let cancelled = false;
-    serverTossApi
-      .getMe()
-      .then((info) => {
-        if (cancelled) return;
-        setCachedNickname(info.nickname);
-        setNickname(info.nickname);
-      })
-      .catch((err) => {
-        console.error("[닉네임 조회 실패, 무시]", err);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [nickname]);
 
   const startGame = useCallback(
     async (source: PlayStartSource = "cta") => {
@@ -147,8 +118,6 @@ const DashboardView = () => {
       if (fromSubmitted) {
         // state를 즉시 제거하여 재마운트 시 토스트 재표시 방지
         window.history.replaceState({}, "");
-
-        refetchDrawings();
 
         const promotionGranted = (
           locationState as { promotionGranted?: boolean }
@@ -277,6 +246,39 @@ const DashboardView = () => {
     },
   }[adStatus];
 
+  let cta;
+  if (isChanceLoading) {
+    cta = (
+      <Button color="primary" display="block" loading disabled>
+        도전 기회 확인 중
+      </Button>
+    );
+  } else if (hasChance) {
+    cta = (
+      <Button
+        color="primary"
+        display="block"
+        loading={isStartingGame}
+        disabled={isStartingGame}
+        onClick={() => startGame("cta")}
+      >
+        {`광고 없이 ${chanceCount}번 도전`}
+      </Button>
+    );
+  } else {
+    cta = (
+      <Button
+        color="primary"
+        display="block"
+        loading={isStartingGame || adButton.busy}
+        disabled={isStartingGame || adButton.busy}
+        onClick={adButton.onClick}
+      >
+        {adButton.label}
+      </Button>
+    );
+  }
+
   if (initialLoading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -310,51 +312,14 @@ const DashboardView = () => {
         onClose={() => setToastOpen(false)}
       />
 
-      <div className="shrink-0 bg-(--color-page)">
-        <Tab onChange={(index) => navigate(index === 1 ? RANKING_PATH : "/")}>
-          <Tab.Item selected={selectedTab === 0}>오늘 그린 그림</Tab.Item>
-          <Tab.Item selected={selectedTab === 1}>오늘의 다빈치</Tab.Item>
-        </Tab>
-        <InfoTicker />
-      </div>
-
-      <main className="min-h-0 flex-1 overflow-y-auto">
-        <Outlet
-          context={{
-            nickname,
-            myDrawings,
-            isMyDrawingsLoading: isLoading,
-          }}
-        />
+      <main className="min-h-0 flex-1 overflow-y-auto px-(--page-px) pt-3 pb-[calc(env(safe-area-inset-bottom)+56px)]">
+        <div className="flex flex-col gap-3">
+          <StreakStatsCard />
+          <ChallengeCard cta={cta} />
+          <TodayMissionCard />
+          <TodayDavinciCard />
+        </div>
       </main>
-
-      <section className="shrink-0 bg-(--color-page) px-(--page-px) pt-3 pb-[env(safe-area-inset-bottom)]">
-        {isChanceLoading ? (
-          <Button color="primary" display="block" loading disabled>
-            도전 기회 확인 중
-          </Button>
-        ) : hasChance ? (
-          <Button
-            color="primary"
-            display="block"
-            loading={isStartingGame}
-            disabled={isStartingGame}
-            onClick={() => startGame("cta")}
-          >
-            {`광고 없이 ${chanceCount}번 도전`}
-          </Button>
-        ) : (
-          <Button
-            color="primary"
-            display="block"
-            loading={isStartingGame || adButton.busy}
-            disabled={isStartingGame || adButton.busy}
-            onClick={adButton.onClick}
-          >
-            {adButton.label}
-          </Button>
-        )}
-      </section>
 
       <NotificationCenterSheet
         open={notificationAutoPrompt.open}

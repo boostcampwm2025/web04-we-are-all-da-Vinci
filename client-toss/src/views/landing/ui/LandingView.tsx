@@ -1,5 +1,6 @@
 import { landing } from "@/shared/assets/images";
-import { Button } from "@toss/tds-mobile";
+import { useExitGuard } from "@/shared/lib";
+import { Button, ConfirmDialog } from "@toss/tds-mobile";
 import { useEffect, useRef } from "react";
 
 const CONFETTI_COLORS = ["#3b82f6", "#60a5fa", "#93c5fd", "#bfdbfe", "#e0e7ff"];
@@ -11,6 +12,7 @@ interface LandingViewProps {
 
 const LandingView = ({ onStart }: LandingViewProps) => {
   const confettiRef = useRef<HTMLDivElement>(null);
+  const { showDialog, setShowDialog, exit } = useExitGuard();
 
   useEffect(() => {
     const container = confettiRef.current;
@@ -51,21 +53,21 @@ const LandingView = ({ onStart }: LandingViewProps) => {
           className="text-sm font-semibold"
           style={{ color: "rgba(0,12,30,0.55)" }}
         >
-          오늘의 그림
+          그림 그리고 파악하는 나의 기억력
         </p>
         <h1
           className="mt-2 mb-3 text-3xl font-extrabold leading-tight"
           style={{ color: "rgba(0,12,30,0.88)" }}
         >
-          상위 1%만
+          당신의 기억력
           <br />
-          95점 이상 달성!
+          상위 1%인가요?
         </h1>
         <p
           className="text-lg font-medium"
           style={{ color: "rgba(0,12,30,0.7)" }}
         >
-          오늘의 그림은 뭘까요?
+          매일 기억력 테스트하고 토스 포인트 받아요!
         </p>
       </section>
       <section className="relative z-10 mt-4 flex flex-1 items-center justify-center">
@@ -105,7 +107,7 @@ const LandingView = ({ onStart }: LandingViewProps) => {
             className="text-sm font-medium"
             style={{ color: "rgba(0,12,30,0.7)" }}
           >
-            나는 몇 점을 받을 수 있을까요?
+            내 기억력 점수는 몇 점일까요?
           </p>
           <svg
             className="landing-bounce-arrow text-blue-600"
@@ -134,10 +136,27 @@ const LandingView = ({ onStart }: LandingViewProps) => {
             }}
             onClick={onStart}
           >
-            도전하기
+            도전하고 포인트 받기
           </Button>
         </div>
       </footer>
+
+      <ConfirmDialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        title="앱을 종료할까요?"
+        description="언제든 다시 들어와서 시작할 수 있어요"
+        confirmButton={
+          <ConfirmDialog.ConfirmButton onClick={exit}>
+            종료
+          </ConfirmDialog.ConfirmButton>
+        }
+        cancelButton={
+          <ConfirmDialog.CancelButton onClick={() => setShowDialog(false)}>
+            계속 보기
+          </ConfirmDialog.CancelButton>
+        }
+      />
     </div>
   );
 };
