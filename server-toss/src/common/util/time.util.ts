@@ -15,6 +15,12 @@ export const getSeoulDayRange = (reference = new Date()) => {
   return { start, end };
 };
 
+// 알림 referenceId·이벤트 payload의 일관 표기를 위한 KST 날짜 문자열(YYYY-MM-DD).
+export const formatKstDate = (date: Date = new Date()): string => {
+  const seoul = new Date(date.getTime() + SEOUL_TIMEZONE_OFFSET_MS);
+  return seoul.toISOString().slice(0, 10);
+};
+
 export const getSeoulDateKey = (date: Date | string) => {
   if (typeof date === "string") {
     return date.slice(0, 10);

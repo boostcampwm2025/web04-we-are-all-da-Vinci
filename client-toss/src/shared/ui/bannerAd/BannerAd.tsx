@@ -1,7 +1,8 @@
 import { TossAds } from "@apps-in-toss/web-framework";
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
-import { FUNNEL_EVENTS, initTossAdsOnce, trackImpression } from "@/shared/lib";
+import { useViewableImpression } from "@/shared/hooks";
+import { FUNNEL_EVENTS, initTossAdsOnce } from "@/shared/lib";
 
 type BannerType = "list" | "feed";
 
@@ -42,25 +43,10 @@ const BannerAd = ({ adGroupId, type = "list", className }: BannerAdProps) => {
   const [isFailed, setIsFailed] = useState(false);
   const height = BANNER_HEIGHTS[type];
 
-  useEffect(() => {
-    const el = bannerRef.current;
-    if (!el) return;
-
-    const adId = adGroupId;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          trackImpression(FUNNEL_EVENTS.bannerAdImpression, {
-            ad_group_id: adId,
-          });
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.1 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [adGroupId]);
+  // IAB Viewable 기준(면적 50% · 1초 연속)을 충족한 노출만 집계한다.
+  useViewableImpression(bannerRef, FUNNEL_EVENTS.bannerAdImpression, {
+    ad_group_id: adGroupId,
+  });
 
   useEffect(() => {
     let attached: ReturnType<typeof TossAds.attachBanner> | undefined;

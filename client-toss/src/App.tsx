@@ -1,6 +1,6 @@
 import { router } from "@/app/config/router";
+import { NotificationBellButton } from "@/feature/notification";
 import { PlayChanceProvider } from "@/feature/playChance";
-import { ShareSheet } from "@/feature/share";
 import { initFirebaseAnalyticsOnce } from "@/shared/api";
 import { captureAttributionOnce, initTossAdsOnce } from "@/shared/lib";
 import { IntroView } from "@/views/intro";
@@ -46,7 +46,7 @@ const App = () => {
       ) : hasStarted ? (
         <PlayChanceProvider>
           <RouterProvider router={router} />
-          <ShareSheet />
+          <NotificationBellButton />
         </PlayChanceProvider>
       ) : (
         <IntroView onStart={handleStart} />

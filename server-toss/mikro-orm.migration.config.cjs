@@ -10,6 +10,12 @@ const { Ranking } = require("./dist/modules/ranking/ranking.entity");
 const { PlayChance } = require("./dist/modules/chance/play-chance.entity");
 const { ShareLog } = require("./dist/modules/chance/share-log.entity");
 const {
+  SentNotification,
+} = require("./dist/modules/notification/sent-notification.entity");
+const {
+  NotificationAgreement,
+} = require("./dist/modules/notification/notification-agreement.entity");
+const {
   PointGrantRequest,
 } = require("./dist/modules/point/entity/point-grant-request.entity");
 
@@ -33,6 +39,8 @@ module.exports = defineConfig({
     Ranking,
     PlayChance,
     ShareLog,
+    SentNotification,
+    NotificationAgreement,
     PointGrantRequest,
   ],
   debug: process.env.NODE_ENV !== "production",

@@ -15,6 +15,36 @@ const mockStartPlay = vi.fn().mockResolvedValue({
 });
 const mockChargeByAd = vi.fn().mockResolvedValue(1);
 const mockRefresh = vi.fn().mockResolvedValue(1);
+const apiMockFns = vi.hoisted(() => ({
+  getDailyPromptNotificationAgreement: vi.fn().mockResolvedValue({
+    status: "unknown",
+    templateCode: "agreement-template",
+    agreedAt: null,
+    rejectedAt: null,
+    lastEventAt: null,
+  }),
+  saveDailyPromptNotificationAgreement: vi.fn().mockResolvedValue({
+    status: "agreed",
+    templateCode: "agreement-template",
+    agreedAt: "2026-05-26T03:00:00.000Z",
+    rejectedAt: null,
+    lastEventAt: "2026-05-26T03:00:00.000Z",
+  }),
+  getOvertakenNotificationAgreement: vi.fn().mockResolvedValue({
+    status: "unknown",
+    templateCode: "overtaken-template",
+    agreedAt: null,
+    rejectedAt: null,
+    lastEventAt: null,
+  }),
+  saveOvertakenNotificationAgreement: vi.fn().mockResolvedValue({
+    status: "agreed",
+    templateCode: "overtaken-template",
+    agreedAt: "2026-05-26T03:00:00.000Z",
+    rejectedAt: null,
+    lastEventAt: "2026-05-26T03:00:00.000Z",
+  }),
+}));
 vi.mock("react-router-dom", async () => {
   const actual =
     await vi.importActual<typeof import("react-router-dom")>(
@@ -31,6 +61,14 @@ vi.mock("@/shared/api", () => ({
     getMe: vi
       .fn()
       .mockResolvedValue({ userKey: 1, name: "테스터", nickname: "테스터닉" }),
+    getDailyPromptNotificationAgreement:
+      apiMockFns.getDailyPromptNotificationAgreement,
+    saveDailyPromptNotificationAgreement:
+      apiMockFns.saveDailyPromptNotificationAgreement,
+    getOvertakenNotificationAgreement:
+      apiMockFns.getOvertakenNotificationAgreement,
+    saveOvertakenNotificationAgreement:
+      apiMockFns.saveOvertakenNotificationAgreement,
   },
   getCachedNickname: vi.fn(() => null),
   setCachedNickname: vi.fn(),
@@ -94,9 +132,9 @@ vi.mock("./MyDrawingsPanel", () => ({
   default: () => <div data-testid="my-ranking-section" />,
 }));
 
-const renderDashboard = (state?: unknown) =>
+const renderDashboard = (state?: unknown, pathname = "/") =>
   render(
-    <MemoryRouter initialEntries={[{ pathname: "/", state }]}>
+    <MemoryRouter initialEntries={[{ pathname, state }]}>
       <Routes>
         <Route element={<DashboardView />}>
           <Route index element={<MyDrawingsPanel />} />
@@ -108,8 +146,37 @@ const renderDashboard = (state?: unknown) =>
 describe("DashboardView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllEnvs();
     localStorage.clear();
     vi.mocked(getDeviceId).mockResolvedValue({ deviceId: "test-device" });
+    apiMockFns.getDailyPromptNotificationAgreement.mockResolvedValue({
+      status: "unknown",
+      templateCode: "agreement-template",
+      agreedAt: null,
+      rejectedAt: null,
+      lastEventAt: null,
+    });
+    apiMockFns.saveDailyPromptNotificationAgreement.mockResolvedValue({
+      status: "agreed",
+      templateCode: "agreement-template",
+      agreedAt: "2026-05-26T03:00:00.000Z",
+      rejectedAt: null,
+      lastEventAt: "2026-05-26T03:00:00.000Z",
+    });
+    apiMockFns.getOvertakenNotificationAgreement.mockResolvedValue({
+      status: "unknown",
+      templateCode: "overtaken-template",
+      agreedAt: null,
+      rejectedAt: null,
+      lastEventAt: null,
+    });
+    apiMockFns.saveOvertakenNotificationAgreement.mockResolvedValue({
+      status: "agreed",
+      templateCode: "overtaken-template",
+      agreedAt: "2026-05-26T03:00:00.000Z",
+      rejectedAt: null,
+      lastEventAt: "2026-05-26T03:00:00.000Z",
+    });
     mockUseFullScreenAd.mockImplementation(() => fullScreenAd("ready"));
     mockUsePlayChanceContext.mockImplementation(() => playChance(true));
   });
@@ -180,6 +247,9 @@ describe("DashboardView", () => {
 
     expect(mockStartPlay).not.toHaveBeenCalled();
   });
+
+  // 알림 동의 흐름은 카드형 CTA에서 헤더 종 아이콘 + Bottom Sheet 패턴으로 이전됨.
+  // 동의 SDK 호출·저장 흐름은 NotificationCenterSheet 단위 테스트 영역.
 
   it("getDeviceId 실패 시 local 폴백으로 동작한다", async () => {
     vi.mocked(getDeviceId).mockRejectedValue(new Error("미지원"));

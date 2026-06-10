@@ -6,6 +6,8 @@ import { PlayChance } from "./modules/chance/play-chance.entity";
 import { ShareLog } from "./modules/chance/share-log.entity";
 import { DailyUserRanking } from "./modules/dailyRanking/daily-user-ranking.entity";
 import { Drawing } from "./modules/drawing/drawing.entity";
+import { NotificationAgreement } from "./modules/notification/notification-agreement.entity";
+import { SentNotification } from "./modules/notification/sent-notification.entity";
 import { PointGrantRequest } from "./modules/point/entity/point-grant-request.entity";
 import { PointLog } from "./modules/point/entity/point-log.entity";
 import { DailyPrompt } from "./modules/prompt/daily-prompt.entity";
@@ -31,6 +33,8 @@ export default defineConfig({
     DailyUserRanking,
     PlayChance,
     ShareLog,
+    SentNotification,
+    NotificationAgreement,
   ],
   debug: process.env.NODE_ENV !== "production",
   forceUtcTimezone: true, // UTC로 시간 설정 고정

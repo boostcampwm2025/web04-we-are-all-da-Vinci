@@ -5,6 +5,10 @@ jest.mock("@mikro-orm/core", () => ({
   EntityManager: class {},
   EntityRepository: class {},
   EntityRepositoryType: Symbol("EntityRepositoryType"),
+  // @Cron/@OnEvent의 RequestContext.create 래핑을 단위 테스트에서 콜백 즉시 실행으로 대체.
+  RequestContext: {
+    create: (_em: unknown, next: () => unknown) => next(),
+  },
   QueryOrder: { ASC: "asc", DESC: "desc" },
   LockMode: {
     NONE: 0,

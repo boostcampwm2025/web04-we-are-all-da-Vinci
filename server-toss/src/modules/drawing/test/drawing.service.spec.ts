@@ -94,6 +94,7 @@ const buildService = ({
     promptService as never,
     drawingRepository as never,
     saveDrawingService as never,
+    { emit: jest.fn() } as never,
   );
 
 describe("DrawingService", () => {
@@ -132,6 +133,7 @@ describe("DrawingService", () => {
       const saveDrawingService = buildSaveDrawingService();
       saveDrawingService.saveDrawingWithRanking.mockResolvedValue({
         drawing: { id: BigInt(42) },
+        rankingChange: { changed: false },
         promotionGranted: true,
       });
 
@@ -171,6 +173,7 @@ describe("DrawingService", () => {
       const saveDrawingService = buildSaveDrawingService();
       saveDrawingService.saveDrawingWithRanking.mockResolvedValue({
         drawing: { id: BigInt(1) },
+        rankingChange: { changed: false },
         promotionGranted: true,
       });
       drawingRepository.saveDrawing.mockResolvedValue({ id: BigInt(1) });

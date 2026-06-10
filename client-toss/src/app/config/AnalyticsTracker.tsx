@@ -1,3 +1,4 @@
+import { ShareFloatingButton } from "@/feature/share";
 import { getAnalyticsInstance } from "@/shared/api";
 import { FUNNEL_EVENTS } from "@/shared/lib";
 import { logEvent } from "firebase/analytics";
@@ -20,7 +21,12 @@ const AnalyticsTracker = () => {
     }
   }, [location.pathname]);
 
-  return <Outlet />;
+  return (
+    <>
+      <Outlet />
+      <ShareFloatingButton />
+    </>
+  );
 };
 
 export default AnalyticsTracker;
