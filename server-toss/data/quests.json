@@ -1,6 +1,6 @@
 [
   {
-    "title": "감점 없이 그림 1번 제출하기",
+    "title": "오늘 감점 없는 그림 1번 달성",
     "period": "daily",
     "isFixed": true,
     "objectiveType": "penalty",
@@ -10,7 +10,7 @@
     "rewardAmount": 5
   },
   {
-    "title": "70점 이상 도전하기",
+    "title": "오늘 70점 이상 1번 달성",
     "period": "daily",
     "isFixed": false,
     "objectiveType": "score",
@@ -20,7 +20,7 @@
     "rewardAmount": 5
   },
   {
-    "title": "80점 이상 도전하기",
+    "title": "오늘 80점 이상 1번 달성",
     "period": "daily",
     "isFixed": false,
     "objectiveType": "score",
@@ -30,7 +30,7 @@
     "rewardAmount": 5
   },
   {
-    "title": "일일 미션 7개 완료하기",
+    "title": "일일 퀘스트 7개 완료",
     "period": "weekly",
     "isFixed": true,
     "objectiveType": "quest_completed",
@@ -40,24 +40,26 @@
     "rewardAmount": 5
   },
   {
-    "title": "서로 다른 3일에 그림 제출하기",
+    "title": "이번 주 3일 동안 그림 제출",
     "period": "weekly",
     "isFixed": false,
     "objectiveType": "daily_submit",
     "requiredCount": 3,
     "threshold": null,
     "rewardType": "point",
-    "rewardAmount": 5
+    "rewardAmount": 5,
+    "progressPeriod": "day"
   },
   {
-    "title": "주간 70점 이상 3번 달성하기",
+    "title": "이번 주 70점 이상 3번 달성",
     "period": "weekly",
     "isFixed": false,
     "objectiveType": "daily_score",
     "requiredCount": 3,
     "threshold": 70,
     "rewardType": "point",
-    "rewardAmount": 5
+    "rewardAmount": 5,
+    "progressPeriod": "day"
   },
   {
     "title": "첫 그림 그리기",
@@ -71,43 +73,10 @@
     "category": "drawing"
   },
   {
-    "title": "70점 이상 달성하기",
-    "period": "tutorial",
-    "isFixed": true,
-    "objectiveType": "score",
-    "requiredCount": 1,
-    "threshold": 70,
-    "rewardType": "point",
-    "rewardAmount": 0,
-    "category": "drawing"
-  },
-  {
-    "title": "한번 더 도전하기",
-    "period": "tutorial",
-    "isFixed": true,
-    "objectiveType": "retry",
-    "requiredCount": 1,
-    "threshold": null,
-    "rewardType": "point",
-    "rewardAmount": 0,
-    "category": "drawing"
-  },
-  {
-    "title": "내 순위 확인하기",
-    "period": "tutorial",
-    "isFixed": true,
-    "objectiveType": "visit_ranking",
-    "requiredCount": 1,
-    "threshold": null,
-    "rewardType": "point",
-    "rewardAmount": 0,
-    "category": "explore"
-  },
-  {
     "title": "오늘의 다빈치 구경하기",
     "period": "tutorial",
     "isFixed": true,
-    "objectiveType": "visit_podium",
+    "objectiveType": "visit_ranking",
     "requiredCount": 1,
     "threshold": null,
     "rewardType": "point",
@@ -152,7 +121,7 @@
     "period": "tutorial",
     "isFixed": true,
     "objectiveType": "tutorial_completed",
-    "requiredCount": 3,
+    "requiredCount": 1,
     "threshold": null,
     "rewardType": "point",
     "rewardAmount": 5,
@@ -163,7 +132,7 @@
     "period": "tutorial",
     "isFixed": true,
     "objectiveType": "tutorial_completed",
-    "requiredCount": 4,
+    "requiredCount": 3,
     "threshold": null,
     "rewardType": "point",
     "rewardAmount": 5,
