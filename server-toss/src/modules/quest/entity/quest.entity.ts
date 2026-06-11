@@ -23,17 +23,27 @@ export enum ObjectiveType {
   DAILY_SCORE = "daily_score",
   QUEST_COMPLETED = "quest_completed",
   VISIT_RANKING = "visit_ranking",
-  VISIT_PODIUM = "visit_podium",
   VISIT_QUEST_TAB = "visit_quest_tab",
   VISIT_DRAWING_DETAIL = "visit_drawing_detail",
   SHARE = "share",
-  RETRY = "retry",
   TUTORIAL_COMPLETED = "tutorial_completed",
 }
 
 export enum RewardType {
   POINT = "point",
   CHANCE = "chance",
+}
+
+/**
+ * 진행 케이던스(rate limit) — 활성 퀘스트가 얼마나 자주 진행될 수 있는지.
+ * 할당/리셋 주기(QuestPeriod)와는 별개의 축이다.
+ * none = 매 이벤트마다 진행, day/week/month = 해당 주기당 1회만 진행.
+ */
+export enum ProgressPeriod {
+  NONE = "none",
+  DAY = "day",
+  WEEK = "week",
+  MONTH = "month",
 }
 
 @Entity({ tableName: "quests", repository: () => QuestRepository })
@@ -69,4 +79,11 @@ export class Quest extends BaseEntity {
 
   @Property({ name: "category", type: "varchar(20)", nullable: true })
   category?: Opt<string>;
+
+  @Enum({
+    items: () => ProgressPeriod,
+    name: "progress_period",
+    default: ProgressPeriod.NONE,
+  })
+  progressPeriod: ProgressPeriod = ProgressPeriod.NONE;
 }

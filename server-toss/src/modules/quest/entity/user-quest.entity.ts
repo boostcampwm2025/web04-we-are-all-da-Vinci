@@ -31,4 +31,8 @@ export class UserQuest extends BaseEntity {
 
   @Property({ name: "completed_at", type: "datetime", nullable: true })
   completedAt?: Opt<Date | null>;
+
+  /** 마지막으로 진행(카운트 증가)된 시각. 진행 케이던스 게이트(ProgressLimit) 판단용. */
+  @Property({ name: "last_progressed_at", type: "datetime", nullable: true })
+  lastProgressedAt?: Opt<Date | null>;
 }

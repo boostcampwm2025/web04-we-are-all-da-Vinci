@@ -1,14 +1,10 @@
 import { Transactional } from "@mikro-orm/decorators/legacy";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable, Logger } from "@nestjs/common";
-import { getSeoulDayRange, getSeoulWeekStart } from "src/common/util/time.util";
 import { Quest, QuestPeriod } from "../entity/quest.entity";
 import { UserQuest } from "../entity/user-quest.entity";
-import {
-  DAILY_RANDOM_COUNT,
-  TUTORIAL_EPOCH,
-  WEEKLY_RANDOM_COUNT,
-} from "../quest.constants";
+import { QuestWindow } from "../quest-window";
+import { DAILY_RANDOM_COUNT, WEEKLY_RANDOM_COUNT } from "../quest.constants";
 import { QuestRepository } from "../repository/quest.repository";
 import { UserQuestRepository } from "../repository/user-quest.repository";
 
@@ -22,19 +18,12 @@ export class AssignQuestService {
     private readonly userQuestRepository: UserQuestRepository,
   ) {}
 
-  async ensureAllQuestsAssigned(userKey: number) {
-    const { start: todayStart } = getSeoulDayRange();
-    const weekStart = getSeoulWeekStart();
-
-    await this.ensureQuestsAssigned(userKey, todayStart, weekStart);
-    await this.ensureTutorialAssigned(userKey);
-  }
-
-  private async ensureQuestsAssigned(
+  async ensureQuestsAssigned(
     userKey: number,
-    todayStart: Date,
-    weekStart: Date,
+    window: QuestWindow,
   ): Promise<void> {
+    const { todayStart, weekStart } = window;
+
     const existing = await this.userQuestRepository.findCurrentQuests(
       userKey,
       todayStart,
@@ -102,36 +91,6 @@ export class AssignQuestService {
 
     return selected.map((quest) =>
       this.userQuestRepository.createForUser(userKey, quest, periodStart),
-    );
-  }
-
-  private async ensureTutorialAssigned(userKey: number): Promise<void> {
-    const existing = await this.userQuestRepository.findTutorialQuests(userKey);
-    if (existing.length > 0) return;
-
-    try {
-      await this.assignTutorialQuests(userKey);
-    } catch (err) {
-      if (!this.isDuplicateKeyError(err)) throw err;
-    }
-  }
-
-  private async assignTutorialQuests(userKey: number): Promise<void> {
-    const quests = await this.questRepository.findTutorial();
-
-    for (const quest of quests) {
-      this.userQuestRepository.createForUser(userKey, quest, TUTORIAL_EPOCH);
-    }
-
-    await this.userQuestRepository.flush();
-
-    this.logger.log(
-      {
-        event: "quest.tutorial.assign.succeeded",
-        userKey,
-        count: quests.length,
-      },
-      "튜토리얼 퀘스트 배정 완료",
     );
   }
 

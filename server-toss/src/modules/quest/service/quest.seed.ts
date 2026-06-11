@@ -5,6 +5,7 @@ import * as path from "node:path";
 import { z } from "zod";
 import {
   ObjectiveType,
+  ProgressPeriod,
   Quest,
   QuestPeriod,
   RewardType,
@@ -21,6 +22,7 @@ const QuestDefinitionSchema = z.object({
   rewardType: z.enum(RewardType),
   rewardAmount: z.number().int().min(0),
   category: z.string().max(20).nullable().default(null),
+  progressPeriod: z.enum(ProgressPeriod).default(ProgressPeriod.NONE),
 });
 
 const QuestsFileSchema = z
@@ -132,6 +134,7 @@ export class QuestSeedService {
           quest.rewardType = def.rewardType;
           quest.rewardAmount = def.rewardAmount;
           quest.category = def.category ?? undefined;
+          quest.progressPeriod = def.progressPeriod;
           txEm.persist(quest);
           added++;
           this.logger.log(
@@ -179,6 +182,10 @@ export class QuestSeedService {
     }
     if (quest.category !== (def.category ?? undefined)) {
       quest.category = def.category ?? undefined;
+      changed = true;
+    }
+    if (quest.progressPeriod !== def.progressPeriod) {
+      quest.progressPeriod = def.progressPeriod;
       changed = true;
     }
     return changed;

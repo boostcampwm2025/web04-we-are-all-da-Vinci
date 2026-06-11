@@ -61,7 +61,9 @@ describe("SaveDrawingService", () => {
     };
 
     questService = {
-      onDrawingSubmitted: jest.fn(async () => Promise.resolve([])),
+      onDrawingSubmitted: jest.fn(async () =>
+        Promise.resolve({ completed: [], metaCompleted: [] }),
+      ),
     };
 
     module = await Test.createTestingModule({

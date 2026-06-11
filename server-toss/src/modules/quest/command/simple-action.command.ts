@@ -1,13 +1,12 @@
-import type { UserQuest } from "../entity/user-quest.entity";
 import type { QuestCommand } from "../quest.types";
 
 /**
- * 조건 없이 카운트를 1 증가시키는 단순 액션 Command.
- * 페이지 방문(VISIT_*), 공유(SHARE), 재시도(RETRY) 등에 공용.
+ * 조건 없이 항상 충족으로 판단하는 단순 액션 Command.
+ * 그림 제출(SUBMIT/DAILY_SUBMIT), 페이지 방문(VISIT_*), 공유(SHARE) 등에 공용.
+ * "하루 1회"류 제약은 커맨드가 아니라 Quest.progressPeriod로 표현된다.
  */
 export class SimpleActionCommand implements QuestCommand {
-  execute(userQuest: UserQuest): boolean {
-    userQuest.currentCount += 1;
+  matches(): boolean {
     return true;
   }
 }

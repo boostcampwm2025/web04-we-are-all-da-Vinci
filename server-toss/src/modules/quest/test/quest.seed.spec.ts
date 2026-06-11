@@ -1,5 +1,6 @@
 import {
   ObjectiveType,
+  ProgressPeriod,
   Quest,
   QuestPeriod,
   RewardType,
@@ -18,6 +19,7 @@ const buildQuest = (overrides: Partial<Quest> = {}): Quest =>
     threshold: undefined,
     rewardType: RewardType.POINT,
     rewardAmount: 10,
+    progressPeriod: ProgressPeriod.NONE,
     ...overrides,
   }) as Quest;
 
@@ -32,6 +34,7 @@ const buildDef = (
   threshold: null,
   rewardType: RewardType.POINT,
   rewardAmount: 10,
+  progressPeriod: ProgressPeriod.NONE,
   ...overrides,
 });
 
