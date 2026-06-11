@@ -1,6 +1,6 @@
 import { landing } from "@/shared/assets/images";
-import { useExitGuard } from "@/shared/lib";
-import { Button, ConfirmDialog } from "@toss/tds-mobile";
+import { ExitDialog } from "@/shared/ui/exitDialog";
+import { Button } from "@toss/tds-mobile";
 import { useEffect, useRef } from "react";
 
 const CONFETTI_COLORS = ["#3b82f6", "#60a5fa", "#93c5fd", "#bfdbfe", "#e0e7ff"];
@@ -12,7 +12,6 @@ interface LandingViewProps {
 
 const LandingView = ({ onStart }: LandingViewProps) => {
   const confettiRef = useRef<HTMLDivElement>(null);
-  const { showDialog, setShowDialog, exit } = useExitGuard();
 
   useEffect(() => {
     const container = confettiRef.current;
@@ -141,21 +140,11 @@ const LandingView = ({ onStart }: LandingViewProps) => {
         </div>
       </footer>
 
-      <ConfirmDialog
-        open={showDialog}
-        onClose={() => setShowDialog(false)}
+      <ExitDialog
         title="앱을 종료할까요?"
         description="언제든 다시 들어와서 시작할 수 있어요"
-        confirmButton={
-          <ConfirmDialog.ConfirmButton onClick={exit}>
-            종료
-          </ConfirmDialog.ConfirmButton>
-        }
-        cancelButton={
-          <ConfirmDialog.CancelButton onClick={() => setShowDialog(false)}>
-            계속 보기
-          </ConfirmDialog.CancelButton>
-        }
+        confirmLabel="종료"
+        cancelLabel="계속 보기"
       />
     </div>
   );

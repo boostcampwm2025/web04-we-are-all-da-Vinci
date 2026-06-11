@@ -1,5 +1,7 @@
 import { usePodium } from "@/entities/podium";
-import type { ReactNode } from "react";
+import { ShareSheet } from "@/feature/share";
+import { Button } from "@toss/tds-mobile";
+import { type ReactNode, useState } from "react";
 
 interface StatPillProps {
   icon: string;
@@ -23,6 +25,7 @@ interface ChallengeCardProps {
 }
 
 const ChallengeCard = ({ cta }: ChallengeCardProps) => {
+  const [shareOpen, setShareOpen] = useState(false);
   const { podium, participantCount } = usePodium();
   const topScore = podium && podium.length > 0 ? `${podium[0].score}점` : "-";
   const participantText =
@@ -57,6 +60,17 @@ const ChallengeCard = ({ cta }: ChallengeCardProps) => {
       </div>
 
       <div className="mt-5">{cta}</div>
+      <div className="mt-2">
+        <Button
+          display="block"
+          variant="weak"
+          onClick={() => setShareOpen(true)}
+        >
+          친구 초대하고 기회 받기
+        </Button>
+      </div>
+
+      <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} />
     </section>
   );
 };

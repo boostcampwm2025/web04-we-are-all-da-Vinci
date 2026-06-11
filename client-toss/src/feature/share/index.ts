@@ -1,1 +1,1 @@
-export { default as ShareNavItem } from "./ui/ShareNavItem";
+export { default as ShareSheet } from "./ui/ShareSheet";

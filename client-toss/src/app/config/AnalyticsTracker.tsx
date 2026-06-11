@@ -1,4 +1,4 @@
-import { ShareNavItem } from "@/feature/share";
+import { PlayNavButton } from "@/feature/playChance";
 import { getAnalyticsInstance } from "@/shared/api";
 import { FUNNEL_EVENTS } from "@/shared/lib";
 import { BottomNav } from "@/shared/ui/bottomNav";
@@ -25,9 +25,7 @@ const AnalyticsTracker = () => {
   return (
     <>
       <Outlet />
-      <BottomNav>
-        <ShareNavItem />
-      </BottomNav>
+      <BottomNav centerSlot={<PlayNavButton />} />
     </>
   );
 };

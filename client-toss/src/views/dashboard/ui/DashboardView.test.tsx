@@ -71,9 +71,13 @@ const playChance = (hasChance: boolean) => ({
   startPlay: mockStartPlay,
 });
 const mockUsePlayChanceContext = vi.fn(() => playChance(true));
-vi.mock("@/feature/playChance", () => ({
-  useFullScreenAd: () => mockUseFullScreenAd(),
+// 통합 useStartGame이 컨텍스트/광고를 상대경로로 구독하므로 하위 모듈을 목한다.
+// (배럴을 목하면 useStartGame 내부 구독에 안 닿음)
+vi.mock("@/feature/playChance/model/playChanceContext", () => ({
   usePlayChanceContext: () => mockUsePlayChanceContext(),
+}));
+vi.mock("@/feature/playChance/hooks/useFullScreenAd", () => ({
+  useFullScreenAd: () => mockUseFullScreenAd(),
 }));
 
 const renderDashboard = (state?: unknown, pathname = "/") =>

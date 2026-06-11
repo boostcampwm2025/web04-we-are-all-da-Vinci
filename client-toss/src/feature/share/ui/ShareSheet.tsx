@@ -1,7 +1,6 @@
 import { usePlayChanceContext } from "@/feature/playChance";
-import { FUNNEL_EVENTS, trackClick } from "@/shared/lib";
+import { FUNNEL_EVENTS, trackClick, useToast } from "@/shared/lib";
 import { BottomSheet, ListRow, Toast } from "@toss/tds-mobile";
-import { useState } from "react";
 import { shareMyScore } from "../lib/handleShare";
 import { useInviteFriend } from "../model/useInviteFriend";
 
@@ -49,24 +48,18 @@ interface ShareSheetProps {
 }
 
 const ShareSheet = ({ open, onClose }: ShareSheetProps) => {
-  const [toast, setToast] = useState<{ open: boolean; message: string }>({
-    open: false,
-    message: "",
-  });
+  const toast = useToast();
   const { refresh } = usePlayChanceContext();
-
-  // 자동 닫힘은 TDS Toast의 duration이 처리한다
-  const showToast = (message: string) => setToast({ open: true, message });
 
   const { start: startInvite } = useInviteFriend({
     onCharged: () => {
       // refresh가 throw해도 state.error로 노출됨 — unhandled rejection만 방지
       refresh().catch(() => {});
-      showToast("그리기 기회 1회를 받았어요");
+      toast.show("그리기 기회 1회를 받았어요");
     },
     onError: (error) => {
-      showToast(
-        error.message || "공유에 실패했어요. 잠시 후 다시 시도해주세요.",
+      toast.show(
+        error.message || "초대에 실패했어요. 잠시 후 다시 시도해주세요.",
       );
     },
   });
@@ -76,7 +69,7 @@ const ShareSheet = ({ open, onClose }: ShareSheetProps) => {
     onClose();
     shareMyScore().catch((error) => {
       console.error(error);
-      showToast("공유에 실패했어요. 잠시 후 다시 시도해주세요.");
+      toast.show("공유에 실패했어요. 잠시 후 다시 시도해주세요.");
     });
   };
 
@@ -107,7 +100,7 @@ const ShareSheet = ({ open, onClose }: ShareSheetProps) => {
             onSelect={handleInviteShare}
           />
           <p className="px-(--page-px) pt-2 text-xs text-(--color-grey)">
-            친구 초대 보상은 하루 5번까지 받을 수 있어요.
+            친구 초대 보상은 하루 5회까지 받을 수 있어요.
           </p>
         </div>
       </BottomSheet>
@@ -115,9 +108,9 @@ const ShareSheet = ({ open, onClose }: ShareSheetProps) => {
       <Toast
         position="top"
         open={toast.open}
-        text={toast.message}
+        text={toast.text}
         duration={TOAST_DURATION_MS}
-        onClose={() => setToast({ open: false, message: "" })}
+        onClose={toast.close}
       />
     </>
   );
