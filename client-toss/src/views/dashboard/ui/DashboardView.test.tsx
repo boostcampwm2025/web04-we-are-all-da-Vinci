@@ -3,10 +3,10 @@ import { formatLocalDate } from "@/shared/lib";
 import { getDeviceId } from "@apps-in-toss/web-framework";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import DashboardView from "./DashboardView";
-import MyDrawingsPanel from "./MyDrawingsPanel";
 
 const navigateMock = vi.fn();
 const mockStartPlay = vi.fn().mockResolvedValue({
@@ -15,6 +15,7 @@ const mockStartPlay = vi.fn().mockResolvedValue({
 });
 const mockChargeByAd = vi.fn().mockResolvedValue(1);
 const mockRefresh = vi.fn().mockResolvedValue(1);
+
 vi.mock("react-router-dom", async () => {
   const actual =
     await vi.importActual<typeof import("react-router-dom")>(
@@ -26,14 +27,26 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
-vi.mock("@/shared/api", () => ({
-  serverTossApi: {
-    getMe: vi
-      .fn()
-      .mockResolvedValue({ userKey: 1, name: "테스터", nickname: "테스터닉" }),
-  },
-  getCachedNickname: vi.fn(() => null),
-  setCachedNickname: vi.fn(),
+// 피드 카드는 DashboardView 로직 검증 범위 밖이라 목으로 대체한다.
+// 단, ChallengeCard는 DashboardView가 만든 CTA 버튼을 그려야 하므로 cta를 렌더한다.
+vi.mock("./ChallengeCard", () => ({
+  default: ({ cta }: { cta: ReactNode }) => (
+    <div data-testid="challenge-card">{cta}</div>
+  ),
+}));
+vi.mock("./StreakStatsCard", () => ({
+  default: () => <div data-testid="streak-card" />,
+}));
+vi.mock("./TodayMissionCard", () => ({
+  default: () => <div data-testid="mission-card" />,
+}));
+vi.mock("./TodayDavinciCard", () => ({
+  default: () => <div data-testid="davinci-card" />,
+}));
+
+vi.mock("@/feature/notification", () => ({
+  NotificationCenterSheet: () => <div data-testid="notification-sheet" />,
+  useNotificationAutoPrompt: () => ({ open: false, close: vi.fn() }),
 }));
 
 const mockShowAd = vi.fn().mockResolvedValue(undefined);
@@ -58,49 +71,20 @@ const playChance = (hasChance: boolean) => ({
   startPlay: mockStartPlay,
 });
 const mockUsePlayChanceContext = vi.fn(() => playChance(true));
-vi.mock("@/feature/playChance", () => ({
-  useFullScreenAd: () => mockUseFullScreenAd(),
+// 통합 useStartGame이 컨텍스트/광고를 상대경로로 구독하므로 하위 모듈을 목한다.
+// (배럴을 목하면 useStartGame 내부 구독에 안 닿음)
+vi.mock("@/feature/playChance/model/playChanceContext", () => ({
   usePlayChanceContext: () => mockUsePlayChanceContext(),
 }));
-
-vi.mock("@/entities/myScoreCard", () => ({
-  MyScoreCard: () => <div data-testid="score-card" />,
-  useMyDrawings: () => ({ myDrawings: [], isLoading: false, refetch: vi.fn() }),
+vi.mock("@/feature/playChance/hooks/useFullScreenAd", () => ({
+  useFullScreenAd: () => mockUseFullScreenAd(),
 }));
 
-vi.mock("@/entities/podium", () => ({
-  Podium: () => <div data-testid="podium" />,
-}));
-
-vi.mock("@/entities/ranking", () => ({
-  MyRankingSection: () => <div data-testid="my-ranking-section" />,
-  RankingList: () => <div data-testid="ranking-list" />,
-}));
-
-vi.mock("@/shared/ui/bannerAd", () => ({
-  BannerAd: () => <div data-testid="banner-ad" />,
-}));
-
-vi.mock("@toss/tds-colors", () => ({
-  colors: {
-    blue500: "#3182f6",
-    grey100: "#f2f4f6",
-    grey300: "#d1d6db",
-    grey600: "#6b7684",
-  },
-}));
-
-vi.mock("./MyDrawingsPanel", () => ({
-  default: () => <div data-testid="my-ranking-section" />,
-}));
-
-const renderDashboard = (state?: unknown) =>
+const renderDashboard = (state?: unknown, pathname = "/") =>
   render(
-    <MemoryRouter initialEntries={[{ pathname: "/", state }]}>
+    <MemoryRouter initialEntries={[{ pathname, state }]}>
       <Routes>
-        <Route element={<DashboardView />}>
-          <Route index element={<MyDrawingsPanel />} />
-        </Route>
+        <Route path="/" element={<DashboardView />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -108,13 +92,14 @@ const renderDashboard = (state?: unknown) =>
 describe("DashboardView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllEnvs();
     localStorage.clear();
     vi.mocked(getDeviceId).mockResolvedValue({ deviceId: "test-device" });
     mockUseFullScreenAd.mockImplementation(() => fullScreenAd("ready"));
     mockUsePlayChanceContext.mockImplementation(() => playChance(true));
   });
 
-  it("첫 방문 시 getPrompt 호출 후 /memorize로 이동한다", async () => {
+  it("첫 방문 시 게임 시작 후 /memorize로 이동한다", async () => {
     renderDashboard();
 
     // 초기에는 "준비 중..." 로딩 표시
@@ -132,7 +117,7 @@ describe("DashboardView", () => {
     });
   });
 
-  it("getPrompt 실패 시 에러 메시지와 재시도 버튼을 표시한다", async () => {
+  it("게임 시작 실패 시 에러 메시지와 재시도 버튼을 표시한다", async () => {
     mockStartPlay.mockRejectedValueOnce(new Error("네트워크 오류"));
 
     renderDashboard();
@@ -146,14 +131,11 @@ describe("DashboardView", () => {
     expect(screen.getByText("다시 시도해요")).toBeInTheDocument();
   });
 
-  it("다시 시도 클릭 시 getPrompt를 재호출한다", async () => {
+  it("다시 시도 클릭 시 게임 시작을 재호출한다", async () => {
     const user = userEvent.setup();
     mockStartPlay
       .mockRejectedValueOnce(new Error("실패"))
-      .mockResolvedValueOnce({
-        promptId: 1,
-        strokes: [],
-      });
+      .mockResolvedValueOnce({ promptId: 1, strokes: [] });
 
     renderDashboard();
 
@@ -168,14 +150,14 @@ describe("DashboardView", () => {
     });
   });
 
-  it("lastPlayed가 오늘이면 게임을 시작하지 않고 대시보드 UI를 표시한다", async () => {
+  it("lastPlayed가 오늘이면 게임을 시작하지 않고 피드를 표시한다", async () => {
     const today = formatLocalDate();
     localStorage.setItem("lastPlayed_test-device", today);
 
     renderDashboard();
 
     await waitFor(() => {
-      expect(screen.getByTestId("my-ranking-section")).toBeInTheDocument();
+      expect(screen.getByTestId("challenge-card")).toBeInTheDocument();
     });
 
     expect(mockStartPlay).not.toHaveBeenCalled();
@@ -183,10 +165,7 @@ describe("DashboardView", () => {
 
   it("getDeviceId 실패 시 local 폴백으로 동작한다", async () => {
     vi.mocked(getDeviceId).mockRejectedValue(new Error("미지원"));
-    mockStartPlay.mockResolvedValueOnce({
-      promptId: 1,
-      strokes: [],
-    });
+    mockStartPlay.mockResolvedValueOnce({ promptId: 1, strokes: [] });
 
     renderDashboard();
 
@@ -225,21 +204,18 @@ describe("DashboardView", () => {
     replaceStateSpy.mockRestore();
   });
 
-  it("플레이하기 버튼이 startGame을 호출한다", async () => {
+  it("도전 버튼이 게임 시작을 호출한다", async () => {
     const today = formatLocalDate();
     localStorage.setItem("lastPlayed_test-device", today);
     const user = userEvent.setup();
 
-    mockStartPlay.mockResolvedValueOnce({
-      promptId: 99,
-      strokes: [],
-    });
+    mockStartPlay.mockResolvedValueOnce({ promptId: 99, strokes: [] });
 
     renderDashboard();
 
-    // lastPlayed=오늘이므로 결과 UI가 먼저 표시됨
+    // lastPlayed=오늘이므로 피드가 먼저 표시됨
     await waitFor(() => {
-      expect(screen.getByTestId("my-ranking-section")).toBeInTheDocument();
+      expect(screen.getByTestId("challenge-card")).toBeInTheDocument();
     });
 
     await user.click(screen.getByText(/광고 없이.*번 도전/));
@@ -261,7 +237,7 @@ describe("DashboardView", () => {
       renderDashboard();
 
       await waitFor(() => {
-        expect(screen.getByTestId("my-ranking-section")).toBeInTheDocument();
+        expect(screen.getByTestId("challenge-card")).toBeInTheDocument();
       });
       expect(screen.getByText("광고 준비 중이에요")).toBeDisabled();
     });
@@ -273,7 +249,7 @@ describe("DashboardView", () => {
       renderDashboard();
 
       await waitFor(() => {
-        expect(screen.getByTestId("my-ranking-section")).toBeInTheDocument();
+        expect(screen.getByTestId("challenge-card")).toBeInTheDocument();
       });
       await user.click(screen.getByText("광고 다시 불러오기"));
 
@@ -289,7 +265,7 @@ describe("DashboardView", () => {
       renderDashboard();
 
       await waitFor(() => {
-        expect(screen.getByTestId("my-ranking-section")).toBeInTheDocument();
+        expect(screen.getByTestId("challenge-card")).toBeInTheDocument();
       });
       await user.click(screen.getByText("5초 광고 보고 도전하기"));
 

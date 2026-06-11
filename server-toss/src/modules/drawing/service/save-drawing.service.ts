@@ -1,4 +1,7 @@
-import { RankingService } from "src/modules/ranking/ranking.service";
+import {
+  RankingService,
+  type RankingChangeResult,
+} from "src/modules/ranking/ranking.service";
 import { User } from "src/modules/user/user.entity";
 import { Drawing } from "../drawing.entity";
 import { SaveDrawingDto } from "../dto/save-drawing.dto";
@@ -7,6 +10,11 @@ import { DrawingRepository } from "../drawing.repository";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Transactional } from "@mikro-orm/decorators/legacy";
 import { QuestService } from "src/modules/quest/service/quest.service";
+
+export type SaveDrawingResult = {
+  drawing: Drawing;
+  rankingChange: RankingChangeResult;
+};
 
 @Injectable()
 export class SaveDrawingService {
@@ -21,7 +29,7 @@ export class SaveDrawingService {
   async saveDrawingWithRanking(
     user: User,
     dto: SaveDrawingDto,
-  ): Promise<Drawing> {
+  ): Promise<SaveDrawingResult> {
     const { promptId, strokes, similarity } = dto;
 
     const drawing = await this.drawingRepository.saveDrawing(
@@ -32,7 +40,10 @@ export class SaveDrawingService {
       similarity.score,
     );
 
-    await this.rankingService.updateRanking(user, drawing);
+    const rankingChange = await this.rankingService.updateRanking(
+      user,
+      drawing,
+    );
 
     await this.questService.onDrawingSubmitted(user.userKey, {
       drawingId: drawing.id,
@@ -40,6 +51,6 @@ export class SaveDrawingService {
       penalty: similarity.penalty,
     });
 
-    return drawing;
+    return { drawing, rankingChange };
   }
 }

@@ -1,12 +1,9 @@
 import { usePlayChanceContext } from "@/feature/playChance";
-import { FUNNEL_EVENTS, trackClick } from "@/shared/lib";
-import { partner, tdsEvent } from "@apps-in-toss/web-framework";
+import { FUNNEL_EVENTS, trackClick, useToast } from "@/shared/lib";
 import { BottomSheet, ListRow, Toast } from "@toss/tds-mobile";
-import { useEffect, useState } from "react";
 import { shareMyScore } from "../lib/handleShare";
 import { useInviteFriend } from "../model/useInviteFriend";
 
-const ACCESSORY_BUTTON_ID = "share";
 const TOAST_DURATION_MS = 2500;
 
 const OptionIcon = ({ emoji }: { emoji: string }) => (
@@ -45,74 +42,48 @@ const ShareOption = ({ emoji, top, bottom, onSelect }: ShareOptionProps) => (
   </div>
 );
 
-/**
- * 네비게이션 바 공유 버튼 하나로 통합된 공유 진입점.
- * 액세서리 버튼을 누르면 바텀시트로 "점수 자랑" / "친구 초대" 중 하나를 고른다.
- */
-const ShareSheet = () => {
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [toast, setToast] = useState<{ open: boolean; message: string }>({
-    open: false,
-    message: "",
-  });
-  const { refresh } = usePlayChanceContext();
+interface ShareSheetProps {
+  open: boolean;
+  onClose: () => void;
+}
 
-  // 자동 닫힘은 TDS Toast의 duration이 처리한다
-  const showToast = (message: string) => setToast({ open: true, message });
+const ShareSheet = ({ open, onClose }: ShareSheetProps) => {
+  const toast = useToast();
+  const { refresh } = usePlayChanceContext();
 
   const { start: startInvite } = useInviteFriend({
     onCharged: () => {
       // refresh가 throw해도 state.error로 노출됨 — unhandled rejection만 방지
       refresh().catch(() => {});
-      showToast("그리기 기회 1회를 받았어요");
+      toast.show("그리기 기회 1회를 받았어요");
     },
     onError: (error) => {
-      showToast(
-        error.message || "공유에 실패했어요. 잠시 후 다시 시도해주세요.",
+      toast.show(
+        error.message || "초대에 실패했어요. 잠시 후 다시 시도해주세요.",
       );
     },
   });
 
-  useEffect(() => {
-    partner.addAccessoryButton({
-      id: ACCESSORY_BUTTON_ID,
-      title: "공유",
-      icon: {
-        name: "icon-share-dots-thin-mono",
-      },
-    });
-
-    const cleanup = tdsEvent.addEventListener("navigationAccessoryEvent", {
-      onEvent: ({ id }) => {
-        if (id === ACCESSORY_BUTTON_ID) {
-          setIsSheetOpen(true);
-        }
-      },
-    });
-
-    return cleanup;
-  }, []);
-
   const handleScoreShare = () => {
     trackClick(FUNNEL_EVENTS.shareScoreSelected);
-    setIsSheetOpen(false);
+    onClose();
     shareMyScore().catch((error) => {
       console.error(error);
-      showToast("공유에 실패했어요. 잠시 후 다시 시도해주세요.");
+      toast.show("공유에 실패했어요. 잠시 후 다시 시도해주세요.");
     });
   };
 
   const handleInviteShare = () => {
     trackClick(FUNNEL_EVENTS.shareInviteSelected);
-    setIsSheetOpen(false);
+    onClose();
     startInvite();
   };
 
   return (
     <>
       <BottomSheet
-        open={isSheetOpen}
-        onClose={() => setIsSheetOpen(false)}
+        open={open}
+        onClose={onClose}
         header={<BottomSheet.Header>공유하기</BottomSheet.Header>}
       >
         <div className="flex flex-col pb-[env(safe-area-inset-bottom)]">
@@ -129,7 +100,7 @@ const ShareSheet = () => {
             onSelect={handleInviteShare}
           />
           <p className="px-(--page-px) pt-2 text-xs text-(--color-grey)">
-            친구 초대 보상은 하루 5번까지 받을 수 있어요.
+            친구 초대 보상은 하루 5회까지 받을 수 있어요.
           </p>
         </div>
       </BottomSheet>
@@ -137,9 +108,9 @@ const ShareSheet = () => {
       <Toast
         position="top"
         open={toast.open}
-        text={toast.message}
+        text={toast.text}
         duration={TOAST_DURATION_MS}
-        onClose={() => setToast({ open: false, message: "" })}
+        onClose={toast.close}
       />
     </>
   );

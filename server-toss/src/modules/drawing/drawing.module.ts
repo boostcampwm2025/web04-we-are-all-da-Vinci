@@ -1,5 +1,5 @@
 import { MikroOrmModule } from "@mikro-orm/nestjs";
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { PointModule } from "../point/point.module";
 import { PromptModule } from "../prompt/prompt.module";
 import { QuestModule } from "../quest/quest.module";
@@ -15,7 +15,7 @@ import { SaveDrawingService } from "./service/save-drawing.service";
 @Module({
   imports: [
     MikroOrmModule.forFeature([Drawing]),
-    PromptModule,
+    forwardRef(() => PromptModule),
     UserModule,
     PointModule,
     QuestModule,

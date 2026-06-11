@@ -31,6 +31,11 @@
     /* surface — 페이지 바탕(흰색)과 카드(회색) */
     --color-page: #ffffff;
     --color-card: #f2f4f6;
+    /* tinted card — 대시보드 피드의 강조 카드 배경(연한 파랑/노랑) */
+    --color-card-blue: #eef3ff;
+    --color-card-yellow: #fdf6e3;
+    /* 챌린지 카드 안의 칩 배경(카드보다 한 톤 진한 베이지) */
+    --color-chip-yellow: #f5ead0;
 
     /* card — 카드가 배경 위에 은은히 떠 보이는 그림자 */
     --card-shadow:
@@ -118,4 +123,62 @@
   .animate-info-ticker {
     animation: none;
   }
+}
+
+@keyframes landing-confetti-fall {
+  0% {
+    transform: translateY(-10vh) rotate(0deg) rotateX(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) rotate(720deg) rotateX(360deg);
+    opacity: 0.5;
+  }
+}
+
+.landing-confetti {
+  position: absolute;
+  top: -20px;
+  opacity: 0;
+  animation: landing-confetti-fall linear infinite;
+  border-radius: 2px;
+  z-index: 0;
+}
+
+@keyframes landing-float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+.landing-float {
+  animation: landing-float 4s ease-in-out infinite;
+}
+
+@keyframes landing-btn-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes landing-bounce-arrow {
+  0%,
+  100% {
+    transform: rotate(-45deg) translateY(0);
+  }
+  50% {
+    transform: rotate(-45deg) translateY(-4px);
+  }
+}
+
+.landing-bounce-arrow {
+  display: inline-block;
+  animation: landing-bounce-arrow 1s ease-in-out infinite;
 }

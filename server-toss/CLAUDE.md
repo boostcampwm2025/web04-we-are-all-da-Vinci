@@ -33,24 +33,28 @@ pnpm format
 
 ## 엔드포인트
 
-| Method | Path                  | 역할                                                                    |
-| ------ | --------------------- | ----------------------------------------------------------------------- |
-| GET    | `/health`             | 헬스체크                                                                |
-| POST   | `/oauth/toss/login`   | Apps-in-Toss OAuth 로그인                                               |
-| POST   | `/oauth/toss/logout`  | 로그아웃                                                                |
-| GET    | `/user/me`            | 현재 사용자 정보                                                        |
-| GET    | `/prompt`             | 오늘의 기준 프롬프트 `{ promptId, strokes }` (KST)                      |
-| POST   | `/strokes`            | 실시간 유사도 계산. 매 획마다 호출, **DB 저장 없음**, `Similarity` 반환 |
-| POST   | `/drawing`            | **최종 제출**. 유사도 재계산 후 `drawings` 테이블에 저장                |
-| GET    | `/drawing/me`         | 내 최근 drawing                                                         |
-| GET    | `/drawing/:drawingId` | drawing 단건 조회                                                       |
-| GET    | `/rankings`           | 오늘 랭킹 리스트                                                        |
-| GET    | `/rankings/me`        | 내 랭킹                                                                 |
-| GET    | `/rankings/podium`    | 포디움                                                                  |
-| POST   | `/adviews`            | 광고 시청 기록                                                          |
-| GET    | `/chances/me`         | 남은 게임 기회                                                          |
-| POST   | `/chances/charge`     | 기회 충전 (광고 시청 등)                                                |
-| POST   | `/chances/consume`    | 기회 소비                                                               |
+| Method | Path                                    | 역할                                                                             |
+| ------ | --------------------------------------- | -------------------------------------------------------------------------------- |
+| GET    | `/health`                               | 헬스체크                                                                         |
+| POST   | `/oauth/toss/login`                     | Apps-in-Toss OAuth 로그인                                                        |
+| POST   | `/oauth/toss/logout`                    | 로그아웃                                                                         |
+| GET    | `/user/me`                              | 현재 사용자 정보                                                                 |
+| POST   | `/plays/start`                          | 게임 시작 — 기회 소비 후 오늘의 기준 프롬프트 `{ promptId, strokes }` 반환 (KST) |
+| POST   | `/strokes`                              | 실시간 유사도 계산. 매 획마다 호출, **DB 저장 없음**, `Similarity` 반환          |
+| POST   | `/drawing`                              | **최종 제출**. 유사도 재계산 후 `drawings` 테이블에 저장                         |
+| GET    | `/drawing/me`                           | 내 최근 drawing                                                                  |
+| GET    | `/drawing/:drawingId`                   | drawing 단건 조회                                                                |
+| GET    | `/rankings`                             | 오늘 랭킹 리스트                                                                 |
+| GET    | `/rankings/me`                          | 내 랭킹                                                                          |
+| GET    | `/rankings/podium`                      | 포디움 TOP3 + 오늘 참가자 수 `{ podium, participantCount }`                      |
+| GET    | `/archive/summary`                      | 아카이브 요약(플레이 일자·통계)                                                  |
+| GET    | `/archive/days/:date`                   | 특정 날짜의 제출/랭킹 상세                                                       |
+| GET    | `/notifications/daily-prompt/agreement` | 일일 프롬프트 알림 동의 조회                                                     |
+| POST   | `/notifications/daily-prompt/agreement` | 일일 프롬프트 알림 동의 저장                                                     |
+| GET    | `/notifications/overtaken/agreement`    | 랭킹 추월 알림 동의 조회                                                         |
+| POST   | `/notifications/overtaken/agreement`    | 랭킹 추월 알림 동의 저장                                                         |
+| GET    | `/chances/me`                           | 남은 게임 기회                                                                   |
+| POST   | `/chances/charge`                       | 기회 충전 (광고 시청/공유 등)                                                    |
 
 요청/응답 스키마의 단일 소스는 `packages/toss-shared/src/schemas/` (`drawing.schema.ts`, `chance.schema.ts` 등). `/strokes`는 클라이언트가 `promptId`를 보내지 않는다 — 서버가 오늘 날짜의 `daily_prompts`로 자동 매칭.
 
@@ -74,11 +78,15 @@ src/
 ├── modules/
 │   ├── auth/                        - POST /oauth/toss/login, /logout (Toss OAuth)
 │   ├── user/                        - GET /user/me
-│   ├── prompt/                      - GET /prompt + 빈 DB 시드 + 메모리 캐시
+│   ├── prompt/                      - 오늘의 프롬프트 제공(서비스, 외부 라우트 없음) + 빈 DB 시드 + 메모리 캐시
+│   ├── play/                        - POST /plays/start (기회 소비 + 프롬프트 반환)
 │   ├── drawing/                     - POST /strokes, /drawing, GET /drawing/me, /drawing/:id
-│   ├── chance/                      - GET /chances/me, POST /chances/{charge,consume}
-│   ├── ad/                          - POST /adviews (광고 시청 기록)
+│   ├── chance/                      - GET /chances/me, POST /chances/charge (consume은 내부 트랜잭션 전용)
+│   ├── ad/                          - 광고 시청 기록(서비스, /chances/charge 내부 처리, 외부 라우트 없음)
 │   ├── ranking/                     - GET /rankings, /rankings/me, /rankings/podium + 스냅샷 서비스
+│   ├── archive/                     - GET /archive/summary, /archive/days/:date
+│   ├── dailyRanking/                - 자정 스냅샷(daily_user_rankings) 서비스, 외부 라우트 없음
+│   ├── notification/               - GET·POST /notifications/{daily-prompt,overtaken}/agreement + 발송 스케줄러
 │   └── point/                       - 포인트 적립/차감 (다른 모듈이 내부 의존, 외부 라우트 없음)
 ├── seeders/                         - DatabaseSeeder + 도메인별 seeder
 ├── migrations/                      - MikroORM 마이그레이션

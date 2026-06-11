@@ -6,4 +6,6 @@ export const TOSS_API_ENDPOINTS = {
   PROMOTION_GET_KEY:
     "/api-partner/v1/apps-in-toss/promotion/execute-promotion/get-key",
   EXECUTE_PROMOTION: "/api-partner/v1/apps-in-toss/promotion/execute-promotion",
+  SEND_MESSAGE: "/api-partner/v1/apps-in-toss/messenger/send-message",
+  SEND_BULK_MESSAGE: "/api-partner/v1/apps-in-toss/messenger/send-bulk-message",
 } as const;

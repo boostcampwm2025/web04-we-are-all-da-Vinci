@@ -1,5 +1,7 @@
+import { PlayNavButton } from "@/feature/playChance";
 import { getAnalyticsInstance } from "@/shared/api";
 import { FUNNEL_EVENTS } from "@/shared/lib";
+import { BottomNav } from "@/shared/ui/bottomNav";
 import { logEvent } from "firebase/analytics";
 import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
@@ -20,7 +22,12 @@ const AnalyticsTracker = () => {
     }
   }, [location.pathname]);
 
-  return <Outlet />;
+  return (
+    <>
+      <Outlet />
+      <BottomNav centerSlot={<PlayNavButton />} />
+    </>
+  );
 };
 
 export default AnalyticsTracker;

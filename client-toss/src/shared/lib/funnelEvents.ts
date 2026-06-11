@@ -1,5 +1,8 @@
 export const FUNNEL_EVENTS = {
   attributionFirstTouch: "attribution_first_touch",
+  // 알림(DAILY_PROMPT / OVERTAKEN) deep link로 진입할 때마다 발화. attributionFirstTouch는
+  // 첫 진입만이라 발송→진입 funnel 측정에 한계가 있어, 매 진입마다 발화하는 이벤트를 별도로 둠.
+  notificationOpen: "notification_open",
   pageView: "page_view",
 
   loginButtonClick: "login_button_click",

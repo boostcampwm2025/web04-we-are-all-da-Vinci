@@ -19,15 +19,22 @@ import {
 } from "./types/ranking.type";
 
 const podiumResponseSchema = {
-  type: "array",
-  items: {
-    type: "object",
-    properties: {
-      nickname: { type: "string", example: "용감한고양이123" },
-      score: { type: "number", example: 91.25 },
+  type: "object",
+  properties: {
+    podium: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          nickname: { type: "string", example: "용감한고양이123" },
+          score: { type: "number", example: 91.25 },
+        },
+        required: ["nickname", "score"],
+      },
     },
-    required: ["nickname", "score"],
+    participantCount: { type: "integer", example: 1021 },
   },
+  required: ["podium", "participantCount"],
 };
 
 const rankingListResponseSchema = {
