@@ -12,7 +12,10 @@ const RankingView = () => {
   }, []);
 
   return (
-    <div className="pb-[calc(env(safe-area-inset-bottom)+72px)]">
+    <div
+      data-no-safe-area-bottom
+      className="pb-[calc(env(safe-area-inset-bottom)+72px)]"
+    >
       <div className="px-(--page-px)">
         <Podium />
       </div>
