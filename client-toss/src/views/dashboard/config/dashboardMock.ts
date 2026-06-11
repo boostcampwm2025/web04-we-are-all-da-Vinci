@@ -10,8 +10,11 @@ export const STREAK_DAYS = 5;
 /** 오늘 획득한 포인트 */
 export const TODAY_POINTS = 4;
 
+/** 지금까지 받은 누적 포인트 */
+export const TOTAL_POINTS = 128;
+
 /** 내일도 참여하면 받는 보너스 포인트 */
-export const STREAK_BONUS_POINT = 2;
+export const STREAK_BONUS_POINT = 10;
 
 export interface TodayMission {
   id: string;
