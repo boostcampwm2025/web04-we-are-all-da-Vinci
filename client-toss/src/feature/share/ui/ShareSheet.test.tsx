@@ -68,7 +68,7 @@ describe("공유 시트", () => {
     expect(screen.getByText("점수 자랑하기")).toBeInTheDocument();
     expect(screen.getByText("친구 초대하고 기회 받기")).toBeInTheDocument();
     expect(
-      screen.getByText("친구 초대 보상은 하루 5번까지 받을 수 있어요."),
+      screen.getByText("친구 초대 보상은 하루 5회까지 받을 수 있어요."),
     ).toBeInTheDocument();
   });
 
