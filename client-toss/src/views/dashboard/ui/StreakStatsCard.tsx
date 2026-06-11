@@ -1,5 +1,4 @@
 import { useMyRanking } from "@/entities/ranking";
-import { TextButton } from "@toss/tds-mobile";
 import { useNavigate } from "react-router-dom";
 import {
   STREAK_BONUS_POINT,
@@ -54,14 +53,17 @@ const StreakStatsCard = () => {
             </p>
           </div>
         </div>
-        <TextButton
-          size="small"
-          variant="arrow"
-          color="var(--color-grey)"
+        {/* 카드의 13px 보조 라벨과 크기를 맞추려고 native 버튼 + span 유지.
+            TDS TextButton은 고정 사이즈 토큰이라 13px가 안 나옴(TodayDavinci "랭킹 top100"과 동일 패턴). */}
+        <button
+          type="button"
           onClick={() => navigate("/archive")}
+          className="flex shrink-0 items-center"
         >
-          내 기록 보기
-        </TextButton>
+          <span className="text-[13px] font-medium text-(--color-grey)">
+            내 기록 보기 ›
+          </span>
+        </button>
       </div>
 
       <div className="mt-5 flex items-stretch rounded-(--radius-inner) bg-(--color-page) py-4">
