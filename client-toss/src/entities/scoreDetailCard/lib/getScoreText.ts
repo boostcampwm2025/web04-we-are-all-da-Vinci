@@ -1,5 +1,3 @@
-export const formatScore = (score: number) => score.toFixed(2);
-
 export const getStrokeMatchText = (score: number): string[] => {
   if (score >= 80)
     return ["획 하나하나의 길이·방향·위치가 제시 그림과 거의 같아요"];

@@ -1,4 +1,5 @@
 import { serverTossApi } from "@/shared/api";
+import { useToast } from "@/shared/lib";
 import { requestNotificationAgreement } from "@apps-in-toss/web-framework";
 import {
   NotificationAgreementEventSchema,
@@ -28,8 +29,7 @@ const NotificationCenterSheet = ({ open, onClose }: Props) => {
     useState<NotificationAgreementStatus | null>(null);
   const [isDailyPromptLoading, setIsDailyPromptLoading] = useState(false);
   const [isOvertakenLoading, setIsOvertakenLoading] = useState(false);
-  const [toastOpen, setToastOpen] = useState(false);
-  const [toastText, setToastText] = useState("");
+  const toast = useToast();
   const sdkCleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -60,11 +60,6 @@ const NotificationCenterSheet = ({ open, onClose }: Props) => {
     };
   }, [open]);
 
-  const showToast = (text: string) => {
-    setToastText(text);
-    setToastOpen(true);
-  };
-
   const requestAgreement = (params: {
     templateCode: string;
     setLoading: (v: boolean) => void;
@@ -87,12 +82,12 @@ const NotificationCenterSheet = ({ open, onClose }: Props) => {
             const agreement = await params.save({ eventType });
             params.onStatus(agreement.status);
             if (agreement.status === "agreed")
-              showToast(`${params.label} 알림을 받기로 했어요`);
+              toast.show(`${params.label} 알림을 받기로 했어요`);
             else if (agreement.status === "rejected")
-              showToast(`${params.label} 알림을 보내지 않을게요`);
+              toast.show(`${params.label} 알림을 보내지 않을게요`);
           } catch (err) {
             console.error("[알림 동의 결과 저장 실패]", err);
-            showToast("알림 동의 결과 저장에 실패했어요");
+            toast.show("알림 동의 결과 저장에 실패했어요");
           } finally {
             cleanup?.();
             sdkCleanupRef.current = null;
@@ -101,7 +96,7 @@ const NotificationCenterSheet = ({ open, onClose }: Props) => {
         },
         onError: (error) => {
           console.error("[알림 동의 요청 실패]", error);
-          showToast("알림 동의 요청에 실패했어요");
+          toast.show("알림 동의 요청에 실패했어요");
           cleanup?.();
           sdkCleanupRef.current = null;
           params.setLoading(false);
@@ -110,7 +105,7 @@ const NotificationCenterSheet = ({ open, onClose }: Props) => {
       sdkCleanupRef.current = cleanup;
     } catch (err) {
       console.error("[알림 동의 UI 실행 실패]", err);
-      showToast("알림 동의 요청에 실패했어요");
+      toast.show("알림 동의 요청에 실패했어요");
       params.setLoading(false);
     }
   };
@@ -168,10 +163,10 @@ const NotificationCenterSheet = ({ open, onClose }: Props) => {
 
       <Toast
         position="top"
-        open={toastOpen}
-        text={toastText}
+        open={toast.open}
+        text={toast.text}
         duration={2500}
-        onClose={() => setToastOpen(false)}
+        onClose={toast.close}
       />
     </>
   );

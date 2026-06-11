@@ -2,7 +2,7 @@ import { useEffect, useRef, type RefObject } from "react";
 import { trackImpression } from "@/shared/lib";
 
 // IAB MRC Viewable Impression 기준: 광고 영역의 50% 이상이 1초 이상 "연속" 노출돼야
-// 1회 노출로 집계한다. 단순 "등장"(threshold 진입 1회) 계측은 useImpressionTracking을 쓴다.
+// 1회 노출로 집계한다(단순 threshold 진입 1회 계측과 구분).
 const VIEWABLE_RATIO = 0.5;
 const VIEWABLE_DURATION_MS = 1000;
 

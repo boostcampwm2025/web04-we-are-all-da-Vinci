@@ -20,18 +20,25 @@ describe("랭킹 서비스", () => {
   } as Ranking;
 
   describe("findTop3 메소드는", () => {
-    it("top3 응답을 반환한다", async () => {
+    it("top3 목록과 오늘 참가자 수를 함께 반환한다", async () => {
       const findTop = jest.fn().mockResolvedValue([ranking]);
-      const repository = { findTop } as unknown as RankingRepository;
+      const countTodayParticipants = jest.fn().mockResolvedValue(7);
+      const repository = {
+        findTop,
+        countTodayParticipants,
+      } as unknown as RankingRepository;
 
       const rankingService = new RankingService(repository);
 
-      await expect(rankingService.findPodium()).resolves.toEqual([
-        {
-          nickname: "홍길동닉",
-          score: 91.25,
-        },
-      ]);
+      await expect(rankingService.findPodium()).resolves.toEqual({
+        podium: [
+          {
+            nickname: "홍길동닉",
+            score: 91.25,
+          },
+        ],
+        participantCount: 7,
+      });
 
       expect(findTop.mock.calls[0]).toEqual([3]);
     });

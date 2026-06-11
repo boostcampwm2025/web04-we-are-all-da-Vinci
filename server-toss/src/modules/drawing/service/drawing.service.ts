@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
-import { formatKstDate } from "src/common/util/time.util";
+import { getSeoulDateKey } from "src/common/util/time.util";
 import {
   RankingChangedEvent,
   RANKING_CHANGED_EVENT,
@@ -135,7 +135,7 @@ export class DrawingService {
           drawing.id,
           rankingChange.newRank,
           rankingChange.overtakenUserKeys,
-          formatKstDate(date),
+          getSeoulDateKey(date),
         ),
       );
     }

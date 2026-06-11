@@ -1,6 +1,1 @@
-interface PodiumEntry {
-  nickname: string;
-  score: number;
-}
-
-export { type PodiumEntry };
+export type { PodiumItem as PodiumEntry, PodiumResponse } from "@toss/shared";

@@ -1,6 +1,6 @@
 import AnalyticsTracker from "@/app/config/AnalyticsTracker";
 import { ArchiveView } from "@/views/archive";
-import { DashboardView, MyDrawingsPanel } from "@/views/dashboard";
+import { DashboardView } from "@/views/dashboard";
 import { Drawing } from "@/views/drawing";
 import { LoginView } from "@/views/login";
 import { Memorize } from "@/views/memorize";
@@ -25,16 +25,21 @@ export const router = createBrowserRouter([
         path: "/drawing",
         element: <Drawing />,
       },
-      {
-        element: <DashboardView />,
-        children: [
-          { index: true, element: <MyDrawingsPanel /> },
-          { path: "ranking", element: <RankingView /> },
-        ],
-      },
+      { index: true, element: <DashboardView /> },
+      { path: "/ranking", element: <RankingView /> },
       { path: "/archive", element: <ArchiveView /> },
       { path: "/submitted", element: <SubmittedView /> },
       { path: "/drawing/:drawingId", element: <RankingDetailView /> },
+      // TODO(팀원 작업 영역): 미션 화면이 준비되면 element를 <MissionView />로 교체.
+      // 경로 `/mission`은 하단바 config(NAV_TABS)와 합의된 값.
+      {
+        path: "/mission",
+        element: (
+          <div className="flex h-full items-center justify-center text-(--color-grey)">
+            미션 화면은 준비 중이에요
+          </div>
+        ),
+      },
     ],
   },
 ]);

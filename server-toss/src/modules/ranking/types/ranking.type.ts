@@ -9,16 +9,12 @@ export const RankingSimilaritySchema = z.object({
 
 export type RankingSimilarity = z.infer<typeof RankingSimilaritySchema>;
 
-export const PodiumItemSchema = z.object({
-  nickname: z.string().max(20),
-  score: z.number().min(0).max(100),
-});
-
-export type PodiumItem = z.infer<typeof PodiumItemSchema>;
-
-export const PodiumResponseSchema = z.array(PodiumItemSchema);
-
-export type PodiumResponse = z.infer<typeof PodiumResponseSchema>;
+export {
+  PodiumItemSchema,
+  PodiumResponseSchema,
+  type PodiumItem,
+  type PodiumResponse,
+} from "@toss/shared";
 
 export const RankingListItemSchema = z.object({
   nickname: z.string().max(20),

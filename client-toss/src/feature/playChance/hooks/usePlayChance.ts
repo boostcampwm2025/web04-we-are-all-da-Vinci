@@ -1,4 +1,5 @@
 import { RequestError, serverTossApi } from "@/shared/api";
+import { toError } from "@/shared/lib";
 import type {
   AdSdkPayload,
   PromptResponse,
@@ -15,9 +16,6 @@ interface PlayChanceHookState {
   isLoading: boolean;
   error: Error | null;
 }
-
-const toError = (unknownError: unknown, fallbackMessage: string): Error =>
-  unknownError instanceof Error ? unknownError : new Error(fallbackMessage);
 
 export const usePlayChance = () => {
   const [state, setState] = useState<PlayChanceHookState>({

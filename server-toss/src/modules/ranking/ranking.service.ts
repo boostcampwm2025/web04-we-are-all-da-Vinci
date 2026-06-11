@@ -76,9 +76,15 @@ export class RankingService {
   }
 
   async findPodium(): Promise<PodiumResponse> {
-    const rankings = await this.rankingRepository.findTop(3);
+    const [rankings, participantCount] = await Promise.all([
+      this.rankingRepository.findTop(3),
+      this.rankingRepository.countTodayParticipants(),
+    ]);
 
-    return rankings.map(mapRankingToPodiumItem);
+    return {
+      podium: rankings.map(mapRankingToPodiumItem),
+      participantCount,
+    };
   }
 
   async findRankingList(userKey?: number): Promise<RankingListResponse> {
