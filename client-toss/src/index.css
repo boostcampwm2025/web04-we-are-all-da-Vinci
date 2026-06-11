@@ -182,3 +182,18 @@
   display: inline-block;
   animation: landing-bounce-arrow 1s ease-in-out infinite;
 }
+
+/* 높이 짧은 기기 안전망 — clamp(vh)로 부족할 때 마스코트·여백을 추가로 압축해
+   헤더+마스코트+CTA가 스크롤 없이 한 화면에 들어오게 한다. */
+@media (max-height: 700px) {
+  .landing-mascot {
+    max-height: 42vh;
+    bottom: 0;
+  }
+}
+
+@media (max-height: 560px) {
+  .landing-mascot {
+    max-height: 34vh;
+  }
+}
