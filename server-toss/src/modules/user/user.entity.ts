@@ -29,4 +29,16 @@ export class User extends BaseEntity {
 
   @Property({ type: "date", nullable: true })
   birthday?: Opt<Date>;
+
+  /**
+   * 튜토리얼 완료 "시점" checkpoint (boolean 아님).
+   * 튜토리얼 콘텐츠 버전(max Quest.createdAt, period=tutorial)과 비교해
+   * checkpoint ≥ 버전이면 완료 — 새 튜토리얼이 배포되면 게이트가 자동으로 다시 열린다.
+   */
+  @Property({
+    fieldName: "tutorial_completed_at",
+    type: "datetime",
+    nullable: true,
+  })
+  tutorialCompletedAt?: Opt<Date | null>;
 }

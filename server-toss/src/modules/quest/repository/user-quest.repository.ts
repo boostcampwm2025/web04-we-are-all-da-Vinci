@@ -69,18 +69,6 @@ export class UserQuestRepository extends EntityRepository<UserQuest> {
         $or: [
           { quest: { period: QuestPeriod.DAILY }, createdAt: todayStart },
           { quest: { period: QuestPeriod.WEEKLY }, createdAt: weekStart },
-          {
-            quest: {
-              period: QuestPeriod.TUTORIAL,
-              objectiveType: {
-                $in: [
-                  ObjectiveType.SUBMIT,
-                  ObjectiveType.SCORE,
-                  ObjectiveType.RETRY,
-                ],
-              },
-            },
-          },
         ],
       },
       { populate: ["quest"] },
@@ -123,6 +111,29 @@ export class UserQuestRepository extends EntityRepository<UserQuest> {
       },
       { populate: ["quest"] },
     );
+  }
+
+  /** 그림 제출 이벤트가 진행시키는 튜토리얼 퀘스트 (SUBMIT/SCORE) */
+  async findActiveTutorialDrawing(userKey: number): Promise<UserQuest[]> {
+    return this.find(
+      {
+        user: { userKey },
+        completedAt: null,
+        quest: {
+          period: QuestPeriod.TUTORIAL,
+          objectiveType: { $in: [ObjectiveType.SUBMIT, ObjectiveType.SCORE] },
+        },
+      },
+      { populate: ["quest"] },
+    );
+  }
+
+  async countIncompleteTutorial(userKey: number): Promise<number> {
+    return this.count({
+      user: { userKey },
+      completedAt: null,
+      quest: { period: QuestPeriod.TUTORIAL },
+    });
   }
 
   async flush(): Promise<void> {

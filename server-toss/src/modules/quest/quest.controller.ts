@@ -1,4 +1,11 @@
-import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  UseGuards,
+} from "@nestjs/common";
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { QuestActionSchema, type QuestAction } from "@toss/shared";
 import { ZodValidationPipe } from "src/common/zod-validation.pipe";
@@ -28,17 +35,18 @@ export class QuestController {
   }
 
   @Post("/quests/me")
+  @HttpCode(201)
   @ApiOperation({ summary: "오늘의 퀘스트 할당" })
   @ApiResponse({ status: 201, description: "퀘스트 할당 완료" })
   @ApiResponse({ status: 401, description: "인증 실패" })
   async assignMyQuests(
     @CurrentUser() user: CurrentUserPayload,
   ): Promise<MyQuestsResponseDto> {
-    await this.questService.assignQuests(user.userKey);
-    return this.questService.myQuests(user.userKey);
+    return this.questService.assignAndGetMyQuests(user.userKey);
   }
 
   @Post("/quests/action")
+  @HttpCode(201)
   @ApiOperation({ summary: "퀘스트 액션 보고 (페이지 방문/공유/재시도)" })
   @ApiBody({
     schema: {
@@ -49,11 +57,9 @@ export class QuestController {
           type: "string",
           enum: [
             "visit_ranking",
-            "visit_podium",
             "visit_quest_tab",
             "visit_drawing_detail",
             "share",
-            "retry",
           ],
         },
       },
@@ -68,6 +74,6 @@ export class QuestController {
     const objectiveType = ACTION_TYPE_TO_OBJECTIVE[body.actionType];
     if (!objectiveType) return;
 
-    await this.questService.onQuestAction(user.userKey, objectiveType);
+    await this.questService.onActionReported(user.userKey, { objectiveType });
   }
 }

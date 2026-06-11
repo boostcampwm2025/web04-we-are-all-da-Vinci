@@ -4,10 +4,11 @@ import { PointModule } from "src/modules/point/point.module";
 import { Quest } from "./entity/quest.entity";
 import { UserQuest } from "./entity/user-quest.entity";
 import { QuestController } from "./quest.controller";
+import { AssignQuestService } from "./service/assign-quest.service";
 import { QuestProcessor } from "./service/quest.processor";
 import { QuestSeedService } from "./service/quest.seed";
 import { QuestService } from "./service/quest.service";
-import { AssignQuestService } from "./service/assign-quest.service";
+import { TutorialQuestService } from "./service/tutorial-quest.service";
 
 @Module({
   imports: [MikroOrmModule.forFeature([Quest, UserQuest]), PointModule],
@@ -17,7 +18,8 @@ import { AssignQuestService } from "./service/assign-quest.service";
     QuestProcessor,
     QuestSeedService,
     AssignQuestService,
+    TutorialQuestService,
   ],
-  exports: [QuestService],
+  exports: [QuestService, TutorialQuestService],
 })
 export class QuestModule {}

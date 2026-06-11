@@ -1,157 +1,148 @@
-import { EntityManager } from "@mikro-orm/core";
 import { Transactional } from "@mikro-orm/decorators/legacy";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable } from "@nestjs/common";
-import { getSeoulDayRange, getSeoulWeekStart } from "src/common/util/time.util";
-import { Drawing } from "src/modules/drawing/drawing.entity";
 import { MyQuestsResponseDto } from "../dto/my-quests-response.dto";
 import { ObjectiveType } from "../entity/quest.entity";
 import { UserQuest } from "../entity/user-quest.entity";
+import { QuestWindow } from "../quest-window";
 import { QuestMapper } from "../quest.mapper";
 import type {
+  BaseActionContext,
   CycleResult,
   DrawingContext,
-  DrawingSubmittedEvent,
 } from "../quest.types";
 import type { UserQuestRepository } from "../repository/user-quest.repository";
 import { AssignQuestService } from "./assign-quest.service";
 import { QuestProcessor } from "./quest.processor";
+import { TutorialQuestService } from "./tutorial-quest.service";
 
 @Injectable()
 export class QuestService {
   constructor(
     @InjectRepository(UserQuest)
-    private readonly userQuestRepository: UserQuestRepository,
+    private readonly userQuestRepo: UserQuestRepository,
     private readonly processor: QuestProcessor,
     private readonly assignQuestService: AssignQuestService,
-    private readonly em: EntityManager,
+    private readonly tutorialQuestService: TutorialQuestService,
   ) {}
 
   async myQuests(userKey: number): Promise<MyQuestsResponseDto> {
-    const { start: todayStart } = getSeoulDayRange();
-    const weekStart = getSeoulWeekStart();
+    return this.queryMyQuests(userKey, QuestWindow.now());
+  }
 
-    const quests = await this.userQuestRepository.findCurrentQuests(
+  async assignAndGetMyQuests(userKey: number): Promise<MyQuestsResponseDto> {
+    const window = QuestWindow.now();
+    await this.assignQuestService.ensureQuestsAssigned(userKey, window);
+    return this.queryMyQuests(userKey, window);
+  }
+
+  private async queryMyQuests(
+    userKey: number,
+    window: QuestWindow,
+  ): Promise<MyQuestsResponseDto> {
+    const quests = await this.userQuestRepo.findCurrentQuests(
       userKey,
-      todayStart,
-      weekStart,
+      window.todayStart,
+      window.weekStart,
     );
-    const tutorialQuests =
-      await this.userQuestRepository.findTutorialQuests(userKey);
+    const tutorialQuests = await this.userQuestRepo.findTutorialQuests(userKey);
 
     return QuestMapper.toResponse(quests, tutorialQuests);
   }
 
-  async assignQuests(userKey: number): Promise<void> {
-    await this.assignQuestService.ensureAllQuestsAssigned(userKey);
-  }
+  // ─── 그림 제출 이벤트 (daily/weekly + tutorial SUBMIT/SCORE/RETRY) ───
 
   @Transactional()
   async onDrawingSubmitted(
     userKey: number,
-    event: DrawingSubmittedEvent,
-  ): Promise<UserQuest[]> {
-    const { start: todayStart } = getSeoulDayRange();
-    const weekStart = getSeoulWeekStart();
+    context: DrawingContext,
+  ): Promise<CycleResult> {
+    const window = QuestWindow.now();
+    await this.assignQuestService.ensureQuestsAssigned(userKey, window);
 
-    const context = await this.buildDrawingContext(userKey, event, todayStart);
-
-    await this.assignQuestService.ensureAllQuestsAssigned(userKey);
-
-    // daily/weekly + tutorial SUBMIT/SCORE/RETRY가 함께 포함됨
-    const activeQuests = await this.userQuestRepository.findActiveDrawingQuests(
+    const drawingActive = await this.userQuestRepo.findActiveDrawingQuests(
       userKey,
-      todayStart,
-      weekStart,
+      window.todayStart,
+      window.weekStart,
     );
-    const weeklyMeta = await this.userQuestRepository.findActiveByObjective(
+    // 튜토리얼은 완료 게이트 뒤 — 완료 유저는 쿼리 없이 []
+    const tutorialDrawing =
+      await this.tutorialQuestService.findActiveDrawing(userKey);
+
+    const weeklyMeta = await this.userQuestRepo.findActiveByObjective(
       userKey,
       ObjectiveType.QUEST_COMPLETED,
-      todayStart,
-      weekStart,
+      window.todayStart,
+      window.weekStart,
     );
     const tutorialMeta =
-      await this.userQuestRepository.findActiveTutorialMeta(userKey);
+      await this.tutorialQuestService.findActiveMeta(userKey);
 
     const result = await this.processor.executeProgressCycle(
       userKey,
-      activeQuests,
+      [...drawingActive, ...tutorialDrawing],
       [...weeklyMeta, ...tutorialMeta],
       context,
+      window,
     );
 
-    await this.userQuestRepository.flush();
+    await this.tutorialQuestService.recordCompletionIfFinished(
+      userKey,
+      result,
+      window,
+    );
+    await this.userQuestRepo.flush();
 
-    return [...result.completed, ...result.metaCompleted];
+    return result;
   }
 
+  // ─── 퀘스트 액션 (방문/공유 등 — 전 period 대상) ───
+
   @Transactional()
-  async onQuestAction(
+  async onActionReported(
     userKey: number,
-    objectiveType: ObjectiveType,
+    context: BaseActionContext,
   ): Promise<CycleResult> {
-    const { start: todayStart } = getSeoulDayRange();
-    const weekStart = getSeoulWeekStart();
+    const window = QuestWindow.now();
+    await this.assignQuestService.ensureQuestsAssigned(userKey, window);
 
-    await this.assignQuestService.ensureAllQuestsAssigned(userKey);
-
-    const dailyWeeklyActive =
-      await this.userQuestRepository.findActiveByObjective(
-        userKey,
-        objectiveType,
-        todayStart,
-        weekStart,
-      );
+    const dailyWeeklyActive = await this.userQuestRepo.findActiveByObjective(
+      userKey,
+      context.objectiveType,
+      window.todayStart,
+      window.weekStart,
+    );
+    // 튜토리얼은 완료 게이트 뒤 — 완료 유저는 쿼리 없이 []
     const tutorialActive =
-      await this.userQuestRepository.findActiveTutorialByObjective(
+      await this.tutorialQuestService.findActiveByObjective(
         userKey,
-        objectiveType,
+        context.objectiveType,
       );
 
-    const weeklyMeta = await this.userQuestRepository.findActiveByObjective(
+    const weeklyMeta = await this.userQuestRepo.findActiveByObjective(
       userKey,
       ObjectiveType.QUEST_COMPLETED,
-      todayStart,
-      weekStart,
+      window.todayStart,
+      window.weekStart,
     );
     const tutorialMeta =
-      await this.userQuestRepository.findActiveTutorialMeta(userKey);
+      await this.tutorialQuestService.findActiveMeta(userKey);
 
     const result = await this.processor.executeProgressCycle(
       userKey,
       [...dailyWeeklyActive, ...tutorialActive],
       [...weeklyMeta, ...tutorialMeta],
-      {},
+      context,
+      window,
     );
 
-    await this.userQuestRepository.flush();
+    await this.tutorialQuestService.recordCompletionIfFinished(
+      userKey,
+      result,
+      window,
+    );
+    await this.userQuestRepo.flush();
 
     return result;
-  }
-
-  private async buildDrawingContext(
-    userKey: number,
-    event: DrawingSubmittedEvent,
-    todayStart: Date,
-  ): Promise<DrawingContext> {
-    const { end: todayEnd } = getSeoulDayRange();
-    const todayDrawings: Pick<Drawing, "score">[] = await this.em.find(
-      Drawing,
-      {
-        user: userKey,
-        createdAt: { $gte: todayStart, $lt: todayEnd },
-        id: { $ne: event.drawingId },
-      },
-      { fields: ["score"] },
-    );
-
-    return {
-      ...event,
-      isFirstOfDay: todayDrawings.length === 0,
-      todayMaxScore:
-        todayDrawings.length > 0
-          ? Math.max(...todayDrawings.map((d) => d.score))
-          : undefined,
-    };
   }
 }
