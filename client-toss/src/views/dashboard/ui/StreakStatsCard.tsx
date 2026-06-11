@@ -1,4 +1,5 @@
 import { useMyRanking } from "@/entities/ranking";
+import { TextButton } from "@toss/tds-mobile";
 import { useNavigate } from "react-router-dom";
 import {
   STREAK_BONUS_POINT,
@@ -53,15 +54,14 @@ const StreakStatsCard = () => {
             </p>
           </div>
         </div>
-        <button
-          type="button"
+        <TextButton
+          size="small"
+          variant="arrow"
+          color="var(--color-grey)"
           onClick={() => navigate("/archive")}
-          className="flex shrink-0 items-center"
         >
-          <span className="text-[13px] font-medium text-(--color-grey)">
-            내 기록 보기 ›
-          </span>
-        </button>
+          내 기록 보기
+        </TextButton>
       </div>
 
       <div className="mt-5 flex items-stretch rounded-(--radius-inner) bg-(--color-page) py-4">
