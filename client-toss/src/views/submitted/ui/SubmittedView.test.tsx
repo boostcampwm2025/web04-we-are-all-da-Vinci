@@ -67,10 +67,23 @@ const playChance = (hasChance: boolean) => ({
   startPlay: mockStartPlay,
 });
 const mockUsePlayChanceContext = vi.fn(() => playChance(true));
-vi.mock("@/feature/playChance", () => ({
+// useStartGame이 상대경로로 가져오는 하위 모듈을 목으로 잡는다(배럴 목 불가).
+vi.mock("@/feature/playChance/hooks/useFullScreenAd", () => ({
   useFullScreenAd: () => mockUseFullScreenAd(),
+}));
+vi.mock("@/feature/playChance/model/playChanceContext", () => ({
   usePlayChanceContext: () => mockUsePlayChanceContext(),
 }));
+
+// getAnonymousHash만 고정값으로 덮고 나머지(useToast·useExitGuard 등)는 실제 구현 유지.
+vi.mock("@/shared/lib", async () => {
+  const actual =
+    await vi.importActual<typeof import("@/shared/lib")>("@/shared/lib");
+  return {
+    ...actual,
+    getAnonymousHash: vi.fn().mockResolvedValue("test-hash"),
+  };
+});
 
 const mockRouteState = {
   promptId: 1,
