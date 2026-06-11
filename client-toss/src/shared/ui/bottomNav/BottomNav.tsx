@@ -32,7 +32,10 @@ export const NavItemButton = ({
       className="flex h-12 w-full flex-col items-center justify-center gap-0.5"
     >
       <MaskedIcon src={iconUrl} color={color} size={22} />
-      <span className="text-xs font-medium" style={{ color }}>
+      <span
+        className="text-[11px] font-medium whitespace-nowrap"
+        style={{ color }}
+      >
         {label}
       </span>
     </button>

@@ -1,10 +1,11 @@
 import { usePodium } from "@/entities/podium";
+import { brainImg, painterMan2Img } from "@/shared/assets/images";
 import { ShareSheet } from "@/feature/share";
 import { Button } from "@toss/tds-mobile";
 import { type ReactNode, useState } from "react";
 
 interface StatPillProps {
-  icon: string;
+  icon: ReactNode;
   label: string;
   value: string;
 }
@@ -37,22 +38,40 @@ const ChallengeCard = ({ cta }: ChallengeCardProps) => {
     <section className="rounded-(--radius-card) bg-(--color-card-yellow) p-5">
       <div className="flex items-stretch justify-between gap-3">
         <div className="flex flex-col gap-4">
-          <h2 className="text-xl leading-snug font-bold whitespace-nowrap text-(--color-black)">
-            10초 동안 기억하고
+          <h2 className="text-[22px] leading-tight font-bold whitespace-nowrap text-(--color-black)">
+            <span className="text-(--color-bronze)">10초</span> 동안{" "}
+            <span className="text-2xl text-(--color-bronze)">기억</span>하고
             <br />
-            30초 동안 그려요
+            <span className="text-(--color-bronze)">30초</span> 동안{" "}
+            <span className="text-2xl text-(--color-bronze)">그려요</span>
           </h2>
           <div className="flex flex-col items-start gap-2">
-            <StatPill icon="👥" label="오늘 참가자" value={participantText} />
-            <StatPill icon="🔥" label="오늘 최고점" value={topScore} />
+            <StatPill
+              icon={
+                <img
+                  src={painterMan2Img}
+                  alt=""
+                  className="h-6 w-6 object-contain"
+                />
+              }
+              label="오늘 참가자"
+              value={participantText}
+            />
+            <StatPill
+              icon={
+                <img src={brainImg} alt="" className="h-6 w-6 object-contain" />
+              }
+              label="오늘 최고점"
+              value={topScore}
+            />
           </div>
         </div>
         {/* 오늘의 그림은 도전 전까지 가려져 있어 ? placeholder로 표시.
             박스 높이는 왼쪽(제목+칩) 컬럼 높이에 맞춰 stretch된다. */}
-        <div className="flex w-28 shrink-0 items-center justify-center rounded-(--radius-inner) bg-(--color-card)">
+        <div className="flex w-28 min-w-0 shrink items-center justify-center rounded-(--radius-inner) bg-(--color-card)">
           <span
             aria-hidden
-            className="flex h-20 w-20 items-center justify-center rounded-full bg-(--color-gold) text-4xl font-bold text-white"
+            className="flex aspect-square w-[71%] items-center justify-center rounded-full bg-(--color-gold) text-4xl font-bold text-white"
           >
             ?
           </span>

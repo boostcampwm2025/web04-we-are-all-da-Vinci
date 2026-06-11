@@ -46,7 +46,7 @@ const PlayCtaButton = ({
         disabled={isStarting}
         onClick={onStart}
       >
-        {`광고 없이 ${chanceCount}번 도전`}
+        {`광고 없이 ${chanceCount}회 도전하기`}
       </Button>
     );
   }

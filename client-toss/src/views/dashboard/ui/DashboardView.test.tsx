@@ -218,7 +218,7 @@ describe("DashboardView", () => {
       expect(screen.getByTestId("challenge-card")).toBeInTheDocument();
     });
 
-    await user.click(screen.getByText(/광고 없이.*번 도전/));
+    await user.click(screen.getByText(/광고 없이.*회 도전하기/));
 
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith("/memorize", expect.anything());

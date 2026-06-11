@@ -21,27 +21,45 @@ const MissionTile = ({ label, point, done }: TodayMission) => (
         {label}
       </span>
     </div>
-    <span className="self-start rounded-full bg-(--color-page) px-2 py-0.5 text-xs font-bold text-(--color-toss-blue)">
+    {/* 미완 미션은 보상 pill을 채운 파랑으로 강조해 "도전해서 받기"를 유도(재도전 레버) */}
+    <span
+      className={`self-start rounded-full px-2 py-0.5 text-xs font-bold ${
+        done
+          ? "bg-(--color-page) text-(--color-toss-blue)"
+          : "bg-(--color-toss-blue) text-white"
+      }`}
+    >
       +{point}P
     </span>
   </div>
 );
 
-const TodayMissionCard = () => (
-  <section className="rounded-(--radius-card) border border-(--color-card) bg-(--color-page) p-4">
-    <div className="flex items-center justify-between">
-      <h2 className="text-base font-bold text-(--color-black)">오늘의 미션</h2>
-      {/* 포인트 더 받기: 진입 라우트가 아직 없어 비활성 라벨로만 노출 (스왑 시 연결) */}
-      <span className="text-[13px] font-medium text-(--color-grey)">
-        포인트 더 받기 ›
-      </span>
-    </div>
-    <div className="mt-3 flex gap-2">
-      {TODAY_MISSIONS.map((mission) => (
-        <MissionTile key={mission.id} {...mission} />
-      ))}
-    </div>
-  </section>
-);
+const TodayMissionCard = () => {
+  const doneCount = TODAY_MISSIONS.filter((mission) => mission.done).length;
+
+  return (
+    <section className="rounded-(--radius-card) border border-(--color-card) bg-(--color-page) p-4">
+      <div className="flex items-baseline justify-between">
+        <div className="flex items-baseline gap-1.5">
+          <h2 className="text-base font-bold text-(--color-black)">
+            오늘의 미션
+          </h2>
+          <span className="rounded-full bg-(--color-card) px-2 py-0.5 text-[11px] font-bold text-(--color-grey)">
+            {doneCount}/{TODAY_MISSIONS.length}
+          </span>
+        </div>
+        {/* 포인트 더 받기: 진입 라우트가 아직 없어 비활성 라벨로만 노출 (스왑 시 연결) */}
+        <span className="text-[13px] font-medium text-(--color-grey)">
+          포인트 더 받기 ›
+        </span>
+      </div>
+      <div className="mt-3 flex gap-2">
+        {TODAY_MISSIONS.map((mission) => (
+          <MissionTile key={mission.id} {...mission} />
+        ))}
+      </div>
+    </section>
+  );
+};
 
 export default TodayMissionCard;

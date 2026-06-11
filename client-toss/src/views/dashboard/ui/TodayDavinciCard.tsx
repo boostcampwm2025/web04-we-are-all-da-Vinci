@@ -40,7 +40,7 @@ const TodayDavinciCard = () => {
       <button
         type="button"
         onClick={() => navigate("/ranking")}
-        className="flex w-full items-center justify-between"
+        className="flex w-full items-baseline justify-between"
       >
         <h2 className="text-base font-bold text-(--color-black)">
           오늘의 다빈치
