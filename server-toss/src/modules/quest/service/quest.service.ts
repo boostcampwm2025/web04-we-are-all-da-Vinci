@@ -98,7 +98,7 @@ export class QuestService {
     return result;
   }
 
-  // ─── 퀘스트 액션 (방문/공유 등 — 전 period 대상) ───
+  // 퀘스트 액션 (방문, 공유 등)
 
   @Transactional()
   async onActionReported(
@@ -110,32 +110,19 @@ export class QuestService {
     // 같은 유저 동시 요청 직렬화 — 활성 퀘스트 조회 전에 행을 잠근다
     await this.userQuestRepo.lockActiveForUpdate(userKey);
 
-    const dailyWeeklyActive = await this.userQuestRepo.findActiveByObjective(
-      userKey,
-      context.objectiveType,
-      window.todayStart,
-      window.weekStart,
-    );
-    // 튜토리얼은 완료 게이트 뒤 — 완료 유저는 쿼리 없이 []
     const tutorialActive =
       await this.tutorialQuestService.findActiveByObjective(
         userKey,
         context.objectiveType,
       );
 
-    const weeklyMeta = await this.userQuestRepo.findActiveByObjective(
-      userKey,
-      ObjectiveType.QUEST_COMPLETED,
-      window.todayStart,
-      window.weekStart,
-    );
     const tutorialMeta =
       await this.tutorialQuestService.findActiveMeta(userKey);
 
     const result = await this.processor.executeProgressCycle(
       userKey,
-      [...dailyWeeklyActive, ...tutorialActive],
-      [...weeklyMeta, ...tutorialMeta],
+      tutorialActive,
+      tutorialMeta,
       context,
       window,
     );

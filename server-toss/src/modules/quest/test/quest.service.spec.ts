@@ -67,6 +67,7 @@ describe("QuestService", () => {
       findTutorialQuests: jest.fn(async () => []),
       findActiveByObjective: jest.fn(async () => []),
       findActiveDrawingQuests: jest.fn(async () => []),
+      lockActiveForUpdate: jest.fn(async () => undefined),
       flush: jest.fn(async () => undefined),
     };
 
@@ -168,19 +169,21 @@ describe("QuestService", () => {
       });
     });
 
-    describe("SUBMIT 액션으로 퀘스트가 진행되면", () => {
+    // onActionReported는 튜토리얼 전용 — daily/weekly는 onDrawingSubmitted로만 진행
+    describe("액션으로 튜토리얼 퀘스트가 진행되면", () => {
       it("currentCount를 1 증가시키고 lastProgressedAt을 기록한다", async () => {
         const uq = buildUserQuest({
           quest: buildQuest({
-            objectiveType: ObjectiveType.SUBMIT,
+            period: QuestPeriod.TUTORIAL,
+            objectiveType: ObjectiveType.VISIT_RANKING,
             requiredCount: 5,
           }),
           currentCount: 0,
         });
-        userQuestRepository.findActiveByObjective.mockResolvedValueOnce([uq]);
+        tutorialQuestService.findActiveByObjective.mockResolvedValue([uq]);
 
         await service.onActionReported(1234, {
-          objectiveType: ObjectiveType.SUBMIT,
+          objectiveType: ObjectiveType.VISIT_RANKING,
         });
 
         expect(uq.currentCount).toBe(1);
@@ -192,31 +195,36 @@ describe("QuestService", () => {
       it("completedAt을 설정하고 보상을 지급한다", async () => {
         const uq = buildUserQuest({
           quest: buildQuest({
-            objectiveType: ObjectiveType.SUBMIT,
+            period: QuestPeriod.TUTORIAL,
+            objectiveType: ObjectiveType.VISIT_RANKING,
             requiredCount: 1,
             rewardType: RewardType.POINT,
           }),
           currentCount: 0,
         });
-        userQuestRepository.findActiveByObjective.mockResolvedValueOnce([uq]);
+        tutorialQuestService.findActiveByObjective.mockResolvedValue([uq]);
 
         const result = await service.onActionReported(1234, {
-          objectiveType: ObjectiveType.SUBMIT,
+          objectiveType: ObjectiveType.VISIT_RANKING,
         });
 
         expect(uq.completedAt).not.toBeNull();
+        // 퀘스트의 rewardAmount(기본 10)가 그대로 지급 금액으로 전달된다
         expect(pointService.savePointGrantRequest).toHaveBeenCalledWith(
           1234,
           expect.anything(),
+          10,
         );
         expect(result.completed).toContain(uq);
       });
 
-      it("메타퀘스트의 카운트를 완료 건수만큼 증가시킨다", async () => {
+      it("같은 카테고리 튜토리얼 메타 카운트를 완료 건수만큼 증가시킨다", async () => {
         const uq = buildUserQuest({
           id: BigInt(10),
           quest: buildQuest({
-            objectiveType: ObjectiveType.SUBMIT,
+            period: QuestPeriod.TUTORIAL,
+            objectiveType: ObjectiveType.VISIT_RANKING,
+            category: "explore",
             requiredCount: 1,
           }),
           currentCount: 0,
@@ -225,18 +233,19 @@ describe("QuestService", () => {
           id: BigInt(20),
           quest: buildQuest({
             id: BigInt(99),
-            objectiveType: ObjectiveType.QUEST_COMPLETED,
-            requiredCount: 5,
+            period: QuestPeriod.TUTORIAL,
+            objectiveType: ObjectiveType.TUTORIAL_COMPLETED,
+            category: "explore",
+            requiredCount: 3,
           }),
           currentCount: 0,
         });
 
-        userQuestRepository.findActiveByObjective
-          .mockResolvedValueOnce([uq])
-          .mockResolvedValueOnce([metaUq]);
+        tutorialQuestService.findActiveByObjective.mockResolvedValue([uq]);
+        tutorialQuestService.findActiveMeta.mockResolvedValue([metaUq]);
 
         await service.onActionReported(1234, {
-          objectiveType: ObjectiveType.SUBMIT,
+          objectiveType: ObjectiveType.VISIT_RANKING,
         });
 
         expect(metaUq.currentCount).toBe(1);

@@ -10,17 +10,12 @@ import type { CycleResult } from "../quest.types";
 import { QuestRepository } from "../repository/quest.repository";
 import { UserQuestRepository } from "../repository/user-quest.repository";
 
-/**
- * 튜토리얼 퀘스트의 할당·완료 게이트를 소유한다.
- *
- * 튜토리얼 완료는 단조(monotonic) 상태 — 한 번 끝나면 다시 안 한다.
- * 완료 시 `user.tutorialCompletedAt`을 기록하고, 프로세스 수명 동안 완료 유저를
- * 메모리 캐시해 hot path에서 튜토리얼 쿼리를 0으로 만든다.
- */
 @Injectable()
 export class TutorialQuestService {
   private readonly logger = new Logger(TutorialQuestService.name);
 
+  // 튜토리얼이 끝난 유저를 캐시
+  // 유저 액션에 반복해서 튜토리얼을 체크하는 동작을 방지하기 위함.
   private readonly completedCache = new Set<number>();
 
   constructor(
@@ -36,7 +31,6 @@ export class TutorialQuestService {
   async isCompleted(userKey: number): Promise<boolean> {
     if (this.completedCache.has(userKey)) return true;
 
-    // 같은 요청에서 이미 User가 로드됐으면 identity map 히트 (쿼리 0)
     const user = await this.em.findOne(User, userKey);
     if (user?.tutorialCompletedAt != null) {
       this.completedCache.add(userKey);
@@ -44,8 +38,6 @@ export class TutorialQuestService {
     }
     return false;
   }
-
-  // ─── 게이트드 read — 완료 유저는 쿼리 없이 [] ───
 
   async findActiveDrawing(userKey: number): Promise<UserQuest[]> {
     if (await this.isCompleted(userKey)) return [];
@@ -67,8 +59,6 @@ export class TutorialQuestService {
     if (await this.isCompleted(userKey)) return [];
     return this.userQuestRepository.findActiveTutorialMeta(userKey);
   }
-
-  // ─── 할당 (가입 시 1회) ───
 
   async ensureTutorialAssigned(userKey: number): Promise<void> {
     const existing = await this.userQuestRepository.findTutorialQuests(userKey);
