@@ -6,7 +6,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from "@nestjs/common";
-import { TutorialQuestService } from "src/modules/quest/service/tutorial-quest.service";
+import { TutorialMissionService } from "src/modules/mission/service/tutorial-mission.service";
 import { generateNickname } from "src/modules/user/lib/nickname-generator";
 import { User } from "src/modules/user/user.entity";
 import { UserRepository } from "src/modules/user/user.repository";
@@ -19,7 +19,7 @@ export class UserService {
     @InjectRepository(User)
     private readonly userRepository: UserRepository,
     private readonly em: EntityManager,
-    private readonly tutorialQuestService: TutorialQuestService,
+    private readonly tutorialMissionService: TutorialMissionService,
   ) {}
 
   async upsert(data: {
@@ -90,9 +90,9 @@ export class UserService {
     this.em.persist(user);
     await this.em.flush();
 
-    // 신규 유저에게 튜토리얼 퀘스트를 가입 시점에 1회 eager 할당
-    // (이후 퀘스트 hot path에서는 튜토리얼 할당을 보장하지 않는다)
-    await this.tutorialQuestService.ensureTutorialAssigned(user.userKey);
+    // 신규 유저에게 튜토리얼 미션을 가입 시점에 1회 eager 할당
+    // (이후 미션 hot path에서는 튜토리얼 할당을 보장하지 않는다)
+    await this.tutorialMissionService.ensureTutorialAssigned(user.userKey);
 
     return user;
   }

@@ -1,5 +1,5 @@
 import AnalyticsTracker from "@/app/config/AnalyticsTracker";
-import { QuestView } from "@/views/quest";
+import { MissionView } from "@/views/mission";
 import { ArchiveView } from "@/views/archive";
 import { DashboardView } from "@/views/dashboard";
 import { Drawing } from "@/views/drawing";
@@ -31,7 +31,7 @@ export const router = createBrowserRouter([
       { path: "/archive", element: <ArchiveView /> },
       { path: "/submitted", element: <SubmittedView /> },
       { path: "/drawing/:drawingId", element: <RankingDetailView /> },
-      { path: "/mission", element: <QuestView /> },
+      { path: "/mission", element: <MissionView /> },
     ],
   },
 ]);

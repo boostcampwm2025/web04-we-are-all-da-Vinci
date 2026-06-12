@@ -954,7 +954,7 @@
         },
         "point_reason": {
           "name": "point_reason",
-          "type": "enum('ad','share','drawing','quest')",
+          "type": "enum('ad','share','drawing','mission')",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -1189,7 +1189,7 @@
         },
         "point_reason": {
           "name": "point_reason",
-          "type": "enum('ad','share','drawing','quest')",
+          "type": "enum('ad','share','drawing','mission')",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -1318,7 +1318,7 @@
       "comment": ""
     },
     {
-      "name": "quests",
+      "name": "missions",
       "columns": {
         "id": {
           "name": "id",
@@ -1412,7 +1412,7 @@
         },
         "objective_type": {
           "name": "objective_type",
-          "type": "enum('submit','score','penalty','daily_submit','daily_score','quest_completed','visit_ranking','visit_podium','visit_quest_tab','visit_drawing_detail','share','retry','tutorial_completed')",
+          "type": "enum('submit','score','penalty','daily_submit','daily_score','mission_completed','visit_ranking','visit_podium','visit_mission_tab','visit_drawing_detail','share','retry','tutorial_completed')",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -1429,10 +1429,10 @@
             "penalty",
             "daily_submit",
             "daily_score",
-            "quest_completed",
+            "mission_completed",
             "visit_ranking",
             "visit_podium",
-            "visit_quest_tab",
+            "visit_mission_tab",
             "visit_drawing_detail",
             "share",
             "retry",
@@ -2015,7 +2015,7 @@
       "comment": ""
     },
     {
-      "name": "user_quests",
+      "name": "user_missions",
       "columns": {
         "id": {
           "name": "id",
@@ -2077,8 +2077,8 @@
           "comment": null,
           "enumItems": []
         },
-        "quest_id": {
-          "name": "quest_id",
+        "mission_id": {
+          "name": "mission_id",
           "type": "bigint",
           "unsigned": true,
           "autoincrement": false,
@@ -2132,15 +2132,15 @@
           "constraint": true
         },
         {
-          "columnNames": ["quest_id"],
-          "keyName": "user_quests_quest_id_index",
+          "columnNames": ["mission_id"],
+          "keyName": "user_missions_mission_id_index",
           "unique": false,
           "primary": false,
           "constraint": false
         },
         {
-          "columnNames": ["user_key", "created_at", "quest_id"],
-          "keyName": "user_quests_user_key_created_at_quest_id_unique",
+          "columnNames": ["user_key", "created_at", "mission_id"],
+          "keyName": "user_missions_user_key_created_at_mission_id_unique",
           "unique": true,
           "primary": false,
           "constraint": true,
@@ -2148,7 +2148,7 @@
         },
         {
           "columnNames": ["user_key"],
-          "keyName": "user_quests_user_key_index",
+          "keyName": "user_missions_user_key_index",
           "unique": false,
           "primary": false,
           "constraint": false
@@ -2156,19 +2156,19 @@
       ],
       "checks": [],
       "foreignKeys": {
-        "user_quests_quest_id_foreign": {
-          "columnNames": ["quest_id"],
-          "constraintName": "user_quests_quest_id_foreign",
-          "localTableName": "user_quests",
-          "referencedTableName": "quests",
+        "user_missions_mission_id_foreign": {
+          "columnNames": ["mission_id"],
+          "constraintName": "user_missions_mission_id_foreign",
+          "localTableName": "user_missions",
+          "referencedTableName": "missions",
           "referencedColumnNames": ["id"],
           "updateRule": "no action",
           "deleteRule": "no action"
         },
-        "user_quests_user_key_foreign": {
+        "user_missions_user_key_foreign": {
           "columnNames": ["user_key"],
-          "constraintName": "user_quests_user_key_foreign",
-          "localTableName": "user_quests",
+          "constraintName": "user_missions_user_key_foreign",
+          "localTableName": "user_missions",
           "referencedTableName": "users",
           "referencedColumnNames": ["user_key"],
           "updateRule": "no action",

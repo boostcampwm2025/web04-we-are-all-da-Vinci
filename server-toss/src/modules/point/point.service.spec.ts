@@ -333,11 +333,11 @@ describe("PointService", () => {
           pointGrantRequestRepository: repository,
         });
 
-        await service.savePointGrantRequest(1234, PointReason.QUEST, 7);
+        await service.savePointGrantRequest(1234, PointReason.MISSION, 7);
 
         expect(repository.create).toHaveBeenCalledWith(
           expect.objectContaining({
-            reason: PointReason.QUEST,
+            reason: PointReason.MISSION,
             pointAmount: 7,
           }),
         );
@@ -351,7 +351,7 @@ describe("PointService", () => {
           pointGrantRequestRepository: repository,
         });
 
-        await service.savePointGrantRequest(1234, PointReason.QUEST);
+        await service.savePointGrantRequest(1234, PointReason.MISSION);
 
         expect(repository.create).toHaveBeenCalledWith(
           expect.objectContaining({ pointAmount: PROMOTION_AMOUNT }),

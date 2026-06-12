@@ -9,7 +9,7 @@ import { Injectable } from "@nestjs/common";
 import { DrawingRepository } from "../drawing.repository";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Transactional } from "@mikro-orm/decorators/legacy";
-import { QuestService } from "src/modules/quest/service/quest.service";
+import { MissionService } from "src/modules/mission/service/mission.service";
 
 export type SaveDrawingResult = {
   drawing: Drawing;
@@ -22,7 +22,7 @@ export class SaveDrawingService {
     @InjectRepository(Drawing)
     private readonly drawingRepository: DrawingRepository,
     private readonly rankingService: RankingService,
-    private readonly questService: QuestService,
+    private readonly missionService: MissionService,
   ) {}
 
   @Transactional()
@@ -45,7 +45,7 @@ export class SaveDrawingService {
       drawing,
     );
 
-    await this.questService.onDrawingSubmitted(user.userKey, {
+    await this.missionService.onDrawingSubmitted(user.userKey, {
       drawingId: drawing.id,
       score: similarity.score,
       penalty: similarity.penalty,

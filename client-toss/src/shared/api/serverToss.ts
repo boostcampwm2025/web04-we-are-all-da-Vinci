@@ -5,7 +5,7 @@ import type {
   ArchiveDayResponse,
   ArchiveSummaryResponse,
   MyDrawingResponse,
-  QuestAction,
+  MissionAction,
   NotificationAgreementRequest,
   ShareSdkPayload,
   Stroke,
@@ -17,7 +17,7 @@ import {
   ChargeResponseSchema,
   LoginResponseSchema,
   MyChanceResponseSchema,
-  MyQuestsResponseSchema,
+  MyMissionsResponseSchema,
   NotificationAgreementResponseSchema,
   PodiumResponseSchema,
   PromptResponseSchema,
@@ -281,16 +281,16 @@ export const serverTossApi = {
       }),
     ),
 
-  getMyQuests: async (options?: RequestOptions) =>
-    MyQuestsResponseSchema.parse(
-      await request<unknown>("GET", "/quests/me", undefined, options),
+  getMyMissions: async (options?: RequestOptions) =>
+    MyMissionsResponseSchema.parse(
+      await request<unknown>("GET", "/missions/me", undefined, options),
     ),
 
-  assignMyQuests: async (options?: RequestOptions) =>
-    MyQuestsResponseSchema.parse(
-      await request<unknown>("POST", "/quests/me", undefined, options),
+  assignMyMissions: async (options?: RequestOptions) =>
+    MyMissionsResponseSchema.parse(
+      await request<unknown>("POST", "/missions/me", undefined, options),
     ),
 
-  reportQuestAction: (actionType: QuestAction["actionType"]) =>
-    request<void>("POST", "/quests/action", { actionType }),
+  reportMissionAction: (actionType: MissionAction["actionType"]) =>
+    request<void>("POST", "/missions/action", { actionType }),
 };

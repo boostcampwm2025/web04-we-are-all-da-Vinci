@@ -1,3 +1,3 @@
 export { useAbortableQuery } from "./useAbortableQuery";
-export { useQuestAction } from "./useQuestAction";
+export { useMissionAction } from "./useMissionAction";
 export { useViewableImpression } from "./useViewableImpression";

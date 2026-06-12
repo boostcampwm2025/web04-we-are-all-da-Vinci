@@ -23,7 +23,7 @@ import { RankingRepository } from "../../ranking/ranking.repository";
 import { RankingService } from "../../ranking/ranking.service";
 import { SaveDrawingService } from "../service/save-drawing.service";
 import { PointService } from "src/modules/point/point.service";
-import { QuestService } from "src/modules/quest/service/quest.service";
+import { MissionService } from "src/modules/mission/service/mission.service";
 
 describe("SaveDrawingService", () => {
   let orm: MikroORM;
@@ -33,7 +33,7 @@ describe("SaveDrawingService", () => {
   let drawingRepository: DrawingRepository;
   let rankingRepository: RankingRepository;
   let pointService: { savePointGrantRequest: jest.Mock };
-  let questService: { onDrawingSubmitted: jest.Mock };
+  let missionService: { onDrawingSubmitted: jest.Mock };
 
   let givenUsers: User[];
   let givenPrompt: Prompt;
@@ -60,7 +60,7 @@ describe("SaveDrawingService", () => {
       savePointGrantRequest: jest.fn(() => true),
     };
 
-    questService = {
+    missionService = {
       onDrawingSubmitted: jest.fn(async () =>
         Promise.resolve({ completed: [], metaCompleted: [] }),
       ),
@@ -77,7 +77,7 @@ describe("SaveDrawingService", () => {
         SaveDrawingService,
         RankingService,
         { provide: PointService, useValue: pointService },
-        { provide: QuestService, useValue: questService },
+        { provide: MissionService, useValue: missionService },
       ],
     }).compile();
 

@@ -9,8 +9,8 @@ const { AdView } = require("./dist/modules/chance/ad-view.entity");
 const { Ranking } = require("./dist/modules/ranking/ranking.entity");
 const { PlayChance } = require("./dist/modules/chance/play-chance.entity");
 const { ShareLog } = require("./dist/modules/chance/share-log.entity");
-const { Quest } = require("./dist/modules/quest/entity/quest.entity");
-const { UserQuest } = require("./dist/modules/quest/entity/user-quest.entity");
+const { Mission } = require("./dist/modules/mission/entity/mission.entity");
+const { UserMission } = require("./dist/modules/mission/entity/user-mission.entity");
 const {
   SentNotification,
 } = require("./dist/modules/notification/sent-notification.entity");
@@ -41,8 +41,8 @@ module.exports = defineConfig({
     Ranking,
     PlayChance,
     ShareLog,
-    Quest,
-    UserQuest,
+    Mission,
+    UserMission,
     SentNotification,
     NotificationAgreement,
     PointGrantRequest,
