@@ -30,6 +30,20 @@ export const MyMissionsResponseSchema = z.object({
 });
 export type MyMissionsResponse = z.infer<typeof MyMissionsResponseSchema>;
 
+// GET /missions/today 응답 (대시보드 카드용 경량 — 오늘의 일일 미션만)
+export const TodayMissionItemSchema = z.object({
+  missionId: z.number().int(),
+  title: z.string(),
+  rewardAmount: z.number().int().min(0),
+  done: z.boolean(),
+});
+export type TodayMissionItem = z.infer<typeof TodayMissionItemSchema>;
+
+export const TodayMissionsResponseSchema = z.object({
+  missions: z.array(TodayMissionItemSchema),
+});
+export type TodayMissionsResponse = z.infer<typeof TodayMissionsResponseSchema>;
+
 // POST /missions/action 요청
 export const MissionActionSchema = z.object({
   actionType: z.enum([
