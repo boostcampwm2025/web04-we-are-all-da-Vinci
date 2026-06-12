@@ -20,12 +20,12 @@
     "rewardAmount": 5
   },
   {
-    "title": "오늘 80점 이상 1번 달성",
+    "title": "오늘 그림 2번 제출",
     "period": "daily",
     "isFixed": false,
-    "objectiveType": "score",
-    "requiredCount": 1,
-    "threshold": 80,
+    "objectiveType": "submit",
+    "requiredCount": 2,
+    "threshold": null,
     "rewardType": "point",
     "rewardAmount": 5
   },
@@ -40,11 +40,11 @@
     "rewardAmount": 5
   },
   {
-    "title": "이번 주 3일 동안 그림 제출",
+    "title": "이번 주 4일 동안 그림 제출",
     "period": "weekly",
     "isFixed": false,
     "objectiveType": "daily_submit",
-    "requiredCount": 3,
+    "requiredCount": 4,
     "threshold": null,
     "rewardType": "point",
     "rewardAmount": 5,
