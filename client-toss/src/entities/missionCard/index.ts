@@ -1,4 +1,5 @@
 export { useMyMissions } from "./hooks/useMyMissions";
+export { useTodayMissions } from "./hooks/useTodayMissions";
 export { MISSION_SECTIONS, REWARD_LABEL } from "./config/constants";
 export type { MissionSectionConfig } from "./config/constants";
 export { default as MissionCard } from "./ui/MissionCard";

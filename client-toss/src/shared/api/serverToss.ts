@@ -23,6 +23,7 @@ import {
   PromptResponseSchema,
   SimilarityResponseSchema,
   SubmitDrawingResponseSchema,
+  TodayMissionsResponseSchema,
   UserInfoResponseSchema,
 } from "@toss/shared";
 
@@ -284,6 +285,11 @@ export const serverTossApi = {
   getMyMissions: async (options?: RequestOptions) =>
     MyMissionsResponseSchema.parse(
       await request<unknown>("GET", "/missions/me", undefined, options),
+    ),
+
+  getTodayMissions: async (options?: RequestOptions) =>
+    TodayMissionsResponseSchema.parse(
+      await request<unknown>("GET", "/missions/today", undefined, options),
     ),
 
   assignMyMissions: async (options?: RequestOptions) =>
