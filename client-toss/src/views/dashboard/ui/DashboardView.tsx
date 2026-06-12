@@ -96,7 +96,7 @@ const DashboardView = () => {
         onClose={toast.close}
       />
 
-      <main className="min-h-0 flex-1 overflow-y-auto px-(--page-px) pt-3 pb-[calc(env(safe-area-inset-bottom)+56px)]">
+      <main className="min-h-0 flex-1 overflow-y-auto px-(--page-px) pt-3 pb-[calc(env(safe-area-inset-bottom)+72px)]">
         <div className="flex flex-col gap-3">
           <StreakStatsCard />
           <ChallengeCard cta={cta} />

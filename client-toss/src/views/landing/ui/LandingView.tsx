@@ -40,14 +40,14 @@ const LandingView = ({ onStart }: LandingViewProps) => {
   return (
     <div
       data-no-safe-area-bottom
-      className="pt-8 relative flex h-full flex-col overflow-hidden bg-(--color-page)"
+      className="landing-root pt-[clamp(0.75rem,3vh,2rem)] relative flex h-full flex-col overflow-hidden bg-(--color-page)"
     >
       <div
         ref={confettiRef}
         className="pointer-events-none absolute inset-0 overflow-hidden"
       />
 
-      <section className="relative z-10 mt-6 px-(--page-px) text-center">
+      <section className="relative z-10 mt-[clamp(0.5rem,2.5vh,1.5rem)] px-(--page-px) text-center">
         <p
           className="text-sm font-semibold"
           style={{ color: "rgba(0,12,30,0.55)" }}
@@ -55,7 +55,7 @@ const LandingView = ({ onStart }: LandingViewProps) => {
           그림 그리고 파악하는 나의 기억력
         </p>
         <h1
-          className="mt-2 mb-3 text-3xl font-extrabold leading-tight"
+          className="mt-2 mb-3 text-[clamp(1.5rem,5vh,1.875rem)] font-extrabold leading-tight"
           style={{ color: "rgba(0,12,30,0.88)" }}
         >
           당신의 기억력
@@ -69,8 +69,8 @@ const LandingView = ({ onStart }: LandingViewProps) => {
           매일 기억력 테스트하고 토스 포인트 받아요!
         </p>
       </section>
-      <section className="relative z-10 mt-4 flex flex-1 items-center justify-center">
-        <div className="landing-float relative w-full max-w-sm px-4">
+      <section className="relative z-10 mt-[clamp(0.5rem,2vh,1rem)] flex min-h-0 flex-1 items-center justify-center">
+        <div className="landing-float relative flex h-full w-full max-w-sm items-center justify-center px-4">
           <span
             className="absolute top-20 right-8 flex h-1.5 w-1.5 animate-ping rounded-full bg-blue-300 opacity-60"
             style={{ animationDelay: "0.5s" }}
@@ -87,17 +87,17 @@ const LandingView = ({ onStart }: LandingViewProps) => {
           >
             ((
           </span>
-          <div className="bottom-16 relative z-10 flex aspect-square w-full items-center justify-center">
+          <div className="landing-mascot bottom-[clamp(0rem,4vh,4rem)] relative z-10 flex h-full max-h-full w-full items-center justify-center">
             <img
               src={landing}
               alt="우리 모두 다빈치 마스코트"
-              className="h-full w-full object-contain drop-shadow-xl"
+              className="h-full max-h-full w-full object-contain drop-shadow-xl"
             />
           </div>
         </div>
       </section>
       <div className="pointer-events-none absolute bottom-0 h-32 w-full bg-linear-to-t from-(--color-page) to-transparent" />
-      <footer className="relative z-10 flex flex-col items-center gap-4 px-(--page-px) pt-3 pb-[env(safe-area-inset-bottom)]">
+      <footer className="relative z-10 flex flex-col items-center gap-[clamp(0.5rem,2vh,1rem)] px-(--page-px) pt-[clamp(0.5rem,1.5vh,0.75rem)] pb-[env(safe-area-inset-bottom)]">
         <div
           className="landing-float flex items-center gap-2"
           style={{ animationDuration: "3s" }}

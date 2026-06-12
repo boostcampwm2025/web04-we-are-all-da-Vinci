@@ -104,10 +104,12 @@ interface SummaryStatProps {
 }
 
 const SummaryStat = ({ iconName, label, value, unit }: SummaryStatProps) => (
-  <div className="flex min-w-0 flex-col items-center gap-1.5 border-r border-[#E5E8EB] px-2 last:border-r-0">
+  <div className="flex min-w-0 flex-col items-center gap-1.5 border-r border-[#E5E8EB] px-1 first:pl-0 last:border-r-0 last:pr-0">
     <Asset.Icon name={iconName} size="small" shape="original" alt="" />
-    <div className="text-xs font-medium text-(--color-grey)">{label}</div>
-    <div className="min-w-0 text-(--color-black)">
+    <div className="text-[11px] font-medium whitespace-nowrap text-(--color-grey)">
+      {label}
+    </div>
+    <div className="min-w-0 whitespace-nowrap text-(--color-black)">
       <span className="text-xl font-bold">{value}</span>
       {unit && <span className="text-sm font-normal">{unit}</span>}
     </div>
@@ -249,7 +251,7 @@ const ArchiveView = () => {
       />
 
       <section className="px-(--page-px)">
-        <div className="grid grid-cols-4 gap-0 rounded-(--radius-card) border border-[#E5E8EB] bg-white p-4 shadow-sm">
+        <div className="grid grid-cols-4 gap-0 rounded-(--radius-card) border border-[#E5E8EB] bg-white py-4 shadow-sm">
           <SummaryStat
             iconName="icon-calendar-check-yellow"
             label="그린 날"
@@ -459,7 +461,7 @@ const ArchiveView = () => {
                 onClick={() => setIsScoreDetailOpen(true)}
                 className="mt-5"
               >
-                기억력 점수 분석
+                기억력 점수 분석 보기
               </Button>
             </div>
           ) : null}

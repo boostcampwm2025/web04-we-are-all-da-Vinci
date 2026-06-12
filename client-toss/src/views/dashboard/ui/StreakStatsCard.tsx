@@ -4,6 +4,7 @@ import {
   STREAK_BONUS_POINT,
   STREAK_DAYS,
   TODAY_POINTS,
+  TOTAL_POINTS,
 } from "../config/dashboardMock";
 
 interface StatItemProps {
@@ -12,8 +13,8 @@ interface StatItemProps {
 }
 
 const StatItem = ({ label, value }: StatItemProps) => (
-  <div className="flex flex-1 flex-col items-start gap-1.5 px-3">
-    <span className="text-[13px] whitespace-nowrap text-(--color-grey)">
+  <div className="flex min-w-0 flex-1 flex-col items-center gap-1.5 px-1">
+    <span className="text-[11px] whitespace-nowrap text-(--color-grey)">
       {label}
     </span>
     <span className="text-[17px] leading-none font-bold text-(--color-black)">
@@ -28,7 +29,7 @@ const StreakStatsCard = () => {
 
   // 로딩 중에는 myRanking이 undefined → found=false → 두 값 모두 "-"로 표시
   const found = myRanking?.state === "FOUND";
-  const scoreText = found ? `${myRanking.ranking.score}` : "-";
+  const scoreText = found ? `${myRanking.ranking.score}점` : "-";
   const rankText = found ? `${myRanking.ranking.rank}위` : "-";
 
   return (
@@ -49,7 +50,7 @@ const StreakStatsCard = () => {
               <span className="text-base">연속 참여 중!</span>
             </p>
             <p className="mt-1 text-[13px] text-(--color-grey)">
-              내일도 참여하면 +{STREAK_BONUS_POINT}P
+              내일도 참여하면 최대 {STREAK_BONUS_POINT}P
             </p>
           </div>
         </div>
@@ -67,11 +68,13 @@ const StreakStatsCard = () => {
       </div>
 
       <div className="mt-5 flex items-stretch rounded-(--radius-inner) bg-(--color-page) py-4">
-        <StatItem label="당일 획득 포인트" value={`${TODAY_POINTS}P`} />
+        <StatItem label="누적 포인트" value={`${TOTAL_POINTS}P`} />
         <div className="my-1 w-px self-stretch bg-(--color-card)" />
-        <StatItem label="기억력 점수" value={scoreText} />
+        <StatItem label="오늘 포인트" value={`${TODAY_POINTS}P`} />
         <div className="my-1 w-px self-stretch bg-(--color-card)" />
-        <StatItem label="오늘 순위" value={rankText} />
+        <StatItem label="오늘 점수" value={scoreText} />
+        <div className="my-1 w-px self-stretch bg-(--color-card)" />
+        <StatItem label="현재 순위" value={rankText} />
       </div>
     </section>
   );

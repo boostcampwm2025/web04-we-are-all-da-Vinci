@@ -49,7 +49,7 @@ const PlayNavButton = () => {
           )}
         </span>
         <span
-          className="text-xs font-medium"
+          className="text-[11px] font-medium whitespace-nowrap"
           style={{ color: "var(--color-grey)" }}
         >
           테스트 시작
