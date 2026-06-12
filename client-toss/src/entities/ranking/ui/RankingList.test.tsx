@@ -1,5 +1,5 @@
 /// <reference types="@testing-library/jest-dom/vitest" />
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -11,7 +11,6 @@ vi.mock("../hooks/useRankingList", () => ({
 }));
 
 vi.mock("@toss/tds-mobile", () => ({
-  List: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
   Skeleton: () => <div data-testid="ranking-list-skeleton" />,
   Paragraph: Object.assign(
     ({ children }: { children?: ReactNode }) => <div>{children}</div>,
@@ -21,21 +20,20 @@ vi.mock("@toss/tds-mobile", () => ({
   ),
 }));
 
-vi.mock("./RankingEntry", () => ({
-  RankingEntry: ({
-    nickname,
-    score,
-    isMe,
-  }: {
-    nickname: string;
-    score: number;
-    isMe: boolean;
-  }) => (
-    <div>
-      <span>{isMe ? `${nickname} (나)` : nickname}</span>
-      <span>{score}점</span>
-    </div>
+vi.mock("@/entities/drawingCanvas", () => ({
+  StaticDrawingCanvas: ({ ariaLabel }: { ariaLabel?: string }) => (
+    <div role="img" aria-label={ariaLabel} />
   ),
+}));
+
+vi.mock("@/entities/myScoreCard", () => ({
+  DrawingScoreDetailSheet: ({
+    open,
+    title,
+  }: {
+    open: boolean;
+    title?: ReactNode;
+  }) => (open ? <div role="dialog">{title}</div> : null),
 }));
 
 const mockUseRankingList = vi.mocked(useRankingList);
@@ -65,7 +63,7 @@ describe("RankingList", () => {
     ).toBeInTheDocument();
   });
 
-  it("랭킹 목록이 있으면 항목을 렌더링한다", () => {
+  it("랭킹 목록이 있으면 캔버스 갤러리 항목을 렌더링한다", () => {
     mockUseRankingList.mockReturnValue({
       rankingList: [
         {
@@ -84,7 +82,15 @@ describe("RankingList", () => {
 
     render(<RankingList />);
 
-    expect(screen.getByText("김동권닉 (나)")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: "1위 김동권닉 그림 상세 보기",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "1위 김동권닉 그림" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("1")).toBeInTheDocument();
     expect(
       screen.queryByText(
         "아직 아무도 그림을 제출하지 않았어요 첫 번째 플레이어가 되어보세요!",
@@ -92,7 +98,7 @@ describe("RankingList", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("본인이 아닌 항목에는 (나) 라벨이 붙지 않는다", () => {
+  it("캔버스를 클릭하면 순위와 닉네임이 포함된 상세 시트를 연다", () => {
     mockUseRankingList.mockReturnValue({
       rankingList: [
         {
@@ -114,7 +120,12 @@ describe("RankingList", () => {
 
     render(<RankingList />);
 
-    expect(screen.getByText("다른유저")).toBeInTheDocument();
-    expect(screen.queryByText("다른유저 (나)")).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "2위 다른유저 그림 상세 보기",
+      }),
+    );
+
+    expect(screen.getByRole("dialog")).toHaveTextContent("2위 다른유저");
   });
 });
