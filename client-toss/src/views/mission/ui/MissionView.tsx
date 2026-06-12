@@ -30,7 +30,10 @@ const MissionView = () => {
     tutorialCategories.every((cat) => cat.isCompleted);
 
   return (
-    <div className="space-y-6 pb-4">
+    <div
+      data-no-safe-area-bottom
+      className="space-y-6 pb-[calc(env(safe-area-inset-bottom)+72px)]"
+    >
       {!allTutorialCompleted && (
         <TutorialMissionSection
           categories={tutorialCategories}
