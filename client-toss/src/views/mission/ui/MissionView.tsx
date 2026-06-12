@@ -46,12 +46,6 @@ const MissionView = () => {
         missions={weeklyMissions}
         section={MISSION_SECTIONS.weekly}
       />
-      {allTutorialCompleted && (
-        <TutorialMissionSection
-          categories={tutorialCategories}
-          defaultOpen={false}
-        />
-      )}
     </div>
   );
 };
