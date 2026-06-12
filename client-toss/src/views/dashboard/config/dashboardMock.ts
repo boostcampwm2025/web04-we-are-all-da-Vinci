@@ -15,24 +15,3 @@ export const TOTAL_POINTS = 128;
 
 /** 내일도 참여하면 받는 보너스 포인트 */
 export const STREAK_BONUS_POINT = 10;
-
-export interface TodayMission {
-  id: string;
-  /** 미션 설명 — 해요체 카피 */
-  label: string;
-  /** 달성 시 지급 포인트 */
-  point: number;
-  /** 달성 여부 */
-  done: boolean;
-}
-
-/** 오늘의 미션 목록 */
-export const TODAY_MISSIONS: TodayMission[] = [
-  {
-    id: "no-penalty",
-    label: "감점 없이 그림 1번 제출하기",
-    point: 2,
-    done: true,
-  },
-  { id: "score-70", label: "70점 이상 받기", point: 2, done: false },
-];
