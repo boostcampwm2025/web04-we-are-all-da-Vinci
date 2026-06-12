@@ -5,6 +5,7 @@ import {
 } from "src/common/errors/external.errors";
 import { PointGrantStatus } from "./entity/point-grant-request.entity";
 import { PointReason } from "./entity/point-log.entity";
+import { PROMOTION_AMOUNT } from "./point.contants";
 import { PointService } from "./point.service";
 
 const FIXED_NOW = new Date("2026-05-25T00:00:00.000Z");
@@ -320,6 +321,41 @@ describe("PointService", () => {
         expect(request2.processing).toHaveBeenCalledTimes(1);
         expect(repository.__flush).toHaveBeenCalledTimes(1);
         expect(result).toEqual([request1, request2]);
+      });
+    });
+  });
+
+  describe("savePointGrantRequest", () => {
+    describe("지급 금액을 명시한 경우", () => {
+      it("전달한 pointAmount로 요청을 생성한다", async () => {
+        const repository = buildPointGrantRequestRepository();
+        const service = buildService({
+          pointGrantRequestRepository: repository,
+        });
+
+        await service.savePointGrantRequest(1234, PointReason.QUEST, 7);
+
+        expect(repository.create).toHaveBeenCalledWith(
+          expect.objectContaining({
+            reason: PointReason.QUEST,
+            pointAmount: 7,
+          }),
+        );
+      });
+    });
+
+    describe("지급 금액을 생략한 경우", () => {
+      it("PROMOTION_AMOUNT로 폴백한다", async () => {
+        const repository = buildPointGrantRequestRepository();
+        const service = buildService({
+          pointGrantRequestRepository: repository,
+        });
+
+        await service.savePointGrantRequest(1234, PointReason.QUEST);
+
+        expect(repository.create).toHaveBeenCalledWith(
+          expect.objectContaining({ pointAmount: PROMOTION_AMOUNT }),
+        );
       });
     });
   });

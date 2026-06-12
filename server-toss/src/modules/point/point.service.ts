@@ -43,13 +43,14 @@ export class PointService {
   async savePointGrantRequest(
     userKey: number,
     reason: PointReason,
+    pointAmount: number = PROMOTION_AMOUNT,
   ): Promise<void> {
     const user = this.em.getReference(User, userKey);
 
     this.pointGrantRequestRepository.create({
       user,
       reason,
-      pointAmount: PROMOTION_AMOUNT,
+      pointAmount,
       status: PointGrantStatus.PENDING,
       maxAttemptCount: PROMOTION_MAX_RETRIES,
       attemptCount: 0,

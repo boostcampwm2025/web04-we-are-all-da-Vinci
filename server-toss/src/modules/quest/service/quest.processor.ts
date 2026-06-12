@@ -133,6 +133,7 @@ export class QuestProcessor {
         await this.pointService.savePointGrantRequest(
           userKey,
           PointReason.QUEST,
+          quest.rewardAmount,
         );
         break;
       case RewardType.CHANCE:
