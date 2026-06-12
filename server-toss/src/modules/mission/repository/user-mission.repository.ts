@@ -23,6 +23,21 @@ export class UserMissionRepository extends EntityRepository<UserMission> {
     );
   }
 
+  /** 대시보드 카드용 — 오늘 배정된 일일 미션만 (경량 조회, 순수 read) */
+  async findTodayDailyMissions(
+    userKey: number,
+    todayStart: Date,
+  ): Promise<UserMission[]> {
+    return this.find(
+      {
+        user: { userKey },
+        mission: { period: MissionPeriod.DAILY },
+        createdAt: todayStart,
+      },
+      { populate: ["mission"] },
+    );
+  }
+
   async findActiveByObjective(
     userKey: number,
     objectiveType: ObjectiveType,

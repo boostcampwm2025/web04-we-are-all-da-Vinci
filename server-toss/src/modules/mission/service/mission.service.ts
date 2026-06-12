@@ -2,6 +2,7 @@ import { Transactional } from "@mikro-orm/decorators/legacy";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable } from "@nestjs/common";
 import { MyMissionsResponseDto } from "../dto/my-missions-response.dto";
+import { TodayMissionsResponseDto } from "../dto/today-missions-response.dto";
 import { ObjectiveType } from "../entity/mission.entity";
 import { UserMission } from "../entity/user-mission.entity";
 import { MissionWindow } from "../mission-window";
@@ -36,6 +37,16 @@ export class MissionService {
     const window = MissionWindow.now();
     await this.assignMissionService.ensureMissionsAssigned(userKey, window);
     return this.queryMyMissions(userKey, window);
+  }
+
+  /** 대시보드 카드용 — 오늘의 일일 미션만 경량 조회 (순수 read, 배정은 클라 훅이 처리) */
+  async todayDailyMissions(userKey: number): Promise<TodayMissionsResponseDto> {
+    const window = MissionWindow.now();
+    const missions = await this.userMissionRepo.findTodayDailyMissions(
+      userKey,
+      window.todayStart,
+    );
+    return MissionMapper.toTodayResponse(missions);
   }
 
   private async queryMyMissions(

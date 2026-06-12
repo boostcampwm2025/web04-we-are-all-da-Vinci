@@ -64,6 +64,7 @@ describe("MissionService", () => {
   beforeEach(async () => {
     userMissionRepository = {
       findCurrentMissions: jest.fn(async () => []),
+      findTodayDailyMissions: jest.fn(async () => []),
       findTutorialMissions: jest.fn(async () => []),
       findActiveByObjective: jest.fn(async () => []),
       findActiveDrawingMissions: jest.fn(async () => []),
@@ -148,6 +149,39 @@ describe("MissionService", () => {
         expect(result.dailyMissions).toHaveLength(0);
         expect(result.weeklyMissions).toHaveLength(0);
       });
+    });
+  });
+
+  describe("todayDailyMissions", () => {
+    it("오늘의 일일 미션을 경량 필드(이름·포인트·완료여부)로 반환한다", async () => {
+      userMissionRepository.findTodayDailyMissions.mockResolvedValue([
+        buildUserMission({
+          mission: buildMission({ title: "감점 없이 제출", rewardAmount: 2 }),
+          completedAt: new Date("2026-05-29T16:00:00.000Z"),
+        }),
+        buildUserMission({
+          id: BigInt(2),
+          mission: buildMission({ title: "70점 이상 받기", rewardAmount: 3 }),
+          completedAt: null,
+        }),
+      ]);
+
+      const result = await service.todayDailyMissions(1234);
+
+      expect(result.missions).toEqual([
+        { missionId: 1, title: "감점 없이 제출", rewardAmount: 2, done: true },
+        { missionId: 1, title: "70점 이상 받기", rewardAmount: 3, done: false },
+      ]);
+    });
+
+    it("배정된 미션이 없으면 빈 목록을 반환한다", async () => {
+      const result = await service.todayDailyMissions(1234);
+
+      expect(result.missions).toHaveLength(0);
+      // 순수 조회 — 배정을 트리거하지 않는다
+      expect(
+        assignMissionService.ensureMissionsAssigned,
+      ).not.toHaveBeenCalled();
     });
   });
 

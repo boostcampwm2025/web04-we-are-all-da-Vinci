@@ -1,5 +1,6 @@
 import type { MyMission } from "./dto/my-missions-response.dto";
 import { MyMissionsResponseDto } from "./dto/my-missions-response.dto";
+import { TodayMissionsResponseDto } from "./dto/today-missions-response.dto";
 import type { TutorialCategoryDto } from "./dto/tutorial-category.dto";
 import { ObjectiveType, MissionPeriod } from "./entity/mission.entity";
 import type { UserMission } from "./entity/user-mission.entity";
@@ -27,6 +28,18 @@ export class MissionMapper {
       MissionMapper.buildTutorialCategories(tutorialMissions);
 
     return { dailyMissions, weeklyMissions, tutorialCategories };
+  }
+
+  /** 대시보드 카드용 경량 매핑 — 완료 여부·이름·포인트만 (오늘의 일일 미션) */
+  static toTodayResponse(missions: UserMission[]): TodayMissionsResponseDto {
+    return {
+      missions: missions.map((uq) => ({
+        missionId: Number(uq.mission.id),
+        title: uq.mission.title,
+        rewardAmount: uq.mission.rewardAmount,
+        done: uq.completedAt != null,
+      })),
+    };
   }
 
   private static readonly toMyMission = (uq: UserMission): MyMission => ({

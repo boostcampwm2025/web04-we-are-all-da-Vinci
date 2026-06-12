@@ -15,6 +15,7 @@ import {
 } from "../auth/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { MyMissionsResponseDto } from "./dto/my-missions-response.dto";
+import { TodayMissionsResponseDto } from "./dto/today-missions-response.dto";
 import { ACTION_TYPE_TO_OBJECTIVE } from "./mission.constants";
 import { MissionService } from "./service/mission.service";
 
@@ -32,6 +33,16 @@ export class MissionController {
     @CurrentUser() user: CurrentUserPayload,
   ): Promise<MyMissionsResponseDto> {
     return this.missionService.myMissions(user.userKey);
+  }
+
+  @Get("/missions/today")
+  @ApiOperation({ summary: "오늘의 미션(일일) 경량 조회" })
+  @ApiResponse({ status: 200, description: "오늘의 일일 미션 반환" })
+  @ApiResponse({ status: 401, description: "인증 실패" })
+  async getTodayMissions(
+    @CurrentUser() user: CurrentUserPayload,
+  ): Promise<TodayMissionsResponseDto> {
+    return this.missionService.todayDailyMissions(user.userKey);
   }
 
   @Post("/missions/me")
