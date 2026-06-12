@@ -1,3 +1,4 @@
+import { SimilarityResponseSchema, StrokeSchema } from "@toss/shared";
 import { z } from "zod";
 
 export const RankingSimilaritySchema = z.object({
@@ -23,6 +24,8 @@ export const RankingListItemSchema = z.object({
   drawingId: z.string(),
   rank: z.number().min(1),
   isMe: z.boolean(),
+  strokes: z.array(StrokeSchema),
+  similarity: SimilarityResponseSchema,
 });
 
 export type RankingListItem = z.infer<typeof RankingListItemSchema>;

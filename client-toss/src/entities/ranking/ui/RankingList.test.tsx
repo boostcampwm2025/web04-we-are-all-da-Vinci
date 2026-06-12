@@ -1,5 +1,6 @@
 /// <reference types="@testing-library/jest-dom/vitest" />
 import { render, screen } from "@testing-library/react";
+import type { SimilarityResponse, Stroke } from "@toss/shared";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useRankingList } from "../hooks/useRankingList";
@@ -38,6 +39,13 @@ vi.mock("./RankingEntry", () => ({
 }));
 
 const mockUseRankingList = vi.mocked(useRankingList);
+const strokes: Stroke[] = [{ points: [[1], [2]], color: [0, 0, 0] }];
+const similarity: SimilarityResponse = {
+  score: 99.9,
+  shapeSimilarity: 50,
+  strokeMatchSimilarity: 50,
+  penalty: 0,
+};
 
 describe("RankingList", () => {
   beforeEach(() => {
@@ -67,6 +75,8 @@ describe("RankingList", () => {
           rank: 1,
           score: 99.9,
           isMe: true,
+          strokes,
+          similarity,
         },
       ],
       isLoading: false,
@@ -92,6 +102,11 @@ describe("RankingList", () => {
           rank: 2,
           score: 80.5,
           isMe: false,
+          strokes,
+          similarity: {
+            ...similarity,
+            score: 80.5,
+          },
         },
       ],
       isLoading: false,
