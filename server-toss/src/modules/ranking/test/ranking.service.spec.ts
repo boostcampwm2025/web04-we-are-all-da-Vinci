@@ -13,7 +13,15 @@ import { RankingService } from "../ranking.service";
 import { DrawingRepository } from "../../drawing/drawing.repository";
 
 describe("랭킹 서비스", () => {
-  const strokes = [{ points: [[1, 2], [3, 4]], color: [0, 0, 0] }];
+  const strokes = [
+    {
+      points: [
+        [1, 2],
+        [3, 4],
+      ],
+      color: [0, 0, 0],
+    },
+  ];
   const similarity = {
     score: 91.25,
     strokeMatchSimilarity: 40,
