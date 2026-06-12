@@ -59,6 +59,8 @@ export class QuestService {
   ): Promise<CycleResult> {
     const window = QuestWindow.now();
     await this.assignQuestService.ensureQuestsAssigned(userKey, window);
+    // 같은 유저 동시 요청 직렬화 — 활성 퀘스트 조회 전에 행을 잠근다
+    await this.userQuestRepo.lockActiveForUpdate(userKey);
 
     const drawingActive = await this.userQuestRepo.findActiveDrawingQuests(
       userKey,
@@ -105,6 +107,8 @@ export class QuestService {
   ): Promise<CycleResult> {
     const window = QuestWindow.now();
     await this.assignQuestService.ensureQuestsAssigned(userKey, window);
+    // 같은 유저 동시 요청 직렬화 — 활성 퀘스트 조회 전에 행을 잠근다
+    await this.userQuestRepo.lockActiveForUpdate(userKey);
 
     const dailyWeeklyActive = await this.userQuestRepo.findActiveByObjective(
       userKey,

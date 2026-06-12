@@ -1,3 +1,4 @@
+import { LockMode } from "@mikro-orm/core";
 import { EntityRepository } from "@mikro-orm/mysql";
 import { User } from "src/modules/user/user.entity";
 import { ObjectiveType, QuestPeriod } from "../entity/quest.entity";
@@ -134,6 +135,22 @@ export class UserQuestRepository extends EntityRepository<UserQuest> {
       completedAt: null,
       quest: { period: QuestPeriod.TUTORIAL },
     });
+  }
+
+  /**
+   * 진행 사이클 진입 시 유저의 활성 퀘스트 행을 한 번에 잠근다(직렬화 + 현재값 보장).
+   * 같은 유저의 동시 요청이 임계구역을 하나씩 통과하게 해 currentCount 유실/이중완료를 막는다.
+   * populate 없이 user_quests만 잠가 공유 quests 마스터 행을 잠그지 않는다.
+   */
+  async lockActiveForUpdate(userKey: number): Promise<void> {
+    await this.find(
+      { user: { userKey }, completedAt: null },
+      {
+        lockMode: LockMode.PESSIMISTIC_WRITE,
+        refresh: true, // 식별 맵의 스냅샷 값을 DB 현재값으로 덮어씀
+        orderBy: { id: "asc" }, // 항상 같은 순서로 잠가 데드락 방지
+      },
+    );
   }
 
   async flush(): Promise<void> {
