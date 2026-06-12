@@ -34,11 +34,9 @@ export type MyQuestsResponse = z.infer<typeof MyQuestsResponseSchema>;
 export const QuestActionSchema = z.object({
   actionType: z.enum([
     "visit_ranking",
-    "visit_podium",
     "visit_quest_tab",
     "visit_drawing_detail",
     "share",
-    "retry",
   ]),
 });
 export type QuestAction = z.infer<typeof QuestActionSchema>;

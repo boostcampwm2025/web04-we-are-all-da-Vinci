@@ -13,7 +13,6 @@ const RankingView = () => {
   }, []);
 
   useQuestAction("visit_ranking");
-  useQuestAction("visit_podium");
 
   return (
     <div
