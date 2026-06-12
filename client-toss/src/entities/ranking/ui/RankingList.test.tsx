@@ -4,6 +4,7 @@ import type { SimilarityResponse, Stroke } from "@toss/shared";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useRankingList } from "../hooks/useRankingList";
+import type { RankingListItem } from "../model/types";
 import RankingList from "./RankingList";
 
 vi.mock("../hooks/useRankingList", () => ({
@@ -36,6 +37,10 @@ vi.mock("@/entities/myScoreCard", () => ({
   }) => (open ? <div role="dialog">{title}</div> : null),
 }));
 
+vi.mock("@/shared/ui/bannerAd", () => ({
+  BannerAd: () => <div data-testid="ranking-banner-ad" />,
+}));
+
 const mockUseRankingList = vi.mocked(useRankingList);
 const strokes: Stroke[] = [{ points: [[1], [2]], color: [0, 0, 0] }];
 const similarity: SimilarityResponse = {
@@ -44,6 +49,20 @@ const similarity: SimilarityResponse = {
   strokeMatchSimilarity: 50,
   penalty: 0,
 };
+
+const makeRanking = (rank: number): RankingListItem => ({
+  userKey: 1000 + rank,
+  nickname: `테스트다빈치${rank}`,
+  drawingId: String(rank),
+  rank,
+  score: 100 - rank,
+  isMe: rank === 1,
+  strokes,
+  similarity: {
+    ...similarity,
+    score: 100 - rank,
+  },
+});
 
 describe("RankingList", () => {
   beforeEach(() => {
@@ -127,5 +146,18 @@ describe("RankingList", () => {
     );
 
     expect(screen.getByRole("dialog")).toHaveTextContent("2위 다른유저");
+  });
+
+  it("캔버스 6개 단위 사이에 배너 광고를 렌더링한다", () => {
+    mockUseRankingList.mockReturnValue({
+      rankingList: Array.from({ length: 7 }, (_, index) =>
+        makeRanking(index + 1),
+      ),
+      isLoading: false,
+    });
+
+    render(<RankingList />);
+
+    expect(screen.getAllByTestId("ranking-banner-ad")).toHaveLength(1);
   });
 });
