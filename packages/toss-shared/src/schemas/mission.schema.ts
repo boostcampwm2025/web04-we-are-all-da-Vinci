@@ -16,7 +16,7 @@ export type MissionItem = z.infer<typeof MissionItemSchema>;
 export const TutorialCategorySchema = z.object({
   category: z.string(),
   label: z.string(),
-  rewardAmount: z.number().int(),
+  rewardAmount: z.number().int().min(0),
   isCompleted: z.boolean(),
   missions: z.array(MissionItemSchema),
 });
