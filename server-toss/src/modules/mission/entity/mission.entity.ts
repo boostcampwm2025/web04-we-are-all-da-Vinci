@@ -69,7 +69,7 @@ export class Mission extends BaseEntity {
   requiredCount!: number;
 
   @Property({ name: "threshold", type: "int", nullable: true })
-  threshold?: Opt<number>;
+  threshold?: Opt<number | null>;
 
   @Enum({ items: () => RewardType, name: "reward_type" })
   rewardType!: RewardType;
@@ -78,7 +78,7 @@ export class Mission extends BaseEntity {
   rewardAmount!: number;
 
   @Property({ name: "category", type: "varchar(20)", nullable: true })
-  category?: Opt<string>;
+  category?: Opt<string | null>;
 
   @Enum({
     items: () => ProgressPeriod,
