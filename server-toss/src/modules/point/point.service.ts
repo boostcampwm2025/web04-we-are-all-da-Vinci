@@ -45,6 +45,10 @@ export class PointService {
     reason: PointReason,
     pointAmount: number = PROMOTION_AMOUNT,
   ): Promise<void> {
+    if (!Number.isInteger(pointAmount) || pointAmount <= 0) {
+      throw new RangeError("pointAmount는 1 이상의 정수여야 해요");
+    }
+
     const user = this.em.getReference(User, userKey);
 
     this.pointGrantRequestRepository.create({
