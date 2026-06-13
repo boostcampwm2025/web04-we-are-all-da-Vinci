@@ -40,6 +40,8 @@ const TutorialMissionSection = ({
       <button
         type="button"
         className="w-full"
+        aria-expanded={isOpen}
+        aria-controls="tutorial-mission-panel"
         onClick={() => setIsOpen((prev) => !prev)}
       >
         <ListHeader
@@ -57,7 +59,10 @@ const TutorialMissionSection = ({
         />
       </button>
       {isOpen && (
-        <div className="flex flex-col gap-4 px-(--page-px)">
+        <div
+          id="tutorial-mission-panel"
+          className="flex flex-col gap-4 px-(--page-px)"
+        >
           {categories.map((cat) => (
             <TutorialCategoryCard key={cat.category} category={cat} />
           ))}
