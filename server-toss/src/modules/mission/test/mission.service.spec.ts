@@ -161,7 +161,11 @@ describe("MissionService", () => {
         }),
         buildUserMission({
           id: BigInt(2),
-          mission: buildMission({ title: "70점 이상 받기", rewardAmount: 3 }),
+          mission: buildMission({
+            id: BigInt(2),
+            title: "70점 이상 받기",
+            rewardAmount: 3,
+          }),
           completedAt: null,
         }),
       ]);
@@ -170,7 +174,7 @@ describe("MissionService", () => {
 
       expect(result.missions).toEqual([
         { missionId: 1, title: "감점 없이 제출", rewardAmount: 2, done: true },
-        { missionId: 1, title: "70점 이상 받기", rewardAmount: 3, done: false },
+        { missionId: 2, title: "70점 이상 받기", rewardAmount: 3, done: false },
       ]);
     });
 
