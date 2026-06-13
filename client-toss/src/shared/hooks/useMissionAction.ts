@@ -11,7 +11,11 @@ const useMissionAction = (actionType: MissionAction["actionType"]) => {
   const reported = useRef(false);
 
   useEffect(() => {
-    const key = `mission_action_${actionType}`;
+    // KST 날짜를 키에 포함해, 세션이 자정을 넘겨도 일일/주간 액션이 다시 보고되게 한다.
+    const kstDate = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Seoul",
+    }).format(new Date());
+    const key = `mission_action_${actionType}_${kstDate}`;
     if (sessionStorage.getItem(key) || reported.current) return;
 
     reported.current = true;
