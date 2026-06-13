@@ -175,6 +175,7 @@ describe("SaveDrawingService", () => {
     describe("정상 처리되면", () => {
       it("drawing과 ranking이 함께 커밋된다", async () => {
         const user = givenUsers[2];
+        missionService.onDrawingSubmitted.mockClear();
 
         const beforeDrawingCount = await orm.em
           .fork()
@@ -206,6 +207,15 @@ describe("SaveDrawingService", () => {
         expect(afterRankingCount).toBe(beforeRankingCount + 1);
         expect(savedRanking.drawingId).toBe(saved.drawing.id);
         expect(savedRanking.score).toBe(sampleSimilarity.score);
+        expect(missionService.onDrawingSubmitted).toHaveBeenCalledTimes(1);
+        expect(missionService.onDrawingSubmitted).toHaveBeenCalledWith(
+          user.userKey,
+          {
+            drawingId: saved.drawing.id,
+            score: sampleSimilarity.score,
+            penalty: sampleSimilarity.penalty,
+          },
+        );
       });
     });
 
