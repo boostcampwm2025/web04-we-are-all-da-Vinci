@@ -55,7 +55,7 @@ export class MissionProcessor {
 
     const metaCompleted =
       completed.length > 0
-        ? this.processMetaMissions(metaMissions, completed)
+        ? this.processMetaMissions(metaMissions, completed, window)
         : [];
 
     await this.grantRewards(userKey, [...completed, ...metaCompleted]);
@@ -79,7 +79,7 @@ export class MissionProcessor {
 
       uq.currentCount += 1;
       uq.lastProgressedAt = window.now;
-      if (this.completeIfFulfilled(uq)) completed.push(uq);
+      if (this.completeIfFulfilled(uq, window.now)) completed.push(uq);
     }
 
     return completed;
@@ -88,6 +88,7 @@ export class MissionProcessor {
   private processMetaMissions(
     metaMissions: UserMission[],
     completed: UserMission[],
+    window: MissionWindow,
   ): UserMission[] {
     const metaCompleted: UserMission[] = [];
 
@@ -101,15 +102,15 @@ export class MissionProcessor {
             .length;
 
       mq.currentCount += relevantCount;
-      if (this.completeIfFulfilled(mq)) metaCompleted.push(mq);
+      if (this.completeIfFulfilled(mq, window.now)) metaCompleted.push(mq);
     }
 
     return metaCompleted;
   }
 
-  private completeIfFulfilled(uq: UserMission): boolean {
+  private completeIfFulfilled(uq: UserMission, now: Date): boolean {
     if (uq.currentCount < uq.mission.requiredCount) return false;
-    uq.completedAt = new Date();
+    uq.completedAt = now;
     return true;
   }
 
