@@ -15,6 +15,28 @@ export const getSeoulDayRange = (reference = new Date()) => {
   return { start, end };
 };
 
+export const getSeoulWeekStart = (reference = new Date()): Date => {
+  const seoulNow = new Date(reference.getTime() + SEOUL_TIMEZONE_OFFSET_MS);
+  const dayOfWeek = seoulNow.getUTCDay();
+  const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const mondayTime = Date.UTC(
+    seoulNow.getUTCFullYear(),
+    seoulNow.getUTCMonth(),
+    seoulNow.getUTCDate() - diffToMonday,
+  );
+  return new Date(mondayTime - SEOUL_TIMEZONE_OFFSET_MS);
+};
+
+export const getSeoulMonthStart = (reference = new Date()): Date => {
+  const seoulNow = new Date(reference.getTime() + SEOUL_TIMEZONE_OFFSET_MS);
+  const monthStartTime = Date.UTC(
+    seoulNow.getUTCFullYear(),
+    seoulNow.getUTCMonth(),
+    1,
+  );
+  return new Date(monthStartTime - SEOUL_TIMEZONE_OFFSET_MS);
+};
+
 // 알림 referenceId·이벤트 payload의 일관 표기를 위한 KST 날짜 문자열(YYYY-MM-DD).
 export const getSeoulDateKey = (date: Date | string) => {
   if (typeof date === "string") {

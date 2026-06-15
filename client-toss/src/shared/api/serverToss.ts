@@ -5,6 +5,7 @@ import type {
   ArchiveDayResponse,
   ArchiveSummaryResponse,
   MyDrawingResponse,
+  MissionAction,
   NotificationAgreementRequest,
   ShareSdkPayload,
   Stroke,
@@ -16,11 +17,13 @@ import {
   ChargeResponseSchema,
   LoginResponseSchema,
   MyChanceResponseSchema,
+  MyMissionsResponseSchema,
   NotificationAgreementResponseSchema,
   PodiumResponseSchema,
   PromptResponseSchema,
   SimilarityResponseSchema,
   SubmitDrawingResponseSchema,
+  TodayMissionsResponseSchema,
   UserInfoResponseSchema,
 } from "@toss/shared";
 
@@ -278,4 +281,22 @@ export const serverTossApi = {
         sdkPayload,
       }),
     ),
+
+  getMyMissions: async (options?: RequestOptions) =>
+    MyMissionsResponseSchema.parse(
+      await request<unknown>("GET", "/missions/me", undefined, options),
+    ),
+
+  getTodayMissions: async (options?: RequestOptions) =>
+    TodayMissionsResponseSchema.parse(
+      await request<unknown>("GET", "/missions/today", undefined, options),
+    ),
+
+  assignMyMissions: async (options?: RequestOptions) =>
+    MyMissionsResponseSchema.parse(
+      await request<unknown>("POST", "/missions/me", undefined, options),
+    ),
+
+  reportMissionAction: (actionType: MissionAction["actionType"]) =>
+    request<void>("POST", "/missions/action", { actionType }),
 };

@@ -9,13 +9,11 @@ import { Injectable } from "@nestjs/common";
 import { DrawingRepository } from "../drawing.repository";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Transactional } from "@mikro-orm/decorators/legacy";
-import { PointService } from "src/modules/point/point.service";
-import { PointReason } from "src/modules/point/entity/point-log.entity";
+import { MissionService } from "src/modules/mission/service/mission.service";
 
 export type SaveDrawingResult = {
   drawing: Drawing;
   rankingChange: RankingChangeResult;
-  promotionGranted: boolean;
 };
 
 @Injectable()
@@ -24,7 +22,7 @@ export class SaveDrawingService {
     @InjectRepository(Drawing)
     private readonly drawingRepository: DrawingRepository,
     private readonly rankingService: RankingService,
-    private readonly pointService: PointService,
+    private readonly missionService: MissionService,
   ) {}
 
   @Transactional()
@@ -47,11 +45,12 @@ export class SaveDrawingService {
       drawing,
     );
 
-    const promotionGranted = await this.pointService.savePointGrantRequest(
-      user,
-      PointReason.DRAWING,
-    );
+    await this.missionService.onDrawingSubmitted(user.userKey, {
+      drawingId: drawing.id,
+      score: similarity.score,
+      penalty: similarity.penalty,
+    });
 
-    return { drawing, rankingChange, promotionGranted };
+    return { drawing, rankingChange };
   }
 }

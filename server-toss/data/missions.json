@@ -1,0 +1,152 @@
+[
+  {
+    "title": "오늘 감점 없는 그림 1번 달성",
+    "period": "daily",
+    "isFixed": true,
+    "objectiveType": "penalty",
+    "requiredCount": 1,
+    "threshold": 0,
+    "rewardType": "point",
+    "rewardAmount": 5
+  },
+  {
+    "title": "오늘 70점 이상 1번 달성",
+    "period": "daily",
+    "isFixed": false,
+    "objectiveType": "score",
+    "requiredCount": 1,
+    "threshold": 70,
+    "rewardType": "point",
+    "rewardAmount": 5
+  },
+  {
+    "title": "오늘 그림 2번 제출",
+    "period": "daily",
+    "isFixed": false,
+    "objectiveType": "submit",
+    "requiredCount": 2,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 5
+  },
+  {
+    "title": "일일 미션 7개 완료",
+    "period": "weekly",
+    "isFixed": true,
+    "objectiveType": "mission_completed",
+    "requiredCount": 7,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 5
+  },
+  {
+    "title": "이번 주 4일 동안 그림 제출",
+    "period": "weekly",
+    "isFixed": false,
+    "objectiveType": "daily_submit",
+    "requiredCount": 4,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 5,
+    "progressPeriod": "day"
+  },
+  {
+    "title": "이번 주 70점 이상 3번 달성",
+    "period": "weekly",
+    "isFixed": false,
+    "objectiveType": "daily_score",
+    "requiredCount": 3,
+    "threshold": 70,
+    "rewardType": "point",
+    "rewardAmount": 5,
+    "progressPeriod": "day"
+  },
+  {
+    "title": "첫 그림 그리기",
+    "period": "tutorial",
+    "isFixed": true,
+    "objectiveType": "submit",
+    "requiredCount": 1,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 0,
+    "category": "drawing"
+  },
+  {
+    "title": "오늘의 다빈치 구경하기",
+    "period": "tutorial",
+    "isFixed": true,
+    "objectiveType": "visit_ranking",
+    "requiredCount": 1,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 0,
+    "category": "explore"
+  },
+  {
+    "title": "미션 탭 확인하기",
+    "period": "tutorial",
+    "isFixed": true,
+    "objectiveType": "visit_mission_tab",
+    "requiredCount": 1,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 0,
+    "category": "explore"
+  },
+  {
+    "title": "그림 분석 보기",
+    "period": "tutorial",
+    "isFixed": true,
+    "objectiveType": "visit_drawing_detail",
+    "requiredCount": 1,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 0,
+    "category": "explore"
+  },
+  {
+    "title": "친구에게 공유하기",
+    "period": "tutorial",
+    "isFixed": true,
+    "objectiveType": "share",
+    "requiredCount": 1,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 0,
+    "category": "share"
+  },
+  {
+    "title": "그리기 튜토리얼 완료",
+    "period": "tutorial",
+    "isFixed": true,
+    "objectiveType": "tutorial_completed",
+    "requiredCount": 1,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 5,
+    "category": "drawing"
+  },
+  {
+    "title": "둘러보기 튜토리얼 완료",
+    "period": "tutorial",
+    "isFixed": true,
+    "objectiveType": "tutorial_completed",
+    "requiredCount": 3,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 5,
+    "category": "explore"
+  },
+  {
+    "title": "공유 튜토리얼 완료",
+    "period": "tutorial",
+    "isFixed": true,
+    "objectiveType": "tutorial_completed",
+    "requiredCount": 1,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 5,
+    "category": "share"
+  }
+]

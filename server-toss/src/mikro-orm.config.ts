@@ -14,6 +14,8 @@ import { DailyPrompt } from "./modules/prompt/daily-prompt.entity";
 import { Prompt } from "./modules/prompt/prompt.entity";
 import { Ranking } from "./modules/ranking/ranking.entity";
 import { User } from "./modules/user/user.entity";
+import { Mission } from "./modules/mission/entity/mission.entity";
+import { UserMission } from "./modules/mission/entity/user-mission.entity";
 
 export default defineConfig({
   dbName: process.env.MYSQL_DATABASE ?? "daVinci_toss",
@@ -33,6 +35,8 @@ export default defineConfig({
     DailyUserRanking,
     PlayChance,
     ShareLog,
+    Mission,
+    UserMission,
     SentNotification,
     NotificationAgreement,
   ],

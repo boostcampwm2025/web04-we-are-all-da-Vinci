@@ -1,4 +1,5 @@
 import { preprocessStrokes, scoreFinalSimilarity } from "@davinci/similarity";
+import { InjectRepository } from "@mikro-orm/nestjs";
 import {
   HttpException,
   Injectable,
@@ -9,16 +10,15 @@ import { EventEmitter2 } from "@nestjs/event-emitter";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
 import { getSeoulDateKey } from "src/common/util/time.util";
 import {
-  RankingChangedEvent,
   RANKING_CHANGED_EVENT,
+  RankingChangedEvent,
 } from "src/modules/ranking/events/ranking-changed.event";
 import { UserService } from "src/modules/user/user.service";
 import { PromptService } from "../../prompt/prompt.service";
 import { Drawing } from "../drawing.entity";
 import { DrawingRepository } from "../drawing.repository";
-import { InjectRepository } from "@mikro-orm/nestjs";
-import { SaveDrawingService } from "./save-drawing.service";
 import { SaveDrawingDto } from "../dto/save-drawing.dto";
+import { SaveDrawingService } from "./save-drawing.service";
 
 type Similarity = ReturnType<typeof scoreFinalSimilarity>;
 const SLOW_STROKES_DURATION_MS = 500;
@@ -96,7 +96,6 @@ export class DrawingService {
   ): Promise<{
     drawingId: number;
     similarity: Similarity;
-    promotionGranted: boolean;
   }> {
     const startedAt = Date.now();
     const user = await this.userService.getUserInfo(userKey);
@@ -107,7 +106,7 @@ export class DrawingService {
     const playerPreprocessed = preprocessStrokes(playerStrokes);
     const similarity = scoreFinalSimilarity(preprocessed, playerPreprocessed);
 
-    const { drawing, rankingChange, promotionGranted } =
+    const { drawing, rankingChange } =
       await this.saveDrawingService.saveDrawingWithRanking(
         user,
         new SaveDrawingDto(promptId, playerStrokes, similarity),
@@ -140,7 +139,7 @@ export class DrawingService {
       );
     }
 
-    return { drawingId: Number(drawing.id), similarity, promotionGranted };
+    return { drawingId: Number(drawing.id), similarity };
   }
 
   async getMyDrawings(userKey: number) {

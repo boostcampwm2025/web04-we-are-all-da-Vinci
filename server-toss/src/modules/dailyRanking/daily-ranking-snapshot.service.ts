@@ -13,6 +13,7 @@ import {
   DailyUserRankingRepository,
   type DailyUserRankingSnapshot,
 } from "./daily-user-ranking.repository";
+import { CreateRequestContext } from "@mikro-orm/decorators/legacy";
 
 export interface SnapshotResult {
   dateKey: string;
@@ -31,6 +32,7 @@ export class DailyRankingSnapshotService {
     private readonly dailyUserRankingRepository: DailyUserRankingRepository,
   ) {}
 
+  @CreateRequestContext()
   async backfillMissingSnapshots(reference = new Date()): Promise<{
     targetDateCount: number;
     createdDateCount: number;
