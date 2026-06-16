@@ -5,6 +5,7 @@ import {
 } from "src/common/errors/external.errors";
 import { PointGrantStatus } from "./entity/point-grant-request.entity";
 import { PointReason } from "./entity/point-log.entity";
+import { PROMOTION_AMOUNT } from "./point.contants";
 import { PointService } from "./point.service";
 
 const FIXED_NOW = new Date("2026-05-25T00:00:00.000Z");
@@ -29,12 +30,14 @@ const buildEntityManager = (countResult: number | number[] = 0) => {
     create: jest.fn((_entity, data) => data),
     persist: jest.fn(),
     flush: jest.fn(async () => undefined),
+    getReference: jest.fn(),
   };
 };
 
 const buildPointGrantRequestRepository = () => {
   const flush = jest.fn(async () => undefined);
   return {
+    getReference: jest.fn(),
     create: jest.fn(),
     findEligibleGrantsWithLock: jest.fn(async () => []),
     purgeByStatusBefore: jest.fn(async () => 0),
@@ -98,121 +101,6 @@ const buildService = ({
   );
 
 describe("PointService", () => {
-  describe("canGrantTodayPromotion", () => {
-    describe("오늘 지급 횟수가 2회 미만인 경우", () => {
-      it("true를 반환한다", async () => {
-        const em = buildEntityManager(1);
-        const service = buildService({ entityManager: em });
-
-        await expect(service.canGrantTodayPromotion(1234)).resolves.toBe(true);
-      });
-    });
-
-    describe("오늘 지급 횟수가 2회 이상인 경우", () => {
-      it("false를 반환한다", async () => {
-        const em = buildEntityManager(2);
-        const service = buildService({ entityManager: em });
-
-        await expect(service.canGrantTodayPromotion(1234)).resolves.toBe(false);
-      });
-    });
-  });
-
-  describe("savePointGrantRequest", () => {
-    describe("오늘 프로모션 지급이 가능한 경우", () => {
-      it("PENDING 요청을 생성하고 true를 반환한다", async () => {
-        const repository = buildPointGrantRequestRepository();
-        const service = buildService({
-          pointGrantRequestRepository: repository,
-        });
-        jest.spyOn(service, "canGrantTodayPromotion").mockResolvedValue(true);
-
-        const user = buildUser(1234);
-        const result = await service.savePointGrantRequest(
-          user,
-          PointReason.DRAWING,
-        );
-
-        expect(result).toBe(true);
-        expect(repository.create).toHaveBeenCalledTimes(1);
-        expect(repository.__flush).toHaveBeenCalledTimes(1);
-      });
-    });
-
-    describe("오늘 프로모션 지급이 불가능한 경우", () => {
-      it("요청을 생성하지 않고 false를 반환한다", async () => {
-        const repository = buildPointGrantRequestRepository();
-        const service = buildService({
-          pointGrantRequestRepository: repository,
-        });
-        jest.spyOn(service, "canGrantTodayPromotion").mockResolvedValue(false);
-
-        const result = await service.savePointGrantRequest(
-          buildUser(1234),
-          PointReason.DRAWING,
-        );
-
-        expect(result).toBe(false);
-        expect(repository.create).not.toHaveBeenCalled();
-        expect(repository.__flush).not.toHaveBeenCalled();
-      });
-    });
-  });
-
-  describe("evaluateGrantEligibility", () => {
-    describe("reason이 DRAWING이 아닌 경우", () => {
-      it("PROCEED를 반환한다", async () => {
-        const em = buildEntityManager([10, 10]);
-        const service = buildService({ entityManager: em });
-        const request = buildRequest({ reason: PointReason.SHARE });
-
-        const result = await service.evaluateGrantEligibility(request as never);
-
-        expect(result).toEqual({ decision: "PROCEED" });
-        expect(em.count).not.toHaveBeenCalled();
-      });
-    });
-
-    describe("오늘 pointLog가 이미 2개 이상인 경우", () => {
-      it("FAIL과 사유를 반환한다", async () => {
-        const em = buildEntityManager([2]);
-        const service = buildService({ entityManager: em });
-        const request = buildRequest();
-
-        const result = await service.evaluateGrantEligibility(request as never);
-
-        expect(result).toEqual({
-          decision: "FAIL",
-          reason: "일일 지급 한도 초과",
-        });
-      });
-    });
-
-    describe("pointLog + in-flight가 2개 이상인 경우", () => {
-      it("RETRY를 반환한다", async () => {
-        const em = buildEntityManager([1, 1]);
-        const service = buildService({ entityManager: em });
-        const request = buildRequest();
-
-        const result = await service.evaluateGrantEligibility(request as never);
-
-        expect(result).toEqual({ decision: "RETRY" });
-      });
-    });
-
-    describe("지급 가능 여유가 있는 경우", () => {
-      it("PROCEED를 반환한다", async () => {
-        const em = buildEntityManager([1, 0]);
-        const service = buildService({ entityManager: em });
-        const request = buildRequest();
-
-        const result = await service.evaluateGrantEligibility(request as never);
-
-        expect(result).toEqual({ decision: "PROCEED" });
-      });
-    });
-  });
-
   describe("settleGrantRequests", () => {
     describe("처리 가능한 요청이 여러 개 있는 경우", () => {
       it("요청마다 settleGrantRequest를 순차 호출한다", async () => {
@@ -265,60 +153,12 @@ describe("PointService", () => {
   });
 
   describe("settleGrantRequest", () => {
-    describe("한도 초과로 FAIL 결정인 경우", () => {
-      it("failed 처리 후 종료한다", async () => {
-        const service = buildService();
-        const request = buildRequest();
-        jest.spyOn(service, "evaluateGrantEligibility").mockResolvedValue({
-          decision: "FAIL",
-          reason: "일일 지급 한도 초과",
-        });
-        const applySpy = jest
-          .spyOn(service, "applyEligibilityDecision")
-          .mockResolvedValue(true);
-        const grantSpy = jest
-          .spyOn(service, "grantDrawingPromotion")
-          .mockResolvedValue(undefined);
-
-        await service.settleGrantRequest(request as never);
-
-        expect(applySpy).toHaveBeenCalledTimes(1);
-        expect(grantSpy).not.toHaveBeenCalled();
-      });
-    });
-
-    describe("한도 충돌로 RETRY 결정인 경우", () => {
-      it("retry 처리 후 종료한다", async () => {
-        const service = buildService();
-        const request = buildRequest();
-        jest.spyOn(service, "evaluateGrantEligibility").mockResolvedValue({
-          decision: "RETRY",
-        });
-        const applySpy = jest
-          .spyOn(service, "applyEligibilityDecision")
-          .mockResolvedValue(true);
-        const grantSpy = jest
-          .spyOn(service, "grantDrawingPromotion")
-          .mockResolvedValue(undefined);
-
-        await service.settleGrantRequest(request as never);
-
-        expect(applySpy).toHaveBeenCalledTimes(1);
-        expect(grantSpy).not.toHaveBeenCalled();
-      });
-    });
-
     describe("PROCEED 결정이고 외부 지급이 성공한 경우", () => {
       it("성공 처리 메서드를 호출한다", async () => {
         const service = buildService();
         const request = buildRequest();
-        jest.spyOn(service, "evaluateGrantEligibility").mockResolvedValue({
-          decision: "PROCEED",
-        });
-        jest
-          .spyOn(service, "applyEligibilityDecision")
-          .mockResolvedValue(false);
-        jest.spyOn(service, "grantDrawingPromotion").mockResolvedValue();
+
+        jest.spyOn(service, "grantPromotion").mockResolvedValue();
         const succeededSpy = jest
           .spyOn(service, "recordGrantSucceeded")
           .mockResolvedValue(undefined);
@@ -338,13 +178,8 @@ describe("PointService", () => {
         const service = buildService();
         const request = buildRequest();
         const error = new Error("external failed");
-        jest.spyOn(service, "evaluateGrantEligibility").mockResolvedValue({
-          decision: "PROCEED",
-        });
-        jest
-          .spyOn(service, "applyEligibilityDecision")
-          .mockResolvedValue(false);
-        jest.spyOn(service, "grantDrawingPromotion").mockRejectedValue(error);
+
+        jest.spyOn(service, "grantPromotion").mockRejectedValue(error);
         const succeededSpy = jest
           .spyOn(service, "recordGrantSucceeded")
           .mockResolvedValue(undefined);
@@ -356,67 +191,6 @@ describe("PointService", () => {
 
         expect(succeededSpy).not.toHaveBeenCalled();
         expect(failedSpy).toHaveBeenCalledTimes(1);
-      });
-    });
-  });
-
-  describe("applyEligibilityDecision", () => {
-    describe("FAIL 결정인 경우", () => {
-      it("failed 후 true를 반환한다", async () => {
-        const em = buildEntityManager();
-        const service = buildService({ entityManager: em });
-        const request = buildRequest();
-
-        const handled = await service.applyEligibilityDecision(
-          request as never,
-          {
-            decision: "FAIL",
-            reason: "일일 지급 한도 초과",
-          },
-        );
-
-        expect(handled).toBe(true);
-        expect(request.failed).toHaveBeenCalledTimes(1);
-        expect(em.flush).toHaveBeenCalledTimes(1);
-      });
-    });
-
-    describe("RETRY 결정인 경우", () => {
-      it("retry 후 true를 반환한다", async () => {
-        const em = buildEntityManager();
-        const service = buildService({ entityManager: em });
-        const request = buildRequest();
-
-        const handled = await service.applyEligibilityDecision(
-          request as never,
-          {
-            decision: "RETRY",
-          },
-        );
-
-        expect(handled).toBe(true);
-        expect(request.retry).toHaveBeenCalledTimes(1);
-        expect(em.flush).toHaveBeenCalledTimes(1);
-      });
-    });
-
-    describe("PROCEED 결정인 경우", () => {
-      it("false를 반환한다", async () => {
-        const em = buildEntityManager();
-        const service = buildService({ entityManager: em });
-        const request = buildRequest();
-
-        const handled = await service.applyEligibilityDecision(
-          request as never,
-          {
-            decision: "PROCEED",
-          },
-        );
-
-        expect(handled).toBe(false);
-        expect(request.failed).not.toHaveBeenCalled();
-        expect(request.retry).not.toHaveBeenCalled();
-        expect(em.flush).not.toHaveBeenCalled();
       });
     });
   });
@@ -547,6 +321,41 @@ describe("PointService", () => {
         expect(request2.processing).toHaveBeenCalledTimes(1);
         expect(repository.__flush).toHaveBeenCalledTimes(1);
         expect(result).toEqual([request1, request2]);
+      });
+    });
+  });
+
+  describe("savePointGrantRequest", () => {
+    describe("지급 금액을 명시한 경우", () => {
+      it("전달한 pointAmount로 요청을 생성한다", async () => {
+        const repository = buildPointGrantRequestRepository();
+        const service = buildService({
+          pointGrantRequestRepository: repository,
+        });
+
+        await service.savePointGrantRequest(1234, PointReason.MISSION, 7);
+
+        expect(repository.create).toHaveBeenCalledWith(
+          expect.objectContaining({
+            reason: PointReason.MISSION,
+            pointAmount: 7,
+          }),
+        );
+      });
+    });
+
+    describe("지급 금액을 생략한 경우", () => {
+      it("PROMOTION_AMOUNT로 폴백한다", async () => {
+        const repository = buildPointGrantRequestRepository();
+        const service = buildService({
+          pointGrantRequestRepository: repository,
+        });
+
+        await service.savePointGrantRequest(1234, PointReason.MISSION);
+
+        expect(repository.create).toHaveBeenCalledWith(
+          expect.objectContaining({ pointAmount: PROMOTION_AMOUNT }),
+        );
       });
     });
   });

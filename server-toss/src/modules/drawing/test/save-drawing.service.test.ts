@@ -23,7 +23,7 @@ import { RankingRepository } from "../../ranking/ranking.repository";
 import { RankingService } from "../../ranking/ranking.service";
 import { SaveDrawingService } from "../service/save-drawing.service";
 import { PointService } from "src/modules/point/point.service";
-import { PointReason } from "src/modules/point/entity/point-log.entity";
+import { MissionService } from "src/modules/mission/service/mission.service";
 
 describe("SaveDrawingService", () => {
   let orm: MikroORM;
@@ -33,6 +33,7 @@ describe("SaveDrawingService", () => {
   let drawingRepository: DrawingRepository;
   let rankingRepository: RankingRepository;
   let pointService: { savePointGrantRequest: jest.Mock };
+  let missionService: { onDrawingSubmitted: jest.Mock };
 
   let givenUsers: User[];
   let givenPrompt: Prompt;
@@ -59,6 +60,12 @@ describe("SaveDrawingService", () => {
       savePointGrantRequest: jest.fn(() => true),
     };
 
+    missionService = {
+      onDrawingSubmitted: jest.fn(async () =>
+        Promise.resolve({ completed: [], metaCompleted: [] }),
+      ),
+    };
+
     module = await Test.createTestingModule({
       imports: [
         MikroOrmModule.forRoot(config),
@@ -70,6 +77,7 @@ describe("SaveDrawingService", () => {
         SaveDrawingService,
         RankingService,
         { provide: PointService, useValue: pointService },
+        { provide: MissionService, useValue: missionService },
       ],
     }).compile();
 
@@ -167,6 +175,7 @@ describe("SaveDrawingService", () => {
     describe("정상 처리되면", () => {
       it("drawing과 ranking이 함께 커밋된다", async () => {
         const user = givenUsers[2];
+        missionService.onDrawingSubmitted.mockClear();
 
         const beforeDrawingCount = await orm.em
           .fork()
@@ -175,7 +184,7 @@ describe("SaveDrawingService", () => {
           .fork()
           .count(Ranking, { userKey: user.userKey });
 
-        const { drawing: saved } = await service.saveDrawingWithRanking(
+        const saved = await service.saveDrawingWithRanking(
           user,
           new SaveDrawingDto(
             Number(givenPrompt.id),
@@ -196,30 +205,17 @@ describe("SaveDrawingService", () => {
 
         expect(afterDrawingCount).toBe(beforeDrawingCount + 1);
         expect(afterRankingCount).toBe(beforeRankingCount + 1);
-        expect(savedRanking.drawingId).toBe(saved.id);
+        expect(savedRanking.drawingId).toBe(saved.drawing.id);
         expect(savedRanking.score).toBe(sampleSimilarity.score);
-        expect(pointService.savePointGrantRequest).toHaveBeenCalledWith(
-          user,
-          PointReason.DRAWING,
+        expect(missionService.onDrawingSubmitted).toHaveBeenCalledTimes(1);
+        expect(missionService.onDrawingSubmitted).toHaveBeenCalledWith(
+          user.userKey,
+          {
+            drawingId: saved.drawing.id,
+            score: sampleSimilarity.score,
+            penalty: sampleSimilarity.penalty,
+          },
         );
-      });
-
-      it("포인트 적립 불가면 promotionGranted가 false를 반환한다", async () => {
-        const user = givenUsers[4];
-        pointService.savePointGrantRequest.mockResolvedValueOnce(
-          false as never,
-        );
-
-        const { promotionGranted } = await service.saveDrawingWithRanking(
-          user,
-          new SaveDrawingDto(
-            Number(givenPrompt.id),
-            sampleStrokes,
-            sampleSimilarity,
-          ),
-        );
-
-        expect(promotionGranted).toBe(false);
       });
     });
 

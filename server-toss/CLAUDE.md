@@ -99,7 +99,8 @@ src/
 2. CORS / Swagger(`/docs`) 세팅
 3. **비-프로덕션**에서만 `orm.migrator.up()` 실행
 4. `PromptSeedService.run()` — `prompts`/`daily_prompts`가 둘 다 빈 경우에만 시드
-5. `app.listen(PORT)`
+5. `QuestSeedService.run()` — `data/quests.json`에서 퀘스트 마스터 데이터 동기화 (title 기준 upsert, user_quest 있는 퀘스트 보존)
+6. `app.listen(PORT)`
 
 시드는 `data/promptStrokes.json`의 `{ date, strokes }[]`를 읽어 `prompts`에 insert → `daily_prompts`에 JSON의 `date`를 그대로 `prompt_date`로 배정. 날짜가 명시적이라 배열 순서에 의존하지 않는다.
 

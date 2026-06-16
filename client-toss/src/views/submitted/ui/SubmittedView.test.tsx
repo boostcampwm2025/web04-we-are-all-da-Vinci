@@ -132,7 +132,6 @@ describe("SubmittedView", () => {
     vi.mocked(serverTossApi.submitDrawing).mockResolvedValue({
       drawingId: 1,
       similarity: mockRouteState.similarity,
-      promotionGranted: false,
     });
 
     renderWithState();
@@ -148,7 +147,7 @@ describe("SubmittedView", () => {
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith("/", {
         replace: true,
-        state: { fromSubmitted: true, promotionGranted: false },
+        state: { fromSubmitted: true },
       });
     });
   });
@@ -171,13 +170,12 @@ describe("SubmittedView", () => {
     });
   });
 
-  it("promotionGranted가 true이면 state에 포함하여 홈으로 이동한다", async () => {
+  it("fromSubmitted가 true이면 state에 포함하여 홈으로 이동한다", async () => {
     vi.useRealTimers();
     const user = userEvent.setup();
     vi.mocked(serverTossApi.submitDrawing).mockResolvedValue({
       drawingId: 1,
       similarity: mockRouteState.similarity,
-      promotionGranted: true,
     });
 
     renderWithState();
@@ -187,7 +185,7 @@ describe("SubmittedView", () => {
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith("/", {
         replace: true,
-        state: { fromSubmitted: true, promotionGranted: true },
+        state: { fromSubmitted: true },
       });
     });
   });

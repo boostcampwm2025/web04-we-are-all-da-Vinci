@@ -1,14 +1,13 @@
-import "reflect-metadata";
-import { RequestContext } from "@mikro-orm/core";
 import { MikroORM } from "@mikro-orm/mysql";
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { Logger, LoggerErrorInterceptor } from "nestjs-pino";
+import "reflect-metadata";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/http-exception.filter";
 import { ZodExceptionFilter } from "./common/zod-exception.filter";
-import { DailyRankingSnapshotService } from "./modules/dailyRanking/daily-ranking-snapshot.service";
 import { PromptSeedService } from "./modules/prompt/prompt.seed";
+import { MissionSeedService } from "./modules/mission/service/mission.seed";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -40,9 +39,7 @@ async function bootstrap() {
   }
 
   await app.get(PromptSeedService).run();
-  await RequestContext.create(orm.em, () =>
-    app.get(DailyRankingSnapshotService).backfillMissingSnapshots(),
-  );
+  await app.get(MissionSeedService).run();
 
   await app.listen(process.env.PORT ?? 3001);
 }

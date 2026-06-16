@@ -1,4 +1,5 @@
 import { RankingList } from "@/entities/ranking";
+import { useMissionAction } from "@/shared/hooks";
 import { FUNNEL_EVENTS, trackScreen } from "@/shared/lib";
 import { Top } from "@toss/tds-mobile";
 import { useEffect } from "react";
@@ -7,6 +8,8 @@ const RankingView = () => {
   useEffect(() => {
     trackScreen(FUNNEL_EVENTS.rankingView);
   }, []);
+
+  useMissionAction("visit_ranking");
 
   return (
     <div

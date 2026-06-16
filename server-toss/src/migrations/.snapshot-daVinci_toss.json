@@ -17,8 +17,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "bigint"
+          "enumItems": []
         },
         "created_at": {
           "name": "created_at",
@@ -33,8 +32,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "updated_at": {
           "name": "updated_at",
@@ -49,8 +47,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "ad_type": {
           "name": "ad_type",
@@ -67,8 +64,7 @@
           "comment": null,
           "enumItems": [
             "drawing"
-          ],
-          "mappedType": "enum"
+          ]
         },
         "user_key": {
           "name": "user_key",
@@ -83,8 +79,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
+          "enumItems": []
         }
       },
       "indexes": [
@@ -142,8 +137,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "bigint"
+          "enumItems": []
         },
         "prompt_id": {
           "name": "prompt_id",
@@ -158,8 +152,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "bigint"
+          "enumItems": []
         },
         "prompt_date": {
           "name": "prompt_date",
@@ -174,8 +167,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "date"
+          "enumItems": []
         }
       },
       "indexes": [
@@ -242,8 +234,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "bigint"
+          "enumItems": []
         },
         "created_at": {
           "name": "created_at",
@@ -258,8 +249,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "updated_at": {
           "name": "updated_at",
@@ -274,8 +264,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "ranking_date": {
           "name": "ranking_date",
@@ -290,8 +279,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "date"
+          "enumItems": []
         },
         "user_key": {
           "name": "user_key",
@@ -306,8 +294,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
+          "enumItems": []
         },
         "nickname": {
           "name": "nickname",
@@ -322,8 +309,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
+          "enumItems": []
         },
         "drawing_id": {
           "name": "drawing_id",
@@ -338,8 +324,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "bigint"
+          "enumItems": []
         },
         "score": {
           "name": "score",
@@ -354,8 +339,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "double"
+          "enumItems": []
         },
         "rank": {
           "name": "rank",
@@ -370,8 +354,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
+          "enumItems": []
         },
         "participant_count": {
           "name": "participant_count",
@@ -386,8 +369,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
+          "enumItems": []
         },
         "submitted_at": {
           "name": "submitted_at",
@@ -402,8 +384,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         }
       },
       "indexes": [
@@ -449,8 +430,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "bigint"
+          "enumItems": []
         },
         "created_at": {
           "name": "created_at",
@@ -465,8 +445,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "updated_at": {
           "name": "updated_at",
@@ -481,8 +460,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "strokes": {
           "name": "strokes",
@@ -497,8 +475,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "text"
+          "enumItems": []
         },
         "similarity": {
           "name": "similarity",
@@ -513,8 +490,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "text"
+          "enumItems": []
         },
         "prompt_id": {
           "name": "prompt_id",
@@ -529,8 +505,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "bigint"
+          "enumItems": []
         },
         "score": {
           "name": "score",
@@ -545,8 +520,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "double"
+          "enumItems": []
         },
         "user_key": {
           "name": "user_key",
@@ -561,8 +535,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
+          "enumItems": []
         }
       },
       "indexes": [
@@ -627,6 +600,247 @@
       "comment": ""
     },
     {
+      "name": "missions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": 20,
+          "scale": 0,
+          "default": null,
+          "comment": null,
+          "enumItems": []
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 0,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": []
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 0,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": []
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": []
+        },
+        "period": {
+          "name": "period",
+          "type": "enum('daily','weekly','tutorial')",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 8,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [
+            "daily",
+            "weekly",
+            "tutorial"
+          ]
+        },
+        "is_fixed": {
+          "name": "is_fixed",
+          "type": "tinyint(1)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": 3,
+          "scale": 0,
+          "default": null,
+          "comment": null,
+          "enumItems": []
+        },
+        "objective_type": {
+          "name": "objective_type",
+          "type": "enum('submit','score','penalty','daily_submit','daily_score','mission_completed','visit_ranking','visit_podium','visit_mission_tab','visit_drawing_detail','share','retry','tutorial_completed')",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 20,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [
+            "submit",
+            "score",
+            "penalty",
+            "daily_submit",
+            "daily_score",
+            "mission_completed",
+            "visit_ranking",
+            "visit_podium",
+            "visit_mission_tab",
+            "visit_drawing_detail",
+            "share",
+            "retry",
+            "tutorial_completed"
+          ]
+        },
+        "required_count": {
+          "name": "required_count",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": 10,
+          "scale": 0,
+          "default": null,
+          "comment": null,
+          "enumItems": []
+        },
+        "threshold": {
+          "name": "threshold",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": 10,
+          "scale": 0,
+          "default": null,
+          "comment": null,
+          "enumItems": []
+        },
+        "reward_type": {
+          "name": "reward_type",
+          "type": "enum('point','chance')",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [
+            "point",
+            "chance"
+          ]
+        },
+        "reward_amount": {
+          "name": "reward_amount",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": 10,
+          "scale": 0,
+          "default": null,
+          "comment": null,
+          "enumItems": []
+        },
+        "category": {
+          "name": "category",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": []
+        },
+        "progress_period": {
+          "name": "progress_period",
+          "type": "enum('none','day','week','month')",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 5,
+          "precision": null,
+          "scale": null,
+          "default": "'none'",
+          "comment": null,
+          "enumItems": [
+            "none",
+            "day",
+            "week",
+            "month"
+          ]
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "id"
+          ],
+          "keyName": "PRIMARY",
+          "unique": true,
+          "primary": true,
+          "constraint": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {},
+      "nativeEnums": {},
+      "comment": ""
+    },
+    {
       "name": "notification_agreements",
       "columns": {
         "id": {
@@ -642,8 +856,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "bigint"
+          "enumItems": []
         },
         "created_at": {
           "name": "created_at",
@@ -658,8 +871,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "updated_at": {
           "name": "updated_at",
@@ -674,8 +886,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "user_key": {
           "name": "user_key",
@@ -690,8 +901,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
+          "enumItems": []
         },
         "type": {
           "name": "type",
@@ -706,8 +916,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
+          "enumItems": []
         },
         "template_code": {
           "name": "template_code",
@@ -722,8 +931,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
+          "enumItems": []
         },
         "status": {
           "name": "status",
@@ -738,8 +946,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
+          "enumItems": []
         },
         "agreed_at": {
           "name": "agreed_at",
@@ -754,8 +961,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "rejected_at": {
           "name": "rejected_at",
@@ -770,8 +976,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "last_event_at": {
           "name": "last_event_at",
@@ -786,8 +991,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         }
       },
       "indexes": [
@@ -845,8 +1049,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
+          "enumItems": []
         },
         "count": {
           "name": "count",
@@ -861,8 +1064,7 @@
           "scale": 0,
           "default": "0",
           "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
+          "enumItems": []
         },
         "last_reset_at": {
           "name": "last_reset_at",
@@ -877,8 +1079,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         }
       },
       "indexes": [
@@ -913,8 +1114,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "bigint"
+          "enumItems": []
         },
         "created_at": {
           "name": "created_at",
@@ -929,8 +1129,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "updated_at": {
           "name": "updated_at",
@@ -945,8 +1144,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "user_key": {
           "name": "user_key",
@@ -961,8 +1159,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
+          "enumItems": []
         },
         "point_grant_status": {
           "name": "point_grant_status",
@@ -983,8 +1180,7 @@
             "retry",
             "failed",
             "succeeded"
-          ],
-          "mappedType": "enum"
+          ]
         },
         "point_amount": {
           "name": "point_amount",
@@ -999,12 +1195,11 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
+          "enumItems": []
         },
         "point_reason": {
           "name": "point_reason",
-          "type": "enum('ad','share','drawing')",
+          "type": "enum('ad','share','drawing','mission')",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -1018,9 +1213,9 @@
           "enumItems": [
             "ad",
             "share",
-            "drawing"
-          ],
-          "mappedType": "enum"
+            "drawing",
+            "mission"
+          ]
         },
         "attempt_count": {
           "name": "attempt_count",
@@ -1035,8 +1230,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
+          "enumItems": []
         },
         "max_attempt_count": {
           "name": "max_attempt_count",
@@ -1051,8 +1245,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
+          "enumItems": []
         },
         "next_retry_at": {
           "name": "next_retry_at",
@@ -1067,8 +1260,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "locked_at": {
           "name": "locked_at",
@@ -1083,8 +1275,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "processed_at": {
           "name": "processed_at",
@@ -1099,8 +1290,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "failed_message": {
           "name": "failed_message",
@@ -1115,8 +1305,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "text"
+          "enumItems": []
         },
         "point_idempotency_key": {
           "name": "point_idempotency_key",
@@ -1131,8 +1320,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
+          "enumItems": []
         }
       },
       "indexes": [
@@ -1223,8 +1411,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "bigint"
+          "enumItems": []
         },
         "created_at": {
           "name": "created_at",
@@ -1239,8 +1426,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "updated_at": {
           "name": "updated_at",
@@ -1255,12 +1441,11 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "point_reason": {
           "name": "point_reason",
-          "type": "enum('ad','share','drawing')",
+          "type": "enum('ad','share','drawing','mission')",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -1274,9 +1459,9 @@
           "enumItems": [
             "ad",
             "share",
-            "drawing"
-          ],
-          "mappedType": "enum"
+            "drawing",
+            "mission"
+          ]
         },
         "point_amount": {
           "name": "point_amount",
@@ -1291,8 +1476,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
+          "enumItems": []
         },
         "user_key": {
           "name": "user_key",
@@ -1307,8 +1491,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
+          "enumItems": []
         }
       },
       "indexes": [
@@ -1366,8 +1549,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "bigint"
+          "enumItems": []
         },
         "strokes": {
           "name": "strokes",
@@ -1382,8 +1564,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "text"
+          "enumItems": []
         }
       },
       "indexes": [
@@ -1418,8 +1599,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "bigint"
+          "enumItems": []
         },
         "created_at": {
           "name": "created_at",
@@ -1434,8 +1614,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "updated_at": {
           "name": "updated_at",
@@ -1450,8 +1629,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "nickname": {
           "name": "nickname",
@@ -1466,8 +1644,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
+          "enumItems": []
         },
         "strokes": {
           "name": "strokes",
@@ -1482,8 +1659,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "text"
+          "enumItems": []
         },
         "drawing_id": {
           "name": "drawing_id",
@@ -1498,8 +1674,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "bigint"
+          "enumItems": []
         },
         "score": {
           "name": "score",
@@ -1514,8 +1689,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "double"
+          "enumItems": []
         },
         "submitted_at": {
           "name": "submitted_at",
@@ -1530,8 +1704,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "user_key": {
           "name": "user_key",
@@ -1546,8 +1719,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
+          "enumItems": []
         }
       },
       "indexes": [
@@ -1600,8 +1772,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "bigint"
+          "enumItems": []
         },
         "created_at": {
           "name": "created_at",
@@ -1616,8 +1787,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "updated_at": {
           "name": "updated_at",
@@ -1632,8 +1802,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "user_key": {
           "name": "user_key",
@@ -1648,8 +1817,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
+          "enumItems": []
         },
         "type": {
           "name": "type",
@@ -1664,8 +1832,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
+          "enumItems": []
         },
         "reference_id": {
           "name": "reference_id",
@@ -1680,8 +1847,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
+          "enumItems": []
         },
         "sent_at": {
           "name": "sent_at",
@@ -1696,8 +1862,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "status": {
           "name": "status",
@@ -1712,8 +1877,7 @@
           "scale": null,
           "default": "'IN_FLIGHT'",
           "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
+          "enumItems": []
         }
       },
       "indexes": [
@@ -1783,8 +1947,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "bigint"
+          "enumItems": []
         },
         "user_key": {
           "name": "user_key",
@@ -1799,8 +1962,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
+          "enumItems": []
         },
         "channel": {
           "name": "channel",
@@ -1817,8 +1979,7 @@
           "comment": null,
           "enumItems": [
             "contactsViral"
-          ],
-          "mappedType": "enum"
+          ]
         },
         "module_id": {
           "name": "module_id",
@@ -1833,8 +1994,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
+          "enumItems": []
         },
         "created_at": {
           "name": "created_at",
@@ -1849,8 +2009,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "updated_at": {
           "name": "updated_at",
@@ -1865,8 +2024,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         }
       },
       "indexes": [
@@ -1920,6 +2078,203 @@
       "comment": ""
     },
     {
+      "name": "user_missions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": 20,
+          "scale": 0,
+          "default": null,
+          "comment": null,
+          "enumItems": []
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 0,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": []
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 0,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": []
+        },
+        "user_key": {
+          "name": "user_key",
+          "type": "int",
+          "unsigned": true,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": null,
+          "precision": 10,
+          "scale": 0,
+          "default": null,
+          "comment": null,
+          "enumItems": []
+        },
+        "mission_id": {
+          "name": "mission_id",
+          "type": "bigint",
+          "unsigned": true,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": 20,
+          "scale": 0,
+          "default": null,
+          "comment": null,
+          "enumItems": []
+        },
+        "current_count": {
+          "name": "current_count",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": 10,
+          "scale": 0,
+          "default": "0",
+          "comment": null,
+          "enumItems": []
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 0,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": []
+        },
+        "last_progressed_at": {
+          "name": "last_progressed_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 0,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": []
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "id"
+          ],
+          "keyName": "PRIMARY",
+          "unique": true,
+          "primary": true,
+          "constraint": true
+        },
+        {
+          "columnNames": [
+            "mission_id"
+          ],
+          "keyName": "user_missions_mission_id_index",
+          "unique": false,
+          "primary": false,
+          "constraint": false
+        },
+        {
+          "columnNames": [
+            "user_key",
+            "created_at",
+            "mission_id"
+          ],
+          "keyName": "user_missions_user_key_created_at_mission_id_unique",
+          "unique": true,
+          "primary": false,
+          "constraint": true,
+          "composite": true
+        },
+        {
+          "columnNames": [
+            "user_key"
+          ],
+          "keyName": "user_missions_user_key_index",
+          "unique": false,
+          "primary": false,
+          "constraint": false
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "user_missions_mission_id_foreign": {
+          "columnNames": [
+            "mission_id"
+          ],
+          "constraintName": "user_missions_mission_id_foreign",
+          "localTableName": "user_missions",
+          "referencedTableName": "missions",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "updateRule": "no action",
+          "deleteRule": "no action"
+        },
+        "user_missions_user_key_foreign": {
+          "columnNames": [
+            "user_key"
+          ],
+          "constraintName": "user_missions_user_key_foreign",
+          "localTableName": "user_missions",
+          "referencedTableName": "users",
+          "referencedColumnNames": [
+            "user_key"
+          ],
+          "updateRule": "no action",
+          "deleteRule": "no action"
+        }
+      },
+      "nativeEnums": {},
+      "comment": ""
+    },
+    {
       "name": "users",
       "columns": {
         "created_at": {
@@ -1935,8 +2290,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "updated_at": {
           "name": "updated_at",
@@ -1951,8 +2305,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
+          "enumItems": []
         },
         "user_key": {
           "name": "user_key",
@@ -1967,8 +2320,7 @@
           "scale": 0,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
+          "enumItems": []
         },
         "name": {
           "name": "name",
@@ -1983,8 +2335,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
+          "enumItems": []
         },
         "gender": {
           "name": "gender",
@@ -1999,8 +2350,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
+          "enumItems": []
         },
         "birthday": {
           "name": "birthday",
@@ -2015,8 +2365,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "date"
+          "enumItems": []
         },
         "nickname": {
           "name": "nickname",
@@ -2031,8 +2380,22 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
+          "enumItems": []
+        },
+        "tutorial_completed_at": {
+          "name": "tutorial_completed_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 0,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": []
         }
       },
       "indexes": [
