@@ -78,6 +78,7 @@ const RankingList = () => {
                     strokes={ranking.strokes}
                     loop={false}
                     targetDurationMs={2000}
+                    shouldScale
                     ariaLabel={`${ranking.rank}위 ${ranking.nickname} 그림`}
                   />
                 </button>

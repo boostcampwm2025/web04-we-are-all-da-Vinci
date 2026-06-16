@@ -1,6 +1,7 @@
 import type { Stroke } from "@toss/shared";
 import type { RefObject } from "react";
 import { getCanvasBackgroundColor } from "./canvasBackground";
+import { calculateStrokeScale, transformPoint } from "./scaleStrokes";
 
 const LOOP_DELAY_MS = 1000; // 루프 재시작 전 대기 시간(ms)
 const NORMALIZE_SIZE = 500; // strokes는 500x500 정규화 좌표로 저장됨 (normalizeStrokes 참조)
@@ -12,6 +13,7 @@ export const animateDrawing = (
   speed: number, // 한 점 그리는 최소 시간(ms)
   loop: boolean,
   targetDurationMs?: number, // 리플레이 최대 지속 시간. speed보다 우선 적용
+  shouldScale?: boolean,
 ): (() => void) => {
   const canvas = canvasRef.current;
   const ctx = ctxRef.current;
@@ -35,7 +37,10 @@ export const animateDrawing = (
   const logicalWidth = canvas.width / dpr;
   const logicalHeight = canvas.height / dpr;
   // 정규화 공간(500x500) → 캔버스 logical 공간 변환 비율
-  const scale = logicalWidth / NORMALIZE_SIZE;
+  const normalizeScale = logicalWidth / NORMALIZE_SIZE;
+  const scaleInfo = shouldScale
+    ? calculateStrokeScale(strokes, logicalWidth, logicalHeight)
+    : null;
 
   const backgroundColor = getCanvasBackgroundColor();
   const clearCanvas = () => {
@@ -48,8 +53,19 @@ export const animateDrawing = (
     const [xPoints, yPoints] = stroke.points;
     const [r, g, b] = stroke.color ?? [0, 0, 0];
 
-    const x = xPoints[state.pointIndex] * scale;
-    const y = yPoints[state.pointIndex] * scale;
+    const rawX = xPoints[state.pointIndex];
+    const rawY = yPoints[state.pointIndex];
+
+    const { x, y } =
+      shouldScale && scaleInfo
+        ? transformPoint(
+            rawX,
+            rawY,
+            scaleInfo.scale,
+            scaleInfo.offsetX,
+            scaleInfo.offsetY,
+          )
+        : { x: rawX * normalizeScale, y: rawY * normalizeScale };
 
     if (state.pointIndex === 0) {
       ctx.beginPath();

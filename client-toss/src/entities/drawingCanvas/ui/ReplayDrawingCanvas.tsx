@@ -7,6 +7,7 @@ interface ReplayDrawingCanvasProps {
   speed?: number;
   loop?: boolean;
   targetDurationMs?: number;
+  shouldScale?: boolean;
   ariaLabel?: string;
 }
 
@@ -15,6 +16,7 @@ const ReplayDrawingCanvas = ({
   speed = 0,
   loop = true,
   targetDurationMs,
+  shouldScale = false,
   ariaLabel,
 }: ReplayDrawingCanvasProps) => {
   const { containerRef, canvasRef, ctxRef, canvasSize } = useCanvasSetup();
@@ -26,6 +28,7 @@ const ReplayDrawingCanvas = ({
     speed,
     loop,
     targetDurationMs,
+    shouldScale,
     canvasSize,
   });
 
