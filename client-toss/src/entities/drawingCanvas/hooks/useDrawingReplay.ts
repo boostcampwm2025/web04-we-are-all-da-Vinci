@@ -8,6 +8,7 @@ interface UseDrawingReplayProps {
   strokes: Stroke[];
   speed: number;
   loop: boolean;
+  targetDurationMs?: number;
   /**
    * 캔버스 사이즈 변화에 맞춰 리플레이 재시작 트리거.
    * useCanvasSetup의 canvasSize 값을 그대로 넘기면 됨.
@@ -21,6 +22,7 @@ export const useDrawingReplay = ({
   strokes,
   speed,
   loop,
+  targetDurationMs,
   canvasSize = 0,
 }: UseDrawingReplayProps) => {
   useEffect(() => {
@@ -37,10 +39,11 @@ export const useDrawingReplay = ({
       strokes,
       speed,
       loop,
+      targetDurationMs,
     );
 
     return () => {
       cancelAnimation();
     };
-  }, [canvasRef, ctxRef, strokes, speed, loop, canvasSize]);
+  }, [canvasRef, ctxRef, strokes, speed, loop, targetDurationMs, canvasSize]);
 };

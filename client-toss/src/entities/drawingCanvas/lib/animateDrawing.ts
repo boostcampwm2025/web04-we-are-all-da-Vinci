@@ -11,6 +11,7 @@ export const animateDrawing = (
   strokes: Stroke[],
   speed: number, // 한 점 그리는 최소 시간(ms)
   loop: boolean,
+  targetDurationMs?: number, // 리플레이 최대 지속 시간. speed보다 우선 적용
 ): (() => void) => {
   const canvas = canvasRef.current;
   const ctx = ctxRef.current;
@@ -22,6 +23,12 @@ export const animateDrawing = (
     lastDrawTime: 0,
     isWaiting: false,
     waitStartTime: 0,
+    startTime: 0,
+    totalPointCount: strokes.reduce(
+      (sum, stroke) => sum + stroke.points[0].length,
+      0,
+    ),
+    drawnPointCount: 0,
   };
 
   const dpr = window.devicePixelRatio || 1;
@@ -72,14 +79,14 @@ export const animateDrawing = (
 
   let animationId: number | null = null;
 
-  const animate = (timestamp: number) => {
+  const animateBySpeed = (timestamp: number) => {
     if (animationId === null) return;
 
     try {
       if (state.isWaiting) {
         if (timestamp - state.waitStartTime >= LOOP_DELAY_MS) restartLoop();
         else {
-          animationId = requestAnimationFrame(animate);
+          animationId = requestAnimationFrame(animateBySpeed);
           return;
         }
       }
@@ -99,15 +106,55 @@ export const animateDrawing = (
         } else return;
       }
 
-      animationId = requestAnimationFrame(animate);
+      animationId = requestAnimationFrame(animateBySpeed);
     } catch (error) {
       console.error("리플레이 애니메이션 오류로 중단:", error);
       animationId = null;
     }
   };
 
+  const animateByDuration = (timestamp: number) => {
+    if (animationId === null) return;
+
+    try {
+      if (state.startTime === 0) {
+        state.startTime = timestamp;
+      }
+
+      const elapsed = timestamp - state.startTime;
+      const progress = Math.min(elapsed / targetDurationMs!, 1);
+      const targetPointCount = Math.floor(state.totalPointCount * progress);
+
+      while (
+        state.drawnPointCount < targetPointCount &&
+        state.strokeIndex < strokes.length
+      ) {
+        drawPoint();
+        state.drawnPointCount++;
+
+        if (
+          state.strokeIndex < strokes.length &&
+          state.pointIndex >= strokes[state.strokeIndex].points[0].length
+        ) {
+          goToNextStroke();
+        }
+      }
+
+      if (state.strokeIndex >= strokes.length) {
+        return;
+      }
+      animationId = requestAnimationFrame(animateByDuration);
+    } catch (error) {
+      console.error("리플레이 애니메이션 오류로 중단:", error);
+      animationId = null;
+    }
+  };
+
+  const animateFrame =
+    targetDurationMs != null ? animateByDuration : animateBySpeed;
+
   clearCanvas();
-  animationId = requestAnimationFrame(animate);
+  animationId = requestAnimationFrame(animateFrame);
 
   return () => {
     if (animationId !== null) cancelAnimationFrame(animationId);

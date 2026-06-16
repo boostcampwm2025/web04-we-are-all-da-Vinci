@@ -77,6 +77,7 @@ const RankingList = () => {
                   <ReplayDrawingCanvas
                     strokes={ranking.strokes}
                     loop={false}
+                    targetDurationMs={2000}
                     ariaLabel={`${ranking.rank}위 ${ranking.nickname} 그림`}
                   />
                 </button>
