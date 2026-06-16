@@ -26,7 +26,7 @@ export const useDrawingReplay = ({
   strokes,
   speed,
   loop,
-  isVisible,
+  isVisible = true,
   replayKey,
   targetDurationMs,
   shouldScale,
