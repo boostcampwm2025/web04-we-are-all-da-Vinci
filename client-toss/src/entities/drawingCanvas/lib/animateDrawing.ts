@@ -139,7 +139,10 @@ export const animateDrawing = (
 
       const elapsed = timestamp - state.startTime;
       const progress = Math.min(elapsed / targetDurationMs!, 1);
-      const targetPointCount = Math.floor(state.totalPointCount * progress);
+      const easedProgress = easeOutCubic(progress);
+      const targetPointCount = Math.floor(
+        state.totalPointCount * easedProgress,
+      );
 
       while (
         state.drawnPointCount < targetPointCount &&
@@ -177,3 +180,5 @@ export const animateDrawing = (
     animationId = null;
   };
 };
+
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
