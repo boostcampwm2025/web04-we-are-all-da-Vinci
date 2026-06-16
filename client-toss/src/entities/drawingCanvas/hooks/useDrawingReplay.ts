@@ -1,6 +1,7 @@
 import type { Stroke } from "@toss/shared";
 import { useEffect, type RefObject } from "react";
 import { animateDrawing } from "../lib/animateDrawing";
+import { getCanvasBackgroundColor } from "../lib/canvasBackground";
 
 interface UseDrawingReplayProps {
   canvasRef: RefObject<HTMLCanvasElement | null>;
@@ -8,6 +9,8 @@ interface UseDrawingReplayProps {
   strokes: Stroke[];
   speed: number;
   loop: boolean;
+  isVisible?: boolean;
+  replayKey?: number;
   targetDurationMs?: number;
   shouldScale?: boolean;
   /**
@@ -23,6 +26,8 @@ export const useDrawingReplay = ({
   strokes,
   speed,
   loop,
+  isVisible,
+  replayKey,
   targetDurationMs,
   shouldScale,
   canvasSize = 0,
@@ -32,6 +37,12 @@ export const useDrawingReplay = ({
     const ctx = ctxRef.current;
 
     if (!canvas || !ctx || strokes.length === 0 || canvasSize === 0) {
+      return;
+    }
+
+    if (!isVisible) {
+      ctx.fillStyle = getCanvasBackgroundColor();
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       return;
     }
 
@@ -54,6 +65,8 @@ export const useDrawingReplay = ({
     strokes,
     speed,
     loop,
+    isVisible,
+    replayKey,
     targetDurationMs,
     shouldScale,
     canvasSize,

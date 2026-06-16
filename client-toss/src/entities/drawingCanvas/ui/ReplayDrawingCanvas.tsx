@@ -6,6 +6,8 @@ interface ReplayDrawingCanvasProps {
   strokes: Stroke[];
   speed?: number;
   loop?: boolean;
+  isVisible?: boolean;
+  replayKey?: number;
   targetDurationMs?: number;
   shouldScale?: boolean;
   ariaLabel?: string;
@@ -15,6 +17,8 @@ const ReplayDrawingCanvas = ({
   strokes,
   speed = 0,
   loop = true,
+  isVisible = true,
+  replayKey = 0,
   targetDurationMs,
   shouldScale = false,
   ariaLabel,
@@ -27,6 +31,8 @@ const ReplayDrawingCanvas = ({
     strokes,
     speed,
     loop,
+    isVisible,
+    replayKey,
     targetDurationMs,
     shouldScale,
     canvasSize,

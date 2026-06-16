@@ -4,7 +4,7 @@ import { AD_GROUP_IDS } from "@/shared/config";
 import { FUNNEL_EVENTS, trackClick } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Skeleton } from "@toss/tds-mobile";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   DEFAULT_RANK_COLOR,
   MY_RANK_HIGHLIGHT,
@@ -35,6 +35,50 @@ const RankingList = () => {
   const [selectedRanking, setSelectedRanking] =
     useState<RankingListItem | null>(null);
 
+  const chunkRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const [chunkReplayKeys, setChunkReplayKeys] = useState<
+    Record<number, number>
+  >({});
+  const [visibleChunks, setVisibleChunks] = useState<Record<number, boolean>>(
+    {},
+  );
+
+  const increaseChunkReplayKeys = (chunkIndex: number) => {
+    setChunkReplayKeys((prev) => ({
+      ...prev,
+      [chunkIndex]: (prev[chunkIndex] || 0) + 1,
+    }));
+  };
+
+  useEffect(() => {
+    if (!rankingList) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const chunkIndex = Number(
+            (entry.target as HTMLElement).dataset.chunkIndex,
+          );
+          if (entry.isIntersecting) {
+            increaseChunkReplayKeys(chunkIndex);
+            setVisibleChunks((prev) => ({ ...prev, [chunkIndex]: true }));
+          } else {
+            setVisibleChunks((prev) => ({ ...prev, [chunkIndex]: false }));
+          }
+        });
+      },
+      {
+        threshold: 0.5,
+      },
+    );
+
+    Object.values(chunkRefs.current).forEach((el) => {
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, [rankingList]);
+
   if (isLoading) {
     return <Skeleton pattern="listOnly" style={{ width: "100%" }} />;
   }
@@ -47,7 +91,14 @@ const RankingList = () => {
     <div className="px-(--page-px)">
       <div className="flex flex-col">
         {chunkRankingList(rankingList).map((chunk, chunkIndex) => (
-          <div key={`ranking-chunk-${chunkIndex}`} className="flex flex-col">
+          <div
+            key={`ranking-chunk-${chunkIndex}`}
+            data-chunk-index={chunkIndex}
+            className="flex flex-col"
+            ref={(el) => {
+              chunkRefs.current[chunkIndex] = el;
+            }}
+          >
             <div className="grid grid-cols-3 gap-x-4 gap-y-5">
               {chunk.map((ranking) => (
                 <button
@@ -77,6 +128,8 @@ const RankingList = () => {
                   <ReplayDrawingCanvas
                     strokes={ranking.strokes}
                     loop={false}
+                    isVisible={visibleChunks[chunkIndex] ?? true}
+                    replayKey={chunkReplayKeys[chunkIndex] || 0}
                     targetDurationMs={2000}
                     shouldScale
                     ariaLabel={`${ranking.rank}위 ${ranking.nickname} 그림`}
