@@ -22,7 +22,7 @@ vi.mock("@toss/tds-mobile", () => ({
 }));
 
 vi.mock("@/entities/drawingCanvas", () => ({
-  StaticDrawingCanvas: ({ ariaLabel }: { ariaLabel?: string }) => (
+  ReplayDrawingCanvas: ({ ariaLabel }: { ariaLabel?: string }) => (
     <div role="img" aria-label={ariaLabel} />
   ),
 }));

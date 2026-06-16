@@ -1,4 +1,4 @@
-import { StaticDrawingCanvas } from "@/entities/drawingCanvas";
+import { ReplayDrawingCanvas } from "@/entities/drawingCanvas";
 import { DrawingScoreDetailSheet } from "@/entities/myScoreCard";
 import { AD_GROUP_IDS } from "@/shared/config";
 import { FUNNEL_EVENTS, trackClick } from "@/shared/lib";
@@ -45,12 +45,9 @@ const RankingList = () => {
 
   return (
     <div className="px-(--page-px)">
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col">
         {chunkRankingList(rankingList).map((chunk, chunkIndex) => (
-          <div
-            key={`ranking-chunk-${chunkIndex}`}
-            className="flex flex-col gap-8"
-          >
+          <div key={`ranking-chunk-${chunkIndex}`} className="flex flex-col">
             <div className="grid grid-cols-3 gap-x-4 gap-y-5">
               {chunk.map((ranking) => (
                 <button
@@ -77,9 +74,9 @@ const RankingList = () => {
                   >
                     {ranking.rank}
                   </span>
-                  <StaticDrawingCanvas
+                  <ReplayDrawingCanvas
                     strokes={ranking.strokes}
-                    isPrompt
+                    loop={false}
                     ariaLabel={`${ranking.rank}위 ${ranking.nickname} 그림`}
                   />
                 </button>
