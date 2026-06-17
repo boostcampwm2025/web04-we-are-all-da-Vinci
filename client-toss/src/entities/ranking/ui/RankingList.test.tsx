@@ -160,4 +160,44 @@ describe("RankingList", () => {
 
     expect(screen.getAllByTestId("ranking-banner-ad")).toHaveLength(1);
   });
+
+  it("참여자가 적으면 빈 자리를 유령 슬롯으로 9칸까지 채운다", () => {
+    mockUseRankingList.mockReturnValue({
+      rankingList: Array.from({ length: 4 }, (_, index) =>
+        makeRanking(index + 1),
+      ),
+      isLoading: false,
+    });
+
+    render(<RankingList />);
+
+    // 실제 4개 + 유령 5개 = 9칸
+    expect(screen.getAllByTestId("ranking-ghost-tile")).toHaveLength(5);
+  });
+
+  it("유령 슬롯을 클릭해도 상세 시트가 열리지 않는다", () => {
+    mockUseRankingList.mockReturnValue({
+      rankingList: [makeRanking(1)],
+      isLoading: false,
+    });
+
+    render(<RankingList />);
+
+    fireEvent.click(screen.getAllByTestId("ranking-ghost-tile")[0]);
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("참여자가 9명 이상이면 유령 슬롯을 만들지 않는다", () => {
+    mockUseRankingList.mockReturnValue({
+      rankingList: Array.from({ length: 9 }, (_, index) =>
+        makeRanking(index + 1),
+      ),
+      isLoading: false,
+    });
+
+    render(<RankingList />);
+
+    expect(screen.queryByTestId("ranking-ghost-tile")).not.toBeInTheDocument();
+  });
 });
