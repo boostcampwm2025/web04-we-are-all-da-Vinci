@@ -19,16 +19,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `server-toss/` | NestJS REST API — 앱인토스 서버                       | See `server-toss/CLAUDE.md` |
 | `packages/`    | Shared packages (shared, toss-shared, similarity)     | —                           |
 
+### Two independent products in one monorepo
+
+The repo holds **two separate apps that do not share runtime code** — read the matching sub-CLAUDE.md before working in either:
+
+- **The game** (`client/` + `server/`): real-time multiplayer over **Socket.io + Redis**. The "Cross-Cutting Patterns" below (WebSocket flow, constants sync, server-driven timer) apply **only here**.
+- **The Apps-in-Toss mini-app** (`client-toss/` + `server-toss/`): a **non-game** WebView mini-app talking to a **REST API + MySQL (MikroORM)**. No WebSocket/Redis. Sandbox-only verification (see `client-toss/CLAUDE.md`). Do **not** apply the game's patterns here.
+
+Shared packages split along the same line: `shared` + `similarity` → game; `toss-shared` → toss app; `similarity` is used by both. `pnpm build:packages` builds all three and is required before the first run.
+
 ## Development Commands
 
 ### Infrastructure
 
-```bash
-# Start local Redis (required before running server)
-pnpm infra:up
+Local services live in `infra/local/compose.yaml`. There is **no `infra:up`/`infra:down`** — each service is started/stopped by name:
 
-# Stop local Redis
-pnpm infra:down
+```bash
+# Redis — required by server/ (game)
+pnpm infra:redis:up
+pnpm infra:redis:down
+
+# MySQL — required by server-toss/ (Apps-in-Toss API; MikroORM)
+pnpm infra:mysql:up
+pnpm infra:mysql:down
 ```
 
 ### Root-level shortcuts
@@ -121,16 +134,16 @@ pnpm perf:multi
 
 `dorny/paths-filter`로 변경된 워크스페이스만 CI를 실행한다.
 
-| 변경 대상 | 실행되는 Job |
-|-----------|-------------|
-| `client/**` | Client (lint, format, test, build) + Bundle Size (Client) |
-| `server/**` | Server (lint, format, test, build) |
-| `client-toss/**` | Client-Toss (lint, format, test, QA, build) + Bundle Size (Toss) |
-| `server-toss/**` | Server-Toss (lint, format, test, build) |
-| `packages/shared/**` | Client, Server, Bundle Size (Client) |
-| `packages/similarity/**` | Client, Client-Toss, Server-Toss, Bundle Size (Client + Toss) |
-| `packages/toss-shared/**` | Client-Toss, Server-Toss, Bundle Size (Toss) |
-| push to main | 모든 워크스페이스 (Bundle Size 제외) |
+| 변경 대상                 | 실행되는 Job                                                     |
+| ------------------------- | ---------------------------------------------------------------- |
+| `client/**`               | Client (lint, format, test, build) + Bundle Size (Client)        |
+| `server/**`               | Server (lint, format, test, build)                               |
+| `client-toss/**`          | Client-Toss (lint, format, test, QA, build) + Bundle Size (Toss) |
+| `server-toss/**`          | Server-Toss (lint, format, test, build)                          |
+| `packages/shared/**`      | Client, Server, Bundle Size (Client)                             |
+| `packages/similarity/**`  | Client, Client-Toss, Server-Toss, Bundle Size (Client + Toss)    |
+| `packages/toss-shared/**` | Client-Toss, Server-Toss, Bundle Size (Toss)                     |
+| push to main              | 모든 워크스페이스 (Bundle Size 제외)                             |
 
 - shared 패키지 빌드: `pnpm build:packages`로 전체 빌드 (shared + similarity + toss-shared)
 - client-toss QA: `pnpm qa:ci`로 앱인토스 심사 기준 자동 검증 (granite config, TDS, UX writing, 다크패턴, 광고, 외부 링크, 번들 사이즈)
