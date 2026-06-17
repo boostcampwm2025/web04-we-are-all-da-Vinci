@@ -8,12 +8,17 @@ import {
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ZodValidationPipe } from "src/common/zod-validation.pipe";
-import { JwtAuthGuard } from "./guards/jwt-auth.guard";
-import { CurrentUser } from "./decorators/current-user.decorator";
-import type { CurrentUserPayload } from "./decorators/current-user.decorator";
 import { AuthService } from "./auth.service";
-import { LoginDto, LoginSchema } from "./dto/login.dto";
+import type { CurrentUserPayload } from "./decorators/current-user.decorator";
+import { CurrentUser } from "./decorators/current-user.decorator";
 import { LoginResponseDto } from "./dto/login-response.dto";
+import { LoginDto, LoginSchema } from "./dto/login.dto";
+import {
+  LogoutCallbackDto,
+  LogoutCallbackSchema,
+} from "./dto/logout-callback.dto";
+import { JwtAuthGuard } from "./guards/jwt-auth.guard";
+import { LogoutCallbackAuthGuard } from "./guards/logout-callback-auth.guard";
 
 @ApiTags("auth")
 @Controller("oauth/toss")
@@ -43,5 +48,14 @@ export class AuthController {
   })
   async logout(@CurrentUser() user: CurrentUserPayload): Promise<void> {
     await this.authService.logout(user.userKey);
+  }
+
+  @Post("logout/callback")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(LogoutCallbackAuthGuard)
+  async logoutCallback(
+    @Body(new ZodValidationPipe(LogoutCallbackSchema)) dto: LogoutCallbackDto,
+  ) {
+    await this.authService.logoutByCallback(dto);
   }
 }

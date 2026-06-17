@@ -1,4 +1,5 @@
 import { UniqueConstraintViolationException } from "@mikro-orm/core";
+import { Transactional } from "@mikro-orm/decorators/legacy";
 import { EntityManager } from "@mikro-orm/mysql";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import {
@@ -10,6 +11,15 @@ import { TutorialMissionService } from "src/modules/mission/service/tutorial-mis
 import { generateNickname } from "src/modules/user/lib/nickname-generator";
 import { User } from "src/modules/user/user.entity";
 import { UserRepository } from "src/modules/user/user.repository";
+import { AdView } from "../chance/ad-view.entity";
+import { PlayChance } from "../chance/play-chance.entity";
+import { ShareLog } from "../chance/share-log.entity";
+import { DailyUserRanking } from "../dailyRanking/daily-user-ranking.entity";
+import { Drawing } from "../drawing/drawing.entity";
+import { UserMission } from "../mission/entity/user-mission.entity";
+import { PointGrantRequest } from "../point/entity/point-grant-request.entity";
+import { PointLog } from "../point/entity/point-log.entity";
+import { Ranking } from "../ranking/ranking.entity";
 
 const NICKNAME_RETRY_LIMIT = 5;
 
@@ -18,8 +28,8 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: UserRepository,
-    private readonly em: EntityManager,
     private readonly tutorialMissionService: TutorialMissionService,
+    private readonly em: EntityManager,
   ) {}
 
   async upsert(data: {
@@ -47,6 +57,26 @@ export class UserService {
     const user = await this.userRepository.findOne({ userKey });
     if (!user) throw new NotFoundException("사용자를 찾을 수 없어요.");
     return user;
+  }
+
+  @Transactional()
+  async removeAll(userKey: number) {
+    const user = await this.getUserInfo(userKey);
+
+    await this.em.nativeDelete(Ranking, { userKey: user.userKey });
+    await this.em.nativeDelete(DailyUserRanking, { userKey: user.userKey });
+    await this.em.nativeDelete(Drawing, { user: user });
+
+    await this.em.nativeDelete(UserMission, { user: user });
+
+    await this.em.nativeDelete(PointLog, { user: user });
+    await this.em.nativeDelete(PointGrantRequest, { user: user });
+
+    await this.em.nativeDelete(PlayChance, { userKey: user.userKey });
+    await this.em.nativeDelete(AdView, { user: user });
+    await this.em.nativeDelete(ShareLog, { user: user });
+
+    await this.userRepository.nativeDelete({ userKey: user.userKey });
   }
 
   private async createWithNickname(data: {
