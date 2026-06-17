@@ -11,6 +11,7 @@ import {
   RewardType,
 } from "../entity/mission.entity";
 import { UserMission } from "../entity/user-mission.entity";
+import { REWARD_POINT } from "../../point/point.contants";
 
 const MissionDefinitionSchema = z.object({
   title: z.string().min(1).max(50),
@@ -34,6 +35,13 @@ const MissionsFileSchema = z
   );
 
 export type MissionDefinition = z.infer<typeof MissionDefinitionSchema>;
+
+// missions.json의 rewardAmount는 "0=보상 없음 / 양수=표준 보상"의 on/off 플래그로만 쓰고,
+// 실제 지급액은 단일 소스 REWARD_POINT로 정규화한다(포인트 보상에 한함).
+const resolveRewardAmount = (def: MissionDefinition): number =>
+  def.rewardType === RewardType.POINT && def.rewardAmount > 0
+    ? REWARD_POINT
+    : def.rewardAmount;
 
 export interface MissionSeedResult {
   added: number;
@@ -133,7 +141,7 @@ export class MissionSeedService {
           mission.requiredCount = def.requiredCount;
           mission.threshold = def.threshold ?? undefined;
           mission.rewardType = def.rewardType;
-          mission.rewardAmount = def.rewardAmount;
+          mission.rewardAmount = resolveRewardAmount(def);
           mission.category = def.category ?? undefined;
           mission.progressPeriod = def.progressPeriod;
           txEm.persist(mission);
@@ -177,8 +185,9 @@ export class MissionSeedService {
       mission.rewardType = def.rewardType;
       changed = true;
     }
-    if (mission.rewardAmount !== def.rewardAmount) {
-      mission.rewardAmount = def.rewardAmount;
+    const resolvedRewardAmount = resolveRewardAmount(def);
+    if (mission.rewardAmount !== resolvedRewardAmount) {
+      mission.rewardAmount = resolvedRewardAmount;
       changed = true;
     }
     if (mission.category !== (def.category ?? undefined)) {

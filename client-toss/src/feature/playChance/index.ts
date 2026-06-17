@@ -4,7 +4,7 @@ export {
   PLAY_SESSION_TTL_MS,
 } from "./config/constants";
 export { useFullScreenAd } from "./hooks/useFullScreenAd";
-export type { AdStatus } from "./hooks/useFullScreenAd";
+export type { AdStatus, AdRewardData } from "./hooks/useFullScreenAd";
 export { usePlayChance } from "./hooks/usePlayChance";
 export { useRequirePlaySession } from "./hooks/useRequirePlaySession";
 export { useStartGame } from "./hooks/useStartGame";

@@ -1,8 +1,8 @@
-import { usePodium } from "@/entities/podium";
+import type { PodiumResponse } from "@/entities/podium";
 import { brainImg, painterMan2Img } from "@/shared/assets/images";
 import { ShareSheet } from "@/feature/share";
 import { Button } from "@toss/tds-mobile";
-import { type ReactNode, useState } from "react";
+import { memo, type ReactNode, useState } from "react";
 
 interface StatPillProps {
   icon: ReactNode;
@@ -21,13 +21,17 @@ const StatPill = ({ icon, label, value }: StatPillProps) => (
 );
 
 interface ChallengeCardProps {
-  /** 하단 도전 버튼 — DashboardView가 게임시작/광고 로직을 담아 전달 */
   cta: ReactNode;
+  podium?: PodiumResponse["podium"];
+  participantCount?: number;
 }
 
-const ChallengeCard = ({ cta }: ChallengeCardProps) => {
+const ChallengeCard = ({
+  cta,
+  podium,
+  participantCount,
+}: ChallengeCardProps) => {
   const [shareOpen, setShareOpen] = useState(false);
-  const { podium, participantCount } = usePodium();
   const topScore = podium && podium.length > 0 ? `${podium[0].score}점` : "-";
   const participantText =
     participantCount == null
@@ -66,8 +70,7 @@ const ChallengeCard = ({ cta }: ChallengeCardProps) => {
             />
           </div>
         </div>
-        {/* 오늘의 그림은 도전 전까지 가려져 있어 ? placeholder로 표시.
-            박스 높이는 왼쪽(제목+칩) 컬럼 높이에 맞춰 stretch된다. */}
+
         <div className="flex w-28 min-w-0 shrink items-center justify-center rounded-(--radius-inner) bg-(--color-card)">
           <span
             aria-hidden
@@ -94,4 +97,4 @@ const ChallengeCard = ({ cta }: ChallengeCardProps) => {
   );
 };
 
-export default ChallengeCard;
+export default memo(ChallengeCard);

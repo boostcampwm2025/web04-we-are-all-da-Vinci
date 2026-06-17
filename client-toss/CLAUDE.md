@@ -87,21 +87,26 @@ Feature-Sliced Design. 레이어: `app` → `views` → `feature` → `entities`
 슬라이스별 역할 (코드 구조만으로는 알기 어려운 의도):
 
 ```text
-views/      dashboard 홈("/", 일일 1회 자동 진입 — model/useDailyAutoStart),
+views/      dashboard 홈("/", 일일 1회 자동 진입 — model/useDailyAutoStart·출석 자동 체크인),
             login, memorize(그림 기억), drawing(캔버스), submitted(제출 완료),
-            ranking(TOP 100), rankingDetail("/drawing/:drawingId"), status
+            ranking(TOP100 갤러리), rankingDetail("/drawing/:drawingId"),
+            archive("/archive" 기록 아카이브), mission("/mission" 미션 목록)
+            ※ landing은 라우터 밖 — App.tsx의 세션당 1회 진입 게이트
 feature/    drawing(캔버스/툴바·스트로크 모델·채점 훅), login(토스 OAuth 훅),
             playChance(도전 시작 단일 훅 useStartGame·기회/광고 충전·하단바 FAB PlayNavButton),
-            share(점수공유·친구초대 ShareSheet), notification(알림 동의 토글)
-entities/   myScoreCard(+useMyDrawings), podium(TOP3 시상대), ranking(리스트 항목),
-            scoreDetailCard(점수 상세), phaseHeader(단계 헤더)
-shared/     api(serverTossApi), hooks(useAbortableQuery),
-            lib(useCountdown·useExitGuard·useRequiredState·useToast·tossAds),
-            ui(BannerAd·score·exitDialog 등), assets
-app/config/ router.tsx, vitest.setup.ts
+            share(점수공유·친구초대 ShareSheet), notification(알림 동의 토글·벨 버튼)
+entities/   myScoreCard(+useMyDrawings), podium(usePodium 훅 — TOP3, 컴포넌트는 삭제됨),
+            ranking(리스트 항목), scoreDetailCard(점수 상세), phaseHeader(단계 헤더),
+            attendance(출석 현황·진행 UI), missionCard(오늘의 미션 카드·섹션),
+            point(usePointSummary), drawingCanvas(리플레이/정적 캔버스)
+shared/     api(serverTossApi·Firebase Analytics init), hooks(useAbortableQuery),
+            lib(useCountdown·useExitGuard·useRequiredState·useToast·tossAds·퍼널 계측
+                analytics/attribution/funnelEvents·getAnonymousHash·formatLocalDate 등),
+            ui(bannerAd·score·exitDialog·bottomNav·bottomCTAButton·maskedIcon), assets
+app/config/ router.tsx, AnalyticsTracker(화면 전환 계측), vitest.setup.ts
 ```
 
-`App.tsx`는 `TDSMobileAITProvider` + `RouterProvider`를 래핑하고 `initTossAdsOnce`를 호출한다.
+`App.tsx`는 `TDSMobileAITProvider`로 감싸고, **세션당 1회 `LandingView` 게이트**(`sessionStorage.landingSeen`)를 거친 뒤 `PlayChanceProvider` + `RouterProvider` + `NotificationBellButton`을 렌더한다. 마운트 시 `initTossAdsOnce`·`initFirebaseAnalyticsOnce`·`captureAttributionOnce`를 1회 호출한다.
 
 ## 도메인 메모
 
@@ -122,6 +127,13 @@ app/config/ router.tsx, vitest.setup.ts
   - 시작 성공 시 `localStorage.lastPlayed_${hash}`(오늘 날짜)를 기록해 자동시작 게이트를 닫는다 — 제출 없이 이탈해도 재자동시작/이중차감 방지.
 - **일일 1회 자동 진입은 `useDailyAutoStart`(`views/dashboard/model`)가 담당.** `getAnonymousHash()`로 익명 해시 획득 → `lastPlayed_${hash}`가 오늘이면 자동시작 없이 대시보드만(`playedToday`), 아니면 마운트당 1회 `start("auto")`. `fromSubmitted` 복귀 시 등록/적립 토스트.
 - `getAnonymousHash()` 실패 시 hash="local" 폴백.
+
+### 출석·미션·포인트 (대시보드 동반 도메인)
+
+- **출석(`entities/attendance`)**: `useAttendanceStatus`(현황)·`AttendanceProgress`/`AttendanceSummary`(7일 진행 UI). 대시보드 첫 노출 시 `views/dashboard/model/useAttendanceAutoCheckIn`이 하루 1회 자동 체크인 → 결과를 `AttendanceResultSheet`(연속/끊김) 바텀시트로 안내. 출석 시트와 알림 시트가 겹치지 않게 출석 처리가 끝나고(settled) 닫힌 뒤에만 알림을 띄운다. 끊긴 연속 복구는 보상형 광고를 끝까지 본 경우에만 인정(`useFullScreenAd` 확장).
+- **미션(`entities/missionCard` + `views/mission`)**: `useTodayMissions`(대시보드 카드)·`useMyMissions`(미션 탭), `MissionCard`/`MissionSection`/`MissionCardSkeleton`/`TutorialMissionSection`. 미션 액션 세션키에 KST 날짜 경계를 적용해 자정 넘어가면 액션이 재집계된다.
+- **포인트(`entities/point`)**: `usePointSummary` — 출석과 분리된 `/points/me` 리소스. 출석 체크인·복구로 포인트(마일스톤)가 바뀔 수 있으므로 대시보드는 출석 현황과 포인트를 **함께 재조회**한다.
+- **리플레이 캔버스(`entities/drawingCanvas`)**: TOP100 갤러리·아카이브 상세에서 획을 시간순으로 다시 그려 보여준다. `useDrawingReplay`·`animateDrawing`(easeout)·`ReplayDrawingCanvas`·`StaticDrawingCanvas`, 화면 안에 들어왔을 때(`isVisible`) 리플레이를 재생한다.
 
 ### TDS 사용
 
@@ -145,8 +157,9 @@ app/config/ router.tsx, vitest.setup.ts
 
 ### 라우팅 (`app/config/router.tsx`)
 
-- `createBrowserRouter` 기반. 샌드박스 앱은 루트(`/`) → `DashboardView`로 진입.
-- 라우트: `/login`, `/`, `/memorize`, `/drawing`, `/drawing/:drawingId`(rankingDetail), `/submitted`, `/ranking`.
+- `createBrowserRouter` 기반. 모든 라우트는 `AnalyticsTracker`(app/config) 하위에 묶여 화면 전환을 계측한다. 샌드박스 앱은 루트(`/`) → `DashboardView`로 진입.
+- 라우트: `/login`, `/`, `/memorize`, `/drawing`, `/drawing/:drawingId`(rankingDetail), `/submitted`, `/ranking`, `/archive`, `/mission`.
+- 하단 탭(`shared/ui/bottomNav`)이 노출되는 경로는 `/`·`/archive`·`/mission`·`/ranking`(`NAV_VISIBLE_PATHS`).
 
 ### 설정
 
@@ -157,7 +170,7 @@ app/config/ router.tsx, vitest.setup.ts
 
 - Vitest(jsdom, `globals: true`), setup `src/app/config/vitest.setup.ts`. 패턴 `src/**/*.{test,spec}.{ts,tsx}`, `passWithNoTests` 활성.
 - `vitest.setup.ts`가 외부 의존성을 전부 모킹: `@toss/tds-mobile` 컴포넌트 전체, `@toss/tds-mobile-ait`의 `TDSMobileAITProvider`, `@apps-in-toss/web-framework`의 모든 export, `HTMLCanvasElement.prototype.getContext`·`ResizeObserver` 폴리필.
-- 모든 테스트 description은 한국어 (예: `describe('카운트다운', …)`).
+- 모든 테스트 description은 한국어 — `describe`·`it` 둘 다. 컴포넌트·훅 이름을 그대로 suite 제목으로 쓰지 말 것. ✗ `describe('StreakStatsCard')` → ✓ `describe('연속 출석 통계 카드')`. (새/수정 spec에서 영문 suite 제목은 반드시 한국어 설명으로 바꾼다.)
 
 ## QA / CI
 

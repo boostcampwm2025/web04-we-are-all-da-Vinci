@@ -61,7 +61,7 @@ const TutorialMissionSection = ({
       {isOpen && (
         <div
           id="tutorial-mission-panel"
-          className="flex flex-col gap-4 px-(--page-px)"
+          className="mt-2 flex flex-col gap-4 px-(--page-px)"
         >
           {categories.map((cat) => (
             <TutorialCategoryCard key={cat.category} category={cat} />

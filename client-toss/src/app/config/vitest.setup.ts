@@ -128,6 +128,8 @@ vi.mock("@toss/tds-mobile", () => ({
     ...props
   }: Record<string, unknown> & { children?: ReactNode }) =>
     createElement("button", props, children),
+  Skeleton: (props: Record<string, unknown>) =>
+    createElement("div", { "data-testid": "skeleton", ...props }),
   BottomCTA: {
     Double: ({
       leftButton,

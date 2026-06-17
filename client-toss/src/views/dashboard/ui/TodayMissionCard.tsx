@@ -1,5 +1,5 @@
-import { useTodayMissions } from "@/entities/missionCard";
 import type { TodayMissionItem } from "@toss/shared";
+import { memo } from "react";
 import { useNavigate } from "react-router-dom";
 
 // 미션을 세로로 한 줄씩 쌓는다 — 좌측 체크+제목(truncate), 우측 보상 pill.
@@ -24,7 +24,6 @@ const MissionRow = ({ title, rewardAmount, done }: TodayMissionItem) => (
         {title}
       </span>
     </div>
-    {/* 미완 미션은 보상 pill을 채운 파랑으로 강조해 "도전해서 받기"를 유도 */}
     <span
       className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${
         done
@@ -43,9 +42,13 @@ const CardShell = ({ children }: { children: React.ReactNode }) => (
   </section>
 );
 
-const TodayMissionCard = () => {
+interface TodayMissionCardProps {
+  missions: TodayMissionItem[];
+  isLoading: boolean;
+}
+
+const TodayMissionCard = ({ missions, isLoading }: TodayMissionCardProps) => {
   const navigate = useNavigate();
-  const { missions, isLoading } = useTodayMissions();
 
   if (isLoading) {
     return (
@@ -98,4 +101,4 @@ const TodayMissionCard = () => {
   );
 };
 
-export default TodayMissionCard;
+export default memo(TodayMissionCard);

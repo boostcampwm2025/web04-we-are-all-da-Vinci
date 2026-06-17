@@ -1,6 +1,6 @@
 [
   {
-    "title": "오늘 감점 없는 그림 1번 달성",
+    "title": "오늘 감점 없는 그림 1회 달성",
     "period": "daily",
     "isFixed": true,
     "objectiveType": "penalty",
@@ -10,7 +10,7 @@
     "rewardAmount": 5
   },
   {
-    "title": "오늘 70점 이상 1번 달성",
+    "title": "오늘 70점 이상 1회 달성",
     "period": "daily",
     "isFixed": false,
     "objectiveType": "score",
@@ -20,7 +20,7 @@
     "rewardAmount": 5
   },
   {
-    "title": "오늘 그림 2번 제출",
+    "title": "오늘 그림 2회 등록",
     "period": "daily",
     "isFixed": false,
     "objectiveType": "submit",
@@ -40,7 +40,7 @@
     "rewardAmount": 5
   },
   {
-    "title": "이번 주 4일 동안 그림 제출",
+    "title": "이번 주 4일 동안 그림 등록",
     "period": "weekly",
     "isFixed": false,
     "objectiveType": "daily_submit",
@@ -51,7 +51,7 @@
     "progressPeriod": "day"
   },
   {
-    "title": "이번 주 70점 이상 3번 달성",
+    "title": "이번 주 70점 이상 3회 달성",
     "period": "weekly",
     "isFixed": false,
     "objectiveType": "daily_score",

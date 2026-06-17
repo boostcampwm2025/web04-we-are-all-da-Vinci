@@ -49,6 +49,32 @@ vi.mock("@/feature/notification", () => ({
   useNotificationAutoPrompt: () => ({ open: false, close: vi.fn() }),
 }));
 
+// 출석 기능은 DashboardView 로직 검증 범위 밖이라 목으로 대체한다.
+vi.mock("@/entities/attendance", () => ({
+  useAttendanceStatus: () => ({ status: undefined, refetch: vi.fn() }),
+  AttendanceProgress: () => null,
+}));
+vi.mock("@/entities/missionCard", () => ({
+  useTodayMissions: () => ({
+    missions: [],
+    isLoading: false,
+    refetch: vi.fn(),
+  }),
+}));
+// DashboardView가 usePodium을 1회 호출해 카드에 내려준다(중복 fetch 방지).
+vi.mock("@/entities/podium", () => ({
+  usePodium: () => ({ podium: undefined, participantCount: undefined }),
+}));
+vi.mock("@/entities/point", () => ({
+  usePointSummary: () => ({ summary: undefined, refetch: vi.fn() }),
+}));
+vi.mock("../model/useAttendanceAutoCheckIn", () => ({
+  useAttendanceAutoCheckIn: () => ({ result: null, close: vi.fn() }),
+}));
+vi.mock("./AttendanceResultSheet", () => ({
+  default: () => <div data-testid="attendance-sheet" />,
+}));
+
 const mockShowAd = vi.fn().mockResolvedValue(undefined);
 const mockReloadAd = vi.fn();
 type AdStatus = "loading" | "ready" | "failed";
@@ -179,16 +205,8 @@ describe("DashboardView", () => {
     });
   });
 
-  it("fromSubmitted + promotionGranted=true일 때 포인트 토스트를 표시한다", async () => {
-    renderDashboard({ fromSubmitted: true, promotionGranted: true });
-
-    expect(
-      await screen.findByText("포인트 지급이 완료됐어요"),
-    ).toBeInTheDocument();
-  });
-
-  it("fromSubmitted + promotionGranted=false일 때 등록 완료 토스트를 표시한다", async () => {
-    renderDashboard({ fromSubmitted: true, promotionGranted: false });
+  it("fromSubmitted이면 등록 완료 토스트를 표시한다", async () => {
+    renderDashboard({ fromSubmitted: true });
 
     expect(await screen.findByText("그림을 등록했어요")).toBeInTheDocument();
   });
@@ -196,9 +214,9 @@ describe("DashboardView", () => {
   it("fromSubmitted 처리 후 history state를 초기화한다", async () => {
     const replaceStateSpy = vi.spyOn(window.history, "replaceState");
 
-    renderDashboard({ fromSubmitted: true, promotionGranted: true });
+    renderDashboard({ fromSubmitted: true });
 
-    await screen.findByText("포인트 지급이 완료됐어요");
+    await screen.findByText("그림을 등록했어요");
 
     expect(replaceStateSpy).toHaveBeenCalledWith({}, "");
     replaceStateSpy.mockRestore();
