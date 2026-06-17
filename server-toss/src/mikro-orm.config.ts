@@ -1,6 +1,7 @@
 import { Migrator } from "@mikro-orm/migrations";
 import { defineConfig } from "@mikro-orm/mysql";
 import { SeedManager } from "@mikro-orm/seeder";
+import { Attendance } from "./modules/attendance/attendance.entity";
 import { AdView } from "./modules/chance/ad-view.entity";
 import { PlayChance } from "./modules/chance/play-chance.entity";
 import { ShareLog } from "./modules/chance/share-log.entity";
@@ -39,6 +40,7 @@ export default defineConfig({
     UserMission,
     SentNotification,
     NotificationAgreement,
+    Attendance,
   ],
   debug: process.env.NODE_ENV !== "production",
   forceUtcTimezone: true, // UTC로 시간 설정 고정

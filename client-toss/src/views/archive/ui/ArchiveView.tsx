@@ -4,6 +4,8 @@ import {
 } from "@/entities/drawingCanvas";
 import { DrawingScoreDetailSheet } from "@/entities/myScoreCard";
 import { serverTossApi } from "@/shared/api";
+import { AD_GROUP_IDS } from "@/shared/config";
+import { BannerAd } from "@/shared/ui/bannerAd";
 import type { ArchiveDayResponse, ArchiveSummaryResponse } from "@toss/shared";
 import { colors } from "@toss/tds-colors";
 import {
@@ -276,7 +278,11 @@ const ArchiveView = () => {
         </div>
       </section>
 
-      <section className="mt-5">
+      <div className="px-(--card-mx)">
+        <BannerAd adGroupId={AD_GROUP_IDS.BANNER_LIST} />
+      </div>
+
+      <section>
         <div className="px-(--page-px) pb-3">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-xl font-bold text-gray-700">날짜별 기록</h2>

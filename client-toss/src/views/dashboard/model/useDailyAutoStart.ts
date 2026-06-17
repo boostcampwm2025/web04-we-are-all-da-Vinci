@@ -36,15 +36,7 @@ export const useDailyAutoStart = ({
       if (fromSubmitted) {
         // state를 즉시 제거하여 재마운트 시 토스트 재표시 방지
         window.history.replaceState({}, "");
-
-        const promotionGranted = (
-          locationState as { promotionGranted?: boolean }
-        )?.promotionGranted;
-        if (promotionGranted != null) {
-          showToast(
-            promotionGranted ? "포인트 지급이 완료됐어요" : "그림을 등록했어요",
-          );
-        }
+        showToast("그림을 등록했어요");
         setInitialLoading(false);
         return;
       }

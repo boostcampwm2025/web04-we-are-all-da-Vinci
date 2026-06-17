@@ -5,6 +5,7 @@ import { FUNNEL_EVENTS, trackClick } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Skeleton } from "@toss/tds-mobile";
 import { useEffect, useRef, useState } from "react";
+import { TARGET_MIN_TILES } from "../config/constants";
 import {
   DEFAULT_RANK_COLOR,
   MY_RANK_HIGHLIGHT,
@@ -12,7 +13,13 @@ import {
 } from "../config/rankingStyles";
 import { useRankingList } from "../hooks/useRankingList";
 import type { RankingListItem } from "../model/types";
+import RankingGhostTile from "./RankingGhostTile";
 import RankingListEmpty from "./RankingListEmpty";
+
+// 그리드 한 칸: 실제 랭킹 항목이거나, 휑함을 메우는 정적 유령 슬롯이다.
+type RankingSlot =
+  | { type: "real"; item: RankingListItem }
+  | { type: "ghost"; id: number };
 
 const getRankBadgeColor = (rank: number, isMe: boolean) => {
   if (isMe) return MY_RANK_HIGHLIGHT;
@@ -20,11 +27,26 @@ const getRankBadgeColor = (rank: number, isMe: boolean) => {
   return DEFAULT_RANK_COLOR;
 };
 
-const chunkRankingList = (rankingList: RankingListItem[]) => {
-  const chunks: RankingListItem[][] = [];
+// 실제 항목이 TARGET_MIN_TILES보다 적으면 유령 슬롯으로 패딩해 그리드를 채운다.
+const buildSlots = (rankingList: RankingListItem[]): RankingSlot[] => {
+  const realSlots: RankingSlot[] = rankingList.map((item) => ({
+    type: "real",
+    item,
+  }));
+  const ghostCount = Math.max(0, TARGET_MIN_TILES - rankingList.length);
+  const ghostSlots: RankingSlot[] = Array.from(
+    { length: ghostCount },
+    (_, id) => ({ type: "ghost", id }),
+  );
 
-  for (let i = 0; i < rankingList.length; i += 6) {
-    chunks.push(rankingList.slice(i, i + 6));
+  return [...realSlots, ...ghostSlots];
+};
+
+const chunkSlots = (slots: RankingSlot[]) => {
+  const chunks: RankingSlot[][] = [];
+
+  for (let i = 0; i < slots.length; i += 6) {
+    chunks.push(slots.slice(i, i + 6));
   }
 
   return chunks;
@@ -87,10 +109,12 @@ const RankingList = () => {
     return <RankingListEmpty />;
   }
 
+  const chunks = chunkSlots(buildSlots(rankingList));
+
   return (
     <div className="px-(--page-px)">
       <div className="flex flex-col">
-        {chunkRankingList(rankingList).map((chunk, chunkIndex) => (
+        {chunks.map((chunk, chunkIndex) => (
           <div
             key={`ranking-chunk-${chunkIndex}`}
             data-chunk-index={chunkIndex}
@@ -100,44 +124,48 @@ const RankingList = () => {
             }}
           >
             <div className="grid grid-cols-3 gap-x-4 gap-y-5">
-              {chunk.map((ranking) => (
-                <button
-                  key={`${ranking.userKey}-${ranking.drawingId}`}
-                  type="button"
-                  aria-label={`${ranking.rank}위 ${ranking.nickname} 그림 상세 보기`}
-                  className="card relative aspect-square w-full appearance-none border-0 p-1.5 transition-transform duration-100 active:scale-[0.98]"
-                  onClick={() => {
-                    trackClick(FUNNEL_EVENTS.rankingItemClick, {
-                      rank: ranking.rank,
-                    });
-                    setSelectedRanking(ranking);
-                  }}
-                >
-                  <span
-                    className="absolute top-1 left-1 z-10 flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-[13px] font-bold"
-                    style={{
-                      backgroundColor: getRankBadgeColor(
-                        ranking.rank,
-                        ranking.isMe,
-                      ),
-                      color: ranking.isMe ? "#FFFFFF" : "#031228B2",
+              {chunk.map((slot) =>
+                slot.type === "ghost" ? (
+                  <RankingGhostTile key={`ghost-${slot.id}`} />
+                ) : (
+                  <button
+                    key={`${slot.item.userKey}-${slot.item.drawingId}`}
+                    type="button"
+                    aria-label={`${slot.item.rank}위 ${slot.item.nickname} 그림 상세 보기`}
+                    className="card relative aspect-square w-full appearance-none border-0 p-1.5 transition-transform duration-100 active:scale-[0.98]"
+                    onClick={() => {
+                      trackClick(FUNNEL_EVENTS.rankingItemClick, {
+                        rank: slot.item.rank,
+                      });
+                      setSelectedRanking(slot.item);
                     }}
                   >
-                    {ranking.rank}
-                  </span>
-                  <ReplayDrawingCanvas
-                    strokes={ranking.strokes}
-                    loop={false}
-                    isVisible={visibleChunks[chunkIndex] ?? true}
-                    replayKey={chunkReplayKeys[chunkIndex] || 0}
-                    targetDurationMs={2000}
-                    shouldScale
-                    ariaLabel={`${ranking.rank}위 ${ranking.nickname} 그림`}
-                  />
-                </button>
-              ))}
+                    <span
+                      className="absolute top-1 left-1 z-10 flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-[13px] font-bold"
+                      style={{
+                        backgroundColor: getRankBadgeColor(
+                          slot.item.rank,
+                          slot.item.isMe,
+                        ),
+                        color: slot.item.isMe ? "#FFFFFF" : "#031228B2",
+                      }}
+                    >
+                      {slot.item.rank}
+                    </span>
+                    <ReplayDrawingCanvas
+                      strokes={slot.item.strokes}
+                      loop={false}
+                      isVisible={visibleChunks[chunkIndex] ?? true}
+                      replayKey={chunkReplayKeys[chunkIndex] || 0}
+                      targetDurationMs={2000}
+                      shouldScale
+                      ariaLabel={`${slot.item.rank}위 ${slot.item.nickname} 그림`}
+                    />
+                  </button>
+                ),
+              )}
             </div>
-            {chunkIndex < Math.ceil(rankingList.length / 6) - 1 && (
+            {chunkIndex < chunks.length - 1 && (
               <BannerAd
                 adGroupId={AD_GROUP_IDS.BANNER_LIST}
                 className="w-full"

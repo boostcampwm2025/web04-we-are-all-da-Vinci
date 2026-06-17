@@ -122,7 +122,6 @@ describe("serverTossApi", () => {
     localStorage.setItem("userKey", "1234");
     const body = {
       drawingId: 42,
-      promotionGranted: true,
       similarity: {
         score: 90,
         shapeSimilarity: 45,
@@ -168,7 +167,6 @@ describe("serverTossApi", () => {
     };
     const submitBody = {
       drawingId: 42,
-      promotionGranted: false,
       similarity: {
         score: 90,
         shapeSimilarity: 45,

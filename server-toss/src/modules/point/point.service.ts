@@ -9,7 +9,7 @@ import {
   ExternalPromotionError,
   ExternalTransportError,
 } from "src/common/errors/external.errors";
-import { getSeoulDateTime } from "src/common/util/time.util";
+import { getSeoulDateTime, getSeoulDayRange } from "src/common/util/time.util";
 import { User } from "src/modules/user/user.entity";
 import {
   PointGrantRequest,
@@ -61,6 +61,70 @@ export class PointService {
     });
 
     await this.pointGrantRequestRepository.getEntityManager().flush();
+  }
+
+  // 호출자의 트랜잭션 EntityManager로 보상 요청(PENDING)만 적재한다. flush는 하지 않으며
+  // 호출자 트랜잭션 커밋 시 함께 반영된다. 출석 등 상태 전이와 같은 원자 경계에서 적재해
+  // "상태는 바뀌었는데 보상만 누락"되는 상황을 막는 용도.
+  enqueueGrant(
+    em: EntityManager,
+    userKey: number,
+    reason: PointReason,
+    pointAmount: number = PROMOTION_AMOUNT,
+  ): void {
+    if (!Number.isInteger(pointAmount) || pointAmount <= 0) {
+      throw new RangeError("pointAmount는 1 이상의 정수여야 해요");
+    }
+
+    em.create(PointGrantRequest, {
+      user: em.getReference(User, userKey),
+      reason,
+      pointAmount,
+      status: PointGrantStatus.PENDING,
+      maxAttemptCount: PROMOTION_MAX_RETRIES,
+      attemptCount: 0,
+    });
+  }
+
+  // 받은 포인트 합(전체 누적 / KST 오늘).
+  // = 지급 성공분(point_logs) + 진행 중 지급(point_grant_requests: PENDING·PROCESSING·RETRY).
+  // 진행 중을 포함해 적립 직후(아직 Cron 미처리) 시점에도 즉시 반영하고,
+  // 성공 시 한 트랜잭션에서 request→SUCCEEDED(진행중 제외) + PointLog 생성(성공 포함)으로 합계가 정합된다.
+  async getPointSummary(
+    userKey: number,
+  ): Promise<{ totalPoints: number; todayPoints: number }> {
+    const em = this.em.fork();
+    const { start, end } = getSeoulDayRange();
+
+    const [logs, pendingRequests] = await Promise.all([
+      em.find(PointLog, { user: userKey }),
+      em.find(PointGrantRequest, {
+        user: userKey,
+        status: {
+          $in: [
+            PointGrantStatus.PENDING,
+            PointGrantStatus.PROCESSING,
+            PointGrantStatus.RETRY,
+          ],
+        },
+      }),
+    ]);
+
+    let totalPoints = 0;
+    let todayPoints = 0;
+    const accumulate = (amount: number, createdAt: Date) => {
+      totalPoints += amount;
+      if (createdAt >= start && createdAt < end) todayPoints += amount;
+    };
+
+    for (const log of logs) {
+      accumulate(log.pointAmount, log.createdAt as Date);
+    }
+    for (const req of pendingRequests) {
+      accumulate(req.pointAmount, req.createdAt as Date);
+    }
+
+    return { totalPoints, todayPoints };
   }
 
   @Transactional()

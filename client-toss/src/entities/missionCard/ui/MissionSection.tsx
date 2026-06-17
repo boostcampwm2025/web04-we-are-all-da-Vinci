@@ -24,7 +24,7 @@ const MissionSection = ({ missions, section }: MissionSectionProps) => {
           </ListHeader.TitleParagraph>
         }
       />
-      <div className="flex flex-col gap-3 px-(--page-px)">
+      <div className="mt-2 flex flex-col gap-3 px-(--page-px)">
         {missions.map((mission) => (
           <MissionCard key={mission.userMissionId} mission={mission} />
         ))}

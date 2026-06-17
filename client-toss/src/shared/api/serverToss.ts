@@ -14,12 +14,16 @@ import type {
 import {
   ArchiveDayResponseSchema,
   ArchiveSummaryResponseSchema,
+  AttendanceCheckInResponseSchema,
+  AttendanceRecoverResponseSchema,
+  AttendanceStatusResponseSchema,
   ChargeResponseSchema,
   LoginResponseSchema,
   MyChanceResponseSchema,
   MyMissionsResponseSchema,
   NotificationAgreementResponseSchema,
   PodiumResponseSchema,
+  PointSummaryResponseSchema,
   PromptResponseSchema,
   SimilarityResponseSchema,
   SubmitDrawingResponseSchema,
@@ -299,4 +303,24 @@ export const serverTossApi = {
 
   reportMissionAction: (actionType: MissionAction["actionType"]) =>
     request<void>("POST", "/missions/action", { actionType }),
+
+  getAttendanceStatus: async (options?: RequestOptions) =>
+    AttendanceStatusResponseSchema.parse(
+      await request<unknown>("GET", "/attendance/me", undefined, options),
+    ),
+
+  checkInAttendance: async () =>
+    AttendanceCheckInResponseSchema.parse(
+      await request<unknown>("POST", "/attendance/check-in"),
+    ),
+
+  recoverAttendance: async (sdkPayload: AdSdkPayload) =>
+    AttendanceRecoverResponseSchema.parse(
+      await request<unknown>("POST", "/attendance/recover", { sdkPayload }),
+    ),
+
+  getPointSummary: async (options?: RequestOptions) =>
+    PointSummaryResponseSchema.parse(
+      await request<unknown>("GET", "/points/me", undefined, options),
+    ),
 };
