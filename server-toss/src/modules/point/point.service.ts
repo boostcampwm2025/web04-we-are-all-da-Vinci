@@ -95,11 +95,22 @@ export class PointService {
   }
 
   async settleGrantRequest(request: PointGrantRequest): Promise<void> {
+    let key: string;
+
     try {
-      const key =
+      key =
         request.pointIdempotencyKey ??
         (await this.issueAndSavePromotionKey(request));
+    } catch (err) {
+      this.logger.warn(
+        `프로모션 지급 키 발급 실패 (재시도): ${err instanceof Error ? err.message : String(err)}`,
+      );
+      request.retry();
+      await this.em.flush();
+      return;
+    }
 
+    try {
       await this.grantPromotion(request, key);
       await this.recordGrantSucceeded(request);
     } catch (err) {
@@ -155,8 +166,7 @@ export class PointService {
       );
     } else {
       // DB 에러
-      await this.recordGrantSucceeded(request);
-      return;
+      request.retry();
     }
 
     await this.em.flush();
