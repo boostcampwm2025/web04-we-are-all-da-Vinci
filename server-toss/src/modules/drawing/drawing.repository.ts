@@ -30,6 +30,21 @@ export class DrawingRepository extends EntityRepository<Drawing> {
     return this.em.findOne(Drawing, { id: drawingId }, { populate: ["user"] });
   }
 
+  async findDrawingDetailsByIds(
+    drawingIds: bigint[],
+  ): Promise<{ id: bigint; similarity: string; strokes: string }[]> {
+    if (drawingIds.length === 0) return [];
+
+    return this.em.find(
+      Drawing,
+      { id: { $in: drawingIds } },
+      {
+        fields: ["id", "similarity", "strokes"],
+        disableIdentityMap: true,
+      },
+    );
+  }
+
   async findMyDrawings(
     userKey: number,
   ): Promise<{ id: bigint; similarity: string; strokes: string }[]> {
