@@ -3,6 +3,22 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { serverTossApi } from "./serverToss";
 
 describe("serverTossApi", () => {
+  const rankingStrokes: Stroke[] = [
+    {
+      points: [
+        [0, 1],
+        [0, 1],
+      ],
+      color: [0, 0, 0],
+    },
+  ];
+  const rankingSimilarity = {
+    score: 99.9,
+    shapeSimilarity: 50,
+    strokeMatchSimilarity: 50,
+    penalty: 0,
+  };
+
   beforeEach(() => {
     vi.restoreAllMocks();
     localStorage.clear();
@@ -41,6 +57,8 @@ describe("serverTossApi", () => {
         rank: 1,
         score: 99.9,
         isMe: true,
+        strokes: rankingStrokes,
+        similarity: rankingSimilarity,
       },
     ];
     const body = {

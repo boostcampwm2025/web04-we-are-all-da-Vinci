@@ -2,7 +2,7 @@ import {
   DrawingCanvasFrame,
   StaticDrawingCanvas,
 } from "@/entities/drawingCanvas";
-import { ScoreDetailCard } from "@/entities/scoreDetailCard";
+import { DrawingScoreDetailSheet } from "@/entities/myScoreCard";
 import { serverTossApi } from "@/shared/api";
 import { AD_GROUP_IDS } from "@/shared/config";
 import { BannerAd } from "@/shared/ui/bannerAd";
@@ -20,9 +20,6 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const QUICK_DATE_COUNT = 5;
-
-const formatScore = (score: number | null) =>
-  score == null ? "-" : `${score.toFixed(2)}점`;
 
 const formatStatScore = (score: number | null) =>
   score == null ? "-" : score.toFixed(2);
@@ -474,39 +471,14 @@ const ArchiveView = () => {
         </section>
       )}
 
-      <BottomSheet
-        open={isScoreDetailOpen && selectedDrawing != null}
-        onClose={() => setIsScoreDetailOpen(false)}
-        maxHeight="60vh"
-        expandedMaxHeight="60vh"
-        header={
-          <BottomSheet.Header>
-            <div className="flex w-full items-baseline justify-between">
-              <span>기억력 점수 상세</span>
-              {selectedDrawing && (
-                <span className="font-normal">
-                  <span className="text-base">총점 </span>
-                  <span className="text-xl font-bold text-(--color-toss-blue)">
-                    {formatScore(selectedDrawing.similarity.score)}
-                  </span>
-                </span>
-              )}
-            </div>
-          </BottomSheet.Header>
-        }
-      >
-        {selectedDrawing && (
-          <div className="flex w-full flex-col items-center gap-4 px-(--page-px) pt-2 pb-[env(safe-area-inset-bottom)]">
-            <ScoreDetailCard
-              strokeMatchSimilarity={
-                selectedDrawing.similarity.strokeMatchSimilarity
-              }
-              shapeSimilarity={selectedDrawing.similarity.shapeSimilarity}
-              penalty={selectedDrawing.similarity.penalty}
-            />
-          </div>
-        )}
-      </BottomSheet>
+      {selectedDrawing && (
+        <DrawingScoreDetailSheet
+          open={isScoreDetailOpen}
+          onClose={() => setIsScoreDetailOpen(false)}
+          strokes={selectedDrawing.strokes}
+          similarity={selectedDrawing.similarity}
+        />
+      )}
 
       <BottomSheet
         open={isDatePickerOpen}

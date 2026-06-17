@@ -7,13 +7,14 @@ import {
 } from "./types/ranking.type";
 import { RankingRepository } from "./ranking.repository";
 import {
-  mapRankingToRankingListItem,
+  mapRankingToRankingGalleryItem,
   mapRankingToPodiumItem,
 } from "./ranking.mapper";
 import { Ranking } from "./ranking.entity";
 import { Drawing } from "../drawing/drawing.entity";
 import { User } from "../user/user.entity";
 import { Transactional } from "@mikro-orm/decorators/legacy";
+import { DrawingRepository } from "../drawing/drawing.repository";
 
 // updateRanking 결과. 알림 트리거(OVERTAKEN) 발송을 위해 변화 정보를 반환한다.
 // changed=false면 점수가 더 낮아 갱신 안 함. 그 외엔 newRank·overtakenUserKeys 사용.
@@ -32,6 +33,8 @@ export class RankingService {
   constructor(
     @InjectRepository(Ranking)
     private readonly rankingRepository: RankingRepository,
+    @InjectRepository(Drawing)
+    private readonly drawingRepository: DrawingRepository,
   ) {}
 
   @Transactional()
@@ -92,11 +95,22 @@ export class RankingService {
       this.rankingRepository.findTop(100),
       this.rankingRepository.findLatestUpdatedAt(),
     ]);
+    const drawingDetails = await this.drawingRepository.findDrawingDetailsByIds(
+      rankings.map((ranking) => ranking.drawingId),
+    );
+    const drawingById = new Map(
+      drawingDetails.map((drawing) => [drawing.id.toString(), drawing]),
+    );
 
     return {
       updatedAt: (updatedAt ?? new Date()).toISOString(),
       rankings: rankings.map((ranking, index) =>
-        mapRankingToRankingListItem(ranking, index, userKey),
+        mapRankingToRankingGalleryItem(
+          ranking,
+          drawingById.get(ranking.drawingId.toString()),
+          index,
+          userKey,
+        ),
       ),
     };
   }
