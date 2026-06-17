@@ -14,21 +14,19 @@ const RankingView = () => {
   return (
     <div
       data-no-safe-area-bottom
-      className="pb-[calc(env(safe-area-inset-bottom)+72px)]"
+      className="min-h-0 flex-1 overflow-y-auto bg-(--color-page) pb-[calc(env(safe-area-inset-bottom)+72px)]"
     >
-      <div>
-        <Top
-          upperGap={16}
-          lowerGap={12}
-          title={<Top.TitleParagraph size={28}>TOP 100</Top.TitleParagraph>}
-          subtitleBottom={
-            <Top.SubtitleParagraph size={17}>
-              눌러서 상세 정보를 볼 수 있어요
-            </Top.SubtitleParagraph>
-          }
-        />
-        <RankingList />
-      </div>
+      <Top
+        upperGap={16}
+        lowerGap={12}
+        title={<Top.TitleParagraph size={28}>TOP 100</Top.TitleParagraph>}
+        subtitleBottom={
+          <Top.SubtitleParagraph size={17}>
+            눌러서 상세 정보를 볼 수 있어요
+          </Top.SubtitleParagraph>
+        }
+      />
+      <RankingList />
     </div>
   );
 };

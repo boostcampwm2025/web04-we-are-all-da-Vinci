@@ -43,7 +43,7 @@ const MissionView = () => {
   return (
     <div
       data-no-safe-area-bottom
-      className="min-h-0 flex-1 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+72px)]"
+      className="min-h-0 flex-1 overflow-y-auto bg-(--color-page) pb-[calc(env(safe-area-inset-bottom)+72px)]"
     >
       <div className="flex flex-col gap-6 pt-3">
         {attendanceStatus && (
