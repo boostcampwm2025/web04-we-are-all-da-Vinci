@@ -9,7 +9,7 @@ import {
   ExternalPromotionError,
   ExternalTransportError,
 } from "src/common/errors/external.errors";
-import { getSeoulDateTime } from "src/common/util/time.util";
+import { getSeoulDateTime, getSeoulDayRange } from "src/common/util/time.util";
 import { User } from "src/modules/user/user.entity";
 import {
   PointGrantRequest,
@@ -61,6 +61,27 @@ export class PointService {
     });
 
     await this.pointGrantRequestRepository.getEntityManager().flush();
+  }
+
+  // 지급 성공으로 기록된 point_logs를 합산한다(전체 누적 / KST 오늘).
+  // PointLog는 recordGrantSucceeded에서만 생성되므로 실제 지급된 포인트만 반영한다(PENDING 제외).
+  async getPointSummary(
+    userKey: number,
+  ): Promise<{ totalPoints: number; todayPoints: number }> {
+    const { start, end } = getSeoulDayRange();
+    const logs = await this.em.find(PointLog, { user: userKey });
+
+    let totalPoints = 0;
+    let todayPoints = 0;
+    for (const log of logs) {
+      totalPoints += log.pointAmount;
+      const createdAt = log.createdAt as Date;
+      if (createdAt >= start && createdAt < end) {
+        todayPoints += log.pointAmount;
+      }
+    }
+
+    return { totalPoints, todayPoints };
   }
 
   @Transactional()

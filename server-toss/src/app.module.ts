@@ -11,6 +11,7 @@ import { ExternalModule } from "./external/external.module";
 import { HealthModule } from "./health/health.module";
 import config from "./mikro-orm.config";
 import { ArchiveModule } from "./modules/archive/archive.module";
+import { AttendanceModule } from "./modules/attendance/attendance.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { ChanceModule } from "./modules/chance/chance.module";
 import { DrawingModule } from "./modules/drawing/drawing.module";
@@ -58,6 +59,7 @@ import { UserModule } from "./modules/user/user.module";
     RankingModule,
     MissionModule,
     NotificationModule,
+    AttendanceModule,
   ],
 })
 export class AppModule implements NestModule {
