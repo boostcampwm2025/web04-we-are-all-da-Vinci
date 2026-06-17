@@ -18,7 +18,7 @@ const samplePodium: PodiumResponse["podium"] = [
   { nickname: "피카소", score: 66 },
 ];
 
-describe("TodayDavinciCard", () => {
+describe("오늘의 다빈치 카드", () => {
   it("시상대 top3를 점수와 함께 보여준다", () => {
     renderCard(samplePodium);
 

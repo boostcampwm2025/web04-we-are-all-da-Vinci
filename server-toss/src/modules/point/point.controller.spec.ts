@@ -7,7 +7,7 @@ import { JwtAuthGuard } from "src/modules/auth/guards/jwt-auth.guard";
 import { PointController } from "./point.controller";
 import { PointService } from "./point.service";
 
-describe("PointController (e2e)", () => {
+describe("포인트 API(PointController (e2e))", () => {
   let app: INestApplication<App>;
   const pointService = { getPointSummary: jest.fn() };
   const mockAuthGuard = {
@@ -37,7 +37,7 @@ describe("PointController (e2e)", () => {
     if (app) await app.close();
   });
 
-  describe("GET /points/me", () => {
+  describe("포인트 요약 조회(GET /points/me)", () => {
     it("포인트 요약을 200으로 반환한다", async () => {
       pointService.getPointSummary.mockResolvedValue({
         totalPoints: 30,

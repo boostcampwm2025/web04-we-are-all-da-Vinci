@@ -85,8 +85,8 @@ const setup = (
   return { service, persisted, removed, txEm, missionRepo, userMissionRepo };
 };
 
-describe("MissionSeedService", () => {
-  describe("syncMissions", () => {
+describe("미션 시드 서비스", () => {
+  describe("미션 동기화", () => {
     it("빈 DB에서 JSON 항목 전체를 삽입한다", async () => {
       const { service, persisted } = setup();
 

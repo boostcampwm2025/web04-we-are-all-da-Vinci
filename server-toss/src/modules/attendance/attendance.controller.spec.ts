@@ -7,7 +7,7 @@ import { JwtAuthGuard } from "src/modules/auth/guards/jwt-auth.guard";
 import { AttendanceController } from "./attendance.controller";
 import { AttendanceService } from "./attendance.service";
 
-describe("AttendanceController (e2e)", () => {
+describe("출석 API (e2e, AttendanceController)", () => {
   let app: INestApplication<App>;
   const attendanceService = {
     getStatus: jest.fn(),
@@ -41,7 +41,7 @@ describe("AttendanceController (e2e)", () => {
     if (app) await app.close();
   });
 
-  describe("POST /attendance/check-in", () => {
+  describe("출석 체크인(POST /attendance/check-in)", () => {
     it("체크인 결과를 200으로 반환한다", async () => {
       const payload = {
         status: "continued",
@@ -61,7 +61,7 @@ describe("AttendanceController (e2e)", () => {
     });
   });
 
-  describe("GET /attendance/me", () => {
+  describe("출석 현황 조회(GET /attendance/me)", () => {
     it("출석 현황을 200으로 반환한다", async () => {
       const status = {
         cycleDay: 2,
@@ -80,7 +80,7 @@ describe("AttendanceController (e2e)", () => {
     });
   });
 
-  describe("POST /attendance/recover", () => {
+  describe("연속 복구(POST /attendance/recover)", () => {
     it("유효한 payload는 복구 결과를 200으로 반환한다", async () => {
       attendanceService.recover.mockResolvedValue({
         cycleDay: 3,

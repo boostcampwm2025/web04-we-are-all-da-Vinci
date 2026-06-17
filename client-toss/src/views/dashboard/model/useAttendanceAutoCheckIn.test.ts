@@ -13,7 +13,7 @@ vi.mock("@/shared/api", () => ({
 const mockedApi = serverTossApi as unknown as { checkInAttendance: Mock };
 const GATE_KEY = "attendance_test-device";
 
-describe("useAttendanceAutoCheckIn", () => {
+describe("출석 자동 체크인 훅", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();

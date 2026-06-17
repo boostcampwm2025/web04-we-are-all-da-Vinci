@@ -21,7 +21,7 @@ const renderCard = (
     />,
   );
 
-describe("ChallengeCard", () => {
+describe("도전 카드", () => {
   it("최고점과 참가자수를 보여준다", () => {
     renderCard([{ nickname: "다빈치", score: 88 }], 1234);
 

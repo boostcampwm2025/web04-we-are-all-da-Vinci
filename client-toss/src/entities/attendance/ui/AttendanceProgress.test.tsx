@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import AttendanceProgress from "./AttendanceProgress";
 
-describe("AttendanceProgress", () => {
+describe("출석 진행 컴포넌트", () => {
   it("7일 사이클을 모두 렌더한다", () => {
     render(<AttendanceProgress cycleDay={3} />);
     expect(screen.getAllByRole("listitem")).toHaveLength(7);

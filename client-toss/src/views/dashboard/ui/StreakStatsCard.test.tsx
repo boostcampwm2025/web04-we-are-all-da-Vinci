@@ -36,7 +36,7 @@ const baseStatus: AttendanceStatusResponse = {
 };
 const pointSummary: PointSummaryResponse = { totalPoints: 30, todayPoints: 5 };
 
-describe("StreakStatsCard", () => {
+describe("연속 출석 통계 카드", () => {
   it("출석 마일스톤 + 미션 포인트를 합쳐 내일 최대 포인트를 보여준다", () => {
     renderCard(baseStatus, pointSummary, 4);
 
