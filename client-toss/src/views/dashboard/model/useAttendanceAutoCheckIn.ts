@@ -34,11 +34,11 @@ export const useAttendanceAutoCheckIn = ({
     if (!enabled) return;
 
     const run = async () => {
-      const hash = await getAnonymousHash();
-      const today = formatLocalDate();
-      const gateKey = `attendance_${hash}`;
-
       try {
+        const hash = await getAnonymousHash();
+        const today = formatLocalDate();
+        const gateKey = `attendance_${hash}`;
+
         if (localStorage.getItem(gateKey) === today) return;
         // effect가 두 번 실행돼도 마운트당 1회만 호출
         if (checkedRef.current) return;

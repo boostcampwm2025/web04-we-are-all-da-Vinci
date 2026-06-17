@@ -40,7 +40,7 @@ export const AttendanceCheckInResponseSchema = z.object({
   cycleDay: z.number().int().min(1).max(ATTENDANCE_CYCLE_LENGTH),
   recoverable: z.boolean(),
   previousDay: z.number().int().min(0).max(ATTENDANCE_CYCLE_LENGTH).nullable(),
-  rewardedDay: z.number().int().nullable(), // 지급 트리거된 마일스톤(3|7) 또는 null
+  rewardedDay: z.union([z.literal(3), z.literal(7), z.null()]),
 });
 export type AttendanceCheckInResponse = z.infer<
   typeof AttendanceCheckInResponseSchema
@@ -55,7 +55,7 @@ export type AttendanceRecoverRequest = z.infer<
 
 export const AttendanceRecoverResponseSchema = z.object({
   cycleDay: z.number().int().min(1).max(ATTENDANCE_CYCLE_LENGTH),
-  rewardedDay: z.number().int().nullable(),
+  rewardedDay: z.union([z.literal(3), z.literal(7), z.null()]),
 });
 export type AttendanceRecoverResponse = z.infer<
   typeof AttendanceRecoverResponseSchema

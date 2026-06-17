@@ -51,7 +51,7 @@ const buildEm = (existing: Partial<Attendance> | null) => {
 };
 
 const buildPointService = () => ({
-  savePointGrantRequest: jest.fn(async () => undefined),
+  enqueueGrant: jest.fn(),
   getPointSummary: jest.fn(async () => ({ totalPoints: 0, todayPoints: 0 })),
 });
 
@@ -75,10 +75,10 @@ const buildService = (
   pointService,
 });
 
-describe("AttendanceService", () => {
+describe("출석 서비스", () => {
   afterEach(() => jest.clearAllMocks());
 
-  describe("checkIn — 첫 출석", () => {
+  describe("체크인 — 첫 출석", () => {
     it("출석 행을 생성하고 1일차 started를 반환한다", async () => {
       const { em, created } = buildEm(null);
       const { service, pointService } = buildService(em);
@@ -93,11 +93,11 @@ describe("AttendanceService", () => {
         rewardedDay: null,
       });
       expect(created[0]).toMatchObject({ userKey: 1234, cycleDay: 1 });
-      expect(pointService.savePointGrantRequest).not.toHaveBeenCalled();
+      expect(pointService.enqueueGrant).not.toHaveBeenCalled();
     });
   });
 
-  describe("checkIn — 멱등", () => {
+  describe("체크인 — 멱등 재호출", () => {
     it("오늘 이미 출석했으면 already를 반환하고 전이·지급이 없다", async () => {
       const { em } = buildEm({
         userKey: 1234,
@@ -112,11 +112,11 @@ describe("AttendanceService", () => {
       expect(result.status).toBe("already");
       expect(result.cycleDay).toBe(3);
       expect(em.flush).not.toHaveBeenCalled();
-      expect(pointService.savePointGrantRequest).not.toHaveBeenCalled();
+      expect(pointService.enqueueGrant).not.toHaveBeenCalled();
     });
   });
 
-  describe("checkIn — 연속(continued)", () => {
+  describe("체크인 — 연속", () => {
     it("어제에 이어 2일차→3일차가 되고 마일스톤 5P를 적재한다", async () => {
       const attendance = {
         userKey: 1234,
@@ -133,7 +133,8 @@ describe("AttendanceService", () => {
       expect(result.cycleDay).toBe(3);
       expect(result.rewardedDay).toBe(3);
       expect(attendance.cycleDay).toBe(3);
-      expect(pointService.savePointGrantRequest).toHaveBeenCalledWith(
+      expect(pointService.enqueueGrant).toHaveBeenCalledWith(
+        expect.anything(),
         1234,
         PointReason.ATTENDANCE,
       );
@@ -153,7 +154,7 @@ describe("AttendanceService", () => {
 
       expect(result.cycleDay).toBe(7);
       expect(result.rewardedDay).toBe(7);
-      expect(pointService.savePointGrantRequest).toHaveBeenCalledTimes(1);
+      expect(pointService.enqueueGrant).toHaveBeenCalledTimes(1);
     });
 
     it("7일차→1일차로 초기화되며 지급하지 않는다", async () => {
@@ -170,11 +171,11 @@ describe("AttendanceService", () => {
 
       expect(result.cycleDay).toBe(1);
       expect(result.rewardedDay).toBeNull();
-      expect(pointService.savePointGrantRequest).not.toHaveBeenCalled();
+      expect(pointService.enqueueGrant).not.toHaveBeenCalled();
     });
   });
 
-  describe("checkIn — 끊김(reset_recoverable)", () => {
+  describe("체크인 — 끊김", () => {
     it("갭이 생기면 1일차로 리셋하고 직전 위치를 복구 대상으로 보관한다", async () => {
       const attendance = {
         userKey: 1234,
@@ -193,11 +194,11 @@ describe("AttendanceService", () => {
       expect(result.previousDay).toBe(4);
       expect(attendance.recoverableDay).toBe(4);
       expect(attendance.cycleDay).toBe(1);
-      expect(pointService.savePointGrantRequest).not.toHaveBeenCalled();
+      expect(pointService.enqueueGrant).not.toHaveBeenCalled();
     });
   });
 
-  describe("recover", () => {
+  describe("복구", () => {
     it("광고 검증 후 직전 위치+1로 복구하고 AdView를 기록한다", async () => {
       const attendance = {
         userKey: 1234,
@@ -253,7 +254,7 @@ describe("AttendanceService", () => {
     });
   });
 
-  describe("getStatus", () => {
+  describe("현황 조회", () => {
     it("출석 이력이 없으면 cycleDay 0 상태를 반환한다(포인트는 별도 리소스)", async () => {
       const { em } = buildEm(null);
       const { service } = buildService(em);

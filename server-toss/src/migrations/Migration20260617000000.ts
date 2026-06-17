@@ -26,6 +26,16 @@ export class Migration20260617000000 extends Migration {
   }
 
   override down(): void {
+    // ENUM 축소 전 신규 값 레코드 정리 — 남아 있으면 MODIFY 시 DB 에러로 롤백이 중단됨.
+    this.addSql(
+      "delete from `ad_views` where `ad_type` = 'attendance_recovery';",
+    );
+    this.addSql(
+      "delete from `point_grant_requests` where `point_reason` = 'attendance';",
+    );
+    this.addSql(
+      "delete from `point_logs` where `point_reason` = 'attendance';",
+    );
     this.addSql(
       "alter table `ad_views` modify `ad_type` enum('drawing') not null;",
     );

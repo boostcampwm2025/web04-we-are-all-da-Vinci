@@ -46,10 +46,14 @@ const AttendanceResultSheet = ({
     setIsRecovering(true);
     try {
       const reward = await showAd();
+      if (!reward?.unitType || reward.unitAmount == null) {
+        toast.show("광고 시청이 완료되지 않았어요. 다시 시도해주세요.");
+        return;
+      }
       await serverTossApi.recoverAttendance({
         adGroupId: AD_GROUP_IDS.ATTENDANCE_RECOVERY,
-        unitType: reward?.unitType,
-        unitAmount: reward?.unitAmount,
+        unitType: reward.unitType,
+        unitAmount: reward.unitAmount,
       });
       onRecovered();
       onClose();

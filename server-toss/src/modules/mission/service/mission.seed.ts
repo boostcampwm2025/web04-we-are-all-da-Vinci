@@ -1,6 +1,5 @@
 import { EntityManager } from "@mikro-orm/core";
 import { Injectable, Logger } from "@nestjs/common";
-import { REWARD_POINT } from "@toss/shared";
 import { readFile } from "node:fs/promises";
 import * as path from "node:path";
 import { z } from "zod";
@@ -12,6 +11,7 @@ import {
   RewardType,
 } from "../entity/mission.entity";
 import { UserMission } from "../entity/user-mission.entity";
+import { REWARD_POINT } from "../../point/point.contants";
 
 const MissionDefinitionSchema = z.object({
   title: z.string().min(1).max(50),

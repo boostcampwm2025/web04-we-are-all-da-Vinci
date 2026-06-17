@@ -16,9 +16,11 @@ export const rewardFor = (day: number): number =>
     ? ATTENDANCE_REWARD_POINT
     : 0;
 
-/** 해당 사이클 위치가 보상 마일스톤이면 그 일차를, 아니면 null을 반환한다. */
-export const rewardedDayFor = (day: number): number | null =>
-  (ATTENDANCE_REWARD_DAYS as readonly number[]).includes(day) ? day : null;
+/** 해당 사이클 위치가 보상 마일스톤이면 그 일차(3|7)를, 아니면 null을 반환한다. */
+export const rewardedDayFor = (
+  day: number,
+): (typeof ATTENDANCE_REWARD_DAYS)[number] | null =>
+  ATTENDANCE_REWARD_DAYS.find((rewardDay) => rewardDay === day) ?? null;
 
 /** 오늘(cycleDay)에 이어 내일도 출석할 경우 받을 수 있는 최대 포인트. */
 export const tomorrowMaxPoint = (day: number): number =>

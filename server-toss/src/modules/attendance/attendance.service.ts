@@ -90,9 +90,14 @@ export class AttendanceService {
         attendance.cycleDay = newDay;
         attendance.recoverableDay = null;
         attendance.lastCheckedDate = todayStart;
+
+        // 마일스톤 보상 적재를 출석 전이와 같은 트랜잭션에 둬 원자적으로 커밋한다.
+        const milestone = rewardedDayFor(newDay);
+        if (milestone != null) {
+          this.pointService.enqueueGrant(em, userKey, PointReason.ATTENDANCE);
+        }
         await em.flush();
 
-        const milestone = rewardedDayFor(newDay);
         return {
           result: {
             status: "continued" as const,
@@ -123,10 +128,6 @@ export class AttendanceService {
         rewardedDay: null as number | null,
       };
     });
-
-    if (rewardedDay != null) {
-      await this.grantMilestoneReward(userKey, rewardedDay, "check_in");
-    }
 
     this.logger.log(
       {
@@ -187,14 +188,15 @@ export class AttendanceService {
         user: em.getReference(User, userKey),
       });
 
+      // 복구로 도달한 위치가 마일스톤이면 같은 트랜잭션에서 보상 적재.
+      const milestone = rewardedDayFor(restored);
+      if (milestone != null) {
+        this.pointService.enqueueGrant(em, userKey, PointReason.ATTENDANCE);
+      }
       await em.flush();
 
-      return { newDay: restored, rewardedDay: rewardedDayFor(restored) };
+      return { newDay: restored, rewardedDay: milestone };
     });
-
-    if (rewardedDay != null) {
-      await this.grantMilestoneReward(userKey, rewardedDay, "recover");
-    }
 
     this.logger.log(
       {
@@ -232,27 +234,5 @@ export class AttendanceService {
       previousDay: attendance.recoverableDay ?? null,
       tomorrowMaxPoint: tomorrowMaxPoint(attendance.cycleDay),
     };
-  }
-
-  // 마일스톤(3·7일) 도달 시 단일 프로모션(고정 5P) 적재. 트랜잭션 커밋 후 호출되며,
-  // 보상 결정 자체는 attendance 행 잠금 하에서 1회만 내려지므로 중복 적재되지 않는다.
-  private async grantMilestoneReward(
-    userKey: number,
-    rewardedDay: number,
-    source: "check_in" | "recover",
-  ): Promise<void> {
-    await this.pointService.savePointGrantRequest(
-      userKey,
-      PointReason.ATTENDANCE,
-    );
-    this.logger.log(
-      {
-        event: "attendance.reward.granted",
-        userKey,
-        rewardedDay,
-        source,
-      },
-      "출석 마일스톤 보상 적재",
-    );
   }
 }
