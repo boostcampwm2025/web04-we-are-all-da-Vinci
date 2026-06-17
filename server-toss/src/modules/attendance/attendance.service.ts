@@ -212,8 +212,6 @@ export class AttendanceService {
   async getStatus(userKey: number): Promise<AttendanceStatusResponse> {
     const today = getSeoulDayRange().start.getTime();
     const attendance = await this.em.findOne(Attendance, { userKey });
-    const { totalPoints, todayPoints } =
-      await this.pointService.getPointSummary(userKey);
 
     if (!attendance) {
       return {
@@ -222,8 +220,6 @@ export class AttendanceService {
         recoverable: false,
         previousDay: null,
         tomorrowMaxPoint: 0,
-        totalPoints,
-        todayPoints,
       };
     }
 
@@ -235,8 +231,6 @@ export class AttendanceService {
       recoverable: attendance.recoverableDay != null,
       previousDay: attendance.recoverableDay ?? null,
       tomorrowMaxPoint: tomorrowMaxPoint(attendance.cycleDay),
-      totalPoints,
-      todayPoints,
     };
   }
 

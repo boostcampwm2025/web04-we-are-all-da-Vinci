@@ -254,14 +254,9 @@ describe("AttendanceService", () => {
   });
 
   describe("getStatus", () => {
-    it("출석 이력이 없으면 cycleDay 0과 포인트 합을 반환한다", async () => {
+    it("출석 이력이 없으면 cycleDay 0 상태를 반환한다(포인트는 별도 리소스)", async () => {
       const { em } = buildEm(null);
-      const pointService = buildPointService();
-      pointService.getPointSummary.mockResolvedValue({
-        totalPoints: 30,
-        todayPoints: 5,
-      });
-      const { service } = buildService(em, pointService);
+      const { service } = buildService(em);
 
       const result = await service.getStatus(1234);
 
@@ -271,8 +266,6 @@ describe("AttendanceService", () => {
         recoverable: false,
         previousDay: null,
         tomorrowMaxPoint: 0,
-        totalPoints: 30,
-        todayPoints: 5,
       });
     });
 

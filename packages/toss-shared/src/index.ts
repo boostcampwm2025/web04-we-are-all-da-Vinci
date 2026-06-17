@@ -6,5 +6,6 @@ export * from "./schemas/chance.schema";
 export * from "./schemas/drawing.schema";
 export * from "./schemas/mission.schema";
 export * from "./schemas/notification.schema";
+export * from "./schemas/point.schema";
 export * from "./schemas/ranking.schema";
 export * from "./schemas/user.schema";

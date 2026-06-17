@@ -29,8 +29,6 @@ export const AttendanceStatusResponseSchema = z.object({
   recoverable: z.boolean(),
   previousDay: z.number().int().min(0).max(ATTENDANCE_CYCLE_LENGTH).nullable(),
   tomorrowMaxPoint: z.number().int().min(0),
-  totalPoints: z.number().int().min(0),
-  todayPoints: z.number().int().min(0),
 });
 export type AttendanceStatusResponse = z.infer<
   typeof AttendanceStatusResponseSchema

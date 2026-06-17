@@ -39,8 +39,6 @@ const AttendanceStatusSchema: SchemaObject = {
     recoverable: { type: "boolean" },
     previousDay: { type: "integer", minimum: 0, nullable: true },
     tomorrowMaxPoint: { type: "integer", minimum: 0 },
-    totalPoints: { type: "integer", minimum: 0 },
-    todayPoints: { type: "integer", minimum: 0 },
   },
   required: [
     "cycleDay",
@@ -48,8 +46,6 @@ const AttendanceStatusSchema: SchemaObject = {
     "recoverable",
     "previousDay",
     "tomorrowMaxPoint",
-    "totalPoints",
-    "todayPoints",
   ],
 };
 

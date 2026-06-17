@@ -63,22 +63,41 @@ export class PointService {
     await this.pointGrantRequestRepository.getEntityManager().flush();
   }
 
-  // 지급 성공으로 기록된 point_logs를 합산한다(전체 누적 / KST 오늘).
-  // PointLog는 recordGrantSucceeded에서만 생성되므로 실제 지급된 포인트만 반영한다(PENDING 제외).
+  // 받은 포인트 합(전체 누적 / KST 오늘).
+  // = 지급 성공분(point_logs) + 진행 중 지급(point_grant_requests: PENDING·PROCESSING·RETRY).
+  // 진행 중을 포함해 적립 직후(아직 Cron 미처리) 시점에도 즉시 반영하고,
+  // 성공 시 한 트랜잭션에서 request→SUCCEEDED(진행중 제외) + PointLog 생성(성공 포함)으로 합계가 정합된다.
   async getPointSummary(
     userKey: number,
   ): Promise<{ totalPoints: number; todayPoints: number }> {
     const { start, end } = getSeoulDayRange();
-    const logs = await this.em.find(PointLog, { user: userKey });
+
+    const [logs, pendingRequests] = await Promise.all([
+      this.em.find(PointLog, { user: userKey }),
+      this.em.find(PointGrantRequest, {
+        user: userKey,
+        status: {
+          $in: [
+            PointGrantStatus.PENDING,
+            PointGrantStatus.PROCESSING,
+            PointGrantStatus.RETRY,
+          ],
+        },
+      }),
+    ]);
 
     let totalPoints = 0;
     let todayPoints = 0;
+    const accumulate = (amount: number, createdAt: Date) => {
+      totalPoints += amount;
+      if (createdAt >= start && createdAt < end) todayPoints += amount;
+    };
+
     for (const log of logs) {
-      totalPoints += log.pointAmount;
-      const createdAt = log.createdAt as Date;
-      if (createdAt >= start && createdAt < end) {
-        todayPoints += log.pointAmount;
-      }
+      accumulate(log.pointAmount, log.createdAt as Date);
+    }
+    for (const req of pendingRequests) {
+      accumulate(req.pointAmount, req.createdAt as Date);
     }
 
     return { totalPoints, todayPoints };

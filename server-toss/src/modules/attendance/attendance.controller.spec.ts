@@ -69,8 +69,6 @@ describe("AttendanceController (e2e)", () => {
         recoverable: false,
         previousDay: null,
         tomorrowMaxPoint: 5,
-        totalPoints: 30,
-        todayPoints: 5,
       };
       attendanceService.getStatus.mockResolvedValue(status);
 
