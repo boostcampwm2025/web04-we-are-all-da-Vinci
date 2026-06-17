@@ -284,7 +284,7 @@ describe("PointService", () => {
     });
 
     describe("DB 에러가 발생한 경우", () => {
-      it("성공 처리한다", async () => {
+      it("재시도 처리한다", async () => {
         const em = buildEntityManager();
         const service = buildService({ entityManager: em });
         const request = buildRequest();
@@ -294,7 +294,7 @@ describe("PointService", () => {
           new Error("unknown"),
         );
 
-        expect(request.succeeded).toHaveBeenCalledTimes(1);
+        expect(request.retry).toHaveBeenCalledTimes(1);
         expect(request.failed).not.toHaveBeenCalled();
         expect(em.flush).toHaveBeenCalledTimes(1);
       });
