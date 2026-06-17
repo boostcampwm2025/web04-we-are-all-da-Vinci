@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Request } from "express";
+import { timingSafeEqual } from "node:crypto";
 
 @Injectable()
 export class LogoutCallbackAuthGuard implements CanActivate {
@@ -25,10 +26,15 @@ export class LogoutCallbackAuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<Request>();
     const auth = this.extractAuth(request);
 
-    const origin = `${this.authUsername}:${this.authPassword}`;
-    const decoded = Buffer.from(auth, "base64").toString("utf-8");
+    const originBuf = Buffer.from(`${this.authUsername}:${this.authPassword}`);
+    const decodedBuf = Buffer.from(
+      Buffer.from(auth, "base64").toString("utf-8"),
+    );
 
-    if (origin != decoded) {
+    if (
+      originBuf.length !== decodedBuf.length ||
+      timingSafeEqual(originBuf, decodedBuf)
+    ) {
       throw new UnauthorizedException("인증 헤더가 일치하지 않아요.");
     }
 
