@@ -1,11 +1,11 @@
+import { AttendanceSummary } from "@/entities/attendance";
 import { useMyRanking } from "@/entities/ranking";
+import type {
+  AttendanceStatusResponse,
+  PointSummaryResponse,
+} from "@toss/shared";
+import { memo } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  STREAK_BONUS_POINT,
-  STREAK_DAYS,
-  TODAY_POINTS,
-  TOTAL_POINTS,
-} from "../config/dashboardMock";
 
 interface StatItemProps {
   label: string;
@@ -23,39 +23,32 @@ const StatItem = ({ label, value }: StatItemProps) => (
   </div>
 );
 
-const StreakStatsCard = () => {
+interface StreakStatsCardProps {
+  status?: AttendanceStatusResponse;
+  /** 포인트는 출석과 분리된 리소스(/points/me) — 별도 prop으로 받는다. */
+  pointSummary?: PointSummaryResponse;
+  missionMaxPoint?: number;
+}
+
+const StreakStatsCard = ({
+  status,
+  pointSummary,
+  missionMaxPoint = 0,
+}: StreakStatsCardProps) => {
   const navigate = useNavigate();
   const { myRanking } = useMyRanking();
 
-  // 로딩 중에는 myRanking이 undefined → found=false → 두 값 모두 "-"로 표시
   const found = myRanking?.state === "FOUND";
   const scoreText = found ? `${myRanking.ranking.score}점` : "-";
   const rankText = found ? `${myRanking.ranking.rank}위` : "-";
 
+  const totalText = pointSummary ? `${pointSummary.totalPoints}P` : "-";
+  const todayText = pointSummary ? `${pointSummary.todayPoints}P` : "-";
+
   return (
     <section className="rounded-(--radius-card) bg-(--color-card-blue) p-5">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span
-            aria-hidden
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-(--color-page) text-2xl leading-none"
-          >
-            🔥
-          </span>
-          <div>
-            <p className="leading-tight font-bold text-(--color-black)">
-              <span className="text-[22px] text-(--color-toss-blue)">
-                {STREAK_DAYS}일
-              </span>{" "}
-              <span className="text-base">연속 참여 중!</span>
-            </p>
-            <p className="mt-1 text-[13px] text-(--color-grey)">
-              내일도 참여하면 최대 {STREAK_BONUS_POINT}P
-            </p>
-          </div>
-        </div>
-        {/* 카드의 13px 보조 라벨과 크기를 맞추려고 native 버튼 + span 유지.
-            TDS TextButton은 고정 사이즈 토큰이라 13px가 안 나옴(TodayDavinci "랭킹 top100"과 동일 패턴). */}
+        <AttendanceSummary status={status} missionMaxPoint={missionMaxPoint} />
         <button
           type="button"
           onClick={() => navigate("/archive")}
@@ -68,9 +61,9 @@ const StreakStatsCard = () => {
       </div>
 
       <div className="mt-5 flex items-stretch rounded-(--radius-inner) bg-(--color-page) py-4">
-        <StatItem label="누적 포인트" value={`${TOTAL_POINTS}P`} />
+        <StatItem label="누적 포인트" value={totalText} />
         <div className="my-1 w-px self-stretch bg-(--color-card)" />
-        <StatItem label="오늘 포인트" value={`${TODAY_POINTS}P`} />
+        <StatItem label="오늘 포인트" value={todayText} />
         <div className="my-1 w-px self-stretch bg-(--color-card)" />
         <StatItem label="오늘 점수" value={scoreText} />
         <div className="my-1 w-px self-stretch bg-(--color-card)" />
@@ -80,4 +73,4 @@ const StreakStatsCard = () => {
   );
 };
 
-export default StreakStatsCard;
+export default memo(StreakStatsCard);

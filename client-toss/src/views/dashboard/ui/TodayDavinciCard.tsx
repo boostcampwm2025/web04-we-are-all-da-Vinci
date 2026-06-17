@@ -1,5 +1,6 @@
-import { usePodium } from "@/entities/podium";
+import type { PodiumResponse } from "@/entities/podium";
 import { Skeleton } from "@toss/tds-mobile";
+import { memo } from "react";
 import { useNavigate } from "react-router-dom";
 
 const RANK_COLOR_CLASS: Record<number, string> = {
@@ -30,9 +31,13 @@ const DavinciRow = ({ rank, nickname, score }: DavinciRowProps) => (
   </div>
 );
 
-const TodayDavinciCard = () => {
+interface TodayDavinciCardProps {
+  podium?: PodiumResponse["podium"];
+}
+
+const TodayDavinciCard = ({ podium }: TodayDavinciCardProps) => {
   const navigate = useNavigate();
-  const { podium, isLoading } = usePodium();
+  const isLoading = podium === undefined;
   const top3 = podium?.slice(0, 3) ?? [];
 
   return (
@@ -72,4 +77,4 @@ const TodayDavinciCard = () => {
   );
 };
 
-export default TodayDavinciCard;
+export default memo(TodayDavinciCard);
