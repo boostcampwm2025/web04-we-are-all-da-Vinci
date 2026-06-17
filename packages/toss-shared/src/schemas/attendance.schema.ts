@@ -1,12 +1,13 @@
 import { z } from "zod";
 import { AdSdkPayloadSchema } from "./chance.schema";
 
+/** 마일스톤 도달 시 지급되는 토스 포인트. 단일 소스 {@link REWARD_POINT}를 따른다. */
+export { REWARD_POINT as ATTENDANCE_REWARD_POINT } from "./point.schema";
+
 /** 출석 사이클 길이(일). 7일 달성 후 1일차로 초기화된다. */
 export const ATTENDANCE_CYCLE_LENGTH = 7;
 /** 보상이 지급되는 사이클 위치(일차). */
 export const ATTENDANCE_REWARD_DAYS = [3, 7] as const;
-/** 마일스톤 도달 시 지급되는 토스 포인트(고정). */
-export const ATTENDANCE_REWARD_POINT = 5;
 
 // 체크인 결과 상태
 // - started: 첫 출석(1일차)

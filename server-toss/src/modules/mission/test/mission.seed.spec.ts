@@ -1,3 +1,4 @@
+import { REWARD_POINT } from "@toss/shared";
 import {
   ObjectiveType,
   ProgressPeriod,
@@ -21,7 +22,7 @@ const buildMission = (overrides: Partial<Mission> = {}): Mission =>
     requiredCount: 1,
     threshold: undefined,
     rewardType: RewardType.POINT,
-    rewardAmount: 10,
+    rewardAmount: REWARD_POINT,
     progressPeriod: ProgressPeriod.NONE,
     ...overrides,
   }) as Mission;
@@ -36,7 +37,7 @@ const buildDef = (
   requiredCount: 1,
   threshold: null,
   rewardType: RewardType.POINT,
-  rewardAmount: 10,
+  rewardAmount: REWARD_POINT,
   progressPeriod: ProgressPeriod.NONE,
   ...overrides,
 });
@@ -141,17 +142,45 @@ describe("MissionSeedService", () => {
       const existing = buildMission({
         id: BigInt(1),
         title: "그림 제출하기",
-        rewardAmount: 10,
+        requiredCount: 1,
       });
       const { service } = setup([existing]);
 
       const result = await service.syncMissions([
-        buildDef({ title: "그림 제출하기", rewardAmount: 20 }),
+        buildDef({ title: "그림 제출하기", requiredCount: 3 }),
       ]);
 
       expect(result.updated).toBe(1);
       expect(result.added).toBe(0);
-      expect(existing.rewardAmount).toBe(20);
+      expect(existing.requiredCount).toBe(3);
+    });
+
+    it("포인트 미션의 양수 보상액을 REWARD_POINT로 정규화해 저장한다", async () => {
+      const { service, persisted } = setup();
+
+      await service.syncMissions([
+        buildDef({
+          title: "비정규 보상 미션",
+          rewardType: RewardType.POINT,
+          rewardAmount: 999,
+        }),
+      ]);
+
+      expect((persisted[0] as Mission).rewardAmount).toBe(REWARD_POINT);
+    });
+
+    it("보상 없는(0) 포인트 미션은 0을 유지한다", async () => {
+      const { service, persisted } = setup();
+
+      await service.syncMissions([
+        buildDef({
+          title: "보상 없는 미션",
+          rewardType: RewardType.POINT,
+          rewardAmount: 0,
+        }),
+      ]);
+
+      expect((persisted[0] as Mission).rewardAmount).toBe(0);
     });
 
     it("동일한 데이터면 변경하지 않는다", async () => {
