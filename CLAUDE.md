@@ -126,7 +126,7 @@ pnpm perf:multi
 - Jest/Vitest configured with `passWithNoTests: true` to allow incremental test development
 - Test files use `*.spec.ts` pattern for server, `*.test.ts(x)` for client
 - Coverage collection enabled for all source files
-- All test descriptions must be in Korean (e.g., `describe('방 생성', () => ...)`)
+- All test descriptions must be in Korean — both `describe` and `it`. Do not use component/class/hook names or HTTP paths as the suite title. ✗ `describe('StreakStatsCard')`, `describe('POST /attendance/check-in')` → ✓ `describe('연속 출석 통계 카드')`, `describe('출석 체크인')`. AI agents must convert any English suite title to a Korean description in new/edited specs.
 
 ## CI/CD
 

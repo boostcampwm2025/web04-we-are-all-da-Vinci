@@ -170,7 +170,7 @@ app/config/ router.tsx, AnalyticsTracker(화면 전환 계측), vitest.setup.ts
 
 - Vitest(jsdom, `globals: true`), setup `src/app/config/vitest.setup.ts`. 패턴 `src/**/*.{test,spec}.{ts,tsx}`, `passWithNoTests` 활성.
 - `vitest.setup.ts`가 외부 의존성을 전부 모킹: `@toss/tds-mobile` 컴포넌트 전체, `@toss/tds-mobile-ait`의 `TDSMobileAITProvider`, `@apps-in-toss/web-framework`의 모든 export, `HTMLCanvasElement.prototype.getContext`·`ResizeObserver` 폴리필.
-- 모든 테스트 description은 한국어 (예: `describe('카운트다운', …)`).
+- 모든 테스트 description은 한국어 — `describe`·`it` 둘 다. 컴포넌트·훅 이름을 그대로 suite 제목으로 쓰지 말 것. ✗ `describe('StreakStatsCard')` → ✓ `describe('연속 출석 통계 카드')`. (새/수정 spec에서 영문 suite 제목은 반드시 한국어 설명으로 바꾼다.)
 
 ## QA / CI
 
