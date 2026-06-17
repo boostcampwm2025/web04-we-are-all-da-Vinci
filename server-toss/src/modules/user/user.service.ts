@@ -17,9 +17,12 @@ import { ShareLog } from "../chance/share-log.entity";
 import { DailyUserRanking } from "../dailyRanking/daily-user-ranking.entity";
 import { Drawing } from "../drawing/drawing.entity";
 import { UserMission } from "../mission/entity/user-mission.entity";
+import { NotificationAgreement } from "../notification/notification-agreement.entity";
+import { SentNotification } from "../notification/sent-notification.entity";
 import { PointGrantRequest } from "../point/entity/point-grant-request.entity";
 import { PointLog } from "../point/entity/point-log.entity";
 import { Ranking } from "../ranking/ranking.entity";
+import { Attendance } from "../attendance/attendance.entity";
 
 const NICKNAME_RETRY_LIMIT = 5;
 
@@ -69,12 +72,19 @@ export class UserService {
 
     await this.em.nativeDelete(UserMission, { user: user });
 
+    await this.em.nativeDelete(SentNotification, { userKey: user.userKey });
+    await this.em.nativeDelete(NotificationAgreement, {
+      userKey: user.userKey,
+    });
+
     await this.em.nativeDelete(PointLog, { user: user });
     await this.em.nativeDelete(PointGrantRequest, { user: user });
 
     await this.em.nativeDelete(PlayChance, { userKey: user.userKey });
     await this.em.nativeDelete(AdView, { user: user });
     await this.em.nativeDelete(ShareLog, { user: user });
+
+    await this.em.nativeDelete(Attendance, { userKey: user.userKey });
 
     await this.userRepository.nativeDelete({ userKey: user.userKey });
   }
