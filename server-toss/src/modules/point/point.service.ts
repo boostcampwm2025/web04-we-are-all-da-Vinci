@@ -167,7 +167,13 @@ export class PointService {
         (await this.issueAndSavePromotionKey(request));
     } catch (err) {
       this.logger.warn(
-        `프로모션 지급 키 발급 실패 (재시도): ${err instanceof Error ? err.message : String(err)}`,
+        {
+          event: "point_grant.key_issue.failed",
+          requestId: request.id,
+          reason: "key_issue_error",
+          error: err instanceof Error ? err.message : String(err),
+        },
+        "프로모션 지급 키 발급 실패 (재시도)",
       );
       request.retry();
       await this.em.flush();
