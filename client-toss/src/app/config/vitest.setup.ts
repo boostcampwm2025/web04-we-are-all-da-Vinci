@@ -16,6 +16,17 @@ globalThis.ResizeObserver = class ResizeObserver {
   disconnect() {}
 } as unknown as typeof ResizeObserver;
 
+// jsdom에 IntersectionObserver가 없어 기본은 no-op 목으로 둔다. 콜백을 직접 구동해야 하는
+// 테스트는 각자 vi.stubGlobal로 제어 가능한 목으로 덮어쓴다.
+globalThis.IntersectionObserver = class IntersectionObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+  takeRecords() {
+    return [];
+  }
+} as unknown as typeof IntersectionObserver;
+
 HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({
   fillStyle: "",
   strokeStyle: "",
@@ -117,6 +128,8 @@ vi.mock("@toss/tds-mobile", () => ({
     ...props
   }: Record<string, unknown> & { children?: ReactNode }) =>
     createElement("button", props, children),
+  Skeleton: (props: Record<string, unknown>) =>
+    createElement("div", { "data-testid": "skeleton", ...props }),
   BottomCTA: {
     Double: ({
       leftButton,
@@ -327,6 +340,21 @@ vi.mock("@toss/tds-mobile", () => ({
         createElement("span", { "aria-hidden": true, ...props }),
     },
   ),
+  Switch: ({
+    checked,
+    onChange,
+    ...props
+  }: Record<string, unknown> & {
+    checked?: boolean;
+    onChange?: () => void;
+  }) =>
+    createElement("input", {
+      type: "checkbox",
+      role: "switch",
+      checked: Boolean(checked),
+      onChange: onChange ?? (() => {}),
+      ...props,
+    }),
 }));
 
 vi.mock("@toss/tds-mobile-ait", () => ({
@@ -367,6 +395,7 @@ vi.mock("@apps-in-toss/web-framework", () => ({
   contactsViral: Object.assign(vi.fn().mockReturnValue(vi.fn()), {
     isSupported: vi.fn().mockReturnValue(false),
   }),
+  requestNotificationAgreement: vi.fn().mockReturnValue(vi.fn()),
   partner: {
     addAccessoryButton: vi.fn(),
   },

@@ -1,15 +1,22 @@
 import { Migrator } from "@mikro-orm/migrations";
 import { defineConfig } from "@mikro-orm/mysql";
 import { SeedManager } from "@mikro-orm/seeder";
+import { Attendance } from "./modules/attendance/attendance.entity";
 import { AdView } from "./modules/chance/ad-view.entity";
 import { PlayChance } from "./modules/chance/play-chance.entity";
 import { ShareLog } from "./modules/chance/share-log.entity";
+import { DailyUserRanking } from "./modules/dailyRanking/daily-user-ranking.entity";
 import { Drawing } from "./modules/drawing/drawing.entity";
-import { PointLog } from "./modules/point/point-log.entity";
+import { NotificationAgreement } from "./modules/notification/notification-agreement.entity";
+import { SentNotification } from "./modules/notification/sent-notification.entity";
+import { PointGrantRequest } from "./modules/point/entity/point-grant-request.entity";
+import { PointLog } from "./modules/point/entity/point-log.entity";
 import { DailyPrompt } from "./modules/prompt/daily-prompt.entity";
 import { Prompt } from "./modules/prompt/prompt.entity";
 import { Ranking } from "./modules/ranking/ranking.entity";
 import { User } from "./modules/user/user.entity";
+import { Mission } from "./modules/mission/entity/mission.entity";
+import { UserMission } from "./modules/mission/entity/user-mission.entity";
 
 export default defineConfig({
   dbName: process.env.MYSQL_DATABASE ?? "daVinci_toss",
@@ -23,10 +30,17 @@ export default defineConfig({
     Prompt,
     DailyPrompt,
     PointLog,
+    PointGrantRequest,
     AdView,
     Ranking,
+    DailyUserRanking,
     PlayChance,
     ShareLog,
+    Mission,
+    UserMission,
+    SentNotification,
+    NotificationAgreement,
+    Attendance,
   ],
   debug: process.env.NODE_ENV !== "production",
   forceUtcTimezone: true, // UTC로 시간 설정 고정

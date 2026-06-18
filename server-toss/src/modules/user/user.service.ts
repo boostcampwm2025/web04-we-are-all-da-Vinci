@@ -1,4 +1,5 @@
 import { UniqueConstraintViolationException } from "@mikro-orm/core";
+import { Transactional } from "@mikro-orm/decorators/legacy";
 import { EntityManager } from "@mikro-orm/mysql";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import {
@@ -6,9 +7,22 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from "@nestjs/common";
+import { TutorialMissionService } from "src/modules/mission/service/tutorial-mission.service";
 import { generateNickname } from "src/modules/user/lib/nickname-generator";
 import { User } from "src/modules/user/user.entity";
 import { UserRepository } from "src/modules/user/user.repository";
+import { AdView } from "../chance/ad-view.entity";
+import { PlayChance } from "../chance/play-chance.entity";
+import { ShareLog } from "../chance/share-log.entity";
+import { DailyUserRanking } from "../dailyRanking/daily-user-ranking.entity";
+import { Drawing } from "../drawing/drawing.entity";
+import { UserMission } from "../mission/entity/user-mission.entity";
+import { NotificationAgreement } from "../notification/notification-agreement.entity";
+import { SentNotification } from "../notification/sent-notification.entity";
+import { PointGrantRequest } from "../point/entity/point-grant-request.entity";
+import { PointLog } from "../point/entity/point-log.entity";
+import { Ranking } from "../ranking/ranking.entity";
+import { Attendance } from "../attendance/attendance.entity";
 
 const NICKNAME_RETRY_LIMIT = 5;
 
@@ -17,6 +31,7 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: UserRepository,
+    private readonly tutorialMissionService: TutorialMissionService,
     private readonly em: EntityManager,
   ) {}
 
@@ -45,6 +60,33 @@ export class UserService {
     const user = await this.userRepository.findOne({ userKey });
     if (!user) throw new NotFoundException("사용자를 찾을 수 없어요.");
     return user;
+  }
+
+  @Transactional()
+  async removeAll(userKey: number) {
+    const user = await this.getUserInfo(userKey);
+
+    await this.em.nativeDelete(Ranking, { userKey: user.userKey });
+    await this.em.nativeDelete(DailyUserRanking, { userKey: user.userKey });
+    await this.em.nativeDelete(Drawing, { user: user });
+
+    await this.em.nativeDelete(UserMission, { user: user });
+
+    await this.em.nativeDelete(SentNotification, { userKey: user.userKey });
+    await this.em.nativeDelete(NotificationAgreement, {
+      userKey: user.userKey,
+    });
+
+    await this.em.nativeDelete(PointLog, { user: user });
+    await this.em.nativeDelete(PointGrantRequest, { user: user });
+
+    await this.em.nativeDelete(PlayChance, { userKey: user.userKey });
+    await this.em.nativeDelete(AdView, { user: user });
+    await this.em.nativeDelete(ShareLog, { user: user });
+
+    await this.em.nativeDelete(Attendance, { userKey: user.userKey });
+
+    await this.userRepository.nativeDelete({ userKey: user.userKey });
   }
 
   private async createWithNickname(data: {
@@ -87,6 +129,11 @@ export class UserService {
     });
     this.em.persist(user);
     await this.em.flush();
+
+    // 신규 유저에게 튜토리얼 미션을 가입 시점에 1회 eager 할당
+    // (이후 미션 hot path에서는 튜토리얼 할당을 보장하지 않는다)
+    await this.tutorialMissionService.ensureTutorialAssigned(user.userKey);
+
     return user;
   }
 }

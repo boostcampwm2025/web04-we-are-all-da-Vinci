@@ -1,5 +1,5 @@
+import { formatScore } from "@/shared/lib";
 import { Paragraph } from "@toss/tds-mobile";
-import { formatScore } from "../lib/getScoreText";
 import { colors } from "@toss/tds-colors";
 import ScoreBar from "./ScoreBar";
 

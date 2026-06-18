@@ -1,19 +1,24 @@
 import { preprocessStrokes, scoreFinalSimilarity } from "@davinci/similarity";
+import { InjectRepository } from "@mikro-orm/nestjs";
 import {
   HttpException,
   Injectable,
   Logger,
   NotFoundException,
 } from "@nestjs/common";
+import { EventEmitter2 } from "@nestjs/event-emitter";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
-import { PointService } from "src/modules/point/point.service";
+import { getSeoulDateKey } from "src/common/util/time.util";
+import {
+  RANKING_CHANGED_EVENT,
+  RankingChangedEvent,
+} from "src/modules/ranking/events/ranking-changed.event";
 import { UserService } from "src/modules/user/user.service";
 import { PromptService } from "../../prompt/prompt.service";
 import { Drawing } from "../drawing.entity";
 import { DrawingRepository } from "../drawing.repository";
-import { InjectRepository } from "@mikro-orm/nestjs";
-import { SaveDrawingService } from "./save-drawing.service";
 import { SaveDrawingDto } from "../dto/save-drawing.dto";
+import { SaveDrawingService } from "./save-drawing.service";
 
 type Similarity = ReturnType<typeof scoreFinalSimilarity>;
 const SLOW_STROKES_DURATION_MS = 500;
@@ -30,10 +35,10 @@ export class DrawingService {
   constructor(
     private readonly userService: UserService,
     private readonly promptService: PromptService,
-    private readonly pointService: PointService,
     @InjectRepository(Drawing)
     private readonly drawingRepository: DrawingRepository,
     private readonly saveDrawingService: SaveDrawingService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   // 획 단위 실시간 호출 엔드포인트. 클라 값 신뢰 X → 서버가 매번 유사도 재계산
@@ -65,10 +70,11 @@ export class DrawingService {
 
       return similarity;
     } catch (err) {
+      const durationMs = Date.now() - startedAt;
       const logObject = {
         event: "drawing.score.failed",
         promptId,
-        durationMs: Date.now() - startedAt,
+        durationMs,
         err,
       };
 
@@ -90,10 +96,8 @@ export class DrawingService {
   ): Promise<{
     drawingId: number;
     similarity: Similarity;
-    promotionGranted: boolean;
   }> {
     const startedAt = Date.now();
-
     const user = await this.userService.getUserInfo(userKey);
 
     const { promptId, preprocessed } =
@@ -102,10 +106,11 @@ export class DrawingService {
     const playerPreprocessed = preprocessStrokes(playerStrokes);
     const similarity = scoreFinalSimilarity(preprocessed, playerPreprocessed);
 
-    const drawing = await this.saveDrawingService.saveDrawingWithRanking(
-      user,
-      new SaveDrawingDto(promptId, playerStrokes, similarity),
-    );
+    const { drawing, rankingChange } =
+      await this.saveDrawingService.saveDrawingWithRanking(
+        user,
+        new SaveDrawingDto(promptId, playerStrokes, similarity),
+      );
 
     this.logger.log(
       {
@@ -119,10 +124,22 @@ export class DrawingService {
       "최종 드로잉 제출 성공",
     );
 
-    const promotionGranted =
-      await this.pointService.grantDrawingPromotionIfEligible(user.userKey);
+    // 트랜잭션 커밋 후(@Transactional이 saveDrawingWithRanking 종료 시 자동 commit)
+    // emit한다. 핸들러는 비동기라 응답에 지연 추가 X.
+    if (rankingChange.changed) {
+      this.eventEmitter.emit(
+        RANKING_CHANGED_EVENT,
+        new RankingChangedEvent(
+          user.userKey,
+          drawing.id,
+          rankingChange.newRank,
+          rankingChange.overtakenUserKeys,
+          getSeoulDateKey(date),
+        ),
+      );
+    }
 
-    return { drawingId: Number(drawing.id), similarity, promotionGranted };
+    return { drawingId: Number(drawing.id), similarity };
   }
 
   async getMyDrawings(userKey: number) {

@@ -19,15 +19,22 @@ import {
 } from "./types/ranking.type";
 
 const podiumResponseSchema = {
-  type: "array",
-  items: {
-    type: "object",
-    properties: {
-      nickname: { type: "string", example: "용감한고양이123" },
-      score: { type: "number", example: 91.25 },
+  type: "object",
+  properties: {
+    podium: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          nickname: { type: "string", example: "용감한고양이123" },
+          score: { type: "number", example: 91.25 },
+        },
+        required: ["nickname", "score"],
+      },
     },
-    required: ["nickname", "score"],
+    participantCount: { type: "integer", example: 1021 },
   },
+  required: ["podium", "participantCount"],
 };
 
 const rankingListResponseSchema = {
@@ -48,8 +55,53 @@ const rankingListResponseSchema = {
           drawingId: { type: "string", example: "456" },
           rank: { type: "integer", example: 1 },
           isMe: { type: "boolean", example: true },
+          strokes: {
+            type: "array",
+            items: {
+              type: "object",
+              required: ["points", "color"],
+              properties: {
+                points: {
+                  type: "array",
+                  items: { type: "array", items: { type: "number" } },
+                  minItems: 2,
+                  maxItems: 2,
+                },
+                color: {
+                  type: "array",
+                  items: { type: "integer", minimum: 0, maximum: 255 },
+                  minItems: 3,
+                  maxItems: 3,
+                },
+              },
+            },
+          },
+          similarity: {
+            type: "object",
+            properties: {
+              score: { type: "number", example: 91.25 },
+              strokeMatchSimilarity: { type: "number", example: 40 },
+              shapeSimilarity: { type: "number", example: 55 },
+              penalty: { type: "number", example: 3.75 },
+            },
+            required: [
+              "score",
+              "strokeMatchSimilarity",
+              "shapeSimilarity",
+              "penalty",
+            ],
+          },
         },
-        required: ["nickname", "score", "userKey", "drawingId", "rank", "isMe"],
+        required: [
+          "nickname",
+          "score",
+          "userKey",
+          "drawingId",
+          "rank",
+          "isMe",
+          "strokes",
+          "similarity",
+        ],
       },
     },
   },

@@ -3,14 +3,16 @@ import {
   ReplayDrawingCanvas,
 } from "@/entities/drawingCanvas";
 import { PhaseHeader } from "@/entities/phaseHeader";
-import { useFullScreenAd, usePlayChanceContext } from "@/feature/playChance";
+import { useStartGame } from "@/feature/playChance";
 import { serverTossApi } from "@/shared/api";
 import { AD_GROUP_IDS } from "@/shared/config";
 import {
+  FUNNEL_EVENTS,
   trackClick,
   trackScreen,
   useExitGuard,
   useRequiredState,
+  useToast,
 } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";
@@ -33,89 +35,107 @@ const SubmittedView = () => {
 
   useEffect(() => {
     if (!routeState) return;
-    trackScreen("submitted_view");
+    trackScreen(FUNNEL_EVENTS.submittedView);
   }, [routeState]);
-  const { hasChance, chargeByAd, startPlay } = usePlayChanceContext();
-  const { isAdLoaded, showAd, adGroupId } = useFullScreenAd();
+  const {
+    start,
+    startWithAd,
+    isStarting: isReplaying,
+    hasChance,
+    adStatus,
+    reloadAd,
+  } = useStartGame();
+  const toast = useToast();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isReplaying, setIsReplaying] = useState(false);
-  const [toastOpen, setToastOpen] = useState(false);
-  const [toastText, setToastText] = useState("");
 
   const handleSubmitAndView = async () => {
     if (isSubmitting || !routeState) return;
     setIsSubmitting(true);
 
     try {
-      trackClick("submitted_submit_click");
-      const { promotionGranted } = await serverTossApi.submitDrawing(
-        routeState.strokes,
-      );
+      trackClick(FUNNEL_EVENTS.submittedSubmitClick, {
+        score: routeState.similarity?.score,
+        stroke_count: routeState.strokes.length,
+      });
+      await serverTossApi.submitDrawing(routeState.strokes);
+
+      trackClick(FUNNEL_EVENTS.submittedSubmitSuccess, {
+        score: routeState.similarity?.score,
+        stroke_count: routeState.strokes.length,
+      });
 
       navigate("/", {
         replace: true,
-        state: { fromSubmitted: true, promotionGranted },
+        state: { fromSubmitted: true },
       });
     } catch (err) {
       console.error("제출 실패:", err);
-      setToastText("등록에 실패했어요. 다시 시도해주세요.");
-      setToastOpen(true);
+      trackClick(FUNNEL_EVENTS.submittedSubmitFailed, {
+        reason: err instanceof Error ? err.message : String(err),
+        score: routeState.similarity?.score,
+        stroke_count: routeState.strokes.length,
+      });
+      toast.show("등록에 실패했어요. 다시 시도해주세요.");
       setIsSubmitting(false);
     }
   };
 
+  // 재도전 = 도전 시작과 동일 흐름(기회로 시작 / 광고 보고 시작) → useStartGame 재사용.
   const handleReplay = async () => {
-    if (isReplaying) return;
-    setIsReplaying(true);
-    try {
-      // chance가 있으면 광고 면제 (라벨 "광고·등록 없이 재도전"과 일치)
-      if (!hasChance && isAdLoaded) {
-        await showAd();
-        await chargeByAd({ adGroupId });
-      }
-      const prompt = await startPlay();
-      if (!prompt) {
-        setToastText("그리기 기회가 부족해요.");
-        setToastOpen(true);
-        setIsReplaying(false);
-        return;
-      }
+    const result = hasChance
+      ? await start("submitted_replay")
+      : await startWithAd("submitted_replay");
+    if (result.ok) return;
 
-      navigate("/memorize", {
-        state: {
-          promptId: prompt.promptId,
-          promptStrokes: prompt.strokes,
-          anonymousHash: routeState?.anonymousHash ?? "local",
-        },
-        replace: true,
-      });
-    } catch {
-      setToastText("다시 시도해주세요.");
-      setToastOpen(true);
-      setIsReplaying(false);
+    if (result.reason === "no_prompt") {
+      toast.show("그리기 기회가 부족해요.");
+    } else if (result.reason === "error") {
+      toast.show("다시 시도해주세요.");
     }
+    // ad_not_ready: 버튼이 ready일 때만 연결되므로 정상 흐름엔 도달하지 않음
   };
 
   if (!routeState) return null;
 
   const score = routeState.similarity?.score ?? 0;
 
+  // 재도전 버튼 — 잔여 기회가 있으면 광고 면제, 없으면 광고 로드 상태에 따라 라벨·동작이 달라진다.
+  const replayButton = hasChance
+    ? { label: "광고·등록 없이 재도전", onClick: handleReplay, busy: false }
+    : {
+        loading: {
+          label: "게임 준비 중",
+          onClick: undefined,
+          busy: true,
+        },
+        failed: {
+          label: "다시시작하기",
+          onClick: reloadAd,
+          busy: false,
+        },
+        ready: {
+          label: "등록 없이 재도전",
+          onClick: handleReplay,
+          busy: false,
+        },
+      }[adStatus];
+
   return (
     <div className="flex h-full flex-col bg-(--color-page)">
       <Toast
         position="top"
-        open={toastOpen}
-        text={toastText}
+        open={toast.open}
+        text={toast.text}
         leftAddon={<Toast.Icon name="icon-check-circle-blue-opacity" />}
         duration={3000}
-        onClose={() => setToastOpen(false)}
+        onClose={toast.close}
       />
 
       <PhaseHeader
         title="완성한 그림이에요"
         description={
-          "등록하면 오늘 그린 최고 점수가 랭킹에 반영돼요\n그림의 점수도 자세히 분석해드려요"
+          "가장 높은 기억력 점수가 랭킹에 반영돼요\n그림의 점수도 자세히 분석해드려요"
         }
       />
 
@@ -142,11 +162,11 @@ const SubmittedView = () => {
                 color="primary"
                 variant="weak"
                 display="block"
-                loading={isReplaying}
-                disabled={isReplaying || isSubmitting}
-                onClick={handleReplay}
+                loading={isReplaying || replayButton.busy}
+                disabled={isReplaying || isSubmitting || replayButton.busy}
+                onClick={replayButton.onClick}
               >
-                {hasChance ? "광고·등록 없이 재도전" : "등록 없이 재도전"}
+                {replayButton.label}
               </Button>
             </div>
             <div className="flex-1">

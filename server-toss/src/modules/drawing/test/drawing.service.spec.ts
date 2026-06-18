@@ -64,10 +64,6 @@ const buildPromptService = () => ({
   })),
 });
 
-const buildPointService = (granted = false) => ({
-  grantDrawingPromotionIfEligible: jest.fn(async () => granted),
-});
-
 const buildUserService = (userKey = 1234) => ({
   getUserInfo: jest.fn(async () => ({ userKey, name: "테스트유저" }) as User),
 });
@@ -85,22 +81,20 @@ const buildSaveDrawingService = () => ({
 const buildService = ({
   userService = buildUserService(),
   promptService = buildPromptService(),
-  pointService = buildPointService(),
   drawingRepository = buildDrawingRepository(),
   saveDrawingService = buildSaveDrawingService(),
 }: {
   userService?: ReturnType<typeof buildUserService>;
   promptService?: ReturnType<typeof buildPromptService>;
-  pointService?: ReturnType<typeof buildPointService>;
   drawingRepository?: ReturnType<typeof buildDrawingRepository>;
   saveDrawingService?: ReturnType<typeof buildSaveDrawingService>;
 }) =>
   new DrawingService(
     userService as never,
     promptService as never,
-    pointService as never,
     drawingRepository as never,
     saveDrawingService as never,
+    { emit: jest.fn() } as never,
   );
 
 describe("DrawingService", () => {
@@ -138,12 +132,12 @@ describe("DrawingService", () => {
       };
       const saveDrawingService = buildSaveDrawingService();
       saveDrawingService.saveDrawingWithRanking.mockResolvedValue({
-        id: BigInt(42),
+        drawing: { id: BigInt(42) },
+        rankingChange: { changed: false },
       });
 
       const service = buildService({
         userService,
-        pointService: buildPointService(false),
         saveDrawingService,
       });
 
@@ -168,36 +162,8 @@ describe("DrawingService", () => {
       );
       expect(result).toMatchObject({
         drawingId: 42,
-        promotionGranted: false,
       });
       expect(result.similarity.score).toBe(87);
-    });
-
-    it("프로모션 지급은 PointService에 위임하고 결과를 그대로 반환한다", async () => {
-      const pointService = buildPointService(true);
-      const drawingRepository = buildDrawingRepository();
-      const saveDrawingService = buildSaveDrawingService();
-      saveDrawingService.saveDrawingWithRanking.mockResolvedValue({
-        id: BigInt(1),
-      });
-      drawingRepository.saveDrawing.mockResolvedValue({ id: BigInt(1) });
-
-      const service = buildService({
-        pointService,
-        drawingRepository,
-        saveDrawingService,
-      });
-
-      const result = await service.submitDrawing(
-        1234,
-        sampleStrokes as never,
-        new Date(),
-      );
-
-      expect(pointService.grantDrawingPromotionIfEligible).toHaveBeenCalledWith(
-        1234,
-      );
-      expect(result.promotionGranted).toBe(true);
     });
   });
 

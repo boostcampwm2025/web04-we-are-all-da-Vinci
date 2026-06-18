@@ -46,23 +46,44 @@ vi.mock("@/shared/ui/bannerAd", () => ({
 }));
 
 const mockShowAd = vi.fn().mockResolvedValue(undefined);
-const mockUseFullScreenAd = vi.fn(() => ({
-  isAdLoaded: false as boolean,
+const mockReloadAd = vi.fn();
+type AdStatus = "loading" | "ready" | "failed";
+const fullScreenAd = (adStatus: AdStatus) => ({
+  adStatus,
+  isAdLoaded: adStatus === "ready",
   showAd: mockShowAd,
-}));
-vi.mock("@/feature/playChance", () => ({
+  reloadAd: mockReloadAd,
+  adGroupId: "test-ad-group",
+});
+const mockUseFullScreenAd = vi.fn(() => fullScreenAd("ready"));
+const playChance = (hasChance: boolean) => ({
+  chanceCount: hasChance ? 1 : 0,
+  hasChance,
+  isLoading: false,
+  error: null,
+  refresh: vi.fn(),
+  chargeByAd: mockChargeByAd,
+  chargeByShare: vi.fn(),
+  startPlay: mockStartPlay,
+});
+const mockUsePlayChanceContext = vi.fn(() => playChance(true));
+// useStartGame이 상대경로로 가져오는 하위 모듈을 목으로 잡는다(배럴 목 불가).
+vi.mock("@/feature/playChance/hooks/useFullScreenAd", () => ({
   useFullScreenAd: () => mockUseFullScreenAd(),
-  usePlayChanceContext: () => ({
-    chanceCount: 1,
-    hasChance: true,
-    isLoading: false,
-    error: null,
-    refresh: vi.fn(),
-    chargeByAd: mockChargeByAd,
-    chargeByShare: vi.fn(),
-    startPlay: mockStartPlay,
-  }),
 }));
+vi.mock("@/feature/playChance/model/playChanceContext", () => ({
+  usePlayChanceContext: () => mockUsePlayChanceContext(),
+}));
+
+// getAnonymousHash만 고정값으로 덮고 나머지(useToast·useExitGuard 등)는 실제 구현 유지.
+vi.mock("@/shared/lib", async () => {
+  const actual =
+    await vi.importActual<typeof import("@/shared/lib")>("@/shared/lib");
+  return {
+    ...actual,
+    getAnonymousHash: vi.fn().mockResolvedValue("test-hash"),
+  };
+});
 
 const mockRouteState = {
   promptId: 1,
@@ -94,10 +115,8 @@ describe("SubmittedView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
-    mockUseFullScreenAd.mockImplementation(() => ({
-      isAdLoaded: false,
-      showAd: mockShowAd,
-    }));
+    mockUseFullScreenAd.mockImplementation(() => fullScreenAd("ready"));
+    mockUsePlayChanceContext.mockImplementation(() => playChance(true));
   });
 
   it("점수와 완성 텍스트가 렌더링된다", () => {
@@ -113,7 +132,6 @@ describe("SubmittedView", () => {
     vi.mocked(serverTossApi.submitDrawing).mockResolvedValue({
       drawingId: 1,
       similarity: mockRouteState.similarity,
-      promotionGranted: false,
     });
 
     renderWithState();
@@ -129,7 +147,7 @@ describe("SubmittedView", () => {
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith("/", {
         replace: true,
-        state: { fromSubmitted: true, promotionGranted: false },
+        state: { fromSubmitted: true },
       });
     });
   });
@@ -152,13 +170,12 @@ describe("SubmittedView", () => {
     });
   });
 
-  it("promotionGranted가 true이면 state에 포함하여 홈으로 이동한다", async () => {
+  it("fromSubmitted가 true이면 state에 포함하여 홈으로 이동한다", async () => {
     vi.useRealTimers();
     const user = userEvent.setup();
     vi.mocked(serverTossApi.submitDrawing).mockResolvedValue({
       drawingId: 1,
       similarity: mockRouteState.similarity,
-      promotionGranted: true,
     });
 
     renderWithState();
@@ -168,7 +185,7 @@ describe("SubmittedView", () => {
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith("/", {
         replace: true,
-        state: { fromSubmitted: true, promotionGranted: true },
+        state: { fromSubmitted: true },
       });
     });
   });
@@ -200,7 +217,7 @@ describe("SubmittedView", () => {
     renderWithState();
 
     expect(
-      screen.getByText(/등록하면 오늘 그린 최고 점수가 랭킹에 반영돼요/),
+      screen.getByText(/가장 높은 기억력 점수가 랭킹에 반영돼요/),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/그림의 점수도 자세히 분석해드려요/),
@@ -254,10 +271,7 @@ describe("SubmittedView", () => {
 
   it("hasChance가 있으면 광고가 로드되어도 광고/chargeByAd 없이 startPlay만 호출한다", async () => {
     vi.useRealTimers();
-    mockUseFullScreenAd.mockImplementation(() => ({
-      isAdLoaded: true,
-      showAd: mockShowAd,
-    }));
+    mockUseFullScreenAd.mockImplementation(() => fullScreenAd("ready"));
     const user = userEvent.setup();
     mockStartPlay.mockResolvedValueOnce({
       promptId: 7,
@@ -281,8 +295,9 @@ describe("SubmittedView", () => {
     );
   });
 
-  it("광고가 로드되지 않은 경우 다시하기 시 광고/chargeByAd 없이 startPlay만 호출한다", async () => {
+  it("hasChance가 있으면 광고가 로드되지 않아도 광고/chargeByAd 없이 startPlay만 호출한다", async () => {
     vi.useRealTimers();
+    mockUseFullScreenAd.mockImplementation(() => fullScreenAd("loading"));
     const user = userEvent.setup();
     mockStartPlay.mockResolvedValueOnce({
       promptId: 8,
@@ -298,5 +313,49 @@ describe("SubmittedView", () => {
     });
     expect(mockShowAd).not.toHaveBeenCalled();
     expect(mockChargeByAd).not.toHaveBeenCalled();
+  });
+
+  describe("잔여 기회 없음 — 광고 로드 상태별 재도전 버튼", () => {
+    beforeEach(() => {
+      mockUsePlayChanceContext.mockImplementation(() => playChance(false));
+    });
+
+    it("광고 로드 중이면 '게임 준비 중' 버튼이 비활성으로 표시된다", () => {
+      mockUseFullScreenAd.mockImplementation(() => fullScreenAd("loading"));
+
+      renderWithState();
+
+      expect(screen.getByText("게임 준비 중")).toBeDisabled();
+    });
+
+    it("광고 로드 실패 시 '다시시작하기'를 누르면 reloadAd만 호출한다", async () => {
+      vi.useRealTimers();
+      mockUseFullScreenAd.mockImplementation(() => fullScreenAd("failed"));
+      const user = userEvent.setup();
+
+      renderWithState();
+
+      await user.click(screen.getByText("다시시작하기"));
+
+      expect(mockReloadAd).toHaveBeenCalled();
+      expect(mockStartPlay).not.toHaveBeenCalled();
+    });
+
+    it("광고 로드 완료 시 '등록 없이 재도전'을 누르면 광고 흐름을 진행한다", async () => {
+      vi.useRealTimers();
+      mockUseFullScreenAd.mockImplementation(() => fullScreenAd("ready"));
+      mockStartPlay.mockResolvedValueOnce({ promptId: 9, strokes: [] });
+      const user = userEvent.setup();
+
+      renderWithState();
+
+      await user.click(screen.getByText("등록 없이 재도전"));
+
+      await waitFor(() => {
+        expect(mockShowAd).toHaveBeenCalled();
+        expect(mockChargeByAd).toHaveBeenCalled();
+        expect(mockStartPlay).toHaveBeenCalled();
+      });
+    });
   });
 });

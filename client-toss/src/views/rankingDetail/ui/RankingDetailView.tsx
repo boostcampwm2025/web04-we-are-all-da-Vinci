@@ -1,7 +1,8 @@
 import { MyScoreCard, useDrawing } from "@/entities/myScoreCard";
 import { PhaseHeader } from "@/entities/phaseHeader";
 import { AD_GROUP_IDS } from "@/shared/config";
-import { trackScreen } from "@/shared/lib";
+import { useMissionAction } from "@/shared/hooks";
+import { FUNNEL_EVENTS, trackScreen } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";
 import { colors } from "@toss/tds-colors";
@@ -16,8 +17,13 @@ const RankingDetailView = () => {
   const rank = (location.state as { rank?: number } | null)?.rank;
 
   useEffect(() => {
-    trackScreen("ranking_detail_view", rank != null ? { rank } : undefined);
+    trackScreen(
+      FUNNEL_EVENTS.rankingDetailView,
+      rank != null ? { rank } : undefined,
+    );
   }, [rank]);
+
+  useMissionAction("visit_drawing_detail");
 
   const renderBody = () => {
     if (isLoading) {

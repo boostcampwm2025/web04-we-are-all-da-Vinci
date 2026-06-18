@@ -1,6 +1,6 @@
 import { serverTossApi } from "@/shared/api";
 import { useCallback } from "react";
-import type { PodiumEntry } from "../model/types";
+import type { PodiumResponse } from "../model/types";
 import { useAbortableQuery } from "@/shared/hooks/useAbortableQuery";
 
 const usePodium = () => {
@@ -10,10 +10,11 @@ const usePodium = () => {
     [],
   );
 
-  const { data, isLoading } = useAbortableQuery<PodiumEntry[]>(queryFn);
+  const { data, isLoading } = useAbortableQuery<PodiumResponse>(queryFn);
 
   return {
-    podium: data,
+    podium: data?.podium,
+    participantCount: data?.participantCount,
     isLoading,
   };
 };

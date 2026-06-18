@@ -1,191 +1,140 @@
-import { useMyDrawings } from "@/entities/myScoreCard";
-import { useFullScreenAd, usePlayChanceContext } from "@/feature/playChance";
+import { useAttendanceStatus } from "@/entities/attendance";
+import { useTodayMissions } from "@/entities/missionCard";
+import { usePodium } from "@/entities/podium";
+import { usePointSummary } from "@/entities/point";
 import {
-  getCachedNickname,
-  serverTossApi,
-  setCachedNickname,
-} from "@/shared/api";
-import { formatLocalDate, getAnonymousHash, useExitGuard } from "@/shared/lib";
-import { Button, ConfirmDialog, Tab, Toast } from "@toss/tds-mobile";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import InfoTicker from "./InfoTicker";
-
-const RANKING_PATH = "/ranking";
+  NotificationCenterSheet,
+  useNotificationAutoPrompt,
+} from "@/feature/notification";
+import { useStartGame } from "@/feature/playChance";
+import { AD_GROUP_IDS } from "@/shared/config";
+import { useToast } from "@/shared/lib";
+import { BannerAd } from "@/shared/ui/bannerAd";
+import { ExitDialog } from "@/shared/ui/exitDialog";
+import { Button, Toast } from "@toss/tds-mobile";
+import { useCallback, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { useAttendanceAutoCheckIn } from "../model/useAttendanceAutoCheckIn";
+import { useDailyAutoStart } from "../model/useDailyAutoStart";
+import AttendanceResultSheet from "./AttendanceResultSheet";
+import ChallengeCard from "./ChallengeCard";
+import PlayCtaButton from "./PlayCtaButton";
+import StreakStatsCard from "./StreakStatsCard";
+import TodayDavinciCard from "./TodayDavinciCard";
+import TodayMissionCard from "./TodayMissionCard";
 
 const DashboardView = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { state: locationState } = location;
-  const { showDialog, setShowDialog, exit } = useExitGuard();
-  const [isStartingGame, setIsStartingGame] = useState(false);
-  const [toastOpen, setToastOpen] = useState(false);
-  const [toastText, setToastText] = useState("일시적 오류가 발생했어요");
-  const anonymousHashRef = useRef<string>("local");
-  const autoStartedRef = useRef(false);
-  const { myDrawings, isLoading, refetch: refetchDrawings } = useMyDrawings();
+  const { state: locationState } = useLocation();
   const {
-    chanceCount,
-    hasChance,
-    isLoading: isChanceLoading,
-    chargeByAd,
-    startPlay,
-    refresh: refreshChance,
-  } = usePlayChanceContext();
-  const { isAdLoaded, showAd, adGroupId } = useFullScreenAd();
-
-  const [initialLoading, setInitialLoading] = useState(true);
+    open: toastOpen,
+    text: toastText,
+    show: showToast,
+    close: closeToast,
+  } = useToast();
   const [error, setError] = useState<string | null>(null);
-  const [nickname, setNickname] = useState<string>(
-    () => getCachedNickname() ?? "",
+
+  const {
+    start,
+    startWithAd,
+    reloadAd,
+    isChanceLoading,
+    hasChance,
+    chanceCount,
+    adStatus,
+    isStarting,
+  } = useStartGame();
+
+  const runPlay = useCallback(
+    async (source: string) => {
+      setError(null);
+      const result = await start(source);
+      if (!result.ok && result.reason === "error") {
+        setError("서버 응답이 늦어지고 있어요. 다시 시도해주세요.");
+      }
+      return result;
+    },
+    [start],
+  );
+  const handleStart = useCallback(() => runPlay("cta"), [runPlay]);
+
+  const { initialLoading, playedToday } = useDailyAutoStart({
+    start: runPlay,
+    showToast,
+    locationState,
+  });
+
+  const { status: attendanceStatus, refetch: refetchAttendance } =
+    useAttendanceStatus();
+  // 포인트는 출석과 분리된 리소스(/points/me). 포인트 변동 시 함께 재조회한다.
+  const { summary: pointSummary, refetch: refetchPoints } = usePointSummary();
+  // 출석 체크인·복구로 포인트(마일스톤)가 바뀔 수 있으므로 현황+포인트를 같이 갱신.
+  const refreshAttendance = useCallback(() => {
+    refetchAttendance();
+    refetchPoints();
+  }, [refetchAttendance, refetchPoints]);
+
+  // 게임 자동시작으로 넘어가지 않고 대시보드가 실제 보일 때(playedToday)만 출석 체크인·시트.
+  const attendanceCheckIn = useAttendanceAutoCheckIn({
+    enabled: playedToday,
+    onChecked: refreshAttendance,
+  });
+
+  // 알림 시트는 출석 시트와 겹치지 않도록 출석 처리가 끝나고(settled) 출석 시트가 닫힌 뒤에만 띄운다.
+  const notificationAutoPrompt = useNotificationAutoPrompt(
+    playedToday &&
+      attendanceCheckIn.settled &&
+      attendanceCheckIn.result === null,
   );
 
-  const selectedTab = location.pathname === RANKING_PATH ? 1 : 0;
+  const { missions: todayMissions, isLoading: isMissionsLoading } =
+    useTodayMissions();
+  const missionMaxPoint = todayMissions.reduce(
+    (sum, mission) => sum + mission.rewardAmount,
+    0,
+  );
 
-  useEffect(() => {
-    if (nickname) return;
-    let cancelled = false;
-    serverTossApi
-      .getMe()
-      .then((info) => {
-        if (cancelled) return;
-        setCachedNickname(info.nickname);
-        setNickname(info.nickname);
-      })
-      .catch((err) => {
-        console.error("[닉네임 조회 실패, 무시]", err);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [nickname]);
+  // 시상대는 ChallengeCard(최고점·참가자수)와 TodayDavinciCard(top3)가 함께 쓴다.
+  // useAbortableQuery에 dedupe가 없어 각 카드가 호출하면 GET /podium이 2번 나가므로
+  // 뷰에서 1회만 호출해 props로 내려준다.
+  const { podium, participantCount } = usePodium();
 
-  const startGame = useCallback(async () => {
-    if (isStartingGame) return;
-    setIsStartingGame(true);
-    setError(null);
-    try {
-      const prompt = await startPlay();
-      if (!prompt) {
-        setIsStartingGame(false);
-        return;
-      }
-
-      // 게임 시작 시점에 자동시작 게이트를 닫는다 — 제출 없이 이탈해도 재자동시작/이중차감 방지
-      localStorage.setItem(
-        `lastPlayed_${anonymousHashRef.current}`,
-        formatLocalDate(),
-      );
-
-      navigate("/memorize", {
-        state: {
-          promptId: prompt.promptId,
-          promptStrokes: prompt.strokes,
-          anonymousHash: anonymousHashRef.current,
-        },
-        replace: true,
-      });
-    } catch (err) {
-      console.error("프롬프트 로드 실패:", err);
-      setError("서버 응답이 늦어지고 있어요. 다시 시도해주세요.");
-      setIsStartingGame(false);
+  const handleAdStart = useCallback(async () => {
+    const result = await startWithAd("retry");
+    if (result.ok) return;
+    if (result.reason === "no_prompt") {
+      showToast("그리기 기회를 다시 확인했어요. 잠시 후 다시 시도해주세요.");
+    } else if (result.reason === "error") {
+      showToast("일시적 오류가 발생했어요");
     }
-  }, [navigate, startPlay, isStartingGame]);
+  }, [startWithAd, showToast]);
 
-  useEffect(() => {
-    const fromSubmitted = (locationState as { fromSubmitted?: boolean })
-      ?.fromSubmitted;
-
-    const init = async () => {
-      const hash = await getAnonymousHash();
-      anonymousHashRef.current = hash;
-
-      if (fromSubmitted) {
-        // state를 즉시 제거하여 재마운트 시 토스트 재표시 방지
-        window.history.replaceState({}, "");
-
-        refetchDrawings();
-
-        const promotionGranted = (
-          locationState as { promotionGranted?: boolean }
-        )?.promotionGranted;
-        if (promotionGranted != null) {
-          setToastText(
-            promotionGranted ? "포인트 지급이 완료됐어요" : "그림을 등록했어요",
-          );
-          setToastOpen(true);
-        }
-
-        setInitialLoading(false);
-        return;
-      }
-
-      const today = formatLocalDate();
-      const lastPlayed = localStorage.getItem(`lastPlayed_${hash}`);
-
-      if (lastPlayed === today) {
-        setInitialLoading(false);
-        return;
-      }
-
-      // effect가 두 번 실행돼도 자동시작은 마운트당 1회만 — startPlay 이중 호출 방지
-      if (autoStartedRef.current) {
-        setInitialLoading(false);
-        return;
-      }
-      autoStartedRef.current = true;
-
-      // 첫 방문: initialLoading=true 상태로 게임 시작 (로딩 화면 유지)
-      try {
-        await startGame();
-      } finally {
-        setInitialLoading(false);
-      }
-    };
-
-    init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locationState]);
-
-  const handleRetry = async () => {
-    if (isStartingGame) return;
-    setIsStartingGame(true);
-    try {
-      if (isAdLoaded) {
-        await showAd();
-        await chargeByAd({ adGroupId });
-      }
-      const prompt = await startPlay();
-      if (!prompt) {
-        await refreshChance();
-        setToastText(
-          "그리기 기회를 다시 확인했어요. 잠시 후 다시 시도해주세요.",
-        );
-        setToastOpen(true);
-        return;
-      }
-
-      localStorage.setItem(
-        `lastPlayed_${anonymousHashRef.current}`,
-        formatLocalDate(),
-      );
-
-      navigate("/memorize", {
-        state: {
-          promptId: prompt.promptId,
-          promptStrokes: prompt.strokes,
-          anonymousHash: anonymousHashRef.current,
-        },
-        replace: true,
-      });
-    } catch (err) {
-      console.error("[handleRetry 실패]", err);
-      setToastText("일시적 오류가 발생했어요");
-      setToastOpen(true);
-    } finally {
-      setIsStartingGame(false);
-    }
-  };
+  // cta를 useMemo로 — play 상태가 바뀔 때만 새 참조가 되어, 그 외 최상위 state
+  // 변화(attendance·missions·podium 해소)에는 ChallengeCard가 리렌더되지 않는다.
+  // (hook이므로 아래 early return보다 위에 있어야 함 — rules of hooks)
+  const cta = useMemo(
+    () => (
+      <PlayCtaButton
+        isChanceLoading={isChanceLoading}
+        hasChance={hasChance}
+        chanceCount={chanceCount}
+        adStatus={adStatus}
+        isStarting={isStarting}
+        onStart={handleStart}
+        onAdStart={handleAdStart}
+        onReloadAd={reloadAd}
+      />
+    ),
+    [
+      isChanceLoading,
+      hasChance,
+      chanceCount,
+      adStatus,
+      isStarting,
+      reloadAd,
+      handleStart,
+      handleAdStart,
+    ],
+  );
 
   if (initialLoading) {
     return (
@@ -199,7 +148,7 @@ const DashboardView = () => {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 px-(--page-px)">
         <p className="text-center text-(--color-grey)">{error}</p>
-        <Button size="large" onClick={startGame}>
+        <Button size="large" onClick={handleStart}>
           다시 시도해요
         </Button>
       </div>
@@ -217,69 +166,48 @@ const DashboardView = () => {
         text={toastText}
         leftAddon={<Toast.Icon name="icon-check-circle-blue-opacity" />}
         duration={3000}
-        onClose={() => setToastOpen(false)}
+        onClose={closeToast}
       />
 
-      <div className="shrink-0 bg-(--color-page)">
-        <Tab onChange={(index) => navigate(index === 1 ? RANKING_PATH : "/")}>
-          <Tab.Item selected={selectedTab === 0}>오늘 그린 그림</Tab.Item>
-          <Tab.Item selected={selectedTab === 1}>오늘의 다빈치</Tab.Item>
-        </Tab>
-        <InfoTicker />
-      </div>
+      <main className="min-h-0 flex-1 overflow-y-auto px-(--page-px) pt-3 pb-[calc(env(safe-area-inset-bottom)+72px)]">
+        <div className="flex flex-col gap-3">
+          <StreakStatsCard
+            status={attendanceStatus ?? undefined}
+            pointSummary={pointSummary ?? undefined}
+            missionMaxPoint={missionMaxPoint}
+          />
+          <ChallengeCard
+            cta={cta}
+            podium={podium}
+            participantCount={participantCount}
+          />
+          <TodayMissionCard
+            missions={todayMissions}
+            isLoading={isMissionsLoading}
+          />
+          <TodayDavinciCard podium={podium} />
+        </div>
 
-      <main className="min-h-0 flex-1 overflow-y-auto">
-        <Outlet
-          context={{
-            nickname,
-            myDrawings,
-            isMyDrawingsLoading: isLoading,
-          }}
-        />
+        <div className="-mx-(--page-px) px-(--card-mx)">
+          <BannerAd type="feed" adGroupId={AD_GROUP_IDS.BANNER_FEED} />
+        </div>
       </main>
 
-      <section className="shrink-0 bg-(--color-page) px-(--page-px) pt-3 pb-[env(safe-area-inset-bottom)]">
-        {isChanceLoading ? (
-          <Button color="primary" display="block" loading disabled>
-            도전 기회 확인 중
-          </Button>
-        ) : hasChance ? (
-          <Button
-            color="primary"
-            display="block"
-            loading={isStartingGame}
-            disabled={isStartingGame}
-            onClick={startGame}
-          >
-            광고 없이 {chanceCount}번 도전
-          </Button>
-        ) : (
-          <Button
-            color="primary"
-            display="block"
-            loading={isStartingGame}
-            disabled={isStartingGame}
-            onClick={handleRetry}
-          >
-            5초 광고 보고 도전하기
-          </Button>
-        )}
-      </section>
+      <AttendanceResultSheet
+        result={attendanceCheckIn.result}
+        onClose={attendanceCheckIn.close}
+        onRecovered={refreshAttendance}
+      />
 
-      <ConfirmDialog
-        open={showDialog}
-        onClose={() => setShowDialog(false)}
+      <NotificationCenterSheet
+        open={notificationAutoPrompt.open}
+        onClose={notificationAutoPrompt.close}
+      />
+
+      <ExitDialog
         title="우리 모두 다빈치를 종료할까요?"
-        confirmButton={
-          <ConfirmDialog.ConfirmButton onClick={exit}>
-            종료하기
-          </ConfirmDialog.ConfirmButton>
-        }
-        cancelButton={
-          <ConfirmDialog.CancelButton onClick={() => setShowDialog(false)}>
-            계속 둘러보기
-          </ConfirmDialog.CancelButton>
-        }
+        confirmLabel="종료하기"
+        cancelLabel="계속 둘러보기"
       />
     </div>
   );

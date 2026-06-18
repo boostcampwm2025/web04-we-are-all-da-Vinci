@@ -4,9 +4,7 @@ import { serverTossApi } from "@/shared/api";
 import {
   contactsViral,
   getTossShareLink,
-  partner,
   share,
-  tdsEvent,
 } from "@apps-in-toss/web-framework";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import {
@@ -39,25 +37,13 @@ const mockedContactsViral = contactsViral as unknown as Mock & {
   isSupported: Mock;
 };
 
+/** open=true로 시트를 띄운 상태에서 렌더한다. */
 const renderShareSheet = () =>
   render(
     <PlayChanceProvider>
-      <ShareSheet />
+      <ShareSheet open onClose={() => {}} />
     </PlayChanceProvider>,
   );
-
-/** `tdsEvent.addEventListener`에 등록된 액세서리 버튼 핸들러를 꺼낸다. */
-const getAccessoryHandler = () => {
-  const calls = (tdsEvent.addEventListener as Mock).mock.calls;
-  const lastCall = calls[calls.length - 1];
-  return lastCall[1].onEvent as (event: { id: string }) => void;
-};
-
-const openSheet = async () => {
-  await act(async () => {
-    getAccessoryHandler()({ id: "share" });
-  });
-};
 
 describe("공유 시트", () => {
   beforeEach(() => {
@@ -75,33 +61,24 @@ describe("공유 시트", () => {
     delete import.meta.env.VITE_CONTACTS_VIRAL_MODULE_ID;
   });
 
-  it("마운트 시 네비게이션 바 공유 액세서리 버튼을 등록한다", async () => {
+  it("open이 true이면 공유 종류 선택 시트가 열린다", async () => {
     renderShareSheet();
-
-    await waitFor(() => {
-      expect(partner.addAccessoryButton).toHaveBeenCalledWith({
-        id: "share",
-        title: "공유",
-        icon: { name: "icon-share-dots-thin-mono" },
-      });
-    });
-  });
-
-  it("액세서리 버튼 이벤트를 받으면 공유 종류 선택 시트가 열린다", async () => {
-    renderShareSheet();
-    await openSheet();
 
     expect(screen.getByText("공유하기")).toBeInTheDocument();
     expect(screen.getByText("점수 자랑하기")).toBeInTheDocument();
     expect(screen.getByText("친구 초대하고 기회 받기")).toBeInTheDocument();
     expect(
-      screen.getByText("친구 초대 보상은 하루 5번까지 받을 수 있어요."),
+      screen.getByText("친구 초대 보상은 하루 5회까지 받을 수 있어요."),
     ).toBeInTheDocument();
   });
 
-  it("점수 자랑 항목을 누르면 점수 공유가 실행되고 시트가 닫힌다", async () => {
-    renderShareSheet();
-    await openSheet();
+  it("점수 자랑 항목을 누르면 점수 공유가 실행되고 onClose가 호출된다", async () => {
+    const onClose = vi.fn();
+    render(
+      <PlayChanceProvider>
+        <ShareSheet open onClose={onClose} />
+      </PlayChanceProvider>,
+    );
 
     await act(async () => {
       screen.getByRole("button", { name: /점수 자랑/ }).click();
@@ -111,7 +88,7 @@ describe("공유 시트", () => {
       expect(getTossShareLink).toHaveBeenCalled();
       expect(share).toHaveBeenCalled();
     });
-    expect(screen.queryByText("공유하기")).not.toBeInTheDocument();
+    expect(onClose).toHaveBeenCalled();
   });
 
   it("친구 초대 항목을 누르면 contactsViral 공유가 실행된다", async () => {
@@ -120,7 +97,6 @@ describe("공유 시트", () => {
     import.meta.env.VITE_CONTACTS_VIRAL_MODULE_ID = "test-module";
 
     renderShareSheet();
-    await openSheet();
 
     await act(async () => {
       screen.getByRole("button", { name: /친구 초대/ }).click();
@@ -158,7 +134,6 @@ describe("공유 시트", () => {
 
     renderShareSheet();
     await waitFor(() => expect(mockedApi.getMyChance).toHaveBeenCalledTimes(1));
-    await openSheet();
 
     await act(async () => {
       screen.getByRole("button", { name: /친구 초대/ }).click();

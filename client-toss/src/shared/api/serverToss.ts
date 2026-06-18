@@ -1,21 +1,33 @@
-import type { PodiumEntry } from "@/entities/podium";
 import type { MyRankingResponse, RankingListItem } from "@/entities/ranking";
 import { appLogin } from "@apps-in-toss/web-framework";
 import type {
   AdSdkPayload,
+  ArchiveDayResponse,
+  ArchiveSummaryResponse,
   MyDrawingResponse,
-  MyDrawingsResponse,
+  MissionAction,
+  NotificationAgreementRequest,
   ShareSdkPayload,
   Stroke,
   SubmitStrokesRequest,
 } from "@toss/shared";
 import {
+  ArchiveDayResponseSchema,
+  ArchiveSummaryResponseSchema,
+  AttendanceCheckInResponseSchema,
+  AttendanceRecoverResponseSchema,
+  AttendanceStatusResponseSchema,
   ChargeResponseSchema,
   LoginResponseSchema,
   MyChanceResponseSchema,
+  MyMissionsResponseSchema,
+  NotificationAgreementResponseSchema,
+  PodiumResponseSchema,
+  PointSummaryResponseSchema,
   PromptResponseSchema,
   SimilarityResponseSchema,
   SubmitDrawingResponseSchema,
+  TodayMissionsResponseSchema,
   UserInfoResponseSchema,
 } from "@toss/shared";
 
@@ -37,7 +49,6 @@ export const clearAccessToken = () => {
   localStorage.removeItem("nickname");
 };
 
-export const getCachedNickname = () => localStorage.getItem("nickname");
 export const setCachedNickname = (nickname: string) =>
   localStorage.setItem("nickname", nickname);
 
@@ -184,14 +195,26 @@ export const serverTossApi = {
     return rankings;
   },
 
-  getPodium: (options?: RequestOptions) =>
-    get<PodiumEntry[]>("/rankings/podium", options),
-
-  getMyDrawings: (options?: RequestOptions) =>
-    get<MyDrawingsResponse>("/drawing/me", options),
+  getPodium: async (options?: RequestOptions) =>
+    PodiumResponseSchema.parse(await get<unknown>("/rankings/podium", options)),
 
   getDrawing: (drawingId: string, options?: RequestOptions) =>
     get<DrawingDetailResponse>(`/drawing/${drawingId}`, options),
+
+  getArchiveSummary: async (
+    options?: RequestOptions,
+  ): Promise<ArchiveSummaryResponse> =>
+    ArchiveSummaryResponseSchema.parse(
+      await get<unknown>("/archive/summary", options),
+    ),
+
+  getArchiveDay: async (
+    date: string,
+    options?: RequestOptions,
+  ): Promise<ArchiveDayResponse> =>
+    ArchiveDayResponseSchema.parse(
+      await get<unknown>(`/archive/days/${date}`, options),
+    ),
 
   submitDrawing: async (strokes: Stroke[]) => {
     const userKey = await getCurrentUserKey();
@@ -203,6 +226,48 @@ export const serverTossApi = {
   getMyChance: async (options?: RequestOptions) =>
     MyChanceResponseSchema.parse(
       await request<unknown>("GET", "/chances/me", undefined, options),
+    ),
+
+  getDailyPromptNotificationAgreement: async (options?: RequestOptions) =>
+    NotificationAgreementResponseSchema.parse(
+      await request<unknown>(
+        "GET",
+        "/notifications/daily-prompt/agreement",
+        undefined,
+        options,
+      ),
+    ),
+
+  saveDailyPromptNotificationAgreement: async (
+    body: NotificationAgreementRequest,
+  ) =>
+    NotificationAgreementResponseSchema.parse(
+      await request<unknown>(
+        "POST",
+        "/notifications/daily-prompt/agreement",
+        body,
+      ),
+    ),
+
+  getOvertakenNotificationAgreement: async (options?: RequestOptions) =>
+    NotificationAgreementResponseSchema.parse(
+      await request<unknown>(
+        "GET",
+        "/notifications/overtaken/agreement",
+        undefined,
+        options,
+      ),
+    ),
+
+  saveOvertakenNotificationAgreement: async (
+    body: NotificationAgreementRequest,
+  ) =>
+    NotificationAgreementResponseSchema.parse(
+      await request<unknown>(
+        "POST",
+        "/notifications/overtaken/agreement",
+        body,
+      ),
     ),
 
   chargeChanceByAd: async (sdkPayload: AdSdkPayload) =>
@@ -219,5 +284,43 @@ export const serverTossApi = {
         source: "share",
         sdkPayload,
       }),
+    ),
+
+  getMyMissions: async (options?: RequestOptions) =>
+    MyMissionsResponseSchema.parse(
+      await request<unknown>("GET", "/missions/me", undefined, options),
+    ),
+
+  getTodayMissions: async (options?: RequestOptions) =>
+    TodayMissionsResponseSchema.parse(
+      await request<unknown>("GET", "/missions/today", undefined, options),
+    ),
+
+  assignMyMissions: async (options?: RequestOptions) =>
+    MyMissionsResponseSchema.parse(
+      await request<unknown>("POST", "/missions/me", undefined, options),
+    ),
+
+  reportMissionAction: (actionType: MissionAction["actionType"]) =>
+    request<void>("POST", "/missions/action", { actionType }),
+
+  getAttendanceStatus: async (options?: RequestOptions) =>
+    AttendanceStatusResponseSchema.parse(
+      await request<unknown>("GET", "/attendance/me", undefined, options),
+    ),
+
+  checkInAttendance: async () =>
+    AttendanceCheckInResponseSchema.parse(
+      await request<unknown>("POST", "/attendance/check-in"),
+    ),
+
+  recoverAttendance: async (sdkPayload: AdSdkPayload) =>
+    AttendanceRecoverResponseSchema.parse(
+      await request<unknown>("POST", "/attendance/recover", { sdkPayload }),
+    ),
+
+  getPointSummary: async (options?: RequestOptions) =>
+    PointSummaryResponseSchema.parse(
+      await request<unknown>("GET", "/points/me", undefined, options),
     ),
 };

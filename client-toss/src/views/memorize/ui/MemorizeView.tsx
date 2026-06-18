@@ -6,6 +6,7 @@ import { PhaseHeader } from "@/entities/phaseHeader";
 import { useRequirePlaySession } from "@/feature/playChance";
 import { AD_GROUP_IDS } from "@/shared/config";
 import {
+  FUNNEL_EVENTS,
   MEMORIZE_SECONDS,
   trackScreen,
   useCountdown,
@@ -32,7 +33,9 @@ const MemorizeView = () => {
 
   useEffect(() => {
     if (isCheckingSession || !routeState) return;
-    trackScreen("memorize_view");
+    trackScreen(FUNNEL_EVENTS.memorizeView, {
+      prompt_id: routeState.promptId,
+    });
   }, [isCheckingSession, routeState]);
   const [endTime] = useState(() => {
     const stored = sessionStorage.getItem("memorizeEndTime");

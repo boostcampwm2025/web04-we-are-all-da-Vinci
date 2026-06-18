@@ -1,93 +1,295 @@
 import { EntityManager } from "@mikro-orm/core";
-import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { getSeoulDayRange } from "src/common/util/time.util";
-import { TossApiClient } from "src/modules/auth/toss-api.client";
 import {
-  TossPromotionError,
-  TossTransportError,
-} from "src/modules/auth/errors/toss.errors";
+  CreateRequestContext,
+  Transactional,
+} from "@mikro-orm/decorators/legacy";
+import { InjectRepository } from "@mikro-orm/nestjs";
+import { Injectable, Logger } from "@nestjs/common";
+import {
+  ExternalPromotionError,
+  ExternalTransportError,
+} from "src/common/errors/external.errors";
+import { getSeoulDateTime, getSeoulDayRange } from "src/common/util/time.util";
 import { User } from "src/modules/user/user.entity";
-import { PointLog, PointReason } from "./point-log.entity";
-
-const PROMOTION_AMOUNT = 2;
-const PROMOTION_MAX_RETRIES = 2;
+import {
+  PointGrantRequest,
+  PointGrantStatus,
+} from "./entity/point-grant-request.entity";
+import { PointLog, PointReason } from "./entity/point-log.entity";
+import { PointGrantRequestRepository } from "./point-grant-request.repository";
+import {
+  FAILED_RETENTION_DAYS,
+  PROMOTION_AMOUNT,
+  PROMOTION_MAX_RETRIES,
+  PURGE_BATCH_SIZE,
+  SUCCEEDED_RETENTION_DAYS,
+} from "./point.contants";
+import { PointGrantExecuter } from "./port/point-grant-executer.interface";
+import { PointGrantKeyIssuer } from "./port/point-grant-key-issuer.interface";
 
 @Injectable()
 export class PointService {
   private readonly logger = new Logger(PointService.name);
-  private readonly promotionCode: string;
 
   constructor(
+    @InjectRepository(PointGrantRequest)
+    private readonly pointGrantRequestRepository: PointGrantRequestRepository,
     private readonly em: EntityManager,
-    private readonly tossApiClient: TossApiClient,
-    private readonly configService: ConfigService,
-  ) {
-    const promotionCode =
-      this.configService.getOrThrow<string>("PROMOTION_CODE");
-    const isProduction =
-      this.configService.get<string>("NODE_ENV") === "production";
+    private readonly pointGrantKeyIssuer: PointGrantKeyIssuer,
+    private readonly pointGrantExecuter: PointGrantExecuter,
+  ) {}
 
-    this.promotionCode = isProduction ? promotionCode : `TEST_${promotionCode}`;
-  }
-
-  async canGrantTodayPromotion(userKey: number): Promise<boolean> {
-    const em = this.em.fork();
-    const { start, end } = getSeoulDayRange();
-    const count = await em.count(PointLog, {
-      user: { userKey },
-      reason: PointReason.DRAWING,
-      createdAt: { $gte: start, $lt: end },
-    });
-    return count < 2;
-  }
-
-  async saveDrawingPointLog(userKey: number): Promise<void> {
-    const em = this.em.fork();
-    const userRef = em.getReference(User, userKey);
-    const log = new PointLog();
-    log.user = userRef;
-    log.reason = PointReason.DRAWING;
-    log.pointAmount = PROMOTION_AMOUNT;
-    em.persist(log);
-    await em.flush();
-  }
-
-  async grantDrawingPromotionIfEligible(userKey: number): Promise<boolean> {
-    const canGrant = await this.canGrantTodayPromotion(userKey);
-    if (!canGrant) return false;
-
-    let lastError: unknown;
-
-    for (let attempt = 0; attempt <= PROMOTION_MAX_RETRIES; attempt++) {
-      try {
-        const key = await this.tossApiClient.getPromotionKey(userKey);
-        await this.tossApiClient.executePromotion(
-          userKey,
-          key,
-          this.promotionCode,
-          PROMOTION_AMOUNT,
-        );
-        await this.saveDrawingPointLog(userKey);
-        return true;
-      } catch (err) {
-        if (
-          err instanceof TossTransportError ||
-          (err instanceof TossPromotionError && err.errorCode === "4110")
-        ) {
-          lastError = err;
-          continue;
-        }
-        this.logger.warn(
-          `프로모션 지급 실패 (재시도 불필요): ${err instanceof Error ? err.message : String(err)}`,
-        );
-        return false;
-      }
+  @Transactional()
+  async savePointGrantRequest(
+    userKey: number,
+    reason: PointReason,
+    pointAmount: number = PROMOTION_AMOUNT,
+  ): Promise<void> {
+    if (!Number.isInteger(pointAmount) || pointAmount <= 0) {
+      throw new RangeError("pointAmount는 1 이상의 정수여야 해요");
     }
 
-    this.logger.warn(
-      `프로모션 지급 최대 재시도 초과: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
+    const user = this.em.getReference(User, userKey);
+
+    this.pointGrantRequestRepository.create({
+      user,
+      reason,
+      pointAmount,
+      status: PointGrantStatus.PENDING,
+      maxAttemptCount: PROMOTION_MAX_RETRIES,
+      attemptCount: 0,
+    });
+
+    await this.pointGrantRequestRepository.getEntityManager().flush();
+  }
+
+  // 호출자의 트랜잭션 EntityManager로 보상 요청(PENDING)만 적재한다. flush는 하지 않으며
+  // 호출자 트랜잭션 커밋 시 함께 반영된다. 출석 등 상태 전이와 같은 원자 경계에서 적재해
+  // "상태는 바뀌었는데 보상만 누락"되는 상황을 막는 용도.
+  enqueueGrant(
+    em: EntityManager,
+    userKey: number,
+    reason: PointReason,
+    pointAmount: number = PROMOTION_AMOUNT,
+  ): void {
+    if (!Number.isInteger(pointAmount) || pointAmount <= 0) {
+      throw new RangeError("pointAmount는 1 이상의 정수여야 해요");
+    }
+
+    em.create(PointGrantRequest, {
+      user: em.getReference(User, userKey),
+      reason,
+      pointAmount,
+      status: PointGrantStatus.PENDING,
+      maxAttemptCount: PROMOTION_MAX_RETRIES,
+      attemptCount: 0,
+    });
+  }
+
+  // 받은 포인트 합(전체 누적 / KST 오늘).
+  // = 지급 성공분(point_logs) + 진행 중 지급(point_grant_requests: PENDING·PROCESSING·RETRY).
+  // 진행 중을 포함해 적립 직후(아직 Cron 미처리) 시점에도 즉시 반영하고,
+  // 성공 시 한 트랜잭션에서 request→SUCCEEDED(진행중 제외) + PointLog 생성(성공 포함)으로 합계가 정합된다.
+  async getPointSummary(
+    userKey: number,
+  ): Promise<{ totalPoints: number; todayPoints: number }> {
+    const em = this.em.fork();
+    const { start, end } = getSeoulDayRange();
+
+    const [logs, pendingRequests] = await Promise.all([
+      em.find(PointLog, { user: userKey }),
+      em.find(PointGrantRequest, {
+        user: userKey,
+        status: {
+          $in: [
+            PointGrantStatus.PENDING,
+            PointGrantStatus.PROCESSING,
+            PointGrantStatus.RETRY,
+          ],
+        },
+      }),
+    ]);
+
+    let totalPoints = 0;
+    let todayPoints = 0;
+    const accumulate = (amount: number, createdAt: Date) => {
+      totalPoints += amount;
+      if (createdAt >= start && createdAt < end) todayPoints += amount;
+    };
+
+    for (const log of logs) {
+      accumulate(log.pointAmount, log.createdAt as Date);
+    }
+    for (const req of pendingRequests) {
+      accumulate(req.pointAmount, req.createdAt as Date);
+    }
+
+    return { totalPoints, todayPoints };
+  }
+
+  @Transactional()
+  async lockAndFetchEligibleGrants(): Promise<PointGrantRequest[]> {
+    const requests =
+      await this.pointGrantRequestRepository.findEligibleGrantsWithLock();
+
+    requests.forEach((request) => request.processing());
+    await this.pointGrantRequestRepository.getEntityManager().flush();
+
+    return requests;
+  }
+
+  @CreateRequestContext()
+  async settleGrantRequests() {
+    const requests = await this.lockAndFetchEligibleGrants();
+
+    for (const request of requests) {
+      try {
+        await this.settleGrantRequest(request);
+      } catch (err) {
+        this.logger.error(
+          {
+            event: "point_grant.settle.failed",
+            requestId: request.id,
+            err,
+          },
+          "개별 포인트 지급 실패",
+        );
+      }
+    }
+  }
+
+  async settleGrantRequest(request: PointGrantRequest): Promise<void> {
+    let key: string;
+
+    try {
+      key =
+        request.pointIdempotencyKey ??
+        (await this.issueAndSavePromotionKey(request));
+    } catch (err) {
+      this.logger.warn(
+        {
+          event: "point_grant.key_issue.failed",
+          requestId: request.id,
+          reason: "key_issue_error",
+          error: err instanceof Error ? err.message : String(err),
+        },
+        "프로모션 지급 키 발급 실패 (재시도)",
+      );
+      request.retry();
+      await this.em.flush();
+      return;
+    }
+
+    try {
+      await this.grantPromotion(request, key);
+      await this.recordGrantSucceeded(request);
+    } catch (err) {
+      await this.recordGrantOutcomeFromError(request, err);
+    }
+  }
+
+  async issueAndSavePromotionKey(request: PointGrantRequest) {
+    const { user } = request;
+
+    const key = await this.pointGrantKeyIssuer.getPromotionKey(user.userKey);
+
+    await this.savePointIdempotencyKey(request, key);
+
+    return key;
+  }
+
+  @Transactional()
+  async savePointIdempotencyKey(request: PointGrantRequest, key: string) {
+    request.setPointIdempotencyKey(key);
+    await this.pointGrantRequestRepository.getEntityManager().flush();
+  }
+
+  @Transactional()
+  async recordGrantSucceeded(request: PointGrantRequest) {
+    request.succeeded();
+
+    const pointLog = this.em.create(PointLog, {
+      user: request.user,
+      reason: request.reason,
+      pointAmount: request.pointAmount,
+    });
+    this.em.persist(pointLog);
+
+    await this.em.flush();
+  }
+
+  @Transactional()
+  async recordGrantOutcomeFromError(request: PointGrantRequest, err: unknown) {
+    if (err instanceof ExternalPromotionError && err.errorCode === "4113") {
+      await this.recordGrantSucceeded(request);
+      return;
+    } else if (
+      err instanceof ExternalTransportError ||
+      (err instanceof ExternalPromotionError && err.errorCode === "4110")
+    ) {
+      request.retry();
+    } else if (err instanceof ExternalPromotionError) {
+      request.failed(err.message);
+
+      this.logger.warn(
+        `프로모션 지급 실패 (재시도 불필요): ${err instanceof Error ? err.message : String(err)}`,
+      );
+    } else {
+      // DB 에러
+      request.retry();
+    }
+
+    await this.em.flush();
+  }
+
+  async grantPromotion(request: PointGrantRequest, key: string): Promise<void> {
+    const { user, pointAmount } = request;
+
+    await this.pointGrantExecuter.executePromotion(
+      user.userKey,
+      key,
+      pointAmount,
     );
-    return false;
+  }
+
+  @CreateRequestContext()
+  async purgeProcessedGrantRequests(): Promise<{
+    succeededDeleted: number;
+    failedDeleted: number;
+  }> {
+    const startedAt = Date.now();
+    const now = getSeoulDateTime();
+    const succeededCutoff = new Date(
+      now.getTime() - SUCCEEDED_RETENTION_DAYS * 24 * 60 * 60 * 1000,
+    );
+    const failedCutoff = new Date(
+      now.getTime() - FAILED_RETENTION_DAYS * 24 * 60 * 60 * 1000,
+    );
+
+    const succeededDeleted =
+      await this.pointGrantRequestRepository.purgeByStatusBefore(
+        PointGrantStatus.SUCCEEDED,
+        succeededCutoff,
+        PURGE_BATCH_SIZE,
+      );
+
+    const failedDeleted =
+      await this.pointGrantRequestRepository.purgeByStatusBefore(
+        PointGrantStatus.FAILED,
+        failedCutoff,
+        PURGE_BATCH_SIZE,
+      );
+
+    this.logger.log(
+      {
+        event: "point_grant.purge.succeeded",
+        succeededDeleted,
+        failedDeleted,
+        durationMs: Date.now() - startedAt,
+      },
+      "포인트 지급 요청 purge 완료",
+    );
+
+    return { succeededDeleted, failedDeleted };
   }
 }
