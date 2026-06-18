@@ -6,7 +6,13 @@ import {
   Post,
   UseGuards,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 import { ZodValidationPipe } from "src/common/zod-validation.pipe";
 import { AuthService } from "./auth.service";
 import type { CurrentUserPayload } from "./decorators/current-user.decorator";
@@ -53,6 +59,26 @@ export class AuthController {
   @Post("logout/callback")
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(LogoutCallbackAuthGuard)
+  @ApiOperation({
+    summary: "토스 로그아웃 콜백",
+    description:
+      "토스 앱 이벤트 기반 로그아웃 콜백을 수신해 사용자 데이터를 삭제해요.",
+  })
+  @ApiBody({
+    schema: {
+      type: "object",
+      required: ["userKey", "referrer"],
+      properties: {
+        userKey: { type: "number", example: 123456789 },
+        referrer: {
+          type: "string",
+          enum: ["UNLINK", "WITHDRAWAL_TERMS", "WITHDRAWAL_TOSS"],
+          example: "UNLINK",
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: HttpStatus.NO_CONTENT, description: "콜백 처리 완료" })
   async logoutCallback(
     @Body(new ZodValidationPipe(LogoutCallbackSchema)) dto: LogoutCallbackDto,
   ) {
