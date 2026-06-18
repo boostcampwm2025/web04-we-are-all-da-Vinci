@@ -31,7 +31,7 @@ const MissionRow = ({ title, rewardAmount, done }: TodayMissionItem) => (
           : "bg-(--color-toss-blue) text-white"
       }`}
     >
-      +{rewardAmount}P
+      +{rewardAmount}원
     </span>
   </div>
 );
@@ -88,7 +88,7 @@ const TodayMissionCard = ({ missions, isLoading }: TodayMissionCardProps) => {
             </span>
           </div>
           <span className="text-[13px] font-medium text-(--color-grey)">
-            포인트 더 받기 ›
+            토스포인트 더 받기 ›
           </span>
         </button>
       </div>
