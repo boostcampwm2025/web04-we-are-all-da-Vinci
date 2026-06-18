@@ -5,10 +5,10 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import TodayDavinciCard from "./TodayDavinciCard";
 
-const renderCard = (podium?: PodiumResponse["podium"]) =>
+const renderCard = (podium?: PodiumResponse["podium"], myRank?: number) =>
   render(
     <MemoryRouter>
-      <TodayDavinciCard podium={podium} />
+      <TodayDavinciCard podium={podium} myRank={myRank} />
     </MemoryRouter>,
   );
 
@@ -41,5 +41,21 @@ describe("오늘의 다빈치 카드", () => {
     expect(
       screen.queryByText("아직 오늘의 다빈치가 없어요"),
     ).not.toBeInTheDocument();
+  });
+
+  it("myRank가 top3 안이면 해당 순위 행만 나로 표시한다", () => {
+    renderCard(samplePodium, 2);
+
+    expect(screen.getByText("나")).toBeInTheDocument();
+    // 2위(고흐) 행에만 나 칩이 붙는다.
+    const meChip = screen.getByText("나");
+    expect(meChip.parentElement).toHaveTextContent("고흐");
+    expect(meChip.parentElement).not.toHaveTextContent("다빈치");
+  });
+
+  it("myRank가 없거나 top3 밖이면 나 표시를 하지 않는다", () => {
+    renderCard(samplePodium, 5);
+
+    expect(screen.queryByText("나")).not.toBeInTheDocument();
   });
 });
