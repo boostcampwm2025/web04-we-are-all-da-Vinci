@@ -1,30 +1,36 @@
 import type { PodiumResponse } from "@/entities/podium";
+import { RankBadge } from "@/shared/ui/rankBadge";
 import { Skeleton } from "@toss/tds-mobile";
 import { memo } from "react";
 import { useNavigate } from "react-router-dom";
-
-const RANK_COLOR_CLASS: Record<number, string> = {
-  1: "bg-(--color-gold)",
-  2: "bg-(--color-silver)",
-  3: "bg-(--color-bronze)",
-};
 
 interface DavinciRowProps {
   rank: number;
   nickname: string;
   score: number;
+  isMe?: boolean;
 }
 
-const DavinciRow = ({ rank, nickname, score }: DavinciRowProps) => (
-  <div className="flex items-center gap-3 py-2.5">
-    <span
-      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-bold text-white ${RANK_COLOR_CLASS[rank]}`}
-    >
-      {rank}
-    </span>
+const DavinciRow = ({
+  rank,
+  nickname,
+  score,
+  isMe = false,
+}: DavinciRowProps) => (
+  <div
+    className={`flex items-center gap-3 py-2.5${
+      isMe ? " -mx-2 rounded-(--radius-inner) bg-(--color-card-blue) px-2" : ""
+    }`}
+  >
+    <RankBadge rank={rank} className="h-7 w-7 shrink-0 text-[13px]" />
     <span className="flex-1 truncate text-[15px] font-medium text-(--color-black)">
       {nickname}
     </span>
+    {isMe && (
+      <span className="shrink-0 rounded-full bg-(--color-blue) px-1.5 py-0.5 text-[11px] font-bold text-white">
+        나
+      </span>
+    )}
     <span className="shrink-0 text-[15px] text-(--color-grey)">
       {score.toFixed(2)}점
     </span>
@@ -33,9 +39,11 @@ const DavinciRow = ({ rank, nickname, score }: DavinciRowProps) => (
 
 interface TodayDavinciCardProps {
   podium?: PodiumResponse["podium"];
+  /** 내 랭킹(top3 안일 때만 1~3). 해당 순위 행을 "나"로 강조한다. */
+  myRank?: number;
 }
 
-const TodayDavinciCard = ({ podium }: TodayDavinciCardProps) => {
+const TodayDavinciCard = ({ podium, myRank }: TodayDavinciCardProps) => {
   const navigate = useNavigate();
   const isLoading = podium === undefined;
   const top3 = podium?.slice(0, 3) ?? [];
@@ -65,6 +73,7 @@ const TodayDavinciCard = ({ podium }: TodayDavinciCardProps) => {
               rank={idx + 1}
               nickname={entry.nickname}
               score={entry.score}
+              isMe={myRank === idx + 1}
             />
           ))
         ) : (

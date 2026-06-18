@@ -3,14 +3,10 @@ import { DrawingScoreDetailSheet } from "@/entities/myScoreCard";
 import { AD_GROUP_IDS } from "@/shared/config";
 import { FUNNEL_EVENTS, trackClick } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
+import { RankBadge } from "@/shared/ui/rankBadge";
 import { Skeleton } from "@toss/tds-mobile";
 import { useEffect, useRef, useState } from "react";
 import { TARGET_MIN_TILES } from "../config/constants";
-import {
-  DEFAULT_RANK_COLOR,
-  MY_RANK_HIGHLIGHT,
-  PODIUM_RANK_COLORS,
-} from "../config/rankingStyles";
 import { useRankingList } from "../hooks/useRankingList";
 import type { RankingListItem } from "../model/types";
 import RankingGhostTile from "./RankingGhostTile";
@@ -20,12 +16,6 @@ import RankingListEmpty from "./RankingListEmpty";
 type RankingSlot =
   | { type: "real"; item: RankingListItem }
   | { type: "ghost"; id: number };
-
-const getRankBadgeColor = (rank: number, isMe: boolean) => {
-  if (isMe) return MY_RANK_HIGHLIGHT;
-  if (rank <= 3) return PODIUM_RANK_COLORS[rank - 1];
-  return DEFAULT_RANK_COLOR;
-};
 
 // 실제 항목이 TARGET_MIN_TILES보다 적으면 유령 슬롯으로 패딩해 그리드를 채운다.
 const buildSlots = (rankingList: RankingListItem[]): RankingSlot[] => {
@@ -131,8 +121,10 @@ const RankingList = () => {
                   <button
                     key={`${slot.item.userKey}-${slot.item.drawingId}`}
                     type="button"
-                    aria-label={`${slot.item.rank}위 ${slot.item.nickname} 그림 상세 보기`}
-                    className="card relative aspect-square w-full appearance-none border-0 p-1.5 transition-transform duration-100 active:scale-[0.98]"
+                    aria-label={`${slot.item.rank}위 ${slot.item.nickname}${slot.item.isMe ? " (내 그림)" : ""} 상세 보기`}
+                    className={`card relative aspect-square w-full appearance-none border-0 p-1.5 transition-transform duration-100 active:scale-[0.98]${
+                      slot.item.isMe ? " outline-2 outline-(--color-blue)" : ""
+                    }`}
                     onClick={() => {
                       trackClick(FUNNEL_EVENTS.rankingItemClick, {
                         rank: slot.item.rank,
@@ -140,18 +132,10 @@ const RankingList = () => {
                       setSelectedRanking(slot.item);
                     }}
                   >
-                    <span
-                      className="absolute top-1 left-1 z-10 flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-[13px] font-bold"
-                      style={{
-                        backgroundColor: getRankBadgeColor(
-                          slot.item.rank,
-                          slot.item.isMe,
-                        ),
-                        color: slot.item.isMe ? "#FFFFFF" : "#031228B2",
-                      }}
-                    >
-                      {slot.item.rank}
-                    </span>
+                    <RankBadge
+                      rank={slot.item.rank}
+                      className="absolute top-1.5 left-1.5 z-10 h-6 min-w-6 px-1 text-[13px]"
+                    />
                     <ReplayDrawingCanvas
                       strokes={slot.item.strokes}
                       loop={false}
@@ -180,7 +164,19 @@ const RankingList = () => {
           onClose={() => setSelectedRanking(null)}
           strokes={selectedRanking.strokes}
           similarity={selectedRanking.similarity}
-          title={`${selectedRanking.rank}위 ${selectedRanking.nickname}${selectedRanking.isMe ? " (나)" : ""}`}
+          title={
+            <>
+              <span className="text-[19px] font-bold">기억력 점수 분석</span>
+              <span className="truncate text-[14px] font-normal text-(--color-grey)">
+                <span className="font-bold text-(--color-blue)">
+                  {selectedRanking.nickname}
+                </span>
+                의 솜씨
+              </span>
+            </>
+          }
+          rank={selectedRanking.rank}
+          isMe={selectedRanking.isMe}
         />
       )}
     </div>
