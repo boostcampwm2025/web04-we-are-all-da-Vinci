@@ -33,7 +33,7 @@ export class LogoutCallbackAuthGuard implements CanActivate {
 
     if (
       originBuf.length !== decodedBuf.length ||
-      timingSafeEqual(originBuf, decodedBuf)
+      !timingSafeEqual(originBuf, decodedBuf)
     ) {
       throw new UnauthorizedException("인증 헤더가 일치하지 않아요.");
     }
