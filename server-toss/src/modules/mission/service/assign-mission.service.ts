@@ -29,10 +29,24 @@ export class AssignMissionService {
       todayStart,
       weekStart,
     );
-    if (existing.length > 0) return;
+
+    const hasDaily = existing.some(
+      (um) => um.mission.period === MissionPeriod.DAILY,
+    );
+    const hasWeekly = existing.some(
+      (um) => um.mission.period === MissionPeriod.WEEKLY,
+    );
+
+    if (hasDaily && hasWeekly) return;
 
     try {
-      await this.assignNewMissions(userKey, todayStart, weekStart);
+      await this.assignNewMissions(
+        userKey,
+        todayStart,
+        weekStart,
+        !hasDaily,
+        !hasWeekly,
+      );
     } catch (err) {
       if (!this.isDuplicateKeyError(err)) throw err;
     }
@@ -43,19 +57,25 @@ export class AssignMissionService {
     userKey: number,
     todayStart: Date,
     weekStart: Date,
+    needsDaily: boolean,
+    needsWeekly: boolean,
   ): Promise<UserMission[]> {
-    const dailyMissions = await this.assignMissions(
-      userKey,
-      MissionPeriod.DAILY,
-      todayStart,
-      DAILY_RANDOM_COUNT,
-    );
-    const weeklyMissions = await this.assignMissions(
-      userKey,
-      MissionPeriod.WEEKLY,
-      weekStart,
-      WEEKLY_RANDOM_COUNT,
-    );
+    const dailyMissions = needsDaily
+      ? await this.assignMissions(
+          userKey,
+          MissionPeriod.DAILY,
+          todayStart,
+          DAILY_RANDOM_COUNT,
+        )
+      : [];
+    const weeklyMissions = needsWeekly
+      ? await this.assignMissions(
+          userKey,
+          MissionPeriod.WEEKLY,
+          weekStart,
+          WEEKLY_RANDOM_COUNT,
+        )
+      : [];
 
     const all = [...dailyMissions, ...weeklyMissions];
     if (all.length > 0) {
