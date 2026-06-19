@@ -6,8 +6,9 @@ import "reflect-metadata";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/http-exception.filter";
 import { ZodExceptionFilter } from "./common/zod-exception.filter";
-import { PromptSeedService } from "./modules/prompt/prompt.seed";
+import { DailyRankingSnapshotService } from "./modules/dailyRanking/daily-ranking-snapshot.service";
 import { MissionSeedService } from "./modules/mission/service/mission.seed";
+import { PromptSeedService } from "./modules/prompt/prompt.seed";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -40,6 +41,7 @@ async function bootstrap() {
 
   await app.get(PromptSeedService).run();
   await app.get(MissionSeedService).run();
+  await app.get(DailyRankingSnapshotService).backfillMissingSnapshots();
 
   await app.listen(process.env.PORT ?? 3001);
 }

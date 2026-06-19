@@ -21,7 +21,7 @@ const similarity: SimilarityResponse = {
   penalty: 2.35,
 };
 
-describe("DrawingScoreDetailSheet", () => {
+describe("그림 점수 상세 시트", () => {
   it("열려 있으면 작은 캔버스와 점수 상세를 렌더링한다", () => {
     render(
       <DrawingScoreDetailSheet
@@ -52,5 +52,51 @@ describe("DrawingScoreDetailSheet", () => {
     );
 
     expect(screen.getByText("1위 다빈치닉")).toBeInTheDocument();
+  });
+
+  it("rank를 넘기면 프리뷰에 순위 배지를 노출한다", () => {
+    render(
+      <DrawingScoreDetailSheet
+        open
+        onClose={vi.fn()}
+        strokes={strokes}
+        similarity={similarity}
+        title="2위 다빈치닉"
+        rank={2}
+      />,
+    );
+
+    expect(screen.getByText("2")).toBeInTheDocument();
+  });
+
+  it("isMe면 프리뷰에 내가 그린 그림 배지를 노출한다", () => {
+    render(
+      <DrawingScoreDetailSheet
+        open
+        onClose={vi.fn()}
+        strokes={strokes}
+        similarity={similarity}
+        title="5위 다빈치닉"
+        rank={5}
+        isMe
+      />,
+    );
+
+    expect(screen.getByText("내가 그린 그림")).toBeInTheDocument();
+  });
+
+  it("isMe가 아니면 내가 그린 그림 배지를 노출하지 않는다", () => {
+    render(
+      <DrawingScoreDetailSheet
+        open
+        onClose={vi.fn()}
+        strokes={strokes}
+        similarity={similarity}
+        title="5위 다빈치닉"
+        rank={5}
+      />,
+    );
+
+    expect(screen.queryByText("내가 그린 그림")).not.toBeInTheDocument();
   });
 });

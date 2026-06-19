@@ -1,3 +1,5 @@
+import { EntityManager } from "@mikro-orm/core";
+import { CreateRequestContext } from "@mikro-orm/decorators/legacy";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable, Logger } from "@nestjs/common";
 import {
@@ -13,7 +15,6 @@ import {
   DailyUserRankingRepository,
   type DailyUserRankingSnapshot,
 } from "./daily-user-ranking.repository";
-import { CreateRequestContext } from "@mikro-orm/decorators/legacy";
 
 export interface SnapshotResult {
   dateKey: string;
@@ -30,6 +31,7 @@ export class DailyRankingSnapshotService {
     private readonly drawingRepository: DrawingRepository,
     @InjectRepository(DailyUserRanking)
     private readonly dailyUserRankingRepository: DailyUserRankingRepository,
+    private readonly em?: EntityManager,
   ) {}
 
   @CreateRequestContext()

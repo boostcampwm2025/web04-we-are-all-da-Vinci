@@ -2,6 +2,7 @@ import { useAttendanceStatus } from "@/entities/attendance";
 import { useTodayMissions } from "@/entities/missionCard";
 import { usePodium } from "@/entities/podium";
 import { usePointSummary } from "@/entities/point";
+import { useMyRanking } from "@/entities/ranking";
 import {
   NotificationCenterSheet,
   useNotificationAutoPrompt,
@@ -98,6 +99,12 @@ const DashboardView = () => {
   // 뷰에서 1회만 호출해 props로 내려준다.
   const { podium, participantCount } = usePodium();
 
+  // 포디움 top3는 rank 1~3이고 /rankings/me의 rank도 동일 tie-break이라,
+  // myRank === 행 순위면 그 행이 나다(서버 스키마 변경 없이 식별).
+  const { myRanking } = useMyRanking();
+  const myRank =
+    myRanking?.state === "FOUND" ? myRanking.ranking.rank : undefined;
+
   const handleAdStart = useCallback(async () => {
     const result = await startWithAd("retry");
     if (result.ok) return;
@@ -185,7 +192,7 @@ const DashboardView = () => {
             missions={todayMissions}
             isLoading={isMissionsLoading}
           />
-          <TodayDavinciCard podium={podium} />
+          <TodayDavinciCard podium={podium} myRank={myRank} />
         </div>
 
         <div className="-mx-(--page-px) px-(--card-mx)">

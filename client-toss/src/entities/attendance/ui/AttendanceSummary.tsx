@@ -22,19 +22,19 @@ const renderSubText = (
   status: AttendanceStatusResponse | undefined,
   missionMaxPoint: number,
 ): ReactNode => {
-  if (!status) return "매일 출석하고 포인트를 받아요";
+  if (!status) return "매일 출석하고 토스포인트를 받아요";
   const maxTomorrow = status.tomorrowMaxPoint + missionMaxPoint;
   if (maxTomorrow > 0) {
     return (
       <>
-        내일도 참여하면 최대 <PointHighlight>{maxTomorrow}P</PointHighlight>
+        내일도 참여하면 최대 <PointHighlight>{maxTomorrow}원</PointHighlight>
       </>
     );
   }
   return (
     <>
       {daysToNextReward(status.cycleDay)}일 더 출석하면{" "}
-      <PointHighlight>{ATTENDANCE_REWARD_POINT}P</PointHighlight>
+      <PointHighlight>{ATTENDANCE_REWARD_POINT}원</PointHighlight>
     </>
   );
 };

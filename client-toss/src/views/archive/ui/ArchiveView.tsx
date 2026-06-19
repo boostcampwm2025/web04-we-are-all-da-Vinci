@@ -128,8 +128,20 @@ const ArchiveView = () => {
   const [isScoreDetailOpen, setIsScoreDetailOpen] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [selectedMonthKey, setSelectedMonthKey] = useState<string | null>(null);
+  const [nickname, setNickname] = useState<string | null>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
   const dayCacheRef = useRef(new Map<string, ArchiveDayResponse>());
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    serverTossApi
+      .getMe({ signal: controller.signal })
+      .then((me) => setNickname(me.nickname))
+      .catch(() => {});
+
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -241,7 +253,20 @@ const ArchiveView = () => {
       <Top
         upperGap={16}
         lowerGap={12}
-        title={<Top.TitleParagraph size={28}>나의 기록</Top.TitleParagraph>}
+        title={
+          <div className="flex items-center gap-2">
+            <Top.TitleParagraph size={28}>나의 기록</Top.TitleParagraph>
+            {nickname && (
+              <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-(--color-card) px-2.5 py-1 text-[13px] font-bold text-(--color-black)">
+                <span
+                  className="h-4 w-4 shrink-0 rounded-full bg-(--color-toss-blue)"
+                  aria-hidden
+                />
+                <span className="truncate">{nickname}</span>
+              </span>
+            )}
+          </div>
+        }
         subtitleBottom={
           <Top.SubtitleParagraph size={17}>
             오늘까지의 기록을 모아봤어요
@@ -278,7 +303,7 @@ const ArchiveView = () => {
         </div>
       </section>
 
-      <div className="px-(--card-mx)">
+      <div className="m-1 px-(--card-mx)">
         <BannerAd adGroupId={AD_GROUP_IDS.BANNER_LIST} />
       </div>
 
@@ -470,6 +495,10 @@ const ArchiveView = () => {
           ) : null}
         </section>
       )}
+
+      <div className="mt-1 px-(--card-mx)">
+        <BannerAd type="feed" adGroupId={AD_GROUP_IDS.BANNER_FEED} />
+      </div>
 
       {selectedDrawing && (
         <DrawingScoreDetailSheet

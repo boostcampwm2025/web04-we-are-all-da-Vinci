@@ -173,8 +173,10 @@ export const serverTossApi = {
 
   logout: () => request<void>("POST", "/oauth/toss/logout"),
 
-  getMe: async () =>
-    UserInfoResponseSchema.parse(await request<unknown>("GET", "/user/me")),
+  getMe: async (options?: RequestOptions) =>
+    UserInfoResponseSchema.parse(
+      await request<unknown>("GET", "/user/me", undefined, options),
+    ),
 
   startPlay: async () =>
     PromptResponseSchema.parse(await request<unknown>("POST", "/plays/start")),

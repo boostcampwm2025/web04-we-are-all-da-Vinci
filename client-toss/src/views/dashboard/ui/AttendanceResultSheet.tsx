@@ -67,7 +67,7 @@ const AttendanceResultSheet = ({
 
   const rewardNote =
     result?.rewardedDay != null
-      ? `${result.rewardedDay}일 연속 달성! ${ATTENDANCE_REWARD_POINT}P를 추가 적립했어요`
+      ? `${result.rewardedDay}일 연속 달성! ${ATTENDANCE_REWARD_POINT}원을 추가 적립했어요`
       : null;
 
   return (

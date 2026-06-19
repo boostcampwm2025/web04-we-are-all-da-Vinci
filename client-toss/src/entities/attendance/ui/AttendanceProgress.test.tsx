@@ -9,9 +9,9 @@ describe("출석 진행 컴포넌트", () => {
     expect(screen.getAllByRole("listitem")).toHaveLength(7);
   });
 
-  it("마일스톤(3·7일)에 5P 라벨을 보여준다", () => {
+  it("마일스톤(3·7일)에 5원 라벨을 보여준다", () => {
     render(<AttendanceProgress cycleDay={0} />);
-    expect(screen.getAllByText("5P")).toHaveLength(2);
+    expect(screen.getAllByText("5원")).toHaveLength(2);
   });
 
   it("끊김 상태면 직전 위치 다음 칸을 ✕로 표시한다", () => {

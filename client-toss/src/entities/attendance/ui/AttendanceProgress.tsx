@@ -31,7 +31,7 @@ const AttendanceProgress = ({
         const label = isBreak
           ? "✕"
           : isReward
-            ? `${ATTENDANCE_REWARD_POINT}P`
+            ? `${ATTENDANCE_REWARD_POINT}원`
             : String(day);
 
         let tone: string;
