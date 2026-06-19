@@ -7,7 +7,13 @@ import {
   type NotificationAgreementResponse,
   type NotificationAgreementStatus,
 } from "@toss/shared";
-import { BottomSheet, ListRow, Switch, Toast } from "@toss/tds-mobile";
+import {
+  BottomSheet,
+  ConfirmDialog,
+  ListRow,
+  Switch,
+  Toast,
+} from "@toss/tds-mobile";
 import { useEffect, useRef, useState } from "react";
 
 type Props = {
@@ -20,6 +26,16 @@ const DAILY_PROMPT_TEMPLATE_CODE =
 const OVERTAKEN_TEMPLATE_CODE =
   import.meta.env.VITE_TOSS_TEMPLATE_OVERTAKEN?.trim();
 
+type AgreementAction = {
+  templateCode: string;
+  setLoading: (v: boolean) => void;
+  save: (
+    body: NotificationAgreementRequest,
+  ) => Promise<NotificationAgreementResponse>;
+  onStatus: (status: NotificationAgreementStatus) => void;
+  label: string;
+};
+
 // 알림 동의 토글 시트. 알림 목록 노출은 폐지 — 토글만 다룬다.
 // 시트 크기는 ShareSheet 패턴과 동일하게 BottomSheet 기본(콘텐츠 높이 자동).
 const NotificationCenterSheet = ({ open, onClose }: Props) => {
@@ -29,6 +45,7 @@ const NotificationCenterSheet = ({ open, onClose }: Props) => {
     useState<NotificationAgreementStatus | null>(null);
   const [isDailyPromptLoading, setIsDailyPromptLoading] = useState(false);
   const [isOvertakenLoading, setIsOvertakenLoading] = useState(false);
+  const [offConfirm, setOffConfirm] = useState<AgreementAction | null>(null);
   const toast = useToast();
   const sdkCleanupRef = useRef<(() => void) | null>(null);
 
@@ -36,6 +53,7 @@ const NotificationCenterSheet = ({ open, onClose }: Props) => {
     if (!open) {
       sdkCleanupRef.current?.();
       sdkCleanupRef.current = null;
+      setOffConfirm(null);
       return;
     }
 
@@ -60,15 +78,7 @@ const NotificationCenterSheet = ({ open, onClose }: Props) => {
     };
   }, [open]);
 
-  const requestAgreement = (params: {
-    templateCode: string;
-    setLoading: (v: boolean) => void;
-    save: (
-      body: NotificationAgreementRequest,
-    ) => Promise<NotificationAgreementResponse>;
-    onStatus: (status: NotificationAgreementStatus) => void;
-    label: string;
-  }) => {
+  const requestAgreement = (params: AgreementAction) => {
     sdkCleanupRef.current?.();
     sdkCleanupRef.current = null;
     params.setLoading(true);
@@ -110,26 +120,63 @@ const NotificationCenterSheet = ({ open, onClose }: Props) => {
     }
   };
 
+  // OFF 경로. 토스 SDK는 동의 해제를 지원하지 않으므로(이미 동의 시 alreadyAgreed만
+  // 반환), 우리 서버에 거부 상태를 직접 저장해 발송 대상에서 제외한다.
+  const rejectAgreement = async (params: AgreementAction) => {
+    params.setLoading(true);
+    try {
+      const agreement = await params.save({ eventType: "agreementRejected" });
+      params.onStatus(agreement.status);
+      toast.show(`${params.label} 알림을 보내지 않을게요`);
+    } catch (err) {
+      console.error("[알림 거부 저장 실패]", err);
+      toast.show("알림 설정 변경에 실패했어요");
+    } finally {
+      params.setLoading(false);
+    }
+  };
+
+  // ON이면 끄기 확인 다이얼로그를 띄우고, OFF면 바로 동의 요청한다.
+  const toggleAgreement = (action: AgreementAction, isAgreed: boolean) => {
+    if (isAgreed) {
+      setOffConfirm(action);
+    } else {
+      requestAgreement(action);
+    }
+  };
+
   const handleDailyPromptClick = () => {
     if (isDailyPromptLoading || !DAILY_PROMPT_TEMPLATE_CODE) return;
-    requestAgreement({
-      templateCode: DAILY_PROMPT_TEMPLATE_CODE,
-      setLoading: setIsDailyPromptLoading,
-      save: serverTossApi.saveDailyPromptNotificationAgreement,
-      onStatus: setDailyPromptStatus,
-      label: "오늘의 그림",
-    });
+    toggleAgreement(
+      {
+        templateCode: DAILY_PROMPT_TEMPLATE_CODE,
+        setLoading: setIsDailyPromptLoading,
+        save: serverTossApi.saveDailyPromptNotificationAgreement,
+        onStatus: setDailyPromptStatus,
+        label: "오늘의 그림",
+      },
+      dailyPromptStatus === "agreed",
+    );
   };
 
   const handleOvertakenClick = () => {
     if (isOvertakenLoading || !OVERTAKEN_TEMPLATE_CODE) return;
-    requestAgreement({
-      templateCode: OVERTAKEN_TEMPLATE_CODE,
-      setLoading: setIsOvertakenLoading,
-      save: serverTossApi.saveOvertakenNotificationAgreement,
-      onStatus: setOvertakenStatus,
-      label: "랭킹 추월",
-    });
+    toggleAgreement(
+      {
+        templateCode: OVERTAKEN_TEMPLATE_CODE,
+        setLoading: setIsOvertakenLoading,
+        save: serverTossApi.saveOvertakenNotificationAgreement,
+        onStatus: setOvertakenStatus,
+        label: "랭킹 추월",
+      },
+      overtakenStatus === "agreed",
+    );
+  };
+
+  const handleConfirmOff = () => {
+    const action = offConfirm;
+    setOffConfirm(null);
+    if (action) void rejectAgreement(action);
   };
 
   return (
@@ -160,6 +207,27 @@ const NotificationCenterSheet = ({ open, onClose }: Props) => {
           )}
         </div>
       </BottomSheet>
+
+      <ConfirmDialog
+        open={offConfirm !== null}
+        onClose={() => setOffConfirm(null)}
+        title="알림을 끌까요?"
+        description={
+          offConfirm
+            ? `${offConfirm.label} 알림을 더 이상 받지 않아요.`
+            : undefined
+        }
+        confirmButton={
+          <ConfirmDialog.ConfirmButton onClick={handleConfirmOff}>
+            알림 끄기
+          </ConfirmDialog.ConfirmButton>
+        }
+        cancelButton={
+          <ConfirmDialog.CancelButton onClick={() => setOffConfirm(null)}>
+            유지하기
+          </ConfirmDialog.CancelButton>
+        }
+      />
 
       <Toast
         position="top"

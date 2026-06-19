@@ -68,6 +68,9 @@ vi.mock("@/entities/podium", () => ({
 vi.mock("@/entities/point", () => ({
   usePointSummary: () => ({ summary: undefined, refetch: vi.fn() }),
 }));
+vi.mock("@/entities/ranking", () => ({
+  useMyRanking: () => ({ myRanking: undefined }),
+}));
 vi.mock("../model/useAttendanceAutoCheckIn", () => ({
   useAttendanceAutoCheckIn: () => ({ result: null, close: vi.fn() }),
 }));

@@ -13,6 +13,6 @@ export type MissionSectionConfig =
   (typeof MISSION_SECTIONS)[keyof typeof MISSION_SECTIONS];
 
 export const REWARD_LABEL = {
-  point: "P",
+  point: "원",
   chance: "회",
 } as const satisfies Record<"point" | "chance", string>;

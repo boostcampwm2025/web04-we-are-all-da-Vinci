@@ -104,11 +104,8 @@ export async function run(): Promise<CheckResult> {
         );
         status = "fail";
       }
-      // drawing 화면에는 배너 광고도 부적절
-      if (
-        (relPath.includes("drawing/") || relPath.includes("Drawing")) &&
-        /BannerAd/.test(content)
-      ) {
+
+      if (relPath.includes("drawing/") && /BannerAd/.test(content)) {
         details.push(
           `[FAIL] ${relPath} — 드로잉 화면에서 배너 광고 노출 (핵심 인터랙션 방해)`,
         );

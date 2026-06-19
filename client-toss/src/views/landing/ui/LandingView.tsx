@@ -66,7 +66,7 @@ const LandingView = ({ onStart }: LandingViewProps) => {
           className="text-lg font-medium"
           style={{ color: "rgba(0,12,30,0.7)" }}
         >
-          매일 기억력 테스트하고 토스 포인트 받아요!
+          매일 기억력 테스트하고 토스포인트 받아요!
         </p>
       </section>
       <section className="relative z-10 mt-[clamp(0.5rem,2vh,1rem)] flex min-h-0 flex-1 items-center justify-center">
@@ -135,7 +135,7 @@ const LandingView = ({ onStart }: LandingViewProps) => {
             }}
             onClick={onStart}
           >
-            도전하고 포인트 받기
+            도전하고 토스포인트 받기
           </Button>
         </div>
       </footer>

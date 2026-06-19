@@ -31,10 +31,21 @@ vi.mock("@/entities/myScoreCard", () => ({
   DrawingScoreDetailSheet: ({
     open,
     title,
+    rank,
+    isMe,
   }: {
     open: boolean;
     title?: ReactNode;
-  }) => (open ? <div role="dialog">{title}</div> : null),
+    rank?: number;
+    isMe?: boolean;
+  }) =>
+    open ? (
+      <div role="dialog">
+        {title}
+        {rank !== undefined && <span data-testid="detail-rank">{rank}</span>}
+        {isMe && <span>내가 그린 그림</span>}
+      </div>
+    ) : null,
 }));
 
 vi.mock("@/shared/ui/bannerAd", () => ({
@@ -103,7 +114,7 @@ describe("RankingList", () => {
 
     expect(
       screen.getByRole("button", {
-        name: "1위 김동권닉 그림 상세 보기",
+        name: "1위 김동권닉 (내 그림) 상세 보기",
       }),
     ).toBeInTheDocument();
     expect(
@@ -117,7 +128,48 @@ describe("RankingList", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("캔버스를 클릭하면 순위와 닉네임이 포함된 상세 시트를 연다", () => {
+  it("내 그림 항목 셀에는 파란 강조 테두리를 표시한다", () => {
+    mockUseRankingList.mockReturnValue({
+      rankingList: [makeRanking(1), makeRanking(2)],
+      isLoading: false,
+    });
+
+    render(<RankingList />);
+
+    // makeRanking은 rank === 1만 isMe: true
+    const myCell = screen.getByRole("button", {
+      name: "1위 테스트다빈치1 (내 그림) 상세 보기",
+    });
+    const otherCell = screen.getByRole("button", {
+      name: "2위 테스트다빈치2 상세 보기",
+    });
+
+    // outline은 레이아웃을 차지하지 않아 그림 크기·정렬에 영향이 없고 색만 입힌다
+    expect(myCell).toHaveClass("outline-2", "outline-(--color-blue)");
+    expect(otherCell).not.toHaveClass("outline-2");
+  });
+
+  it("내 그림 항목을 클릭하면 상세 시트에 내가 그린 그림 표식을 노출한다", () => {
+    mockUseRankingList.mockReturnValue({
+      rankingList: [makeRanking(1)],
+      isLoading: false,
+    });
+
+    render(<RankingList />);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "1위 테스트다빈치1 (내 그림) 상세 보기",
+      }),
+    );
+
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveTextContent("기억력 점수 분석");
+    expect(dialog).toHaveTextContent("테스트다빈치1의 솜씨");
+    expect(dialog).toHaveTextContent("내가 그린 그림");
+  });
+
+  it("캔버스를 클릭하면 닉네임과 기억력 점수 상세가 담긴 시트를 연다", () => {
     mockUseRankingList.mockReturnValue({
       rankingList: [
         {
@@ -141,11 +193,13 @@ describe("RankingList", () => {
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: "2위 다른유저 그림 상세 보기",
+        name: "2위 다른유저 상세 보기",
       }),
     );
 
-    expect(screen.getByRole("dialog")).toHaveTextContent("2위 다른유저");
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveTextContent("기억력 점수 분석");
+    expect(dialog).toHaveTextContent("다른유저의 솜씨");
   });
 
   it("캔버스 6개 단위 사이에 배너 광고를 렌더링한다", () => {

@@ -4,6 +4,8 @@ import {
   useAttendanceStatus,
 } from "@/entities/attendance";
 import {
+  getDailyMissionRangeLabel,
+  getWeeklyMissionRangeLabel,
   MissionCardSkeleton,
   MissionSection,
   MISSION_SECTIONS,
@@ -45,7 +47,7 @@ const MissionView = () => {
       data-no-safe-area-bottom
       className="min-h-0 flex-1 overflow-y-auto bg-(--color-page) pb-[calc(env(safe-area-inset-bottom)+72px)]"
     >
-      <div className="flex flex-col gap-6 pt-3">
+      <div className="flex flex-col gap-1 pt-3">
         {attendanceStatus && (
           <section className="mx-(--page-px) rounded-(--radius-card) bg-(--color-card-blue) p-5">
             <AttendanceSummary
@@ -66,9 +68,9 @@ const MissionView = () => {
               {ATTENDANCE_REWARD_DAYS.map((day) => `${day}일`).join("·")} 연속
               출석하면{" "}
               <span className="font-bold text-(--color-toss-blue)">
-                {ATTENDANCE_REWARD_POINT}P
+                {ATTENDANCE_REWARD_POINT}원
               </span>
-              를 추가로 받아요
+              을 추가로 받아요
             </p>
           </section>
         )}
@@ -82,18 +84,18 @@ const MissionView = () => {
         <MissionSection
           missions={dailyMissions}
           section={MISSION_SECTIONS.daily}
+          rangeLabel={getDailyMissionRangeLabel()}
         />
       </div>
-      <div className="px-(--card-mx)">
+      <div className="mt-1 px-(--card-mx)">
         <BannerAd type="feed" adGroupId={AD_GROUP_IDS.BANNER_FEED} />
       </div>
       {weeklyMissions.length > 0 && (
-        <div className="mt-6">
-          <MissionSection
-            missions={weeklyMissions}
-            section={MISSION_SECTIONS.weekly}
-          />
-        </div>
+        <MissionSection
+          missions={weeklyMissions}
+          section={MISSION_SECTIONS.weekly}
+          rangeLabel={getWeeklyMissionRangeLabel()}
+        />
       )}
     </div>
   );

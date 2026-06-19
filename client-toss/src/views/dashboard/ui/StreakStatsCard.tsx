@@ -42,8 +42,8 @@ const StreakStatsCard = ({
   const scoreText = found ? `${myRanking.ranking.score}점` : "-";
   const rankText = found ? `${myRanking.ranking.rank}위` : "-";
 
-  const totalText = pointSummary ? `${pointSummary.totalPoints}P` : "-";
-  const todayText = pointSummary ? `${pointSummary.todayPoints}P` : "-";
+  const totalText = pointSummary ? `${pointSummary.totalPoints}원` : "-";
+  const todayText = pointSummary ? `${pointSummary.todayPoints}원` : "-";
 
   return (
     <section className="rounded-(--radius-card) bg-(--color-card-blue) p-5">
@@ -61,9 +61,9 @@ const StreakStatsCard = ({
       </div>
 
       <div className="mt-5 flex items-stretch rounded-(--radius-inner) bg-(--color-page) py-4">
-        <StatItem label="누적 포인트" value={totalText} />
+        <StatItem label="누적 토스포인트" value={totalText} />
         <div className="my-1 w-px self-stretch bg-(--color-card)" />
-        <StatItem label="오늘 포인트" value={todayText} />
+        <StatItem label="오늘 토스포인트" value={todayText} />
         <div className="my-1 w-px self-stretch bg-(--color-card)" />
         <StatItem label="오늘 점수" value={scoreText} />
         <div className="my-1 w-px self-stretch bg-(--color-card)" />
