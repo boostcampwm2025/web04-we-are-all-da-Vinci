@@ -160,6 +160,8 @@ export class AttendanceService {
       throw new ForbiddenException("등록되지 않은 광고예요.");
     }
 
+    const today = getSeoulDayRange().start.getTime();
+
     const { newDay, rewardedDay } = await this.em.transactional(async (em) => {
       const attendance = await em.findOne(
         Attendance,
@@ -177,6 +179,19 @@ export class AttendanceService {
           "복구할 연속 출석이 없어요",
         );
         throw new ForbiddenException("복구할 연속 출석이 없어요.");
+      }
+
+      // 만회는 끊김을 감지한 당일(KST)에만 유효 — 오늘 체크인 기록이 아니면 만료.
+      if (this.dayStartMs(attendance.lastCheckedDate) !== today) {
+        this.logger.warn(
+          {
+            event: "attendance.recover.denied",
+            userKey,
+            reason: "recovery_window_expired",
+          },
+          "복구 기간이 지났어요",
+        );
+        throw new ForbiddenException("복구 기간이 지났어요.");
       }
 
       const restored = nextCycleDay(attendance.recoverableDay);
@@ -211,6 +226,30 @@ export class AttendanceService {
     return { cycleDay: newDay, rewardedDay };
   }
 
+  // 복구를 포기하고 끊긴 채로 새로 시작한다. 이미 리셋된 cycleDay는 두고
+  // 복구 대상(recoverableDay)만 비워 카드가 정상 상태로 돌아가게 한다.
+  async declineRecovery(userKey: number): Promise<AttendanceStatusResponse> {
+    await this.em.transactional(async (em) => {
+      const attendance = await em.findOne(
+        Attendance,
+        { userKey },
+        { lockMode: LockMode.PESSIMISTIC_WRITE },
+      );
+
+      if (attendance && attendance.recoverableDay != null) {
+        attendance.recoverableDay = null;
+        await em.flush();
+      }
+    });
+
+    this.logger.log(
+      { event: "attendance.recover.declined", userKey },
+      "연속 출석 복구 포기",
+    );
+
+    return this.getStatus(userKey);
+  }
+
   async getStatus(userKey: number): Promise<AttendanceStatusResponse> {
     const today = getSeoulDayRange().start.getTime();
     const attendance = await this.em.findOne(Attendance, { userKey });
@@ -226,12 +265,13 @@ export class AttendanceService {
     }
 
     const checkedToday = this.dayStartMs(attendance.lastCheckedDate) === today;
+    const recoverable = attendance.recoverableDay != null && checkedToday;
 
     return {
       cycleDay: attendance.cycleDay,
       checkedToday,
-      recoverable: attendance.recoverableDay != null,
-      previousDay: attendance.recoverableDay ?? null,
+      recoverable,
+      previousDay: recoverable ? attendance.recoverableDay : null,
       tomorrowMaxPoint: tomorrowMaxPoint(attendance.cycleDay),
     };
   }
