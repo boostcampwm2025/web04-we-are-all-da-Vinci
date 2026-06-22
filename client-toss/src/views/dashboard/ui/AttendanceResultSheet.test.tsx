@@ -25,7 +25,10 @@ vi.mock("@/feature/playChance/hooks/useFullScreenAd", () => ({
   }),
 }));
 
-const mockedApi = serverTossApi as unknown as { recoverAttendance: Mock };
+const mockedApi = serverTossApi as unknown as {
+  recoverAttendance: Mock;
+  declineAttendanceRecovery: Mock;
+};
 
 const continued: AttendanceCheckInResponse = {
   status: "continued",
@@ -49,6 +52,13 @@ describe("출석 결과 시트", () => {
     mockedApi.recoverAttendance.mockResolvedValue({
       cycleDay: 3,
       rewardedDay: 3,
+    });
+    mockedApi.declineAttendanceRecovery.mockResolvedValue({
+      cycleDay: 1,
+      checkedToday: true,
+      recoverable: false,
+      previousDay: null,
+      tomorrowMaxPoint: 0,
     });
   });
 
@@ -104,6 +114,29 @@ describe("출석 결과 시트", () => {
       expect(mockedApi.recoverAttendance).toHaveBeenCalledWith({
         adGroupId: "ait.v2.live.932e847f2b0c499c",
       });
+      expect(onRecovered).toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+
+  it("새롭게 시작하기를 누르면 복구 포기 API를 호출하고 시트를 닫는다", async () => {
+    const onClose = vi.fn();
+    const onRecovered = vi.fn();
+    render(
+      <AttendanceResultSheet
+        result={broken}
+        onClose={onClose}
+        onRecovered={onRecovered}
+      />,
+    );
+
+    await act(async () => {
+      screen.getByRole("button", { name: "새롭게 시작하기" }).click();
+    });
+
+    await waitFor(() => {
+      expect(mockedApi.declineAttendanceRecovery).toHaveBeenCalled();
+      expect(mockShowAd).not.toHaveBeenCalled();
       expect(onRecovered).toHaveBeenCalled();
       expect(onClose).toHaveBeenCalled();
     });
