@@ -56,7 +56,7 @@ const TodayDavinciCard = ({ podium, myRank }: TodayDavinciCardProps) => {
         className="flex w-full items-baseline justify-between"
       >
         <h2 className="text-base font-bold text-(--color-black)">
-          오늘의 다빈치
+          기억력 TOP3
         </h2>
         <span className="text-[13px] font-medium text-(--color-grey)">
           랭킹 top100 ›
@@ -78,7 +78,7 @@ const TodayDavinciCard = ({ podium, myRank }: TodayDavinciCardProps) => {
           ))
         ) : (
           <p className="py-6 text-center text-sm text-(--color-grey)">
-            아직 오늘의 다빈치가 없어요
+            아직 오늘의 기록이 없어요
           </p>
         )}
       </div>
