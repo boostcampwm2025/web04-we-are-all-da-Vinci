@@ -160,9 +160,9 @@ export class AttendanceService {
       throw new ForbiddenException("등록되지 않은 광고예요.");
     }
 
-    const today = getSeoulDayRange().start.getTime();
-
     const { newDay, rewardedDay } = await this.em.transactional(async (em) => {
+      // 자정 경계 race 방지를 위해 today를 트랜잭션 내부에서 계산한다.
+      const today = getSeoulDayRange().start.getTime();
       const attendance = await em.findOne(
         Attendance,
         { userKey },
