@@ -1,12 +1,16 @@
 import { AttendanceProgress } from "@/entities/attendance";
-import { useAttendanceRecovery } from "@/feature/attendanceRecovery";
+import {
+  ATTENDANCE_RECOVERY_DECLINE_FAIL_MESSAGE,
+  ATTENDANCE_RECOVERY_SUCCESS_MESSAGE,
+  ATTENDANCE_RECOVERY_TOAST_DURATION_MS,
+  getRecoveryFailMessage,
+  useAttendanceRecovery,
+} from "@/feature/attendanceRecovery";
 import { useToast } from "@/shared/lib";
 import { ATTENDANCE_REWARD_POINT } from "@toss/shared";
 import type { AttendanceCheckInResponse } from "@toss/shared";
 import { BottomSheet, Button, Toast } from "@toss/tds-mobile";
 import { useState } from "react";
-
-const TOAST_DURATION_MS = 2500;
 
 interface AttendanceResultSheetProps {
   result: AttendanceCheckInResponse | null;
@@ -42,16 +46,10 @@ const AttendanceResultSheet = ({
     if (outcome.ok) {
       onRecovered();
       onClose();
-      toast.show("연속출석을 이어갔어요");
+      toast.show(ATTENDANCE_RECOVERY_SUCCESS_MESSAGE);
       return;
     }
-    if (outcome.reason === "ad_not_ready") {
-      toast.show("광고를 불러오고 있어요. 잠시 후 다시 시도해주세요.");
-    } else if (outcome.reason === "not_watched") {
-      toast.show("광고 시청이 완료되지 않았어요. 다시 시도해주세요.");
-    } else {
-      toast.show("이어가기에 실패했어요. 잠시 후 다시 시도해주세요.");
-    }
+    toast.show(getRecoveryFailMessage(outcome.reason));
   };
 
   const handleDecline = async () => {
@@ -63,7 +61,7 @@ const AttendanceResultSheet = ({
       onRecovered();
       onClose();
     } else {
-      toast.show("잠시 후 다시 시도해주세요.");
+      toast.show(ATTENDANCE_RECOVERY_DECLINE_FAIL_MESSAGE);
     }
   };
 
@@ -128,7 +126,7 @@ const AttendanceResultSheet = ({
         position="top"
         open={toast.open}
         text={toast.text}
-        duration={TOAST_DURATION_MS}
+        duration={ATTENDANCE_RECOVERY_TOAST_DURATION_MS}
         onClose={toast.close}
       />
     </>

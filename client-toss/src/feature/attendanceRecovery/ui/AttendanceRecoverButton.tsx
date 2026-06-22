@@ -1,9 +1,13 @@
 import { useToast } from "@/shared/lib";
 import { Button, Toast } from "@toss/tds-mobile";
 import { useState } from "react";
+import {
+  ATTENDANCE_RECOVERY_DECLINE_FAIL_MESSAGE,
+  ATTENDANCE_RECOVERY_SUCCESS_MESSAGE,
+  ATTENDANCE_RECOVERY_TOAST_DURATION_MS,
+  getRecoveryFailMessage,
+} from "../config/recoveryToast";
 import { useAttendanceRecovery } from "../hooks/useAttendanceRecovery";
-
-const TOAST_DURATION_MS = 2500;
 
 interface AttendanceRecoverButtonProps {
   /** 복구/포기로 출석 현황이 바뀐 직후 호출 — 현황을 재조회해 카드를 갱신한다. */
@@ -25,16 +29,10 @@ const AttendanceRecoverButton = ({
     const result = await recover();
     if (result.ok) {
       onResolved();
-      toast.show("연속출석을 이어갔어요");
+      toast.show(ATTENDANCE_RECOVERY_SUCCESS_MESSAGE);
       return;
     }
-    if (result.reason === "ad_not_ready") {
-      toast.show("광고를 불러오고 있어요. 잠시 후 다시 시도해주세요.");
-    } else if (result.reason === "not_watched") {
-      toast.show("광고 시청이 완료되지 않았어요. 다시 시도해주세요.");
-    } else {
-      toast.show("이어가기에 실패했어요. 잠시 후 다시 시도해주세요.");
-    }
+    toast.show(getRecoveryFailMessage(result.reason));
   };
 
   const handleDecline = async () => {
@@ -43,7 +41,7 @@ const AttendanceRecoverButton = ({
     const ok = await decline();
     setIsDeclining(false);
     if (ok) onResolved();
-    else toast.show("잠시 후 다시 시도해주세요.");
+    else toast.show(ATTENDANCE_RECOVERY_DECLINE_FAIL_MESSAGE);
   };
 
   return (
@@ -79,7 +77,7 @@ const AttendanceRecoverButton = ({
         position="top"
         open={toast.open}
         text={toast.text}
-        duration={TOAST_DURATION_MS}
+        duration={ATTENDANCE_RECOVERY_TOAST_DURATION_MS}
         onClose={toast.close}
       />
     </>

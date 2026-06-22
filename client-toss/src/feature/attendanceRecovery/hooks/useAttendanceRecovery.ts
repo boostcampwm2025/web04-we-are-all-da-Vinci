@@ -3,12 +3,11 @@ import { serverTossApi } from "@/shared/api";
 import { AD_GROUP_IDS } from "@/shared/config";
 import { FUNNEL_EVENTS, getErrorMessage, trackClick } from "@/shared/lib";
 import { useCallback, useState } from "react";
+import type { RecoveryFailReason } from "../config/recoveryToast";
 
 const RECOVERY_AD_GROUP_ID = AD_GROUP_IDS.ATTENDANCE_RECOVERY;
 
-type RecoverResult =
-  | { ok: true }
-  | { ok: false; reason: "ad_not_ready" | "not_watched" | "error" };
+type RecoverResult = { ok: true } | { ok: false; reason: RecoveryFailReason };
 
 /**
  * 끊긴 연속 출석을 보상형 광고 완주로 복구하는 단일 훅.
@@ -40,12 +39,17 @@ export const useAttendanceRecovery = () => {
       // 보상형: userEarnedReward가 발생한 경우에만 resolve된다(끝까지 시청).
       await showAd();
     } catch (err) {
+      const adErrorReason = getErrorMessage(err);
       trackClick(FUNNEL_EVENTS.adRewardFailed, {
         ad_group_id: RECOVERY_AD_GROUP_ID,
-        reason: getErrorMessage(err),
+        reason: adErrorReason,
       });
       setIsRecovering(false);
-      return { ok: false, reason: "not_watched" };
+      // userEarnedReward 미발생(끝까지 안 봄)만 미시청으로, 그 외(failedToShow·SDK 에러)는 시스템 오류로.
+      return {
+        ok: false,
+        reason: adErrorReason === "reward_not_earned" ? "not_watched" : "error",
+      };
     }
 
     try {
