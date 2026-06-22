@@ -1,7 +1,5 @@
 import { AttendanceProgress } from "@/entities/attendance";
-import { useFullScreenAd } from "@/feature/playChance";
-import { serverTossApi } from "@/shared/api";
-import { AD_GROUP_IDS } from "@/shared/config";
+import { useAttendanceRecovery } from "@/feature/attendanceRecovery";
 import { useToast } from "@/shared/lib";
 import { ATTENDANCE_REWARD_POINT } from "@toss/shared";
 import type { AttendanceCheckInResponse } from "@toss/shared";
@@ -19,7 +17,7 @@ interface AttendanceResultSheetProps {
 /**
  * 출석 체크 결과를 안내하는 바텀시트.
  * - 연속/첫 출석: 연속 일수 + (마일스톤 시) 적립 안내.
- * - 끊김: 끊긴 연속을 보여주고 보상형 광고로 이어가거나 처음부터 시작한다.
+ * - 끊김: 끊긴 연속을 보여주고 보상형 광고로 이어가거나 새롭게 시작한다(복구 포기).
  */
 const AttendanceResultSheet = ({
   result,
@@ -27,41 +25,45 @@ const AttendanceResultSheet = ({
   onRecovered,
 }: AttendanceResultSheetProps) => {
   const toast = useToast();
-  const { isAdLoaded, showAd, reloadAd } = useFullScreenAd(
-    AD_GROUP_IDS.ATTENDANCE_RECOVERY,
-    { rewarded: true },
-  );
-  const [isRecovering, setIsRecovering] = useState(false);
+  const { recover, decline, isRecovering } = useAttendanceRecovery();
+  const [isDeclining, setIsDeclining] = useState(false);
 
   const isBroken = result?.status === "reset_recoverable";
 
-  const handleRecover = async () => {
-    if (isRecovering) return;
-    if (!isAdLoaded) {
-      reloadAd();
-      toast.show("광고를 불러오고 있어요. 잠시 후 다시 시도해주세요.");
-      return;
-    }
+  let headerText = "";
+  if (result != null) {
+    headerText = isBroken
+      ? "연속출석이 끊겼어요!"
+      : `🔥 ${result.cycleDay}일 연속출석!`;
+  }
 
-    setIsRecovering(true);
-    try {
-      const reward = await showAd();
-      if (!reward?.unitType || reward.unitAmount == null) {
-        toast.show("광고 시청이 완료되지 않았어요. 다시 시도해주세요.");
-        return;
-      }
-      await serverTossApi.recoverAttendance({
-        adGroupId: AD_GROUP_IDS.ATTENDANCE_RECOVERY,
-        unitType: reward.unitType,
-        unitAmount: reward.unitAmount,
-      });
+  const handleRecover = async () => {
+    const outcome = await recover();
+    if (outcome.ok) {
       onRecovered();
       onClose();
-      toast.show("연속 출석을 이어갔어요");
-    } catch {
+      toast.show("연속출석을 이어갔어요");
+      return;
+    }
+    if (outcome.reason === "ad_not_ready") {
+      toast.show("광고를 불러오고 있어요. 잠시 후 다시 시도해주세요.");
+    } else if (outcome.reason === "not_watched") {
+      toast.show("광고 시청이 완료되지 않았어요. 다시 시도해주세요.");
+    } else {
       toast.show("이어가기에 실패했어요. 잠시 후 다시 시도해주세요.");
-    } finally {
-      setIsRecovering(false);
+    }
+  };
+
+  const handleDecline = async () => {
+    if (isDeclining) return;
+    setIsDeclining(true);
+    const ok = await decline();
+    setIsDeclining(false);
+    if (ok) {
+      onRecovered();
+      onClose();
+    } else {
+      toast.show("잠시 후 다시 시도해주세요.");
     }
   };
 
@@ -75,19 +77,14 @@ const AttendanceResultSheet = ({
       <BottomSheet
         open={result != null}
         onClose={onClose}
-        header={<BottomSheet.Header>출석 체크</BottomSheet.Header>}
+        header={<BottomSheet.Header>{headerText}</BottomSheet.Header>}
       >
         {result &&
           (isBroken ? (
             <div className="flex flex-col gap-5 px-(--page-px) pt-1 pb-[env(safe-area-inset-bottom)]">
-              <div>
-                <p className="text-lg font-bold text-(--color-black)">
-                  연속 출석이 끊겼어요!
-                </p>
-                <p className="mt-1 text-[13px] text-(--color-grey)">
-                  {result.previousDay}일 연속 출석 중이었어요
-                </p>
-              </div>
+              <p className="text-[13px] text-(--color-grey)">
+                {result.previousDay}일 연속출석 중이었어요
+              </p>
               <AttendanceProgress
                 cycleDay={result.cycleDay}
                 recoverableDay={result.previousDay}
@@ -97,25 +94,23 @@ const AttendanceResultSheet = ({
                   color="primary"
                   display="block"
                   loading={isRecovering}
-                  disabled={isRecovering}
+                  disabled={isRecovering || isDeclining}
                   onClick={handleRecover}
                 >
                   광고 보고 이어가기
                 </Button>
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={handleDecline}
+                  disabled={isRecovering || isDeclining}
                   className="py-1 text-[13px] font-medium text-(--color-grey)"
                 >
-                  처음부터 시작
+                  새롭게 시작하기
                 </button>
               </div>
             </div>
           ) : (
             <div className="flex flex-col gap-5 px-(--page-px) pt-1 pb-[env(safe-area-inset-bottom)]">
-              <p className="text-lg font-bold text-(--color-black)">
-                🔥 {result.cycleDay}일 연속 출석!
-              </p>
               <AttendanceProgress cycleDay={result.cycleDay} />
               {rewardNote && (
                 <p className="text-[13px] font-medium text-(--color-toss-blue)">
