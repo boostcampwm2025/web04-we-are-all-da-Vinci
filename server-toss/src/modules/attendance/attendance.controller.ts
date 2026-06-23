@@ -144,4 +144,18 @@ export class AttendanceController {
   ): Promise<AttendanceRecoverResponse> {
     return this.attendanceService.recover(user.userKey, body.sdkPayload);
   }
+
+  @Post("decline")
+  @HttpCode(200)
+  @ApiOperation({ summary: "복구를 포기하고 끊긴 채로 새로 시작" })
+  @ApiOkResponse({
+    description: "복구 대상을 비운 출석 현황",
+    schema: AttendanceStatusSchema,
+  })
+  @ApiUnauthorizedResponse({ description: "인증이 필요해요." })
+  declineRecovery(
+    @CurrentUser() user: CurrentUserPayload,
+  ): Promise<AttendanceStatusResponse> {
+    return this.attendanceService.declineRecovery(user.userKey);
+  }
 }

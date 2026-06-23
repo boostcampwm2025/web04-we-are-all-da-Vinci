@@ -6,7 +6,10 @@ import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import AttendanceResultSheet from "./AttendanceResultSheet";
 
 vi.mock("@/shared/api", () => ({
-  serverTossApi: { recoverAttendance: vi.fn() },
+  serverTossApi: {
+    recoverAttendance: vi.fn(),
+    declineAttendanceRecovery: vi.fn(),
+  },
   getAnalyticsInstance: vi.fn().mockReturnValue(null),
 }));
 
@@ -22,7 +25,10 @@ vi.mock("@/feature/playChance/hooks/useFullScreenAd", () => ({
   }),
 }));
 
-const mockedApi = serverTossApi as unknown as { recoverAttendance: Mock };
+const mockedApi = serverTossApi as unknown as {
+  recoverAttendance: Mock;
+  declineAttendanceRecovery: Mock;
+};
 
 const continued: AttendanceCheckInResponse = {
   status: "continued",
@@ -47,6 +53,13 @@ describe("출석 결과 시트", () => {
       cycleDay: 3,
       rewardedDay: 3,
     });
+    mockedApi.declineAttendanceRecovery.mockResolvedValue({
+      cycleDay: 1,
+      checkedToday: true,
+      recoverable: false,
+      previousDay: null,
+      tomorrowMaxPoint: 0,
+    });
   });
 
   it("연속 출석이면 연속 일수와 적립 안내를 보여준다", () => {
@@ -58,11 +71,11 @@ describe("출석 결과 시트", () => {
       />,
     );
 
-    expect(screen.getByText(/3일 연속 출석/)).toBeInTheDocument();
+    expect(screen.getByText(/3일 연속출석/)).toBeInTheDocument();
     expect(screen.getByText(/적립/)).toBeInTheDocument();
   });
 
-  it("끊긴 경우 광고 이어가기와 처음부터 시작을 함께 보여준다", () => {
+  it("끊긴 경우 광고 이어가기와 새롭게 시작하기를 함께 보여준다", () => {
     render(
       <AttendanceResultSheet
         result={broken}
@@ -71,12 +84,12 @@ describe("출석 결과 시트", () => {
       />,
     );
 
-    expect(screen.getByText("연속 출석이 끊겼어요!")).toBeInTheDocument();
+    expect(screen.getByText("연속출석이 끊겼어요!")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "광고 보고 이어가기" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "처음부터 시작" }),
+      screen.getByRole("button", { name: "새롭게 시작하기" }),
     ).toBeInTheDocument();
   });
 
@@ -97,11 +110,33 @@ describe("출석 결과 시트", () => {
 
     await waitFor(() => {
       expect(mockShowAd).toHaveBeenCalled();
+      // 서버 recover()는 adGroupId만 검증하므로 reward 페이로드는 보내지 않는다.
       expect(mockedApi.recoverAttendance).toHaveBeenCalledWith({
         adGroupId: "ait.v2.live.932e847f2b0c499c",
-        unitType: "point",
-        unitAmount: 1,
       });
+      expect(onRecovered).toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+
+  it("새롭게 시작하기를 누르면 복구 포기 API를 호출하고 시트를 닫는다", async () => {
+    const onClose = vi.fn();
+    const onRecovered = vi.fn();
+    render(
+      <AttendanceResultSheet
+        result={broken}
+        onClose={onClose}
+        onRecovered={onRecovered}
+      />,
+    );
+
+    await act(async () => {
+      screen.getByRole("button", { name: "새롭게 시작하기" }).click();
+    });
+
+    await waitFor(() => {
+      expect(mockedApi.declineAttendanceRecovery).toHaveBeenCalled();
+      expect(mockShowAd).not.toHaveBeenCalled();
       expect(onRecovered).toHaveBeenCalled();
       expect(onClose).toHaveBeenCalled();
     });

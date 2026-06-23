@@ -18,7 +18,7 @@ const samplePodium: PodiumResponse["podium"] = [
   { nickname: "피카소", score: 66 },
 ];
 
-describe("오늘의 다빈치 카드", () => {
+describe("기억력 TOP3 카드", () => {
   it("시상대 top3를 점수와 함께 보여준다", () => {
     renderCard(samplePodium);
 
@@ -31,7 +31,7 @@ describe("오늘의 다빈치 카드", () => {
   it("podium이 빈 배열이면 안내 문구를 보여준다", () => {
     renderCard([]);
 
-    expect(screen.getByText("아직 오늘의 다빈치가 없어요")).toBeInTheDocument();
+    expect(screen.getByText("아직 오늘의 기록이 없어요")).toBeInTheDocument();
   });
 
   it("podium이 undefined면 로딩 상태로 항목·안내를 노출하지 않는다", () => {
@@ -39,7 +39,7 @@ describe("오늘의 다빈치 카드", () => {
 
     expect(screen.queryByText("다빈치")).not.toBeInTheDocument();
     expect(
-      screen.queryByText("아직 오늘의 다빈치가 없어요"),
+      screen.queryByText("아직 오늘의 기록이 없어요"),
     ).not.toBeInTheDocument();
   });
 

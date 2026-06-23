@@ -31,7 +31,7 @@ const MissionSection = ({
         }
         right={
           rangeLabel ? (
-            <span className="pr-(--page-px) text-[13px] text-(--color-grey)">
+            <span className="shrink-0 pr-(--page-px) text-[13px] whitespace-nowrap text-(--color-grey)">
               {rangeLabel}
             </span>
           ) : undefined

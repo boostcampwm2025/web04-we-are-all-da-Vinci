@@ -1,4 +1,5 @@
 import { AttendanceSummary } from "@/entities/attendance";
+import { AttendanceRecoverButton } from "@/feature/attendanceRecovery";
 import { useMyRanking } from "@/entities/ranking";
 import type {
   AttendanceStatusResponse,
@@ -28,12 +29,15 @@ interface StreakStatsCardProps {
   /** 포인트는 출석과 분리된 리소스(/points/me) — 별도 prop으로 받는다. */
   pointSummary?: PointSummaryResponse;
   missionMaxPoint?: number;
+  /** 끊김 복구 성공 직후 호출 — 출석 현황·포인트를 재조회한다. */
+  onRecovered?: () => void;
 }
 
 const StreakStatsCard = ({
   status,
   pointSummary,
   missionMaxPoint = 0,
+  onRecovered,
 }: StreakStatsCardProps) => {
   const navigate = useNavigate();
   const { myRanking } = useMyRanking();
@@ -59,6 +63,12 @@ const StreakStatsCard = ({
           </span>
         </button>
       </div>
+
+      {status?.recoverable && onRecovered && (
+        <div className="mt-4">
+          <AttendanceRecoverButton onResolved={onRecovered} />
+        </div>
+      )}
 
       <div className="mt-5 flex items-stretch rounded-(--radius-inner) bg-(--color-page) py-4">
         <StatItem label="누적 토스포인트" value={totalText} />

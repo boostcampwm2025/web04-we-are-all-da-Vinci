@@ -3,6 +3,7 @@ import {
   AttendanceSummary,
   useAttendanceStatus,
 } from "@/entities/attendance";
+import { AttendanceRecoverButton } from "@/feature/attendanceRecovery";
 import {
   getDailyMissionRangeLabel,
   getWeeklyMissionRangeLabel,
@@ -22,7 +23,8 @@ import { useEffect } from "react";
 const MissionView = () => {
   const { dailyMissions, weeklyMissions, tutorialCategories, isLoading } =
     useMyMissions();
-  const { status: attendanceStatus } = useAttendanceStatus();
+  const { status: attendanceStatus, refetch: refetchAttendance } =
+    useAttendanceStatus();
 
   useEffect(() => {
     trackScreen(FUNNEL_EVENTS.missionView);
@@ -65,13 +67,18 @@ const MissionView = () => {
               />
             </div>
             <p className="mt-3 text-[13px] text-(--color-grey)">
-              {ATTENDANCE_REWARD_DAYS.map((day) => `${day}일`).join("·")} 연속
-              출석하면{" "}
+              {ATTENDANCE_REWARD_DAYS.map((day) => `${day}일`).join("·")}{" "}
+              연속출석하면{" "}
               <span className="font-bold text-(--color-toss-blue)">
                 {ATTENDANCE_REWARD_POINT}원
               </span>
               을 추가로 받아요
             </p>
+            {attendanceStatus.recoverable && (
+              <div className="mt-4">
+                <AttendanceRecoverButton onResolved={refetchAttendance} />
+              </div>
+            )}
           </section>
         )}
 
