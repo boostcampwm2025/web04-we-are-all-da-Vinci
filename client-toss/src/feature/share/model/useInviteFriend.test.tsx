@@ -30,7 +30,7 @@ describe("useInviteFriend", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedCharge.mockResolvedValue({ count: 2 });
+    mockedCharge.mockResolvedValue({ count: 2, chanceGranted: true });
   });
 
   describe("moduleId / SDK 미지원 분기", () => {
@@ -158,7 +158,10 @@ describe("useInviteFriend", () => {
           rewardAmount: 1,
           rewardUnit: "그리기 기회",
         });
-        expect(onCharged).toHaveBeenCalledWith(2);
+        expect(onCharged).toHaveBeenCalledWith({
+          count: 2,
+          chanceGranted: true,
+        });
       });
     });
 

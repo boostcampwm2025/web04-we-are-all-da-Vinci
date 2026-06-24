@@ -91,18 +91,26 @@ describe("MissionService", () => {
       providers: [
         {
           provide: MissionService,
-          useFactory: (userMissionRepo, processor, assignSvc, tutorialSvc) =>
+          useFactory: (
+            userMissionRepo,
+            processor,
+            assignSvc,
+            tutorialSvc,
+            pointSvc,
+          ) =>
             new MissionService(
               userMissionRepo,
               processor,
               assignSvc,
               tutorialSvc,
+              pointSvc,
             ),
           inject: [
             USER_MISSION_REPO_TOKEN,
             MissionProcessor,
             AssignMissionService,
             TutorialMissionService,
+            PointService,
           ],
         },
         { provide: USER_MISSION_REPO_TOKEN, useValue: userMissionRepository },
@@ -378,6 +386,87 @@ describe("MissionService", () => {
       await service.onDrawingSubmitted(1234, drawingContext);
 
       expect(uq.currentCount).toBe(2);
+    });
+  });
+
+  describe("onFriendInvited — 친구초대 일일 미션", () => {
+    const buildInviteMission = (currentCount: number): UserMission =>
+      buildUserMission({
+        mission: buildMission({
+          objectiveType: ObjectiveType.INVITE,
+          period: MissionPeriod.DAILY,
+          requiredCount: 5,
+          rewardType: RewardType.POINT,
+          rewardAmount: 5,
+          progressPeriod: ProgressPeriod.NONE,
+        }),
+        currentCount,
+      });
+
+    // INVITE는 일일 미션이라 findActiveByObjective로 조회된다. MISSION_COMPLETED(주간 메타)와
+    // 같은 mock을 쓰므로 objectiveType 인자로 분기해 INVITE 미션만 돌려준다.
+    const stubActiveInvite = (uq: UserMission | null): void => {
+      userMissionRepository.findActiveByObjective.mockImplementation(
+        async (_userKey: number, objectiveType: ObjectiveType) =>
+          objectiveType === ObjectiveType.INVITE && uq ? [uq] : [],
+      );
+    };
+
+    it("당일 누적 초대 횟수를 그대로 진행도로 설정해요", async () => {
+      const uq = buildInviteMission(0);
+      stubActiveInvite(uq);
+
+      await service.onFriendInvited(1234, 1);
+
+      expect(uq.currentCount).toBe(1);
+      expect(uq.completedAt).toBeNull();
+      expect(pointService.savePointGrantRequest).not.toHaveBeenCalled();
+      expect(userMissionRepository.flush).toHaveBeenCalled();
+    });
+
+    it("이전 진행이 누락돼도 다음 호출이 실제 초대 횟수로 보정해요", async () => {
+      // 진행도가 2에 머물러 있는데 실제로는 4번째 초대 → 4로 맞춰진다
+      const uq = buildInviteMission(2);
+      stubActiveInvite(uq);
+
+      await service.onFriendInvited(1234, 4);
+
+      expect(uq.currentCount).toBe(4);
+      expect(uq.completedAt).toBeNull();
+    });
+
+    it("뒤늦게 더 작은 초대 횟수가 와도 진행도를 되돌리지 않아요", async () => {
+      const uq = buildInviteMission(3);
+      stubActiveInvite(uq);
+
+      await service.onFriendInvited(1234, 2);
+
+      expect(uq.currentCount).toBe(3);
+    });
+
+    it("다섯 번째 초대로 채워지면 완료 처리하고 5원을 한 번만 지급해요", async () => {
+      const uq = buildInviteMission(4);
+      stubActiveInvite(uq);
+
+      await service.onFriendInvited(1234, 5);
+
+      expect(uq.currentCount).toBe(5);
+      expect(uq.completedAt).not.toBeNull();
+      expect(pointService.savePointGrantRequest).toHaveBeenCalledTimes(1);
+      expect(pointService.savePointGrantRequest).toHaveBeenCalledWith(
+        1234,
+        expect.anything(),
+        5,
+      );
+    });
+
+    it("이미 완료된 미션은 재호출해도 다시 지급하지 않아요", async () => {
+      // 완료된 미션은 findActiveByObjective(completedAt: null 필터)에서 제외돼 []
+      stubActiveInvite(null);
+
+      await service.onFriendInvited(1234, 5);
+
+      expect(pointService.savePointGrantRequest).not.toHaveBeenCalled();
     });
   });
 });

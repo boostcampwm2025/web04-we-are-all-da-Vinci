@@ -50,7 +50,10 @@ describe("공유 시트", () => {
     vi.clearAllMocks();
     mockedApi.getMyChance.mockResolvedValue({ count: 0 });
     mockedApi.getMyRanking.mockResolvedValue({ state: "NOT_FOUND" });
-    mockedApi.chargeChanceByShare.mockResolvedValue({ count: 3 });
+    mockedApi.chargeChanceByShare.mockResolvedValue({
+      count: 3,
+      chanceGranted: true,
+    });
     mockedContactsViral.isSupported.mockReturnValue(false);
     mockedContactsViral.mockReturnValue(vi.fn());
   });
@@ -68,7 +71,9 @@ describe("공유 시트", () => {
     expect(screen.getByText("점수 자랑하기")).toBeInTheDocument();
     expect(screen.getByText("친구 초대하고 기회 받기")).toBeInTheDocument();
     expect(
-      screen.getByText("친구 초대 보상은 하루 5회까지 받을 수 있어요."),
+      screen.getByText(
+        "그리기 기회는 하루 3번까지 받고, 친구 5명을 초대하면 5원을 받아요.",
+      ),
     ).toBeInTheDocument();
   });
 
@@ -151,6 +156,57 @@ describe("공유 시트", () => {
         screen.getByText("그리기 기회 1회를 받았어요"),
       ).toBeInTheDocument();
       expect(mockedApi.getMyChance).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it("기회 한도를 넘긴 초대(chanceGranted=false)는 미션 진행 안내 토스트를 띄운다", async () => {
+    mockedContactsViral.isSupported.mockReturnValue(true);
+    mockedApi.chargeChanceByShare.mockResolvedValue({
+      count: 3,
+      chanceGranted: false,
+    });
+    // @ts-expect-error: 테스트에서 환경변수 주입
+    import.meta.env.VITE_CONTACTS_VIRAL_MODULE_ID = "test-module";
+
+    let capturedOnEvent:
+      | ((event: {
+          type: string;
+          data: { rewardAmount: number; rewardUnit: string };
+        }) => void)
+      | undefined;
+    mockedContactsViral.mockImplementation(
+      ({
+        onEvent,
+      }: {
+        onEvent: (event: {
+          type: string;
+          data: { rewardAmount: number; rewardUnit: string };
+        }) => void;
+      }) => {
+        capturedOnEvent = onEvent;
+        return vi.fn();
+      },
+    );
+
+    renderShareSheet();
+
+    await act(async () => {
+      screen.getByRole("button", { name: /친구 초대/ }).click();
+    });
+
+    await act(async () => {
+      capturedOnEvent?.({
+        type: "sendViral",
+        data: { rewardAmount: 1, rewardUnit: "그리기 기회" },
+      });
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "친구를 초대했어요! 그리기 기회는 하루 3번까지 받을 수 있어요",
+        ),
+      ).toBeInTheDocument();
     });
   });
 });

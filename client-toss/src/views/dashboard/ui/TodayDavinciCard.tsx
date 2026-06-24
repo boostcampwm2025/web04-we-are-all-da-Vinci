@@ -18,7 +18,7 @@ const DavinciRow = ({
   isMe = false,
 }: DavinciRowProps) => (
   <div
-    className={`flex items-center gap-3 py-2.5${
+    className={`flex items-center gap-3 py-2${
       isMe ? " -mx-2 rounded-(--radius-inner) bg-(--color-card-blue) px-2" : ""
     }`}
   >
@@ -63,7 +63,7 @@ const TodayDavinciCard = ({ podium, myRank }: TodayDavinciCardProps) => {
         </span>
       </button>
 
-      <div className="mt-1">
+      <div className="mt-3 flex flex-col gap-1">
         {isLoading ? (
           <Skeleton pattern="listOnly" style={{ width: "100%" }} />
         ) : top3.length > 0 ? (

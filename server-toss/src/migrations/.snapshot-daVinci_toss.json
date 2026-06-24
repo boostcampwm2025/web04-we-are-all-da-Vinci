@@ -732,7 +732,7 @@
         },
         "objective_type": {
           "name": "objective_type",
-          "type": "enum('submit','score','penalty','daily_submit','daily_score','mission_completed','visit_ranking','visit_podium','visit_mission_tab','visit_drawing_detail','share','retry','tutorial_completed')",
+          "type": "enum('submit','score','penalty','daily_submit','daily_score','mission_completed','visit_ranking','visit_podium','visit_mission_tab','visit_drawing_detail','share','invite','retry','tutorial_completed')",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -755,6 +755,7 @@
             "visit_mission_tab",
             "visit_drawing_detail",
             "share",
+            "invite",
             "retry",
             "tutorial_completed"
           ],

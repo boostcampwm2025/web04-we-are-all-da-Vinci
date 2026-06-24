@@ -46,6 +46,7 @@ export class MissionMapper {
     userMissionId: Number(uq.id),
     missionId: Number(uq.mission.id),
     title: uq.mission.title,
+    objectiveType: uq.mission.objectiveType,
     currentCount: uq.currentCount,
     requiredCount: uq.mission.requiredCount,
     rewardType: uq.mission.rewardType,
