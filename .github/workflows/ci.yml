@@ -76,7 +76,9 @@ jobs:
         run: |
           pnpm audit --audit-level=high 2>&1 | tee audit-output.txt || true
           echo "audit_result<<EOF" >> $GITHUB_OUTPUT
-          cat audit-output.txt >> $GITHUB_OUTPUT
+          # 리포트 스크립트가 어차피 앞 2000자만 사용한다. 전체 출력을 GITHUB_OUTPUT으로
+          # 흘리면 후속 스텝(github-script)의 env 크기가 ARG_MAX를 넘겨 spawn이 실패하므로 절단한다.
+          head -c 2000 audit-output.txt >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         continue-on-error: true
 
@@ -137,7 +139,9 @@ jobs:
         run: |
           pnpm audit --audit-level=high 2>&1 | tee audit-output.txt || true
           echo "audit_result<<EOF" >> $GITHUB_OUTPUT
-          cat audit-output.txt >> $GITHUB_OUTPUT
+          # 리포트 스크립트가 어차피 앞 2000자만 사용한다. 전체 출력을 GITHUB_OUTPUT으로
+          # 흘리면 후속 스텝(github-script)의 env 크기가 ARG_MAX를 넘겨 spawn이 실패하므로 절단한다.
+          head -c 2000 audit-output.txt >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         continue-on-error: true
 
@@ -390,7 +394,9 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm audit --audit-level=high 2>&1 | tee audit-output.txt || true
           echo "result<<EOF" >> $GITHUB_OUTPUT
-          cat audit-output.txt >> $GITHUB_OUTPUT
+          # 리포트 스크립트가 어차피 앞 2000자만 사용한다. 전체 출력을 GITHUB_OUTPUT으로
+          # 흘리면 후속 스텝(github-script)의 env 크기가 ARG_MAX를 넘겨 spawn이 실패하므로 절단한다.
+          head -c 2000 audit-output.txt >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         continue-on-error: true
 
@@ -401,12 +407,15 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm audit --audit-level=high 2>&1 | tee audit-output.txt || true
           echo "result<<EOF" >> $GITHUB_OUTPUT
-          cat audit-output.txt >> $GITHUB_OUTPUT
+          # 리포트 스크립트가 어차피 앞 2000자만 사용한다. 전체 출력을 GITHUB_OUTPUT으로
+          # 흘리면 후속 스텝(github-script)의 env 크기가 ARG_MAX를 넘겨 spawn이 실패하므로 절단한다.
+          head -c 2000 audit-output.txt >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         continue-on-error: true
 
       - name: Post Security Audit Report
         uses: actions/github-script@v8
+        continue-on-error: true
         env:
           CLIENT_AUDIT: ${{ steps.client-audit.outputs.result }}
           SERVER_AUDIT: ${{ steps.server-audit.outputs.result }}
