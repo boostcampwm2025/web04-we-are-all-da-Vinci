@@ -321,6 +321,11 @@ export const serverTossApi = {
       await request<unknown>("POST", "/attendance/recover", { sdkPayload }),
     ),
 
+  declineAttendanceRecovery: async () =>
+    AttendanceStatusResponseSchema.parse(
+      await request<unknown>("POST", "/attendance/decline"),
+    ),
+
   getPointSummary: async (options?: RequestOptions) =>
     PointSummaryResponseSchema.parse(
       await request<unknown>("GET", "/points/me", undefined, options),

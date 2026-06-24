@@ -21,7 +21,10 @@ import { ShareChannel, ShareLog } from "./share-log.entity";
 @Injectable()
 export class ChanceService {
   private readonly logger = new Logger(ChanceService.name);
+
   private readonly shareDailyChargeLimit: number;
+
+  private readonly inviteDailyLimit: number;
 
   constructor(
     private readonly em: EntityManager,
@@ -29,7 +32,9 @@ export class ChanceService {
     private readonly chanceWhitelistValidator: ChanceWhitelistValidator,
   ) {
     this.shareDailyChargeLimit =
-      configService.get<number>("SHARE_DAILY_CHARGE_LIMIT") ?? 5;
+      configService.get<number>("SHARE_DAILY_CHARGE_LIMIT") ?? 3;
+    this.inviteDailyLimit =
+      configService.get<number>("INVITE_DAILY_LIMIT") ?? 5;
   }
 
   // 읽기 전용. DB를 수정하지 않으므로 차감(consume)과 동시에 호출돼도 lost update가 발생하지 않는다.
@@ -65,10 +70,14 @@ export class ChanceService {
     });
   }
 
+  // 친구 초대(공유) 적립.
+  // - 당일 초대 N건째: N < shareDailyChargeLimit(3)이면 기회 +1, 아니면 기회 없이 ShareLog만 기록.
+  // - N >= inviteDailyLimit(5)이면 더 받을 보상이 없으므로 거부.
+  // 기회를 못 받는 4·5번째 초대도 ShareLog는 남겨, 친구초대 일일 미션 진행에 사용된다.
   async chargeByShare(
     userKey: number,
     payload: ShareSdkPayload,
-  ): Promise<{ count: number }> {
+  ): Promise<{ count: number; chanceGranted: boolean; inviteCount: number }> {
     this.chanceWhitelistValidator.validateShareModule(userKey, payload);
 
     return this.em.transactional(async (em) => {
@@ -79,9 +88,9 @@ export class ChanceService {
         user: { userKey },
         createdAt: { $gte: start, $lt: end },
       });
-      if (todayShareLogs >= this.shareDailyChargeLimit) {
+      if (todayShareLogs >= this.inviteDailyLimit) {
         this.denyLog(userKey, "share", "daily_cap", payload);
-        throw new ForbiddenException("오늘 공유 적립 횟수를 모두 사용했어요.");
+        throw new ForbiddenException("오늘 친구 초대를 모두 완료했어요.");
       }
 
       const userRef = em.getReference(User, userKey);
@@ -92,11 +101,21 @@ export class ChanceService {
       });
       em.persist(shareLog);
 
-      chance.count += 1;
+      // 이번 초대를 포함한 당일 누적 초대 횟수. 미션 진행의 단일 소스(멱등 갱신용).
+      const inviteCount = todayShareLogs + 1;
+      // 기회 지급 한도 내(처음 3건)에서만 기회를 +1 한다. 한도 초과분은 미션 진행만.
+      const chanceGranted = todayShareLogs < this.shareDailyChargeLimit;
+      if (chanceGranted) chance.count += 1;
       this.successLog(userKey, "share", chance.count, {
         channel: payload.channel,
+        chanceGranted,
+        inviteCount,
       });
-      return { count: this.computeAvailable(chance, start) };
+      return {
+        count: this.computeAvailable(chance, start),
+        chanceGranted,
+        inviteCount,
+      };
     });
   }
 

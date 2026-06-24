@@ -71,6 +71,8 @@ const buildConfigService = () => ({
   get: jest.fn((key: string) => {
     switch (key) {
       case "SHARE_DAILY_CHARGE_LIMIT":
+        return 3;
+      case "INVITE_DAILY_LIMIT":
         return 5;
       default:
         return undefined;
@@ -315,8 +317,8 @@ describe("ChanceService", () => {
     });
   });
 
-  describe("chargeByShare", () => {
-    it("contactsViral 채널: moduleId 통과 시 count++ 와 ShareLog INSERT", async () => {
+  describe("친구 초대 적립은 기회 한도 3회와 초대 상한 5회를 분리해요", () => {
+    it("허용된 모듈이면 첫 번째 초대에서 기회를 지급하고 공유 기록을 남겨요", async () => {
       const existing = buildExisting({ count: 1, lastResetAt: TODAY_START });
       const { em, persisted } = buildEm(existing, 0);
       const chanceWhitelistValidator = buildWhitelistValidator();
@@ -329,7 +331,8 @@ describe("ChanceService", () => {
         rewardUnit: "그리기 기회",
       });
 
-      expect(result).toEqual({ count: 2 });
+      expect(result).toEqual({ count: 2, chanceGranted: true, inviteCount: 1 });
+      expect(existing.count).toBe(2);
       expect(persisted.find((p) => p instanceof ShareLog)).toBeDefined();
       expect(chanceWhitelistValidator.validateShareModule).toHaveBeenCalledWith(
         1,
@@ -340,9 +343,60 @@ describe("ChanceService", () => {
       );
     });
 
-    it("일일 캡(=5) 도달 시 거부", async () => {
-      const existing = buildExisting({ count: 5, lastResetAt: TODAY_START });
-      const { em } = buildEm(existing, 5);
+    it("세 번째 초대까지는 기회를 지급해요", async () => {
+      const existing = buildExisting({ count: 2, lastResetAt: TODAY_START });
+      const { em } = buildEm(existing, 2);
+      const service = buildService(em);
+
+      await expect(
+        service.chargeByShare(1, {
+          channel: "contactsViral",
+          moduleId: ALLOWED_MODULE,
+        }),
+      ).resolves.toEqual({ count: 3, chanceGranted: true, inviteCount: 3 });
+    });
+
+    it("기회 한도를 넘은 네 번째 초대는 기회 없이 공유 기록만 남겨요", async () => {
+      const existing = buildExisting({ count: 3, lastResetAt: TODAY_START });
+      const { em, persisted } = buildEm(existing, 3);
+      const service = buildService(em);
+
+      const result = await service.chargeByShare(1, {
+        channel: "contactsViral",
+        moduleId: ALLOWED_MODULE,
+      });
+
+      expect(result).toEqual({
+        count: 3,
+        chanceGranted: false,
+        inviteCount: 4,
+      });
+      // 기회는 그대로, 미션 진행용 공유 기록만 쌓인다
+      expect(existing.count).toBe(3);
+      expect(persisted.find((p) => p instanceof ShareLog)).toBeDefined();
+    });
+
+    it("다섯 번째 초대도 기회 없이 공유 기록만 남겨요", async () => {
+      const existing = buildExisting({ count: 3, lastResetAt: TODAY_START });
+      const { em, persisted } = buildEm(existing, 4);
+      const service = buildService(em);
+
+      const result = await service.chargeByShare(1, {
+        channel: "contactsViral",
+        moduleId: ALLOWED_MODULE,
+      });
+
+      expect(result).toEqual({
+        count: 3,
+        chanceGranted: false,
+        inviteCount: 5,
+      });
+      expect(persisted.find((p) => p instanceof ShareLog)).toBeDefined();
+    });
+
+    it("초대 상한을 채운 여섯 번째 초대는 거부하고 기록도 남기지 않아요", async () => {
+      const existing = buildExisting({ count: 3, lastResetAt: TODAY_START });
+      const { em, persisted } = buildEm(existing, 5);
       const service = buildService(em);
 
       await expect(
@@ -351,20 +405,8 @@ describe("ChanceService", () => {
           moduleId: ALLOWED_MODULE,
         }),
       ).rejects.toBeInstanceOf(ForbiddenException);
-      expect(existing.count).toBe(5);
-    });
-
-    it("일일 캡 직전(4건)이면 통과 → 5번째 적립", async () => {
-      const existing = buildExisting({ count: 4, lastResetAt: TODAY_START });
-      const { em } = buildEm(existing, 4);
-      const service = buildService(em);
-
-      await expect(
-        service.chargeByShare(1, {
-          channel: "contactsViral",
-          moduleId: ALLOWED_MODULE,
-        }),
-      ).resolves.toEqual({ count: 5 });
+      expect(existing.count).toBe(3);
+      expect(persisted.find((p) => p instanceof ShareLog)).toBeUndefined();
     });
   });
 

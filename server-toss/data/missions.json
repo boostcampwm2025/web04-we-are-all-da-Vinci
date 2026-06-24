@@ -30,6 +30,16 @@
     "rewardAmount": 5
   },
   {
+    "title": "친구 5명 초대하기",
+    "period": "daily",
+    "isFixed": true,
+    "objectiveType": "invite",
+    "requiredCount": 5,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 5
+  },
+  {
     "title": "일일 미션 7개 완료",
     "period": "weekly",
     "isFixed": true,

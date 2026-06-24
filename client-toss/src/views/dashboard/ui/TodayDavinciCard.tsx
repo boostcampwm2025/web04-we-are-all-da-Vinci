@@ -18,7 +18,7 @@ const DavinciRow = ({
   isMe = false,
 }: DavinciRowProps) => (
   <div
-    className={`flex items-center gap-3 py-2.5${
+    className={`flex items-center gap-3 py-2${
       isMe ? " -mx-2 rounded-(--radius-inner) bg-(--color-card-blue) px-2" : ""
     }`}
   >
@@ -56,14 +56,14 @@ const TodayDavinciCard = ({ podium, myRank }: TodayDavinciCardProps) => {
         className="flex w-full items-baseline justify-between"
       >
         <h2 className="text-base font-bold text-(--color-black)">
-          오늘의 다빈치
+          기억력 TOP3
         </h2>
         <span className="text-[13px] font-medium text-(--color-grey)">
           랭킹 top100 ›
         </span>
       </button>
 
-      <div className="mt-1">
+      <div className="mt-3 flex flex-col gap-1">
         {isLoading ? (
           <Skeleton pattern="listOnly" style={{ width: "100%" }} />
         ) : top3.length > 0 ? (
@@ -78,7 +78,7 @@ const TodayDavinciCard = ({ podium, myRank }: TodayDavinciCardProps) => {
           ))
         ) : (
           <p className="py-6 text-center text-sm text-(--color-grey)">
-            아직 오늘의 다빈치가 없어요
+            아직 오늘의 기록이 없어요
           </p>
         )}
       </div>

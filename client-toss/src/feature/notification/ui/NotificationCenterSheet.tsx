@@ -1,5 +1,7 @@
 import { serverTossApi } from "@/shared/api";
+import { AD_GROUP_IDS } from "@/shared/config";
 import { useToast } from "@/shared/lib";
+import { BannerAd } from "@/shared/ui/bannerAd";
 import { requestNotificationAgreement } from "@apps-in-toss/web-framework";
 import {
   NotificationAgreementEventSchema,
@@ -205,6 +207,9 @@ const NotificationCenterSheet = ({ open, onClose }: Props) => {
               onSelect={handleOvertakenClick}
             />
           )}
+          <div className="mt-3 px-(--card-mx)">
+            <BannerAd type="list" adGroupId={AD_GROUP_IDS.BANNER_LIST} />
+          </div>
         </div>
       </BottomSheet>
 
