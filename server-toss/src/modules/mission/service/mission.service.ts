@@ -150,4 +150,38 @@ export class MissionService {
 
     return result;
   }
+
+  @Transactional()
+  async onFriendInvited(userKey: number): Promise<CycleResult> {
+    const window = MissionWindow.now();
+    await this.assignMissionService.ensureMissionsAssigned(userKey, window);
+    // 같은 유저 동시 요청 직렬화 — 활성 미션 조회 전에 행을 잠근다
+    await this.userMissionRepo.lockActiveForUpdate(userKey);
+
+    const inviteActive = await this.userMissionRepo.findActiveByObjective(
+      userKey,
+      ObjectiveType.INVITE,
+      window.todayStart,
+      window.weekStart,
+    );
+    // 일일 미션 완료 수를 세는 주간 메타("일일 미션 N개 완료")도 함께 진행시킨다
+    const weeklyMeta = await this.userMissionRepo.findActiveByObjective(
+      userKey,
+      ObjectiveType.MISSION_COMPLETED,
+      window.todayStart,
+      window.weekStart,
+    );
+
+    const result = await this.processor.executeProgressCycle(
+      userKey,
+      inviteActive,
+      weeklyMeta,
+      { objectiveType: ObjectiveType.INVITE },
+      window,
+    );
+
+    await this.userMissionRepo.flush();
+
+    return result;
+  }
 }

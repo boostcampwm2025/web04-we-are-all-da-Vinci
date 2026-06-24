@@ -380,4 +380,66 @@ describe("MissionService", () => {
       expect(uq.currentCount).toBe(2);
     });
   });
+
+  describe("onFriendInvited — 친구초대 일일 미션", () => {
+    const buildInviteMission = (currentCount: number): UserMission =>
+      buildUserMission({
+        mission: buildMission({
+          objectiveType: ObjectiveType.INVITE,
+          period: MissionPeriod.DAILY,
+          requiredCount: 5,
+          rewardType: RewardType.POINT,
+          rewardAmount: 5,
+          progressPeriod: ProgressPeriod.NONE,
+        }),
+        currentCount,
+      });
+
+    // INVITE는 일일 미션이라 findActiveByObjective로 조회된다. MISSION_COMPLETED(주간 메타)와
+    // 같은 mock을 쓰므로 objectiveType 인자로 분기해 INVITE 미션만 돌려준다.
+    const stubActiveInvite = (uq: UserMission | null): void => {
+      userMissionRepository.findActiveByObjective.mockImplementation(
+        async (_userKey: number, objectiveType: ObjectiveType) =>
+          objectiveType === ObjectiveType.INVITE && uq ? [uq] : [],
+      );
+    };
+
+    it("초대 1회당 INVITE 미션 currentCount를 1 증가시킨다", async () => {
+      const uq = buildInviteMission(0);
+      stubActiveInvite(uq);
+
+      await service.onFriendInvited(1234);
+
+      expect(uq.currentCount).toBe(1);
+      expect(uq.completedAt).toBeNull();
+      expect(pointService.savePointGrantRequest).not.toHaveBeenCalled();
+      expect(userMissionRepository.flush).toHaveBeenCalled();
+    });
+
+    it("5번째 초대로 미션이 완료되면 completedAt 설정 + 5원 프로모션을 지급한다", async () => {
+      const uq = buildInviteMission(4);
+      stubActiveInvite(uq);
+
+      const result = await service.onFriendInvited(1234);
+
+      expect(uq.currentCount).toBe(5);
+      expect(uq.completedAt).not.toBeNull();
+      expect(pointService.savePointGrantRequest).toHaveBeenCalledWith(
+        1234,
+        expect.anything(),
+        5,
+      );
+      expect(result.completed).toContain(uq);
+    });
+
+    it("활성 INVITE 미션이 없으면 빈 결과를 반환하고 flush한다", async () => {
+      stubActiveInvite(null);
+
+      const result = await service.onFriendInvited(1234);
+
+      expect(result.completed).toEqual([]);
+      expect(pointService.savePointGrantRequest).not.toHaveBeenCalled();
+      expect(userMissionRepository.flush).toHaveBeenCalled();
+    });
+  });
 });

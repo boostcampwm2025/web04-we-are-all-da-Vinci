@@ -71,6 +71,8 @@ const buildConfigService = () => ({
   get: jest.fn((key: string) => {
     switch (key) {
       case "SHARE_DAILY_CHARGE_LIMIT":
+        return 3;
+      case "INVITE_DAILY_LIMIT":
         return 5;
       default:
         return undefined;
@@ -315,8 +317,8 @@ describe("ChanceService", () => {
     });
   });
 
-  describe("chargeByShare", () => {
-    it("contactsViral 채널: moduleId 통과 시 count++ 와 ShareLog INSERT", async () => {
+  describe("chargeByShare (기회 한도 3 / 초대 상한 5)", () => {
+    it("contactsViral 채널: moduleId 통과 시 1번째 초대는 기회 지급 + ShareLog INSERT", async () => {
       const existing = buildExisting({ count: 1, lastResetAt: TODAY_START });
       const { em, persisted } = buildEm(existing, 0);
       const chanceWhitelistValidator = buildWhitelistValidator();
@@ -329,7 +331,8 @@ describe("ChanceService", () => {
         rewardUnit: "그리기 기회",
       });
 
-      expect(result).toEqual({ count: 2 });
+      expect(result).toEqual({ count: 2, chanceGranted: true });
+      expect(existing.count).toBe(2);
       expect(persisted.find((p) => p instanceof ShareLog)).toBeDefined();
       expect(chanceWhitelistValidator.validateShareModule).toHaveBeenCalledWith(
         1,
@@ -340,9 +343,52 @@ describe("ChanceService", () => {
       );
     });
 
-    it("일일 캡(=5) 도달 시 거부", async () => {
-      const existing = buildExisting({ count: 5, lastResetAt: TODAY_START });
-      const { em } = buildEm(existing, 5);
+    it("기회 한도 직전(2건)이면 3번째 초대까지 기회를 지급한다", async () => {
+      const existing = buildExisting({ count: 2, lastResetAt: TODAY_START });
+      const { em } = buildEm(existing, 2);
+      const service = buildService(em);
+
+      await expect(
+        service.chargeByShare(1, {
+          channel: "contactsViral",
+          moduleId: ALLOWED_MODULE,
+        }),
+      ).resolves.toEqual({ count: 3, chanceGranted: true });
+    });
+
+    it("기회 한도(3) 초과한 4번째 초대는 기회 없이 ShareLog만 기록한다", async () => {
+      const existing = buildExisting({ count: 3, lastResetAt: TODAY_START });
+      const { em, persisted } = buildEm(existing, 3);
+      const service = buildService(em);
+
+      const result = await service.chargeByShare(1, {
+        channel: "contactsViral",
+        moduleId: ALLOWED_MODULE,
+      });
+
+      expect(result).toEqual({ count: 3, chanceGranted: false });
+      // 기회는 그대로, 미션 진행용 ShareLog만 쌓인다
+      expect(existing.count).toBe(3);
+      expect(persisted.find((p) => p instanceof ShareLog)).toBeDefined();
+    });
+
+    it("5번째 초대도 기회 없이 ShareLog만 기록한다", async () => {
+      const existing = buildExisting({ count: 3, lastResetAt: TODAY_START });
+      const { em, persisted } = buildEm(existing, 4);
+      const service = buildService(em);
+
+      const result = await service.chargeByShare(1, {
+        channel: "contactsViral",
+        moduleId: ALLOWED_MODULE,
+      });
+
+      expect(result).toEqual({ count: 3, chanceGranted: false });
+      expect(persisted.find((p) => p instanceof ShareLog)).toBeDefined();
+    });
+
+    it("초대 상한(5) 도달 시 6번째 초대는 거부하고 ShareLog도 남기지 않는다", async () => {
+      const existing = buildExisting({ count: 3, lastResetAt: TODAY_START });
+      const { em, persisted } = buildEm(existing, 5);
       const service = buildService(em);
 
       await expect(
@@ -351,20 +397,8 @@ describe("ChanceService", () => {
           moduleId: ALLOWED_MODULE,
         }),
       ).rejects.toBeInstanceOf(ForbiddenException);
-      expect(existing.count).toBe(5);
-    });
-
-    it("일일 캡 직전(4건)이면 통과 → 5번째 적립", async () => {
-      const existing = buildExisting({ count: 4, lastResetAt: TODAY_START });
-      const { em } = buildEm(existing, 4);
-      const service = buildService(em);
-
-      await expect(
-        service.chargeByShare(1, {
-          channel: "contactsViral",
-          moduleId: ALLOWED_MODULE,
-        }),
-      ).resolves.toEqual({ count: 5 });
+      expect(existing.count).toBe(3);
+      expect(persisted.find((p) => p instanceof ShareLog)).toBeUndefined();
     });
   });
 

@@ -5,6 +5,7 @@ export const MissionItemSchema = z.object({
   userMissionId: z.number().int(),
   missionId: z.number().int(),
   title: z.string(),
+  objectiveType: z.string(),
   currentCount: z.number().int().min(0),
   requiredCount: z.number().int().min(1),
   rewardType: z.enum(["point", "chance"]),
