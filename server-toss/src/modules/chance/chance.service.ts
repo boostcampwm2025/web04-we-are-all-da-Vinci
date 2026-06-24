@@ -77,7 +77,7 @@ export class ChanceService {
   async chargeByShare(
     userKey: number,
     payload: ShareSdkPayload,
-  ): Promise<{ count: number; chanceGranted: boolean }> {
+  ): Promise<{ count: number; chanceGranted: boolean; inviteCount: number }> {
     this.chanceWhitelistValidator.validateShareModule(userKey, payload);
 
     return this.em.transactional(async (em) => {
@@ -101,14 +101,21 @@ export class ChanceService {
       });
       em.persist(shareLog);
 
+      // 이번 초대를 포함한 당일 누적 초대 횟수. 미션 진행의 단일 소스(멱등 갱신용).
+      const inviteCount = todayShareLogs + 1;
       // 기회 지급 한도 내(처음 3건)에서만 기회를 +1 한다. 한도 초과분은 미션 진행만.
       const chanceGranted = todayShareLogs < this.shareDailyChargeLimit;
       if (chanceGranted) chance.count += 1;
       this.successLog(userKey, "share", chance.count, {
         channel: payload.channel,
         chanceGranted,
+        inviteCount,
       });
-      return { count: this.computeAvailable(chance, start), chanceGranted };
+      return {
+        count: this.computeAvailable(chance, start),
+        chanceGranted,
+        inviteCount,
+      };
     });
   }
 

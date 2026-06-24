@@ -137,22 +137,28 @@ export class ChanceController {
       return this.chanceService.chargeByAd(user.userKey, body.sdkPayload);
     }
 
-    const result = await this.chanceService.chargeByShare(
-      user.userKey,
-      body.sdkPayload,
-    );
-    // 적립(기회) 트랜잭션이 커밋된 뒤 친구초대 미션을 진행시킨다. 미션 진행 실패가
-    // 이미 지급된 기회를 되돌리지 않도록 best-effort로 분리한다(별도 트랜잭션).
-    await this.progressInviteMission(user.userKey);
-    return result;
+    const { count, chanceGranted, inviteCount } =
+      await this.chanceService.chargeByShare(user.userKey, body.sdkPayload);
+
+    await this.progressInviteMission(user.userKey, inviteCount);
+    // inviteCount는 내부용이라 응답에서 제외한다.
+    return { count, chanceGranted };
   }
 
-  private async progressInviteMission(userKey: number): Promise<void> {
+  private async progressInviteMission(
+    userKey: number,
+    inviteCount: number,
+  ): Promise<void> {
     try {
-      await this.missionService.onFriendInvited(userKey);
+      await this.missionService.onFriendInvited(userKey, inviteCount);
     } catch (err) {
       this.logger.warn(
-        { event: "mission.invite.progress_failed", userKey, err },
+        {
+          event: "mission.invite_progress.failed",
+          userKey,
+          reason: "mission_progress_failed",
+          err,
+        },
         "친구초대 미션 진행 실패",
       );
     }

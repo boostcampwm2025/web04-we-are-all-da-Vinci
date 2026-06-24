@@ -13,6 +13,8 @@ import type {
   DrawingContext,
 } from "../mission.types";
 import type { UserMissionRepository } from "../repository/user-mission.repository";
+import { PointReason } from "../../point/entity/point-log.entity";
+import { PointService } from "../../point/point.service";
 import { AssignMissionService } from "./assign-mission.service";
 import { MissionProcessor } from "./mission.processor";
 import { TutorialMissionService } from "./tutorial-mission.service";
@@ -25,6 +27,7 @@ export class MissionService {
     private readonly processor: MissionProcessor,
     private readonly assignMissionService: AssignMissionService,
     private readonly tutorialMissionService: TutorialMissionService,
+    private readonly pointService: PointService,
   ) {}
 
   async myMissions(userKey: number): Promise<MyMissionsResponseDto> {
@@ -151,37 +154,73 @@ export class MissionService {
     return result;
   }
 
+  // 친구 초대 이벤트 — 공유 적립(ChanceService.chargeByShare) 성공 시마다 호출된다.
+  // 당일 누적 초대 횟수(inviteCount = ShareLog 개수)를 단일 소스로 삼아 INVITE 미션을
+  // 멱등 갱신한다. 진행을 ++로 누적하지 않으므로, 어떤 호출이 누락돼도 다음 초대가
+  // currentCount를 실제 ShareLog 개수로 보정한다(드리프트·복구불가 방지).
   @Transactional()
-  async onFriendInvited(userKey: number): Promise<CycleResult> {
+  async onFriendInvited(userKey: number, inviteCount: number): Promise<void> {
     const window = MissionWindow.now();
     await this.assignMissionService.ensureMissionsAssigned(userKey, window);
     // 같은 유저 동시 요청 직렬화 — 활성 미션 조회 전에 행을 잠근다
     await this.userMissionRepo.lockActiveForUpdate(userKey);
 
-    const inviteActive = await this.userMissionRepo.findActiveByObjective(
+    // findActiveByObjective는 completedAt: null만 반환 → 미배정·완료 시 []이고 멱등하게 종료.
+    const [invite] = await this.userMissionRepo.findActiveByObjective(
       userKey,
       ObjectiveType.INVITE,
       window.todayStart,
       window.weekStart,
     );
-    // 일일 미션 완료 수를 세는 주간 메타("일일 미션 N개 완료")도 함께 진행시킨다
-    const weeklyMeta = await this.userMissionRepo.findActiveByObjective(
+    if (!invite) return;
+
+    const required = invite.mission.requiredCount;
+    // ShareLog 개수로 멱등 설정. 후퇴 방지를 위해 기존 값과 max, 상한은 required.
+    const next = Math.min(Math.max(invite.currentCount, inviteCount), required);
+    if (next === invite.currentCount) return; // 변화 없음(중복/지연 호출)
+    invite.currentCount = next;
+
+    if (invite.currentCount >= required) {
+      invite.completedAt = window.now;
+      if (invite.mission.rewardAmount > 0) {
+        await this.pointService.savePointGrantRequest(
+          userKey,
+          PointReason.MISSION,
+          invite.mission.rewardAmount,
+        );
+      }
+      // 일일 미션 완료 수를 세는 주간 메타("일일 미션 N개 완료")를 1 증가시킨다.
+      await this.progressDailyCompletionMeta(userKey, window);
+    }
+
+    await this.userMissionRepo.flush();
+  }
+
+  private async progressDailyCompletionMeta(
+    userKey: number,
+    window: MissionWindow,
+  ): Promise<void> {
+    const metas = await this.userMissionRepo.findActiveByObjective(
       userKey,
       ObjectiveType.MISSION_COMPLETED,
       window.todayStart,
       window.weekStart,
     );
-
-    const result = await this.processor.executeProgressCycle(
-      userKey,
-      inviteActive,
-      weeklyMeta,
-      { objectiveType: ObjectiveType.INVITE },
-      window,
-    );
-
-    await this.userMissionRepo.flush();
-
-    return result;
+    for (const meta of metas) {
+      meta.currentCount += 1;
+      if (
+        meta.currentCount >= meta.mission.requiredCount &&
+        !meta.completedAt
+      ) {
+        meta.completedAt = window.now;
+        if (meta.mission.rewardAmount > 0) {
+          await this.pointService.savePointGrantRequest(
+            userKey,
+            PointReason.MISSION,
+            meta.mission.rewardAmount,
+          );
+        }
+      }
+    }
   }
 }
