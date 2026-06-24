@@ -1,5 +1,7 @@
 import { usePlayChanceContext } from "@/feature/playChance";
+import { AD_GROUP_IDS } from "@/shared/config";
 import { FUNNEL_EVENTS, trackClick, useToast } from "@/shared/lib";
+import { BannerAd } from "@/shared/ui/bannerAd";
 import { BottomSheet, ListRow, Toast } from "@toss/tds-mobile";
 import {
   getInviteResultMessage,
@@ -107,6 +109,9 @@ const ShareSheet = ({ open, onClose, onInvited }: ShareSheetProps) => {
           <p className="px-(--page-px) pt-2 text-xs text-(--color-grey)">
             {INVITE_REWARD_NOTICE}
           </p>
+          <div className="mt-3 px-(--card-mx)">
+            <BannerAd type="list" adGroupId={AD_GROUP_IDS.BANNER_LIST} />
+          </div>
         </div>
       </BottomSheet>
 
