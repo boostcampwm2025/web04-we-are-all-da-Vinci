@@ -317,8 +317,8 @@ describe("ChanceService", () => {
     });
   });
 
-  describe("chargeByShare (기회 한도 3 / 초대 상한 5)", () => {
-    it("contactsViral 채널: moduleId 통과 시 1번째 초대는 기회 지급 + ShareLog INSERT", async () => {
+  describe("친구 초대 적립은 기회 한도 3회와 초대 상한 5회를 분리해요", () => {
+    it("허용된 모듈이면 첫 번째 초대에서 기회를 지급하고 공유 기록을 남겨요", async () => {
       const existing = buildExisting({ count: 1, lastResetAt: TODAY_START });
       const { em, persisted } = buildEm(existing, 0);
       const chanceWhitelistValidator = buildWhitelistValidator();
@@ -331,7 +331,7 @@ describe("ChanceService", () => {
         rewardUnit: "그리기 기회",
       });
 
-      expect(result).toEqual({ count: 2, chanceGranted: true });
+      expect(result).toEqual({ count: 2, chanceGranted: true, inviteCount: 1 });
       expect(existing.count).toBe(2);
       expect(persisted.find((p) => p instanceof ShareLog)).toBeDefined();
       expect(chanceWhitelistValidator.validateShareModule).toHaveBeenCalledWith(
@@ -343,7 +343,7 @@ describe("ChanceService", () => {
       );
     });
 
-    it("기회 한도 직전(2건)이면 3번째 초대까지 기회를 지급한다", async () => {
+    it("세 번째 초대까지는 기회를 지급해요", async () => {
       const existing = buildExisting({ count: 2, lastResetAt: TODAY_START });
       const { em } = buildEm(existing, 2);
       const service = buildService(em);
@@ -353,10 +353,10 @@ describe("ChanceService", () => {
           channel: "contactsViral",
           moduleId: ALLOWED_MODULE,
         }),
-      ).resolves.toEqual({ count: 3, chanceGranted: true });
+      ).resolves.toEqual({ count: 3, chanceGranted: true, inviteCount: 3 });
     });
 
-    it("기회 한도(3) 초과한 4번째 초대는 기회 없이 ShareLog만 기록한다", async () => {
+    it("기회 한도를 넘은 네 번째 초대는 기회 없이 공유 기록만 남겨요", async () => {
       const existing = buildExisting({ count: 3, lastResetAt: TODAY_START });
       const { em, persisted } = buildEm(existing, 3);
       const service = buildService(em);
@@ -366,13 +366,17 @@ describe("ChanceService", () => {
         moduleId: ALLOWED_MODULE,
       });
 
-      expect(result).toEqual({ count: 3, chanceGranted: false });
-      // 기회는 그대로, 미션 진행용 ShareLog만 쌓인다
+      expect(result).toEqual({
+        count: 3,
+        chanceGranted: false,
+        inviteCount: 4,
+      });
+      // 기회는 그대로, 미션 진행용 공유 기록만 쌓인다
       expect(existing.count).toBe(3);
       expect(persisted.find((p) => p instanceof ShareLog)).toBeDefined();
     });
 
-    it("5번째 초대도 기회 없이 ShareLog만 기록한다", async () => {
+    it("다섯 번째 초대도 기회 없이 공유 기록만 남겨요", async () => {
       const existing = buildExisting({ count: 3, lastResetAt: TODAY_START });
       const { em, persisted } = buildEm(existing, 4);
       const service = buildService(em);
@@ -382,11 +386,15 @@ describe("ChanceService", () => {
         moduleId: ALLOWED_MODULE,
       });
 
-      expect(result).toEqual({ count: 3, chanceGranted: false });
+      expect(result).toEqual({
+        count: 3,
+        chanceGranted: false,
+        inviteCount: 5,
+      });
       expect(persisted.find((p) => p instanceof ShareLog)).toBeDefined();
     });
 
-    it("초대 상한(5) 도달 시 6번째 초대는 거부하고 ShareLog도 남기지 않는다", async () => {
+    it("초대 상한을 채운 여섯 번째 초대는 거부하고 기록도 남기지 않아요", async () => {
       const existing = buildExisting({ count: 3, lastResetAt: TODAY_START });
       const { em, persisted } = buildEm(existing, 5);
       const service = buildService(em);
