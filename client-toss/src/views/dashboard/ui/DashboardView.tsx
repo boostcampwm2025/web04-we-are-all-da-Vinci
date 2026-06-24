@@ -87,8 +87,11 @@ const DashboardView = () => {
       attendanceCheckIn.result === null,
   );
 
-  const { missions: todayMissions, isLoading: isMissionsLoading } =
-    useTodayMissions();
+  const {
+    missions: todayMissions,
+    isLoading: isMissionsLoading,
+    refetch: refetchMissions,
+  } = useTodayMissions();
   const missionMaxPoint = todayMissions.reduce(
     (sum, mission) => sum + mission.rewardAmount,
     0,
@@ -188,6 +191,7 @@ const DashboardView = () => {
             cta={cta}
             podium={podium}
             participantCount={participantCount}
+            onInvited={refetchMissions}
           />
           <TodayMissionCard
             missions={todayMissions}

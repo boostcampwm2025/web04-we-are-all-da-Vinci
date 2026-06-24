@@ -4,6 +4,7 @@ import {
   useAttendanceStatus,
 } from "@/entities/attendance";
 import { AttendanceRecoverButton } from "@/feature/attendanceRecovery";
+import { InviteMissionButton } from "@/feature/share";
 import {
   getDailyMissionRangeLabel,
   getWeeklyMissionRangeLabel,
@@ -21,8 +22,13 @@ import { ATTENDANCE_REWARD_DAYS, ATTENDANCE_REWARD_POINT } from "@toss/shared";
 import { useEffect } from "react";
 
 const MissionView = () => {
-  const { dailyMissions, weeklyMissions, tutorialCategories, isLoading } =
-    useMyMissions();
+  const {
+    dailyMissions,
+    weeklyMissions,
+    tutorialCategories,
+    isLoading,
+    refetch,
+  } = useMyMissions();
   const { status: attendanceStatus, refetch: refetchAttendance } =
     useAttendanceStatus();
 
@@ -92,6 +98,13 @@ const MissionView = () => {
           missions={dailyMissions}
           section={MISSION_SECTIONS.daily}
           rangeLabel={getDailyMissionRangeLabel()}
+          renderAction={(mission) =>
+            // 친구초대 미션은 미완료일 때 카드에서 바로 초대를 시작할 수 있게 한다.
+            mission.objectiveType === "invite" &&
+            mission.currentCount < mission.requiredCount ? (
+              <InviteMissionButton onInvited={refetch} />
+            ) : null
+          }
         />
       </div>
       <div className="mt-1 px-(--card-mx)">

@@ -1,10 +1,14 @@
 import { usePlayChanceContext } from "@/feature/playChance";
 import { FUNNEL_EVENTS, trackClick, useToast } from "@/shared/lib";
 import { BottomSheet, ListRow, Toast } from "@toss/tds-mobile";
+import {
+  getInviteResultMessage,
+  INVITE_FAIL_MESSAGE,
+  INVITE_REWARD_NOTICE,
+  INVITE_TOAST_DURATION_MS,
+} from "../config/inviteToast";
 import { shareMyScore } from "../lib/handleShare";
 import { useInviteFriend } from "../model/useInviteFriend";
-
-const TOAST_DURATION_MS = 2500;
 
 const OptionIcon = ({ emoji }: { emoji: string }) => (
   <span
@@ -45,22 +49,23 @@ const ShareOption = ({ emoji, top, bottom, onSelect }: ShareOptionProps) => (
 interface ShareSheetProps {
   open: boolean;
   onClose: () => void;
+  onInvited?: () => void;
 }
 
-const ShareSheet = ({ open, onClose }: ShareSheetProps) => {
+const ShareSheet = ({ open, onClose, onInvited }: ShareSheetProps) => {
   const toast = useToast();
   const { refresh } = usePlayChanceContext();
 
   const { start: startInvite } = useInviteFriend({
-    onCharged: () => {
+    onCharged: ({ chanceGranted }) => {
       // refresh가 throw해도 state.error로 노출됨 — unhandled rejection만 방지
       refresh().catch(() => {});
-      toast.show("그리기 기회 1회를 받았어요");
+      // 기회 한도(하루 3회) 초과분은 기회 없이 미션만 진행되므로 문구를 분기한다.
+      toast.show(getInviteResultMessage(chanceGranted));
+      onInvited?.();
     },
     onError: (error) => {
-      toast.show(
-        error.message || "초대에 실패했어요. 잠시 후 다시 시도해주세요.",
-      );
+      toast.show(error.message || INVITE_FAIL_MESSAGE);
     },
   });
 
@@ -100,7 +105,7 @@ const ShareSheet = ({ open, onClose }: ShareSheetProps) => {
             onSelect={handleInviteShare}
           />
           <p className="px-(--page-px) pt-2 text-xs text-(--color-grey)">
-            친구 초대 보상은 하루 5회까지 받을 수 있어요.
+            {INVITE_REWARD_NOTICE}
           </p>
         </div>
       </BottomSheet>
@@ -109,7 +114,7 @@ const ShareSheet = ({ open, onClose }: ShareSheetProps) => {
         position="top"
         open={toast.open}
         text={toast.text}
-        duration={TOAST_DURATION_MS}
+        duration={INVITE_TOAST_DURATION_MS}
         onClose={toast.close}
       />
     </>
