@@ -2288,6 +2288,15 @@
           "unique": true,
           "primary": true,
           "constraint": true
+        },
+        {
+          "columnNames": [
+            "last_checked_date"
+          ],
+          "keyName": "user_attendances_last_checked_date_index",
+          "unique": false,
+          "primary": false,
+          "constraint": false
         }
       ],
       "checks": [],

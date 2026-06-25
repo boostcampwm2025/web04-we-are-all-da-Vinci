@@ -108,4 +108,39 @@ export class NotificationController {
       eventType: body.eventType,
     });
   }
+
+  @Get("attendance-streak/agreement")
+  @ApiOperation({
+    summary: "연속 출석 중단 알림 동의 상태 조회",
+    description:
+      "JWT로 인증된 사용자의 연속 출석 중단 알림 동의 상태를 반환해요.",
+  })
+  @ApiResponse({ status: 200, description: "동의 상태 반환" })
+  getAttendanceStreakAgreement(
+    @CurrentUser() user: CurrentUserPayload,
+  ): Promise<NotificationAgreementResponse> {
+    return this.notificationAgreementService.getAttendanceStreakAgreement(
+      user.userKey,
+    );
+  }
+
+  @Post("attendance-streak/agreement")
+  @ApiOperation({
+    summary: "연속 출석 중단 알림 동의 결과 저장",
+    description:
+      "앱인토스 requestNotificationAgreement SDK의 이벤트 결과를 저장해요.",
+  })
+  @ApiBody(agreementRequestBody)
+  @ApiResponse({ status: 201, description: "동의 결과 저장 성공" })
+  @ApiResponse({ status: 400, description: "Zod 검증 실패" })
+  saveAttendanceStreakAgreement(
+    @CurrentUser() user: CurrentUserPayload,
+    @Body(new ZodValidationPipe(NotificationAgreementRequestSchema))
+    body: NotificationAgreementRequest,
+  ): Promise<NotificationAgreementResponse> {
+    return this.notificationAgreementService.saveAttendanceStreakAgreement({
+      userKey: user.userKey,
+      eventType: body.eventType,
+    });
+  }
 }

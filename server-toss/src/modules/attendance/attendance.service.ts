@@ -1,4 +1,5 @@
 import { EntityManager, LockMode } from "@mikro-orm/core";
+import { InjectRepository } from "@mikro-orm/nestjs";
 import { ForbiddenException, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type {
@@ -13,6 +14,7 @@ import { PointReason } from "src/modules/point/entity/point-log.entity";
 import { PointService } from "src/modules/point/point.service";
 import { User } from "src/modules/user/user.entity";
 import { Attendance } from "./attendance.entity";
+import { AttendanceRepository } from "./attendance.repository";
 import { nextCycleDay, rewardedDayFor, tomorrowMaxPoint } from "./lib/cycle";
 
 @Injectable()
@@ -23,10 +25,21 @@ export class AttendanceService {
   constructor(
     private readonly em: EntityManager,
     private readonly pointService: PointService,
+    @InjectRepository(Attendance)
+    private readonly attendanceRepository: AttendanceRepository,
     configService: ConfigService,
   ) {
     this.recoveryAdGroupId = configService.getOrThrow<string>(
       "ATTENDANCE_AD_GROUP_ID",
+    );
+  }
+
+  // 오늘(KST) 출석하지 않은 사용자 전수 — 연속 출석 중단 알림 발송 대상.
+  // last_checked_date < 오늘 시작이면 오늘 미체크인(어제·그저께·장기 휴면 포함).
+  async findUncheckedInTodayUserKeys(): Promise<number[]> {
+    const todayStart = getSeoulDayRange().start;
+    return this.attendanceRepository.findUserKeysByLastCheckedBefore(
+      todayStart,
     );
   }
 
