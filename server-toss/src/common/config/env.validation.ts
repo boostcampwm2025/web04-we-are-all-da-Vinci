@@ -70,5 +70,15 @@ export const validateChanceWhitelistEnv = (
   if (config.OVERTAKEN_NOTIFICATION_ENABLED === "true") {
     validateNonEmpty("TOSS_TEMPLATE_OVERTAKEN", config.TOSS_TEMPLATE_OVERTAKEN);
   }
+  validateOptionalBoolean(
+    "ATTENDANCE_STREAK_NOTIFICATION_ENABLED",
+    config.ATTENDANCE_STREAK_NOTIFICATION_ENABLED,
+  );
+  if (config.ATTENDANCE_STREAK_NOTIFICATION_ENABLED === "true") {
+    validateNonEmpty(
+      "TOSS_TEMPLATE_ATTENDANCE_STREAK",
+      config.TOSS_TEMPLATE_ATTENDANCE_STREAK,
+    );
+  }
   return config;
 };

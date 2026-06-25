@@ -3,7 +3,6 @@ import {
   Controller,
   Get,
   HttpCode,
-  Logger,
   Post,
   UseGuards,
 } from "@nestjs/common";
@@ -28,7 +27,6 @@ import {
   type CurrentUserPayload,
 } from "../auth/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { MissionService } from "../mission/service/mission.service";
 import { ChanceService } from "./chance.service";
 import type { SchemaObject } from "@nestjs/swagger/dist/interfaces/open-api-spec.interface";
 
@@ -94,12 +92,7 @@ const ChargeRequestBodySchema: SchemaObject = {
 @UseGuards(JwtAuthGuard)
 @Controller("chances")
 export class ChanceController {
-  private readonly logger = new Logger(ChanceController.name);
-
-  constructor(
-    private readonly chanceService: ChanceService,
-    private readonly missionService: MissionService,
-  ) {}
+  constructor(private readonly chanceService: ChanceService) {}
 
   @Get("me")
   @ApiOperation({ summary: "현재 그리기 기회 조회" })
@@ -129,38 +122,14 @@ export class ChanceController {
   @ApiForbiddenResponse({
     description: "화이트리스트에 없거나 일일 적립 한도를 넘었어요.",
   })
-  async charge(
+  charge(
     @CurrentUser() user: CurrentUserPayload,
     @Body(new ZodValidationPipe(ChargeRequestSchema)) body: ChargeRequest,
   ): Promise<ChargeResponse> {
     if (body.source === "ad") {
       return this.chanceService.chargeByAd(user.userKey, body.sdkPayload);
     }
-
-    const { count, chanceGranted, inviteCount } =
-      await this.chanceService.chargeByShare(user.userKey, body.sdkPayload);
-
-    await this.progressInviteMission(user.userKey, inviteCount);
-    // inviteCount는 내부용이라 응답에서 제외한다.
-    return { count, chanceGranted };
-  }
-
-  private async progressInviteMission(
-    userKey: number,
-    inviteCount: number,
-  ): Promise<void> {
-    try {
-      await this.missionService.onFriendInvited(userKey, inviteCount);
-    } catch (err) {
-      this.logger.warn(
-        {
-          event: "mission.invite_progress.failed",
-          userKey,
-          reason: "mission_progress_failed",
-          err,
-        },
-        "친구초대 미션 진행 실패",
-      );
-    }
+    // 친구초대 미션 진행은 chargeByShare 트랜잭션 내부에서 원자적으로 처리된다.
+    return this.chanceService.chargeByShare(user.userKey, body.sdkPayload);
   }
 }

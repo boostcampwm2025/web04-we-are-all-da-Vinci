@@ -62,21 +62,51 @@ const buildConfigService = () => ({
   }),
 });
 
+const buildAttendanceRepository = () => ({
+  findUserKeysByLastCheckedBefore: jest.fn(async () => [] as number[]),
+});
+
 const buildService = (
   em: unknown,
   pointService = buildPointService(),
   configService = buildConfigService(),
+  attendanceRepository = buildAttendanceRepository(),
 ) => ({
   service: new AttendanceService(
     em as never,
     pointService as never,
+    attendanceRepository as never,
     configService as never,
   ),
   pointService,
+  attendanceRepository,
 });
 
 describe("출석 서비스", () => {
   afterEach(() => jest.clearAllMocks());
+
+  describe("연속 출석 중단 알림 대상 조회", () => {
+    it("오늘(KST) 시작 시각 이전으로 마지막 출석한 사용자를 리포지토리에서 조회한다", async () => {
+      const { em } = buildEm(null);
+      const attendanceRepository = buildAttendanceRepository();
+      attendanceRepository.findUserKeysByLastCheckedBefore.mockResolvedValue([
+        101, 202,
+      ]);
+      const { service } = buildService(
+        em,
+        buildPointService(),
+        buildConfigService(),
+        attendanceRepository,
+      );
+
+      const result = await service.findUncheckedInTodayUserKeys();
+
+      expect(result).toEqual([101, 202]);
+      expect(
+        attendanceRepository.findUserKeysByLastCheckedBefore,
+      ).toHaveBeenCalledWith(TODAY_START);
+    });
+  });
 
   describe("체크인 — 첫 출석", () => {
     it("출석 행을 생성하고 1일차 started를 반환한다", async () => {

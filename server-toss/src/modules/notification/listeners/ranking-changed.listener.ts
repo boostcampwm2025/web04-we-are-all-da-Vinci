@@ -15,7 +15,9 @@ import { NotificationService } from "../notification.service";
 // 그림 제출로 랭킹이 갱신되면 추월된 사용자에게 OVERTAKEN 알림 발송.
 // 발송 정책:
 //   - TOP100 내 변동만 (overtakenUserKeys는 ranking.service에서 limit 100으로 잘림)
-//   - 사용자당 일일 1회 (referenceId = `${day}_${userKey}` UNIQUE 자동 차단)
+//   - 추월 사건당 1회 (referenceId = `${triggerDrawingId}_${userKey}` UNIQUE 자동 차단).
+//     제출 그림 1건은 전역 유일이라, 같은 사람이라도 다른 제출로 다시 추월하면 매번 발송.
+//     같은 이벤트가 중복 처리(재발행/재시도)되면 같은 키라 UNIQUE가 차단해 멱등 유지.
 // 격리:
 //   - @OnEvent async — 사용자 그림 제출 응답에 발송 시간 영향 X
 //   - try/catch로 발송 실패가 다른 사용자에 전파되지 않도록 분리
@@ -101,8 +103,8 @@ export class RankingChangedListener {
       try {
         const result = await this.notificationService.send({
           targetUserKey: userKey,
-          // user별 referenceId로 같은 사용자에게 일일 1회만 발송됨 (UNIQUE 차단).
-          referenceId: `${event.day}_${userKey}`,
+          // 추월 사건(제출 그림)+user별 referenceId → 추월당할 때마다 발송, 동일 이벤트는 멱등.
+          referenceId: `${event.triggerDrawingId}_${userKey}`,
           type: NOTIFICATION_TYPE.OVERTAKEN,
           templateSetCode,
           context: {
