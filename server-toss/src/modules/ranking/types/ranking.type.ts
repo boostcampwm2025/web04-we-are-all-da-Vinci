@@ -1,3 +1,4 @@
+import { SimilarityResponseSchema, StrokeSchema } from "@toss/shared";
 import { z } from "zod";
 
 export const RankingSimilaritySchema = z.object({
@@ -9,16 +10,12 @@ export const RankingSimilaritySchema = z.object({
 
 export type RankingSimilarity = z.infer<typeof RankingSimilaritySchema>;
 
-export const PodiumItemSchema = z.object({
-  nickname: z.string().max(20),
-  score: z.number().min(0).max(100),
-});
-
-export type PodiumItem = z.infer<typeof PodiumItemSchema>;
-
-export const PodiumResponseSchema = z.array(PodiumItemSchema);
-
-export type PodiumResponse = z.infer<typeof PodiumResponseSchema>;
+export {
+  PodiumItemSchema,
+  PodiumResponseSchema,
+  type PodiumItem,
+  type PodiumResponse,
+} from "@toss/shared";
 
 export const RankingListItemSchema = z.object({
   nickname: z.string().max(20),
@@ -27,6 +24,8 @@ export const RankingListItemSchema = z.object({
   drawingId: z.string(),
   rank: z.number().min(1),
   isMe: z.boolean(),
+  strokes: z.array(StrokeSchema),
+  similarity: SimilarityResponseSchema,
 });
 
 export type RankingListItem = z.infer<typeof RankingListItemSchema>;

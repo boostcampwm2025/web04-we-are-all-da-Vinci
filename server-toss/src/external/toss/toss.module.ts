@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { TossAuthClient } from "./auth/toss-auth.client";
 import { TossHttpClient } from "./common/toss-http.client";
+import { TossNotificationSender } from "./messenger/toss-messenger.client";
 import { TossPointGrantKeyIssuer } from "./point/toss-point-grant-key.issuer";
 import { TossPointGrantExecuter } from "./point/toss-point-grant.executer";
 
@@ -10,12 +11,14 @@ import { TossPointGrantExecuter } from "./point/toss-point-grant.executer";
     TossAuthClient,
     TossPointGrantExecuter,
     TossPointGrantKeyIssuer,
+    TossNotificationSender,
   ],
   exports: [
     TossHttpClient,
     TossAuthClient,
     TossPointGrantExecuter,
     TossPointGrantKeyIssuer,
+    TossNotificationSender,
   ],
 })
 export class TossModule {}

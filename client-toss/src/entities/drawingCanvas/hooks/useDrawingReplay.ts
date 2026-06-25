@@ -1,6 +1,7 @@
 import type { Stroke } from "@toss/shared";
 import { useEffect, type RefObject } from "react";
 import { animateDrawing } from "../lib/animateDrawing";
+import { getCanvasBackgroundColor } from "../lib/canvasBackground";
 
 interface UseDrawingReplayProps {
   canvasRef: RefObject<HTMLCanvasElement | null>;
@@ -8,6 +9,10 @@ interface UseDrawingReplayProps {
   strokes: Stroke[];
   speed: number;
   loop: boolean;
+  isVisible?: boolean;
+  replayKey?: number;
+  targetDurationMs?: number;
+  shouldScale?: boolean;
   /**
    * 캔버스 사이즈 변화에 맞춰 리플레이 재시작 트리거.
    * useCanvasSetup의 canvasSize 값을 그대로 넘기면 됨.
@@ -21,6 +26,10 @@ export const useDrawingReplay = ({
   strokes,
   speed,
   loop,
+  isVisible = true,
+  replayKey,
+  targetDurationMs,
+  shouldScale,
   canvasSize = 0,
 }: UseDrawingReplayProps) => {
   useEffect(() => {
@@ -31,16 +40,35 @@ export const useDrawingReplay = ({
       return;
     }
 
+    if (!isVisible) {
+      ctx.fillStyle = getCanvasBackgroundColor();
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
+
     const cancelAnimation = animateDrawing(
       canvasRef,
       ctxRef,
       strokes,
       speed,
       loop,
+      targetDurationMs,
+      shouldScale,
     );
 
     return () => {
       cancelAnimation();
     };
-  }, [canvasRef, ctxRef, strokes, speed, loop, canvasSize]);
+  }, [
+    canvasRef,
+    ctxRef,
+    strokes,
+    speed,
+    loop,
+    isVisible,
+    replayKey,
+    targetDurationMs,
+    shouldScale,
+    canvasSize,
+  ]);
 };

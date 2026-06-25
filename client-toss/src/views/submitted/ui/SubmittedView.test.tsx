@@ -67,10 +67,23 @@ const playChance = (hasChance: boolean) => ({
   startPlay: mockStartPlay,
 });
 const mockUsePlayChanceContext = vi.fn(() => playChance(true));
-vi.mock("@/feature/playChance", () => ({
+// useStartGame이 상대경로로 가져오는 하위 모듈을 목으로 잡는다(배럴 목 불가).
+vi.mock("@/feature/playChance/hooks/useFullScreenAd", () => ({
   useFullScreenAd: () => mockUseFullScreenAd(),
+}));
+vi.mock("@/feature/playChance/model/playChanceContext", () => ({
   usePlayChanceContext: () => mockUsePlayChanceContext(),
 }));
+
+// getAnonymousHash만 고정값으로 덮고 나머지(useToast·useExitGuard 등)는 실제 구현 유지.
+vi.mock("@/shared/lib", async () => {
+  const actual =
+    await vi.importActual<typeof import("@/shared/lib")>("@/shared/lib");
+  return {
+    ...actual,
+    getAnonymousHash: vi.fn().mockResolvedValue("test-hash"),
+  };
+});
 
 const mockRouteState = {
   promptId: 1,
@@ -119,7 +132,6 @@ describe("SubmittedView", () => {
     vi.mocked(serverTossApi.submitDrawing).mockResolvedValue({
       drawingId: 1,
       similarity: mockRouteState.similarity,
-      promotionGranted: false,
     });
 
     renderWithState();
@@ -135,7 +147,7 @@ describe("SubmittedView", () => {
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith("/", {
         replace: true,
-        state: { fromSubmitted: true, promotionGranted: false },
+        state: { fromSubmitted: true },
       });
     });
   });
@@ -158,13 +170,12 @@ describe("SubmittedView", () => {
     });
   });
 
-  it("promotionGranted가 true이면 state에 포함하여 홈으로 이동한다", async () => {
+  it("fromSubmitted가 true이면 state에 포함하여 홈으로 이동한다", async () => {
     vi.useRealTimers();
     const user = userEvent.setup();
     vi.mocked(serverTossApi.submitDrawing).mockResolvedValue({
       drawingId: 1,
       similarity: mockRouteState.similarity,
-      promotionGranted: true,
     });
 
     renderWithState();
@@ -174,7 +185,7 @@ describe("SubmittedView", () => {
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith("/", {
         replace: true,
-        state: { fromSubmitted: true, promotionGranted: true },
+        state: { fromSubmitted: true },
       });
     });
   });
@@ -206,7 +217,7 @@ describe("SubmittedView", () => {
     renderWithState();
 
     expect(
-      screen.getByText(/등록하면 오늘 그린 최고 점수가 랭킹에 반영돼요/),
+      screen.getByText(/가장 높은 기억력 점수가 랭킹에 반영돼요/),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/그림의 점수도 자세히 분석해드려요/),

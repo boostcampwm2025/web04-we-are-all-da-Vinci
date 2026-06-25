@@ -3,6 +3,22 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { serverTossApi } from "./serverToss";
 
 describe("serverTossApi", () => {
+  const rankingStrokes: Stroke[] = [
+    {
+      points: [
+        [0, 1],
+        [0, 1],
+      ],
+      color: [0, 0, 0],
+    },
+  ];
+  const rankingSimilarity = {
+    score: 99.9,
+    shapeSimilarity: 50,
+    strokeMatchSimilarity: 50,
+    penalty: 0,
+  };
+
   beforeEach(() => {
     vi.restoreAllMocks();
     localStorage.clear();
@@ -41,6 +57,8 @@ describe("serverTossApi", () => {
         rank: 1,
         score: 99.9,
         isMe: true,
+        strokes: rankingStrokes,
+        similarity: rankingSimilarity,
       },
     ];
     const body = {
@@ -59,30 +77,6 @@ describe("serverTossApi", () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/rankings",
-      expect.objectContaining({
-        method: "GET",
-        headers: expect.any(Headers),
-      }),
-    );
-
-    const requestInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
-    expect((requestInit.headers as Headers).get("x-user-id")).toBeNull();
-  });
-
-  it("내 그림 조회 시 /api/drawing/me로 요청하고 x-user-id를 보내지 않는다", async () => {
-    const body = { userKey: 7, drawings: [] };
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      text: async () => JSON.stringify(body),
-      json: async () => body,
-    });
-
-    vi.stubGlobal("fetch", fetchMock);
-
-    await serverTossApi.getMyDrawings();
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/drawing/me",
       expect.objectContaining({
         method: "GET",
         headers: expect.any(Headers),
@@ -128,7 +122,6 @@ describe("serverTossApi", () => {
     localStorage.setItem("userKey", "1234");
     const body = {
       drawingId: 42,
-      promotionGranted: true,
       similarity: {
         score: 90,
         shapeSimilarity: 45,
@@ -174,7 +167,6 @@ describe("serverTossApi", () => {
     };
     const submitBody = {
       drawingId: 42,
-      promotionGranted: false,
       similarity: {
         score: 90,
         shapeSimilarity: 45,
@@ -222,5 +214,91 @@ describe("serverTossApi", () => {
       }),
     );
     expect(localStorage.getItem("userKey")).toBe("760442640");
+  });
+
+  it("아카이브 요약 조회 시 /api/archive/summary로 요청한다", async () => {
+    const body = {
+      dates: [
+        {
+          date: "2026-05-29",
+          drawingCount: 2,
+          bestScore: 90,
+          rank: 3,
+          participantCount: 10,
+        },
+      ],
+      stats: {
+        totalDrawingCount: 2,
+        playDays: 1,
+        bestScore: 90,
+        bestRank: 3,
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => JSON.stringify(body),
+      json: async () => body,
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(serverTossApi.getArchiveSummary()).resolves.toEqual(body);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/archive/summary",
+      expect.objectContaining({
+        method: "GET",
+        headers: expect.any(Headers),
+      }),
+    );
+  });
+
+  it("아카이브 날짜 상세 조회 시 /api/archive/days/:date로 요청한다", async () => {
+    const body = {
+      date: "2026-05-29",
+      prompt: {
+        promptId: 1,
+        strokes: [],
+      },
+      ranking: {
+        rank: 3,
+        score: 90,
+        participantCount: 10,
+        drawingId: 42,
+      },
+      drawings: [
+        {
+          drawingId: 42,
+          createdAt: "2026-05-29T01:00:00.000Z",
+          strokes: [],
+          similarity: {
+            score: 90,
+            shapeSimilarity: 80,
+            strokeMatchSimilarity: 95,
+            penalty: 5,
+          },
+          isRankedDrawing: true,
+        },
+      ],
+    };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => JSON.stringify(body),
+      json: async () => body,
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(serverTossApi.getArchiveDay("2026-05-29")).resolves.toEqual(
+      body,
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/archive/days/2026-05-29",
+      expect.objectContaining({
+        method: "GET",
+        headers: expect.any(Headers),
+      }),
+    );
   });
 });

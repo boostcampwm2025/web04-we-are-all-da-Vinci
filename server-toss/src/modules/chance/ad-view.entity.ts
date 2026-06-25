@@ -22,4 +22,5 @@ export class AdView extends BaseEntity {
 
 export enum AdType {
   DRAWING = "drawing",
+  ATTENDANCE_RECOVERY = "attendance_recovery",
 }

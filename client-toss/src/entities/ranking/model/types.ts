@@ -1,3 +1,5 @@
+import type { SimilarityResponse, Stroke } from "@toss/shared";
+
 interface MyRankingFoundResponse {
   state: "FOUND";
   ranking: {
@@ -20,6 +22,8 @@ interface RankingListItem {
   rank: number;
   score: number;
   isMe: boolean;
+  strokes: Stroke[];
+  similarity: SimilarityResponse;
 }
 
 export type { MyRankingResponse, RankingListItem };

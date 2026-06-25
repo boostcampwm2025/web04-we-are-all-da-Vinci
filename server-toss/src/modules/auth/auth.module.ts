@@ -5,6 +5,7 @@ import { UserModule } from "src/modules/user/user.module";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
+import { LogoutCallbackAuthGuard } from "./guards/logout-callback-auth.guard";
 
 @Global()
 @Module({
@@ -21,7 +22,7 @@ import { JwtAuthGuard } from "./guards/jwt-auth.guard";
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthGuard],
+  providers: [AuthService, JwtAuthGuard, LogoutCallbackAuthGuard],
   exports: [JwtAuthGuard],
 })
 export class AuthModule {}

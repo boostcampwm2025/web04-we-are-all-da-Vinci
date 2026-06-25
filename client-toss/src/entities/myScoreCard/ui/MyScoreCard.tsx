@@ -1,15 +1,14 @@
 import {
   DrawingCanvasFrame,
   ReplayDrawingCanvas,
-  StaticDrawingCanvas,
 } from "@/entities/drawingCanvas";
-import { ScoreDetailCard } from "@/entities/scoreDetailCard";
 import { AD_GROUP_IDS } from "@/shared/config";
+import { formatScore } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";
 import type { MyDrawingResponse } from "@toss/shared";
-import { BottomSheet } from "@toss/tds-mobile";
 import { useState } from "react";
+import DrawingScoreDetailSheet from "./DrawingScoreDetailSheet";
 
 interface MyScoreCardProps {
   drawing: MyDrawingResponse;
@@ -17,14 +16,11 @@ interface MyScoreCardProps {
   hideAd?: boolean;
 }
 
-const formatScore = (score: number) => score.toFixed(2);
-
 const MyScoreCard = ({
   drawing,
   hideHeader = false,
   hideAd = false,
 }: MyScoreCardProps) => {
-  const { similarity } = drawing;
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   return (
@@ -61,47 +57,12 @@ const MyScoreCard = ({
           <BannerAd adGroupId={AD_GROUP_IDS.BANNER_LIST} className="w-full" />
         </div>
       )}
-      {isDetailOpen && (
-        <div
-          className="animate-slide-up-canvas pointer-events-none fixed inset-x-0 bottom-[calc(60vh+40px)] z-10001 flex justify-center"
-          aria-hidden
-        >
-          <div className="w-56.25 rounded-(--radius-card) bg-(--color-card) p-2 shadow-md">
-            <StaticDrawingCanvas
-              strokes={drawing.strokes}
-              isPrompt
-              ariaLabel="제출한 그림 미리보기"
-            />
-          </div>
-        </div>
-      )}
-      <BottomSheet
+      <DrawingScoreDetailSheet
         open={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
-        maxHeight="60vh"
-        expandedMaxHeight="60vh"
-        header={
-          <BottomSheet.Header>
-            <div className="flex w-full items-baseline justify-between">
-              <span>점수 분석</span>
-              <span className="font-normal">
-                <span className="text-base">총점 </span>
-                <span className="text-xl font-bold text-(--color-toss-blue)">
-                  {formatScore(drawing.similarity.score)}점
-                </span>
-              </span>
-            </div>
-          </BottomSheet.Header>
-        }
-      >
-        <div className="flex w-full flex-col items-center gap-4 px-(--page-px) pt-2 pb-[env(safe-area-inset-bottom)]">
-          <ScoreDetailCard
-            strokeMatchSimilarity={similarity.strokeMatchSimilarity}
-            shapeSimilarity={similarity.shapeSimilarity}
-            penalty={similarity.penalty}
-          />
-        </div>
-      </BottomSheet>
+        strokes={drawing.strokes}
+        similarity={drawing.similarity}
+      />
     </div>
   );
 };

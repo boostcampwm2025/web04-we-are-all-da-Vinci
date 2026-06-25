@@ -28,4 +28,6 @@ export enum PointReason {
   AD = "ad",
   SHARE = "share",
   DRAWING = "drawing",
+  MISSION = "mission",
+  ATTENDANCE = "attendance",
 }

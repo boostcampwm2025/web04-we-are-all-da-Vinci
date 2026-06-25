@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -14,6 +15,7 @@ import {
 } from "src/common/errors/external.errors";
 import type { LoginResponseDto } from "src/modules/auth/dto/login-response.dto";
 import type { LoginDto } from "src/modules/auth/dto/login.dto";
+import type { LogoutCallbackDto } from "src/modules/auth/dto/logout-callback.dto";
 import { UserService } from "src/modules/user/user.service";
 import { AuthClient } from "./port/auth-client.interface";
 
@@ -144,6 +146,18 @@ export class AuthService {
       { event: "auth.logout.succeeded", userKey },
       "토스 로그아웃 성공",
     );
+  }
+
+  async logoutByCallback({ userKey, referrer }: LogoutCallbackDto) {
+    if (
+      referrer !== "UNLINK" &&
+      referrer !== "WITHDRAWAL_TERMS" &&
+      referrer !== "WITHDRAWAL_TOSS"
+    ) {
+      throw new BadRequestException("잘못된 경로로 요청했어요.");
+    }
+
+    await this.userService.removeAll(userKey);
   }
 
   private decrypt(encryptedText: string): string {

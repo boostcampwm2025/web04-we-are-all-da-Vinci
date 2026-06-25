@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     optimizeDeps: {
-      exclude: ["@toss/shared"],
+      exclude: ["@toss/shared", "@apps-in-toss/web-framework"],
     },
     build: {
       commonjsOptions: {

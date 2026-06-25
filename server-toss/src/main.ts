@@ -1,11 +1,13 @@
-import "reflect-metadata";
 import { MikroORM } from "@mikro-orm/mysql";
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { Logger, LoggerErrorInterceptor } from "nestjs-pino";
+import "reflect-metadata";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/http-exception.filter";
 import { ZodExceptionFilter } from "./common/zod-exception.filter";
+import { DailyRankingSnapshotService } from "./modules/dailyRanking/daily-ranking-snapshot.service";
+import { MissionSeedService } from "./modules/mission/service/mission.seed";
 import { PromptSeedService } from "./modules/prompt/prompt.seed";
 
 async function bootstrap() {
@@ -31,12 +33,15 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup("/docs", app, document);
 
+  const orm = app.get<MikroORM>(MikroORM);
+
   if (process.env.NODE_ENV !== "production") {
-    const orm = app.get<MikroORM>(MikroORM);
     await orm.migrator.up();
   }
 
   await app.get(PromptSeedService).run();
+  await app.get(MissionSeedService).run();
+  await app.get(DailyRankingSnapshotService).backfillMissingSnapshots();
 
   await app.listen(process.env.PORT ?? 3001);
 }

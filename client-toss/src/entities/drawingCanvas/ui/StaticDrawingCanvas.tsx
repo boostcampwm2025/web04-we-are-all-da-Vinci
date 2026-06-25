@@ -8,12 +8,14 @@ interface StaticDrawingCanvasProps {
   strokes: Stroke[];
   /** true면 strokes를 캔버스 영역에 맞춰 스케일링 (prompt 데이터처럼 normalized 좌표일 때) */
   isPrompt?: boolean;
+  shouldScale?: boolean;
   ariaLabel?: string;
 }
 
 const StaticDrawingCanvas = ({
   strokes,
   isPrompt = false,
+  shouldScale = false,
   ariaLabel,
 }: StaticDrawingCanvasProps) => {
   const { containerRef, canvasRef, ctxRef, canvasSize } = useCanvasSetup();
@@ -26,9 +28,9 @@ const StaticDrawingCanvas = ({
     if (isPrompt) {
       drawPromptOnCanvas(canvas, ctx, strokes);
     } else {
-      drawStrokesOnCanvas(canvas, ctx, strokes, false);
+      drawStrokesOnCanvas(canvas, ctx, strokes, shouldScale);
     }
-  }, [canvasRef, ctxRef, strokes, isPrompt, canvasSize]);
+  }, [canvasRef, ctxRef, strokes, isPrompt, shouldScale, canvasSize]);
 
   return (
     <div

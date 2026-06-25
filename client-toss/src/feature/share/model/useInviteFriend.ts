@@ -1,5 +1,5 @@
 import { serverTossApi } from "@/shared/api";
-import { FUNNEL_EVENTS, trackClick } from "@/shared/lib";
+import { FUNNEL_EVENTS, toError, trackClick } from "@/shared/lib";
 import { contactsViral } from "@apps-in-toss/web-framework";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -7,9 +7,6 @@ interface UseInviteFriendArgs {
   onCharged?: (count: number) => void;
   onError?: (error: Error) => void;
 }
-
-const toError = (err: unknown, fallback: string): Error =>
-  err instanceof Error ? err : new Error(fallback);
 
 const isContactsViralAvailable = (): boolean => {
   const candidate = contactsViral as unknown as {
