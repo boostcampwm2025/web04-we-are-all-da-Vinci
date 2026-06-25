@@ -80,6 +80,27 @@ export class NotificationAgreementService {
     });
   }
 
+  async getAttendanceStreakAgreement(
+    userKey: number,
+  ): Promise<NotificationAgreementResponse> {
+    return this.getAgreement(
+      userKey,
+      NOTIFICATION_TYPE.ATTENDANCE_STREAK,
+      "TOSS_TEMPLATE_ATTENDANCE_STREAK",
+    );
+  }
+
+  async saveAttendanceStreakAgreement(input: {
+    userKey: number;
+    eventType: NotificationAgreementEvent;
+  }): Promise<NotificationAgreementResponse> {
+    return this.saveAgreement({
+      ...input,
+      type: NOTIFICATION_TYPE.ATTENDANCE_STREAK,
+      configKey: "TOSS_TEMPLATE_ATTENDANCE_STREAK",
+    });
+  }
+
   // 알림 타입별 동의 조회·저장 공통 로직. templateCode는 type별 환경변수에서 lookup.
   private async getAgreement(
     userKey: number,

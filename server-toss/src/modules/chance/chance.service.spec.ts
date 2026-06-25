@@ -39,12 +39,14 @@ interface EmApi {
 
 const buildEm = (existing: PlayChance | null, todayShareLogs = 0) => {
   const persisted: unknown[] = [];
+  // ShareLog 생성 시 카운트가 늘도록 상태를 둔다 → chargeByShare가 insert 후 다시 세는
+  // 실제 동작(삽입 전 N, 삽입 후 N+1)을 모사한다.
+  let shareLogCount = todayShareLogs;
   const em: EmApi = {
     findOne: jest.fn(async () => existing),
-    count: jest.fn(async (entity) =>
-      entity === ShareLog ? todayShareLogs : 0,
-    ),
+    count: jest.fn(async (entity) => (entity === ShareLog ? shareLogCount : 0)),
     create: jest.fn((entity, data) => {
+      if (entity === ShareLog) shareLogCount += 1;
       const obj = Object.assign(
         entity === PlayChance
           ? new PlayChance()
@@ -66,6 +68,10 @@ const buildEm = (existing: PlayChance | null, todayShareLogs = 0) => {
   };
   return { em, persisted };
 };
+
+const buildMissionService = () => ({
+  syncInviteProgress: jest.fn(async () => undefined),
+});
 
 const buildConfigService = () => ({
   get: jest.fn((key: string) => {
@@ -89,11 +95,13 @@ const buildWhitelistValidator = () =>
 const buildService = (
   em: unknown,
   chanceWhitelistValidator = buildWhitelistValidator(),
+  missionService = buildMissionService(),
 ) =>
   new ChanceService(
     em as never,
     buildConfigService() as never,
     chanceWhitelistValidator,
+    missionService as never,
   );
 
 const buildExisting = (overrides: Partial<PlayChance> = {}): PlayChance =>
@@ -322,7 +330,12 @@ describe("ChanceService", () => {
       const existing = buildExisting({ count: 1, lastResetAt: TODAY_START });
       const { em, persisted } = buildEm(existing, 0);
       const chanceWhitelistValidator = buildWhitelistValidator();
-      const service = buildService(em, chanceWhitelistValidator);
+      const missionService = buildMissionService();
+      const service = buildService(
+        em,
+        chanceWhitelistValidator,
+        missionService,
+      );
 
       const result = await service.chargeByShare(1, {
         channel: "contactsViral",
@@ -331,9 +344,11 @@ describe("ChanceService", () => {
         rewardUnit: "그리기 기회",
       });
 
-      expect(result).toEqual({ count: 2, chanceGranted: true, inviteCount: 1 });
+      expect(result).toEqual({ count: 2, chanceGranted: true });
       expect(existing.count).toBe(2);
       expect(persisted.find((p) => p instanceof ShareLog)).toBeDefined();
+      // 같은 트랜잭션에서 ShareLog 실개수(1)로 미션 동기화를 호출한다.
+      expect(missionService.syncInviteProgress).toHaveBeenCalledWith(em, 1, 1);
       expect(chanceWhitelistValidator.validateShareModule).toHaveBeenCalledWith(
         1,
         expect.objectContaining({
@@ -353,7 +368,7 @@ describe("ChanceService", () => {
           channel: "contactsViral",
           moduleId: ALLOWED_MODULE,
         }),
-      ).resolves.toEqual({ count: 3, chanceGranted: true, inviteCount: 3 });
+      ).resolves.toEqual({ count: 3, chanceGranted: true });
     });
 
     it("기회 한도를 넘은 네 번째 초대는 기회 없이 공유 기록만 남겨요", async () => {
@@ -366,11 +381,7 @@ describe("ChanceService", () => {
         moduleId: ALLOWED_MODULE,
       });
 
-      expect(result).toEqual({
-        count: 3,
-        chanceGranted: false,
-        inviteCount: 4,
-      });
+      expect(result).toEqual({ count: 3, chanceGranted: false });
       // 기회는 그대로, 미션 진행용 공유 기록만 쌓인다
       expect(existing.count).toBe(3);
       expect(persisted.find((p) => p instanceof ShareLog)).toBeDefined();
@@ -386,11 +397,7 @@ describe("ChanceService", () => {
         moduleId: ALLOWED_MODULE,
       });
 
-      expect(result).toEqual({
-        count: 3,
-        chanceGranted: false,
-        inviteCount: 5,
-      });
+      expect(result).toEqual({ count: 3, chanceGranted: false });
       expect(persisted.find((p) => p instanceof ShareLog)).toBeDefined();
     });
 

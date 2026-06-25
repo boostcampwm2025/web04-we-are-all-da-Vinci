@@ -1,10 +1,26 @@
-import type { Opt } from "@mikro-orm/core";
-import { Entity, PrimaryKey, Property } from "@mikro-orm/decorators/legacy";
+import { EntityRepositoryType, type Opt } from "@mikro-orm/core";
+import {
+  Entity,
+  Index,
+  PrimaryKey,
+  Property,
+} from "@mikro-orm/decorators/legacy";
 import { BaseEntity } from "src/common/entitiy/base.entity";
+import { AttendanceRepository } from "./attendance.repository";
 
 // 유저당 1행으로 출석 사이클 상태만 보관하는 카운터 테이블.
-@Entity({ tableName: "user_attendances" })
+@Entity({
+  tableName: "user_attendances",
+  repository: () => AttendanceRepository,
+})
+// 연속 출석 중단 알림이 매일 last_checked_date < 오늘 전수 스캔 → 범위 조회용 인덱스.
+@Index({
+  name: "user_attendances_last_checked_date_index",
+  properties: ["lastCheckedDate"],
+})
 export class Attendance extends BaseEntity {
+  [EntityRepositoryType]?: AttendanceRepository;
+
   @PrimaryKey({
     fieldName: "user_key",
     type: "integer",

@@ -87,7 +87,7 @@ describe("RankingChangedListener", () => {
     expect(notificationService.send).not.toHaveBeenCalled();
   });
 
-  it("동의자에게 user별 referenceId로 발송해요", async () => {
+  it("동의자에게 추월 사건(제출 그림)+user별 referenceId로 발송해요", async () => {
     const { listener, notificationService } = buildListener({
       agreedUserKeys: [101, 202],
     });
@@ -97,14 +97,14 @@ describe("RankingChangedListener", () => {
     expect(notificationService.send).toHaveBeenCalledTimes(2);
     expect(notificationService.send).toHaveBeenNthCalledWith(1, {
       targetUserKey: 101,
-      referenceId: "2026-05-28_101",
+      referenceId: "12345_101",
       type: NOTIFICATION_TYPE.OVERTAKEN,
       templateSetCode: "overtaken_v1",
       context: { day: "2026-05-28", newRank: 1 },
     });
     expect(notificationService.send).toHaveBeenNthCalledWith(2, {
       targetUserKey: 202,
-      referenceId: "2026-05-28_202",
+      referenceId: "12345_202",
       type: NOTIFICATION_TYPE.OVERTAKEN,
       templateSetCode: "overtaken_v1",
       context: { day: "2026-05-28", newRank: 1 },

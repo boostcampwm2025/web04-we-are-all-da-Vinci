@@ -10,6 +10,7 @@ import type { AdSdkPayload, ShareSdkPayload } from "@toss/shared";
 import { getSeoulDayRange } from "src/common/util/time.util";
 import { AdType, AdView } from "src/modules/chance/ad-view.entity";
 import { User } from "src/modules/user/user.entity";
+import { MissionService } from "../mission/service/mission.service";
 import { ChanceWhitelistValidator } from "./chance-whitelist.validator";
 import { PlayChance } from "./play-chance.entity";
 import { ShareChannel, ShareLog } from "./share-log.entity";
@@ -30,11 +31,21 @@ export class ChanceService {
     private readonly em: EntityManager,
     configService: ConfigService,
     private readonly chanceWhitelistValidator: ChanceWhitelistValidator,
+    private readonly missionService: MissionService,
   ) {
     this.shareDailyChargeLimit =
       configService.get<number>("SHARE_DAILY_CHARGE_LIMIT") ?? 3;
     this.inviteDailyLimit =
       configService.get<number>("INVITE_DAILY_LIMIT") ?? 5;
+    // 부팅 시 실제 적용된 한도값을 1줄 남겨 env 미반영(컨테이너 미재생성)을 즉시 감지한다.
+    this.logger.log(
+      {
+        event: "chance.config.loaded",
+        shareDailyChargeLimit: this.shareDailyChargeLimit,
+        inviteDailyLimit: this.inviteDailyLimit,
+      },
+      "기회 한도 설정 로드",
+    );
   }
 
   // 읽기 전용. DB를 수정하지 않으므로 차감(consume)과 동시에 호출돼도 lost update가 발생하지 않는다.
@@ -77,45 +88,51 @@ export class ChanceService {
   async chargeByShare(
     userKey: number,
     payload: ShareSdkPayload,
-  ): Promise<{ count: number; chanceGranted: boolean; inviteCount: number }> {
+  ): Promise<{ count: number; chanceGranted: boolean }> {
     this.chanceWhitelistValidator.validateShareModule(userKey, payload);
 
     return this.em.transactional(async (em) => {
       const { start, end } = getSeoulDayRange();
-      const chance = await this.findOrCreate(em, userKey);
+      const chance = await this.findOrCreate(em, userKey); // play_chances 행 잠금 → 직렬화
 
-      const todayShareLogs = await em.count(ShareLog, {
+      const beforeCount = await em.count(ShareLog, {
         user: { userKey },
         createdAt: { $gte: start, $lt: end },
       });
-      if (todayShareLogs >= this.inviteDailyLimit) {
+      // 더 받을 보상이 없는 상한(5) 초과는 기록 전에 거부.
+      if (beforeCount >= this.inviteDailyLimit) {
         this.denyLog(userKey, "share", "daily_cap", payload);
         throw new ForbiddenException("오늘 친구 초대를 모두 완료했어요.");
       }
 
       const userRef = em.getReference(User, userKey);
-      const shareLog = em.create(ShareLog, {
-        user: userRef,
-        channel: ShareChannel.CONTACTS_VIRAL,
-        moduleId: payload.moduleId,
-      });
-      em.persist(shareLog);
+      em.persist(
+        em.create(ShareLog, {
+          user: userRef,
+          channel: ShareChannel.CONTACTS_VIRAL,
+          moduleId: payload.moduleId,
+        }),
+      );
 
-      // 이번 초대를 포함한 당일 누적 초대 횟수. 미션 진행의 단일 소스(멱등 갱신용).
-      const inviteCount = todayShareLogs + 1;
-      // 기회 지급 한도 내(처음 3건)에서만 기회를 +1 한다. 한도 초과분은 미션 진행만.
-      const chanceGranted = todayShareLogs < this.shareDailyChargeLimit;
+      await em.flush();
+      const inviteCount = await em.count(ShareLog, {
+        user: { userKey },
+        createdAt: { $gte: start, $lt: end },
+      });
+
+      // 기회 지급 한도 내(처음 3건)에서만 +1. 초과분은 기록만(미션 진행에 사용).
+      const chanceGranted = inviteCount <= this.shareDailyChargeLimit;
       if (chanceGranted) chance.count += 1;
+
+      // 같은 트랜잭션에서 친구초대 미션을 ShareLog 실개수로 멱등 동기화 → 드리프트 불가.
+      await this.missionService.syncInviteProgress(em, userKey, inviteCount);
+
       this.successLog(userKey, "share", chance.count, {
         channel: payload.channel,
         chanceGranted,
         inviteCount,
       });
-      return {
-        count: this.computeAvailable(chance, start),
-        chanceGranted,
-        inviteCount,
-      };
+      return { count: this.computeAvailable(chance, start), chanceGranted };
     });
   }
 

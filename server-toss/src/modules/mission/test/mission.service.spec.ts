@@ -85,6 +85,7 @@ describe("MissionService", () => {
 
     pointService = {
       savePointGrantRequest: jest.fn(async () => undefined),
+      enqueueGrant: jest.fn(),
     };
 
     const module = await Test.createTestingModule({
@@ -389,7 +390,7 @@ describe("MissionService", () => {
     });
   });
 
-  describe("onFriendInvited — 친구초대 일일 미션", () => {
+  describe("친구초대 미션 동기화는 ShareLog 실개수를 단일 소스로 멱등하게 반영해요", () => {
     const buildInviteMission = (currentCount: number): UserMission =>
       buildUserMission({
         mission: buildMission({
@@ -403,70 +404,88 @@ describe("MissionService", () => {
         currentCount,
       });
 
-    // INVITE는 일일 미션이라 findActiveByObjective로 조회된다. MISSION_COMPLETED(주간 메타)와
-    // 같은 mock을 쓰므로 objectiveType 인자로 분기해 INVITE 미션만 돌려준다.
-    const stubActiveInvite = (uq: UserMission | null): void => {
-      userMissionRepository.findActiveByObjective.mockImplementation(
-        async (_userKey: number, objectiveType: ObjectiveType) =>
-          objectiveType === ObjectiveType.INVITE && uq ? [uq] : [],
-      );
-    };
+    // 호출자(트랜잭션) em을 모사 — findOne은 활성 INVITE 미션, find는 주간 메타를 돌려준다.
+    const buildEm = (
+      invite: UserMission | null,
+      metas: UserMission[] = [],
+    ) => ({
+      findOne: jest.fn(async () => invite),
+      find: jest.fn(async () => metas),
+    });
 
     it("당일 누적 초대 횟수를 그대로 진행도로 설정해요", async () => {
       const uq = buildInviteMission(0);
-      stubActiveInvite(uq);
+      const em = buildEm(uq);
 
-      await service.onFriendInvited(1234, 1);
+      await service.syncInviteProgress(em as never, 1234, 1);
 
       expect(uq.currentCount).toBe(1);
       expect(uq.completedAt).toBeNull();
-      expect(pointService.savePointGrantRequest).not.toHaveBeenCalled();
-      expect(userMissionRepository.flush).toHaveBeenCalled();
+      expect(pointService.enqueueGrant).not.toHaveBeenCalled();
     });
 
     it("이전 진행이 누락돼도 다음 호출이 실제 초대 횟수로 보정해요", async () => {
-      // 진행도가 2에 머물러 있는데 실제로는 4번째 초대 → 4로 맞춰진다
       const uq = buildInviteMission(2);
-      stubActiveInvite(uq);
+      const em = buildEm(uq);
 
-      await service.onFriendInvited(1234, 4);
+      await service.syncInviteProgress(em as never, 1234, 4);
 
       expect(uq.currentCount).toBe(4);
       expect(uq.completedAt).toBeNull();
     });
 
-    it("뒤늦게 더 작은 초대 횟수가 와도 진행도를 되돌리지 않아요", async () => {
-      const uq = buildInviteMission(3);
-      stubActiveInvite(uq);
+    it("진행도를 전달된 초대 수 실값으로 설정해요", async () => {
+      // chargeByShare가 유일 작성자이고 같은 트랜잭션에서 단조 증가 실값을 넘기므로,
+      // 별도 보정 없이 inviteCount를 그대로 반영한다.
+      const uq = buildInviteMission(0);
+      const em = buildEm(uq);
 
-      await service.onFriendInvited(1234, 2);
+      await service.syncInviteProgress(em as never, 1234, 3);
 
       expect(uq.currentCount).toBe(3);
+      expect(uq.completedAt).toBeNull();
     });
 
-    it("다섯 번째 초대로 채워지면 완료 처리하고 5원을 한 번만 지급해요", async () => {
+    it("다섯 번째 초대로 채워지면 완료 처리하고 5원을 한 번만 같은 트랜잭션에 적재해요", async () => {
       const uq = buildInviteMission(4);
-      stubActiveInvite(uq);
+      const em = buildEm(uq);
 
-      await service.onFriendInvited(1234, 5);
+      await service.syncInviteProgress(em as never, 1234, 5);
 
       expect(uq.currentCount).toBe(5);
       expect(uq.completedAt).not.toBeNull();
-      expect(pointService.savePointGrantRequest).toHaveBeenCalledTimes(1);
-      expect(pointService.savePointGrantRequest).toHaveBeenCalledWith(
+      expect(pointService.enqueueGrant).toHaveBeenCalledTimes(1);
+      expect(pointService.enqueueGrant).toHaveBeenCalledWith(
+        em,
         1234,
         expect.anything(),
         5,
       );
     });
 
-    it("이미 완료된 미션은 재호출해도 다시 지급하지 않아요", async () => {
-      // 완료된 미션은 findActiveByObjective(completedAt: null 필터)에서 제외돼 []
-      stubActiveInvite(null);
+    it("미션 완료 시 주간 메타(일일 미션 완료 수)도 1 증가시켜요", async () => {
+      const uq = buildInviteMission(4);
+      const meta = buildUserMission({
+        mission: buildMission({
+          objectiveType: ObjectiveType.MISSION_COMPLETED,
+          period: MissionPeriod.WEEKLY,
+          requiredCount: 7,
+        }),
+        currentCount: 3,
+      });
+      const em = buildEm(uq, [meta]);
 
-      await service.onFriendInvited(1234, 5);
+      await service.syncInviteProgress(em as never, 1234, 5);
 
-      expect(pointService.savePointGrantRequest).not.toHaveBeenCalled();
+      expect(meta.currentCount).toBe(4);
+    });
+
+    it("미배정/완료 상태(em.findOne null)면 아무 지급도 하지 않아요", async () => {
+      const em = buildEm(null);
+
+      await service.syncInviteProgress(em as never, 1234, 5);
+
+      expect(pointService.enqueueGrant).not.toHaveBeenCalled();
     });
   });
 });

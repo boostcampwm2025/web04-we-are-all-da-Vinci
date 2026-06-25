@@ -164,6 +164,29 @@ const getCurrentUserKey = async () => {
 const get = <T>(path: string, options: RequestOptions = {}): Promise<T> =>
   request<T>("GET", path, undefined, options);
 
+// 알림 동의 GET/POST는 경로만 다르고 본문이 동일하다. 경로별로 get/save 쌍을 찍어내
+// 중복을 없앤다. 공개 메서드명은 그대로 유지(소비처·테스트 영향 없음).
+const makeAgreementApi = (path: string) => ({
+  get: async (options?: RequestOptions) =>
+    NotificationAgreementResponseSchema.parse(
+      await request<unknown>("GET", path, undefined, options),
+    ),
+  save: async (body: NotificationAgreementRequest) =>
+    NotificationAgreementResponseSchema.parse(
+      await request<unknown>("POST", path, body),
+    ),
+});
+
+const dailyPromptAgreement = makeAgreementApi(
+  "/notifications/daily-prompt/agreement",
+);
+const overtakenAgreement = makeAgreementApi(
+  "/notifications/overtaken/agreement",
+);
+const attendanceStreakAgreement = makeAgreementApi(
+  "/notifications/attendance-streak/agreement",
+);
+
 export const serverTossApi = {
   login: async (body: {
     authorizationCode: string;
@@ -230,47 +253,14 @@ export const serverTossApi = {
       await request<unknown>("GET", "/chances/me", undefined, options),
     ),
 
-  getDailyPromptNotificationAgreement: async (options?: RequestOptions) =>
-    NotificationAgreementResponseSchema.parse(
-      await request<unknown>(
-        "GET",
-        "/notifications/daily-prompt/agreement",
-        undefined,
-        options,
-      ),
-    ),
+  getDailyPromptNotificationAgreement: dailyPromptAgreement.get,
+  saveDailyPromptNotificationAgreement: dailyPromptAgreement.save,
 
-  saveDailyPromptNotificationAgreement: async (
-    body: NotificationAgreementRequest,
-  ) =>
-    NotificationAgreementResponseSchema.parse(
-      await request<unknown>(
-        "POST",
-        "/notifications/daily-prompt/agreement",
-        body,
-      ),
-    ),
+  getOvertakenNotificationAgreement: overtakenAgreement.get,
+  saveOvertakenNotificationAgreement: overtakenAgreement.save,
 
-  getOvertakenNotificationAgreement: async (options?: RequestOptions) =>
-    NotificationAgreementResponseSchema.parse(
-      await request<unknown>(
-        "GET",
-        "/notifications/overtaken/agreement",
-        undefined,
-        options,
-      ),
-    ),
-
-  saveOvertakenNotificationAgreement: async (
-    body: NotificationAgreementRequest,
-  ) =>
-    NotificationAgreementResponseSchema.parse(
-      await request<unknown>(
-        "POST",
-        "/notifications/overtaken/agreement",
-        body,
-      ),
-    ),
+  getAttendanceStreakNotificationAgreement: attendanceStreakAgreement.get,
+  saveAttendanceStreakNotificationAgreement: attendanceStreakAgreement.save,
 
   chargeChanceByAd: async (sdkPayload: AdSdkPayload) =>
     ChargeResponseSchema.parse(
