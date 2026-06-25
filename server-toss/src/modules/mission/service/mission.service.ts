@@ -1,3 +1,4 @@
+import { EntityManager } from "@mikro-orm/core";
 import { Transactional } from "@mikro-orm/decorators/legacy";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable } from "@nestjs/common";
@@ -154,57 +155,69 @@ export class MissionService {
     return result;
   }
 
-  // 친구 초대 이벤트 — 공유 적립(ChanceService.chargeByShare) 성공 시마다 호출된다.
-  // 당일 누적 초대 횟수(inviteCount = ShareLog 개수)를 단일 소스로 삼아 INVITE 미션을
-  // 멱등 갱신한다. 진행을 ++로 누적하지 않으므로, 어떤 호출이 누락돼도 다음 초대가
-  // currentCount를 실제 ShareLog 개수로 보정한다(드리프트·복구불가 방지).
-  @Transactional()
-  async onFriendInvited(userKey: number, inviteCount: number): Promise<void> {
+  // 친구 초대 미션 동기화 — 공유 적립(ChanceService.chargeByShare)과 **같은 트랜잭션**에서,
+  // 호출자가 넘긴 em으로 동작한다. inviteCount(= 당일 ShareLog 실제 개수)를 단일 소스로
+  // INVITE 미션 currentCount를 멱등 **설정**(증가 아님)하므로, ShareLog 기록과 원자적으로
+  // 커밋/롤백되어 드리프트가 발생하지 않는다.
+  // 주의: 주입된 repo(this.userMissionRepo)는 이 트랜잭션 fork가 아니므로 쓰지 말고,
+  // 반드시 전달받은 em으로만 조회/변경한다. flush는 호출자 트랜잭션 커밋 시 함께 수행.
+  async syncInviteProgress(
+    em: EntityManager,
+    userKey: number,
+    inviteCount: number,
+  ): Promise<void> {
     const window = MissionWindow.now();
-    await this.assignMissionService.ensureMissionsAssigned(userKey, window);
-    // 같은 유저 동시 요청 직렬화 — 활성 미션 조회 전에 행을 잠근다
-    await this.userMissionRepo.lockActiveForUpdate(userKey);
 
-    // findActiveByObjective는 completedAt: null만 반환 → 미배정·완료 시 []이고 멱등하게 종료.
-    const [invite] = await this.userMissionRepo.findActiveByObjective(
-      userKey,
-      ObjectiveType.INVITE,
-      window.todayStart,
-      window.weekStart,
+    // 활성(미완료) 오늘자 INVITE 미션. 미배정/완료 시 null → 멱등하게 종료.
+    const invite = await em.findOne(
+      UserMission,
+      {
+        user: { userKey },
+        completedAt: null,
+        createdAt: window.todayStart,
+        mission: { objectiveType: ObjectiveType.INVITE },
+      },
+      { populate: ["mission"] },
     );
     if (!invite) return;
 
     const required = invite.mission.requiredCount;
-    // ShareLog 개수로 멱등 설정. 후퇴 방지를 위해 기존 값과 max, 상한은 required.
-    const next = Math.min(Math.max(invite.currentCount, inviteCount), required);
-    if (next === invite.currentCount) return; // 변화 없음(중복/지연 호출)
+    // ShareLog 실개수(상한 required)로 그대로 설정. chargeByShare가 유일한 작성자이고
+    // 같은 트랜잭션에서 호출되므로 inviteCount는 단조 증가하는 실값 → 별도 보정(max) 불필요.
+    const next = Math.min(inviteCount, required);
+    if (next === invite.currentCount) return;
     invite.currentCount = next;
 
     if (invite.currentCount >= required) {
       invite.completedAt = window.now;
       if (invite.mission.rewardAmount > 0) {
-        await this.pointService.savePointGrantRequest(
+        // 같은 트랜잭션에 보상 적재(커밋 시 함께 반영) — 상태만 바뀌고 보상 누락 방지.
+        this.pointService.enqueueGrant(
+          em,
           userKey,
           PointReason.MISSION,
           invite.mission.rewardAmount,
         );
       }
-      // 일일 미션 완료 수를 세는 주간 메타("일일 미션 N개 완료")를 1 증가시킨다.
-      await this.progressDailyCompletionMeta(userKey, window);
+      await this.progressDailyCompletionMetaWithEm(em, userKey, window);
     }
-
-    await this.userMissionRepo.flush();
   }
 
-  private async progressDailyCompletionMeta(
+  // 주간 메타("일일 미션 N개 완료")를 전달받은 em으로 1 증가시킨다.
+  private async progressDailyCompletionMetaWithEm(
+    em: EntityManager,
     userKey: number,
     window: MissionWindow,
   ): Promise<void> {
-    const metas = await this.userMissionRepo.findActiveByObjective(
-      userKey,
-      ObjectiveType.MISSION_COMPLETED,
-      window.todayStart,
-      window.weekStart,
+    const metas = await em.find(
+      UserMission,
+      {
+        user: { userKey },
+        completedAt: null,
+        createdAt: window.weekStart,
+        mission: { objectiveType: ObjectiveType.MISSION_COMPLETED },
+      },
+      { populate: ["mission"] },
     );
     for (const meta of metas) {
       meta.currentCount += 1;
@@ -214,7 +227,8 @@ export class MissionService {
       ) {
         meta.completedAt = window.now;
         if (meta.mission.rewardAmount > 0) {
-          await this.pointService.savePointGrantRequest(
+          this.pointService.enqueueGrant(
+            em,
             userKey,
             PointReason.MISSION,
             meta.mission.rewardAmount,
