@@ -13,11 +13,8 @@ export type NotificationTypeId =
 // 새 알림 타입은 여기 한 곳에만 추가하면 토글·자동노출·동의 흐름에 모두 반영된다.
 export type NotificationTypeConfig = {
   id: NotificationTypeId;
-  // 토스 알림 템플릿 코드(env). 미설정이면 해당 토글을 노출하지 않는다.
   templateCode: string | undefined;
-  // toast·확인 다이얼로그 문구에 쓰는 짧은 이름.
   label: string;
-  // 시트 행의 제목/설명.
   rowTop: string;
   rowBottom: string;
   get: () => Promise<NotificationAgreementResponse>;
@@ -48,9 +45,9 @@ export const NOTIFICATION_TYPES: NotificationTypeConfig[] = [
   {
     id: "attendanceStreak",
     templateCode: import.meta.env.VITE_TOSS_TEMPLATE_ATTENDANCE_STREAK?.trim(),
-    label: "연속출석",
-    rowTop: "연속출석 알림",
-    rowBottom: "연속출석이 끊길 때 알려드려요",
+    label: "연속 출석",
+    rowTop: "연속 출석 알림",
+    rowBottom: "토스포인트를 챙기도록 도와드려요",
     get: serverTossApi.getAttendanceStreakNotificationAgreement,
     save: serverTossApi.saveAttendanceStreakNotificationAgreement,
   },
