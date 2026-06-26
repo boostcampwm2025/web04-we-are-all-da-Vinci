@@ -32,9 +32,25 @@ const MissionsFileSchema = z
     (missions) =>
       new Set(missions.map((q) => q.title)).size === missions.length,
     { message: "미션 제목이 중복됩니다" },
+  )
+  .refine(
+    (missions) =>
+      new Set(missions.map(missionNaturalKey)).size === missions.length,
+    {
+      message: "미션 자연 키(period+objectiveType+category)가 중복됩니다",
+    },
   );
 
 export type MissionDefinition = z.infer<typeof MissionDefinitionSchema>;
+
+// 미션의 안정 식별자. title·requiredCount·threshold는 리워딩/튜닝으로 바뀌므로
+// 식별자에서 제외하고, 슬롯을 규정하는 (period, objectiveType, category)만 쓴다.
+// 이 키로 시드를 매칭해야 제목/수치 변경 시 새 행을 만들지 않고 제자리 업데이트한다.
+const missionNaturalKey = (m: {
+  period: MissionPeriod;
+  objectiveType: ObjectiveType;
+  category?: string | null;
+}): string => `${m.period}|${m.objectiveType}|${m.category ?? ""}`;
 
 // missions.json의 rewardAmount는 "0=보상 없음 / 양수=표준 보상"의 on/off 플래그로만 쓰고,
 // 실제 지급액은 단일 소스 REWARD_POINT로 정규화한다(포인트 보상에 한함).
@@ -78,10 +94,10 @@ export class MissionSeedService {
       const userMissionRepo = txEm.getRepository(UserMission);
 
       const allMissions = await missionRepo.findAll();
-      const jsonTitles = new Set(data.map((d) => d.title));
+      const jsonKeys = new Set(data.map(missionNaturalKey));
 
       for (const mission of allMissions) {
-        if (jsonTitles.has(mission.title)) continue;
+        if (jsonKeys.has(missionNaturalKey(mission))) continue;
 
         const userMissionCount = await userMissionRepo.count({ mission });
 
@@ -111,14 +127,17 @@ export class MissionSeedService {
 
       await txEm.flush();
 
-      const existingByTitle = new Map(
-        allMissions
-          .filter((q) => jsonTitles.has(q.title))
-          .map((q) => [q.title, q]),
-      );
+      // 자연 키 → 기존 미션. 중복 행이 남아 있으면 가장 오래된(먼저 조회된) 행을
+      // canonical로 삼는다(복구 마이그레이션의 MIN(id) 선택과 일치).
+      const existingByKey = new Map<string, Mission>();
+      for (const mission of allMissions) {
+        const key = missionNaturalKey(mission);
+        if (!jsonKeys.has(key)) continue;
+        if (!existingByKey.has(key)) existingByKey.set(key, mission);
+      }
 
       for (const def of data) {
-        const existing = existingByTitle.get(def.title);
+        const existing = existingByKey.get(missionNaturalKey(def));
 
         if (existing) {
           if (this.applyChanges(existing, def)) {
@@ -161,6 +180,11 @@ export class MissionSeedService {
 
   private applyChanges(mission: Mission, def: MissionDefinition): boolean {
     let changed = false;
+    // title은 더 이상 매칭 키가 아니므로(자연 키로 매칭) 제자리에서 동기화한다.
+    if (mission.title !== def.title) {
+      mission.title = def.title;
+      changed = true;
+    }
     if (mission.period !== def.period) {
       mission.period = def.period;
       changed = true;
