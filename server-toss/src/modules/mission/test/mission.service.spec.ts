@@ -388,6 +388,27 @@ describe("MissionService", () => {
 
       expect(uq.currentCount).toBe(2);
     });
+
+    it("친구초대 미션이 활성 목록에 섞여 들어와도 그림 제출로는 진행되지 않아요", async () => {
+      // INVITE는 공유(syncInviteProgress) 전용 — 프로세서 commandMap에서 제외돼
+      // 그림 제출 경로로는 절대 증가하지 않아야 한다(공유 0회인데 1로 오르던 버그 방지).
+      const invite = buildUserMission({
+        mission: buildMission({
+          objectiveType: ObjectiveType.INVITE,
+          requiredCount: 5,
+          progressPeriod: ProgressPeriod.NONE,
+        }),
+        currentCount: 0,
+      });
+      userMissionRepository.findActiveDrawingMissions.mockResolvedValue([
+        invite,
+      ]);
+
+      await service.onDrawingSubmitted(1234, drawingContext);
+
+      expect(invite.currentCount).toBe(0);
+      expect(invite.completedAt).toBeNull();
+    });
   });
 
   describe("친구초대 미션 동기화는 ShareLog 실개수를 단일 소스로 멱등하게 반영해요", () => {

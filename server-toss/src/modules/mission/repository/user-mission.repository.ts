@@ -78,11 +78,18 @@ export class UserMissionRepository extends EntityRepository<UserMission> {
       {
         user: { userKey },
         completedAt: null,
+        // 그림 제출이 실제로 진행시키는 objectiveType만 허용(allowlist).
+        // 블록리스트로 두면 INVITE/SHARE/VISIT_* 처럼 그림과 무관한 미션이 새어
+        // 들어와 SimpleActionCommand(항상 매칭)로 잘못 증가한다. INVITE는 공유
+        // (syncInviteProgress) 전용이라 이 경로에서 반드시 제외돼야 한다.
         mission: {
           objectiveType: {
-            $nin: [
-              ObjectiveType.MISSION_COMPLETED,
-              ObjectiveType.TUTORIAL_COMPLETED,
+            $in: [
+              ObjectiveType.SUBMIT,
+              ObjectiveType.SCORE,
+              ObjectiveType.PENALTY,
+              ObjectiveType.DAILY_SUBMIT,
+              ObjectiveType.DAILY_SCORE,
             ],
           },
         },

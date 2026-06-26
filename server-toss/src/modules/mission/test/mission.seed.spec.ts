@@ -108,12 +108,17 @@ describe("미션 시드 서비스", () => {
       expect(persisted).toHaveLength(2);
     });
 
-    it("user_mission 없는 기존 미션은 삭제한다", async () => {
-      const orphan = buildMission({ id: BigInt(99), title: "삭제될 미션" });
+    it("자연 키가 JSON에 없는 user_mission 없는 미션은 삭제한다", async () => {
+      // 자연 키(objectiveType) 자체가 JSON에 없어야 진짜 제거 대상이다.
+      const orphan = buildMission({
+        id: BigInt(99),
+        title: "삭제될 미션",
+        objectiveType: ObjectiveType.SCORE,
+      });
       const { service, removed } = setup([orphan]);
 
       const result = await service.syncMissions([
-        buildDef({ title: "새 미션" }),
+        buildDef({ title: "새 미션", objectiveType: ObjectiveType.SUBMIT }),
       ]);
 
       expect(result.deleted).toBe(1);
@@ -121,21 +126,71 @@ describe("미션 시드 서비스", () => {
       expect(result.added).toBe(1);
     });
 
-    it("user_mission 있는 기존 미션은 보존한다", async () => {
+    it("자연 키가 JSON에 없고 user_mission 있는 미션은 보존한다", async () => {
       const protectedMission = buildMission({
         id: BigInt(10),
         title: "보존될 미션",
+        objectiveType: ObjectiveType.SCORE,
       });
       const counts = new Map([[BigInt(10), 3]]);
       const { service, removed } = setup([protectedMission], counts);
 
       const result = await service.syncMissions([
-        buildDef({ title: "새 미션" }),
+        buildDef({ title: "새 미션", objectiveType: ObjectiveType.SUBMIT }),
       ]);
 
       expect(result.protected).toBe(1);
       expect(result.deleted).toBe(0);
       expect(removed).not.toContain(protectedMission);
+    });
+
+    it("제목만 바뀌면 새 행을 만들지 않고 기존 행 제목을 업데이트한다", async () => {
+      const existing = buildMission({
+        id: BigInt(1),
+        title: "오늘 감점 없는 그림 1회 달성",
+        objectiveType: ObjectiveType.PENALTY,
+      });
+      const { service, persisted, removed } = setup([existing]);
+
+      const result = await service.syncMissions([
+        buildDef({
+          title: "감점 없는 그림 1회 등록",
+          objectiveType: ObjectiveType.PENALTY,
+        }),
+      ]);
+
+      expect(result.added).toBe(0);
+      expect(result.deleted).toBe(0);
+      expect(result.updated).toBe(1);
+      expect(persisted).toHaveLength(0);
+      expect(removed).toHaveLength(0);
+      expect(existing.title).toBe("감점 없는 그림 1회 등록");
+    });
+
+    it("requiredCount가 바뀌어도 같은 슬롯으로 제자리 업데이트한다", async () => {
+      const existing = buildMission({
+        id: BigInt(1),
+        title: "이번 주 3일 동안 그림 등록",
+        period: MissionPeriod.WEEKLY,
+        objectiveType: ObjectiveType.DAILY_SUBMIT,
+        requiredCount: 3,
+      });
+      const { service, persisted } = setup([existing]);
+
+      const result = await service.syncMissions([
+        buildDef({
+          title: "이번 주 4일 동안 그림 등록",
+          period: MissionPeriod.WEEKLY,
+          objectiveType: ObjectiveType.DAILY_SUBMIT,
+          requiredCount: 4,
+        }),
+      ]);
+
+      expect(result.added).toBe(0);
+      expect(result.updated).toBe(1);
+      expect(persisted).toHaveLength(0);
+      expect(existing.requiredCount).toBe(4);
+      expect(existing.title).toBe("이번 주 4일 동안 그림 등록");
     });
 
     it("JSON에 있는 기존 미션의 필드를 업데이트한다", async () => {
