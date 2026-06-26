@@ -129,6 +129,10 @@ src/
   - `this.em` — CUD(`create`, `persist`, `flush`, `getReference`, `nativeDelete`) + 단순 조회(`findOne`/`find`/`count` — PK·간단 필터 조건).
   - 커스텀 Repository(`extends EntityRepository<T>`) — 복잡한 쿼리(QueryBuilder, 조인, raw SQL, 집계, 페이지네이션 등)를 이름 있는 메서드로 캡슐화할 때만 사용. Repository에 CUD 로직을 넣지 않는다.
   - `repo.getEntityManager()` 금지 — EM이 필요하면 서비스에서 직접 DI.
+- **커스텀 Repository 등록 규칙**:
+  - 엔티티: `@Entity({ repository: () => XxxRepository })` + `[EntityRepositoryType]?: XxxRepository` 타입 힌트.
+  - 클래스명은 `{EntityName}Repository` 컨벤션을 따르면 NestJS DI 자동 등록 → 서비스에서 `@InjectRepository()` 없이 `constructor(private readonly xxxRepository: XxxRepository)` 직접 주입 가능.
+  - 복잡한 쿼리가 없는 엔티티는 커스텀 Repository를 만들지 않는다 — `this.em`으로 충분.
 - **Zod 검증** (NestJS 기본 `ValidationPipe`/`class-validator` 미사용):
   - 컨트롤러: `@Body(new ZodValidationPipe(Schema))`. 파이프가 `ZodError`를 그대로 throw → 전역 `ZodExceptionFilter`가 400 + issues로 변환.
   - `ZodError`를 `BadRequestException`으로 감싸지 말 것 — `@Catch(ZodError)` 필터를 우회해 응답 포맷이 갈라진다.
