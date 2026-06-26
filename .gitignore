@@ -60,3 +60,5 @@ we-are-all-da-vinci.ait
 AGENTS.md
 
 **/tokens.json
+# AI 하네스 마이그레이션 검증(.claude/hooks/verify-migrations.sh)의 일회용 DB 스냅샷
+server-toss/src/migrations/.snapshot-daVinci_toss_migcheck.json

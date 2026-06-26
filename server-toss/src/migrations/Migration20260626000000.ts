@@ -30,13 +30,15 @@ export class Migration20260626000000 extends Migration {
     );
 
     // 병합 후 충돌하는 중복 user_missions 삭제(canonical이 이미 있는 경우).
+    // MySQL은 삭제 대상 테이블을 서브쿼리에서 참조하면 1093(ER_UPDATE_TABLE_USED)으로
+    // 막으므로, EXISTS 서브쿼리 대신 canonical 행(c)과의 JOIN으로 표현한다.
     this.addSql(
       "delete um from `user_missions` um " +
         "join `_mission_dedup` d on d.`mission_id` = um.`mission_id` and d.`mission_id` <> d.`canonical_id` " +
-        "where exists (" +
-        "  select 1 from `user_missions` c " +
-        "  where c.`user_key` = um.`user_key` and c.`created_at` = um.`created_at` and c.`mission_id` = d.`canonical_id`" +
-        ");",
+        "join `user_missions` c " +
+        "  on c.`user_key` = um.`user_key` " +
+        " and c.`created_at` = um.`created_at` " +
+        " and c.`mission_id` = d.`canonical_id`;",
     );
 
     // 충돌하지 않는 나머지 중복 user_missions는 canonical로 재지정.
