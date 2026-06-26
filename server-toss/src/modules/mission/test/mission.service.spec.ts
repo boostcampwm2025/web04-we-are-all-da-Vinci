@@ -389,7 +389,7 @@ describe("MissionService", () => {
       expect(uq.currentCount).toBe(2);
     });
 
-    it("INVITE 미션이 활성 목록에 섞여 들어와도 그림 제출로는 진행되지 않아요", async () => {
+    it("친구초대 미션이 활성 목록에 섞여 들어와도 그림 제출로는 진행되지 않아요", async () => {
       // INVITE는 공유(syncInviteProgress) 전용 — 프로세서 commandMap에서 제외돼
       // 그림 제출 경로로는 절대 증가하지 않아야 한다(공유 0회인데 1로 오르던 버그 방지).
       const invite = buildUserMission({

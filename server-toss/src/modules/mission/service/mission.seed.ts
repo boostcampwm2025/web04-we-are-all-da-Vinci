@@ -127,10 +127,14 @@ export class MissionSeedService {
 
       await txEm.flush();
 
-      // 자연 키 → 기존 미션. 중복 행이 남아 있으면 가장 오래된(먼저 조회된) 행을
-      // canonical로 삼는다(복구 마이그레이션의 MIN(id) 선택과 일치).
+      // 자연 키 → 기존 미션. 중복 행이 남아 있으면 가장 작은 id 행을 canonical로
+      // 삼는다(복구 마이그레이션의 MIN(id) 선택과 일치). findAll() 순서에 의존하지
+      // 않도록 id 오름차순으로 정렬한 뒤 첫 행을 고른다.
+      const orderedById = [...allMissions].sort((a, b) =>
+        a.id < b.id ? -1 : a.id > b.id ? 1 : 0,
+      );
       const existingByKey = new Map<string, Mission>();
-      for (const mission of allMissions) {
+      for (const mission of orderedById) {
         const key = missionNaturalKey(mission);
         if (!jsonKeys.has(key)) continue;
         if (!existingByKey.has(key)) existingByKey.set(key, mission);
