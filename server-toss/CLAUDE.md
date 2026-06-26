@@ -125,6 +125,10 @@ src/
 
 - **KST 날짜**: `getTodayKst()` / `getSeoulDayRange()`만 사용 (위 "반드시 지킬 규칙" 참조). 컨트롤러·서비스가 직접 `new Date()`로 날짜를 결정하지 말 것.
 - **MikroORM v7**: `persistAndFlush` 없음 → `em.persist(e); await em.flush()`. 서비스·시드에서는 `em.fork()` 필수 (`allowGlobalContext`는 `NODE_ENV=test`에서만 활성).
+- **EM vs Repository 역할 분리**:
+  - `this.em` — CUD(`create`, `persist`, `flush`, `getReference`, `nativeDelete`) + 단순 조회(`findOne`/`find`/`count` — PK·간단 필터 조건).
+  - 커스텀 Repository(`extends EntityRepository<T>`) — 복잡한 쿼리(QueryBuilder, 조인, raw SQL, 집계, 페이지네이션 등)를 이름 있는 메서드로 캡슐화할 때만 사용. Repository에 CUD 로직을 넣지 않는다.
+  - `repo.getEntityManager()` 금지 — EM이 필요하면 서비스에서 직접 DI.
 - **Zod 검증** (NestJS 기본 `ValidationPipe`/`class-validator` 미사용):
   - 컨트롤러: `@Body(new ZodValidationPipe(Schema))`. 파이프가 `ZodError`를 그대로 throw → 전역 `ZodExceptionFilter`가 400 + issues로 변환.
   - `ZodError`를 `BadRequestException`으로 감싸지 말 것 — `@Catch(ZodError)` 필터를 우회해 응답 포맷이 갈라진다.
