@@ -41,7 +41,8 @@ export class MissionProcessor {
       [ObjectiveType.VISIT_MISSION_TAB]: simpleAction,
       [ObjectiveType.VISIT_DRAWING_DETAIL]: simpleAction,
       [ObjectiveType.SHARE]: simpleAction,
-      [ObjectiveType.INVITE]: simpleAction,
+      // INVITE는 공유 적립(syncInviteProgress)에서만 진행한다. 프로세서가 어떤
+      // 경로로도 INVITE를 증가시키지 못하도록 commandMap에서 제외(이중 안전망).
     };
   }
 
