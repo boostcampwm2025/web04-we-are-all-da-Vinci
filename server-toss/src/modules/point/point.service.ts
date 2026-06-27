@@ -60,7 +60,7 @@ export class PointService {
       attemptCount: 0,
     });
 
-    await this.pointGrantRequestRepository.getEntityManager().flush();
+    await this.em.flush();
   }
 
   enqueueGrant(
@@ -128,7 +128,7 @@ export class PointService {
       await this.pointGrantRequestRepository.findEligibleGrantsWithLock();
 
     requests.forEach((request) => request.processing());
-    await this.pointGrantRequestRepository.getEntityManager().flush();
+    await this.em.flush();
 
     return requests;
   }
@@ -196,7 +196,7 @@ export class PointService {
   @Transactional()
   async savePointIdempotencyKey(request: PointGrantRequest, key: string) {
     request.setPointIdempotencyKey(key);
-    await this.pointGrantRequestRepository.getEntityManager().flush();
+    await this.em.flush();
   }
 
   @Transactional()

@@ -35,18 +35,13 @@ const buildEntityManager = (countResult: number | number[] = 0) => {
   };
 };
 
-const buildPointGrantRequestRepository = () => {
-  const flush = jest.fn(async () => undefined);
-  return {
-    getReference: jest.fn(),
-    create: jest.fn(),
-    findEligibleGrantsWithLock: jest
-      .fn<() => Promise<unknown[]>>()
-      .mockResolvedValue([]),
-    getEntityManager: jest.fn(() => ({ flush })),
-    __flush: flush,
-  };
-};
+const buildPointGrantRequestRepository = () => ({
+  getReference: jest.fn(),
+  create: jest.fn(),
+  findEligibleGrantsWithLock: jest
+    .fn<() => Promise<unknown[]>>()
+    .mockResolvedValue([]),
+});
 
 const buildPointGrantKeyIssuer = () => ({
   getPromotionKey: jest.fn(async () => "promotion-key"),
@@ -300,6 +295,7 @@ describe("PointService", () => {
   describe("lockAndFetchEligibleGrants", () => {
     describe("대상 요청을 선점하는 경우", () => {
       it("각 요청을 processing 상태로 바꾸고 flush한다", async () => {
+        const em = buildEntityManager();
         const repository = buildPointGrantRequestRepository();
         const request1 = { processing: jest.fn() };
         const request2 = { processing: jest.fn() };
@@ -308,6 +304,7 @@ describe("PointService", () => {
           request2,
         ]);
         const service = buildService({
+          entityManager: em,
           pointGrantRequestRepository: repository,
         });
 
@@ -315,7 +312,7 @@ describe("PointService", () => {
 
         expect(request1.processing).toHaveBeenCalledTimes(1);
         expect(request2.processing).toHaveBeenCalledTimes(1);
-        expect(repository.__flush).toHaveBeenCalledTimes(1);
+        expect(em.flush).toHaveBeenCalledTimes(1);
         expect(result).toEqual([request1, request2]);
       });
     });
