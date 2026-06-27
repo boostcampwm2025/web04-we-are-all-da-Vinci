@@ -130,6 +130,7 @@ src/
   - **Cron / 이벤트 리스너** (HTTP 컨텍스트 없는 진입점): 메서드에 `@CreateRequestContext()` 데코레이터를 붙여 EM 컨텍스트 확보. `em.fork()` 금지.
   - **부팅 시드** (`seeders/`, `*.seed.ts` 등 NestJS 요청 스코프 밖): `em.fork()` 수동 사용 허용 — 유일한 예외.
   - **트랜잭션**: `@Transactional()` 데코레이터 방식이 표준. `em.transactional()` 프로그래밍 방식은 콜백 안에서 lock mode 등 세밀한 제어가 필요할 때만 사용.
+  - **EM을 메서드 인자로 전달하지 않는다.** MikroORM의 `getContext()`는 `TransactionContext`(AsyncLocalStorage) → `RequestContext`(AsyncLocalStorage) → global EM 순으로 해석한다. 따라서 서비스 A의 `@Transactional()` 메서드 안에서 서비스 B를 호출하면, B의 `this.em`도 같은 트랜잭션 fork EM을 자동으로 사용한다. 크로스 서비스 호출에서도 `this.em`만 사용하면 트랜잭션 원자성이 보장되므로, 트랜잭션 EM을 인자로 넘길 필요가 없다.
   - `allowGlobalContext`는 `NODE_ENV=test`에서만 활성 — 프로덕션/개발에서 EM 컨텍스트 없이 접근하면 런타임 에러.
 - **EM vs Repository 역할 분리**:
   - `this.em` — CUD(`create`, `persist`, `flush`, `getReference`, `nativeDelete`) + 단순 조회(`findOne`/`find`/`count` — PK·간단 필터 조건).
