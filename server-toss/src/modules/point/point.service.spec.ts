@@ -36,8 +36,6 @@ const buildEntityManager = (countResult: number | number[] = 0) => {
 };
 
 const buildPointGrantRequestRepository = () => ({
-  getReference: jest.fn(),
-  create: jest.fn(),
   findEligibleGrantsWithLock: jest
     .fn<() => Promise<unknown[]>>()
     .mockResolvedValue([]),
@@ -321,14 +319,13 @@ describe("PointService", () => {
   describe("savePointGrantRequest", () => {
     describe("지급 금액을 명시한 경우", () => {
       it("전달한 pointAmount로 요청을 생성한다", async () => {
-        const repository = buildPointGrantRequestRepository();
-        const service = buildService({
-          pointGrantRequestRepository: repository,
-        });
+        const em = buildEntityManager();
+        const service = buildService({ entityManager: em });
 
         await service.savePointGrantRequest(1234, PointReason.MISSION, 7);
 
-        expect(repository.create).toHaveBeenCalledWith(
+        expect(em.create).toHaveBeenCalledWith(
+          expect.anything(),
           expect.objectContaining({
             reason: PointReason.MISSION,
             pointAmount: 7,
@@ -339,14 +336,13 @@ describe("PointService", () => {
 
     describe("지급 금액을 생략한 경우", () => {
       it("PROMOTION_AMOUNT로 폴백한다", async () => {
-        const repository = buildPointGrantRequestRepository();
-        const service = buildService({
-          pointGrantRequestRepository: repository,
-        });
+        const em = buildEntityManager();
+        const service = buildService({ entityManager: em });
 
         await service.savePointGrantRequest(1234, PointReason.MISSION);
 
-        expect(repository.create).toHaveBeenCalledWith(
+        expect(em.create).toHaveBeenCalledWith(
+          expect.anything(),
           expect.objectContaining({ pointAmount: PROMOTION_AMOUNT }),
         );
       });

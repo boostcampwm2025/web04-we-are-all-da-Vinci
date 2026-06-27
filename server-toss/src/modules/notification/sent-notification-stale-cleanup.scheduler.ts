@@ -1,4 +1,5 @@
-import { EntityManager, RequestContext } from "@mikro-orm/core";
+import { EntityManager } from "@mikro-orm/core";
+import { CreateRequestContext } from "@mikro-orm/decorators/legacy";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Cron } from "@nestjs/schedule";
@@ -26,10 +27,10 @@ export class SentNotificationStaleCleanupScheduler {
     private readonly notificationService: NotificationService,
   ) {}
 
-  // @Cron은 RequestContext가 없어 em 작업이 막힐 수 있다 → 작업 전용 컨텍스트로 감싼다.
+  @CreateRequestContext()
   @Cron(STALE_CLEANUP_CRON, { timeZone: "Asia/Seoul" })
   async handleCleanup(): Promise<void> {
-    await RequestContext.create(this.em, () => this.run());
+    await this.run();
   }
 
   /** 테스트에서 직접 호출하기 위한 진입점 */

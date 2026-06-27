@@ -51,7 +51,7 @@ export class PointService {
 
     const user = this.em.getReference(User, userKey);
 
-    this.pointGrantRequestRepository.create({
+    this.em.create(PointGrantRequest, {
       user,
       reason,
       pointAmount,

@@ -1,6 +1,9 @@
 import { EntityManager } from "@mikro-orm/mysql";
 import { Injectable } from "@nestjs/common";
-import { Transactional } from "@mikro-orm/decorators/legacy";
+import {
+  CreateRequestContext,
+  Transactional,
+} from "@mikro-orm/decorators/legacy";
 import {
   type MyRankingResponse,
   type RankingListResponse,
@@ -138,6 +141,7 @@ export class RankingService {
     };
   }
 
+  @CreateRequestContext()
   async cleanupRanking(): Promise<void> {
     const { start } = getSeoulDayRange();
     await this.em.nativeDelete(Ranking, {
