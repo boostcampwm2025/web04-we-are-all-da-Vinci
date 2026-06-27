@@ -1,4 +1,5 @@
 import { EntityManager, LockMode } from "@mikro-orm/core";
+import { Transactional } from "@mikro-orm/decorators/legacy";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { ForbiddenException, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
@@ -48,114 +49,115 @@ export class AttendanceService {
     return getSeoulDayRange(date).start.getTime();
   }
 
+  @Transactional()
   async checkIn(userKey: number): Promise<AttendanceCheckInResponse> {
     const todayStart = getSeoulDayRange().start;
     const today = todayStart.getTime();
     const yesterday = today - DAY_DURATION_MS;
 
-    const { result, rewardedDay } = await this.em.transactional(async (em) => {
-      const attendance = await em.findOne(
-        Attendance,
-        { userKey },
-        { lockMode: LockMode.PESSIMISTIC_WRITE },
-      );
+    const attendance = await this.em.findOne(
+      Attendance,
+      { userKey },
+      { lockMode: LockMode.PESSIMISTIC_WRITE },
+    );
 
-      // 첫 출석
-      if (!attendance) {
-        em.create(Attendance, {
-          userKey,
-          cycleDay: 1,
-          lastCheckedDate: todayStart,
-          recoverableDay: null,
-        });
-        await em.flush();
-        return {
-          result: {
-            status: "started" as const,
-            cycleDay: 1,
-            recoverable: false,
-            previousDay: null,
-            rewardedDay: null,
-          },
-          rewardedDay: null as number | null,
-        };
-      }
+    // 첫 출석
+    if (!attendance) {
+      this.em.create(Attendance, {
+        userKey,
+        cycleDay: 1,
+        lastCheckedDate: todayStart,
+        recoverableDay: null,
+      });
+      await this.em.flush();
 
-      const lastDay = this.dayStartMs(attendance.lastCheckedDate);
-
-      // 오늘 이미 출석 — 멱등 재호출(전이·지급 없음)
-      if (lastDay === today) {
-        return {
-          result: {
-            status: "already" as const,
-            cycleDay: attendance.cycleDay,
-            recoverable: attendance.recoverableDay != null,
-            previousDay: attendance.recoverableDay ?? null,
-            rewardedDay: null,
-          },
-          rewardedDay: null as number | null,
-        };
-      }
-
-      // 어제에 이어 연속 출석
-      if (lastDay === yesterday) {
-        const newDay = nextCycleDay(attendance.cycleDay);
-        attendance.cycleDay = newDay;
-        attendance.recoverableDay = null;
-        attendance.lastCheckedDate = todayStart;
-
-        // 마일스톤 보상 적재를 출석 전이와 같은 트랜잭션에 둬 원자적으로 커밋한다.
-        const milestone = rewardedDayFor(newDay);
-        if (milestone != null) {
-          this.pointService.enqueueGrant(em, userKey, PointReason.ATTENDANCE);
-        }
-        await em.flush();
-
-        return {
-          result: {
-            status: "continued" as const,
-            cycleDay: newDay,
-            recoverable: false,
-            previousDay: null,
-            rewardedDay: milestone,
-          },
-          rewardedDay: milestone,
-        };
-      }
-
-      // 갭(어제 이전) — 끊김 리셋. 오늘은 1일차로 출석 처리하고 직전 위치를 복구 대상으로 보관.
-      const previousDay = attendance.cycleDay;
-      attendance.recoverableDay = previousDay;
-      attendance.cycleDay = 1;
-      attendance.lastCheckedDate = todayStart;
-      await em.flush();
-
+      this.logCheckIn(userKey, "started", 1, null);
       return {
-        result: {
-          status: "reset_recoverable" as const,
-          cycleDay: 1,
-          recoverable: true,
-          previousDay,
-          rewardedDay: null,
-        },
-        rewardedDay: null as number | null,
+        status: "started",
+        cycleDay: 1,
+        recoverable: false,
+        previousDay: null,
+        rewardedDay: null,
       };
-    });
+    }
 
+    const lastDay = this.dayStartMs(attendance.lastCheckedDate);
+
+    // 오늘 이미 출석 — 멱등 재호출(전이·지급 없음)
+    if (lastDay === today) {
+      this.logCheckIn(userKey, "already", attendance.cycleDay, null);
+      return {
+        status: "already",
+        cycleDay: attendance.cycleDay,
+        recoverable: attendance.recoverableDay != null,
+        previousDay: attendance.recoverableDay ?? null,
+        rewardedDay: null,
+      };
+    }
+
+    // 어제에 이어 연속 출석
+    if (lastDay === yesterday) {
+      const newDay = nextCycleDay(attendance.cycleDay);
+      attendance.cycleDay = newDay;
+      attendance.recoverableDay = null;
+      attendance.lastCheckedDate = todayStart;
+
+      const milestone = rewardedDayFor(newDay);
+      if (milestone != null) {
+        this.pointService.enqueueGrant(
+          this.em,
+          userKey,
+          PointReason.ATTENDANCE,
+        );
+      }
+      await this.em.flush();
+
+      this.logCheckIn(userKey, "continued", newDay, milestone);
+      return {
+        status: "continued",
+        cycleDay: newDay,
+        recoverable: false,
+        previousDay: null,
+        rewardedDay: milestone,
+      };
+    }
+
+    // 갭(어제 이전) — 끊김 리셋. 오늘은 1일차로 출석 처리하고 직전 위치를 복구 대상으로 보관.
+    const previousDay = attendance.cycleDay;
+    attendance.recoverableDay = previousDay;
+    attendance.cycleDay = 1;
+    attendance.lastCheckedDate = todayStart;
+    await this.em.flush();
+
+    this.logCheckIn(userKey, "reset_recoverable", 1, null);
+    return {
+      status: "reset_recoverable",
+      cycleDay: 1,
+      recoverable: true,
+      previousDay,
+      rewardedDay: null,
+    };
+  }
+
+  private logCheckIn(
+    userKey: number,
+    status: string,
+    cycleDay: number,
+    rewardedDay: number | null,
+  ) {
     this.logger.log(
       {
         event: "attendance.check_in.succeeded",
         userKey,
-        status: result.status,
-        cycleDay: result.cycleDay,
+        status,
+        cycleDay,
         rewardedDay,
       },
       "출석 체크 완료",
     );
-
-    return result;
   }
 
+  @Transactional()
   async recover(
     userKey: number,
     payload: AdSdkPayload,
@@ -173,87 +175,79 @@ export class AttendanceService {
       throw new ForbiddenException("등록되지 않은 광고예요.");
     }
 
-    const { newDay, rewardedDay } = await this.em.transactional(async (em) => {
-      // 자정 경계 race 방지를 위해 today를 트랜잭션 내부에서 계산한다.
-      const today = getSeoulDayRange().start.getTime();
-      const attendance = await em.findOne(
-        Attendance,
-        { userKey },
-        { lockMode: LockMode.PESSIMISTIC_WRITE },
+    const today = getSeoulDayRange().start.getTime();
+    const attendance = await this.em.findOne(
+      Attendance,
+      { userKey },
+      { lockMode: LockMode.PESSIMISTIC_WRITE },
+    );
+
+    if (!attendance || attendance.recoverableDay == null) {
+      this.logger.warn(
+        {
+          event: "attendance.recover.denied",
+          userKey,
+          reason: "not_recoverable",
+        },
+        "복구할 연속 출석이 없어요",
       );
+      throw new ForbiddenException("복구할 연속 출석이 없어요.");
+    }
 
-      if (!attendance || attendance.recoverableDay == null) {
-        this.logger.warn(
-          {
-            event: "attendance.recover.denied",
-            userKey,
-            reason: "not_recoverable",
-          },
-          "복구할 연속 출석이 없어요",
-        );
-        throw new ForbiddenException("복구할 연속 출석이 없어요.");
-      }
+    if (this.dayStartMs(attendance.lastCheckedDate) !== today) {
+      this.logger.warn(
+        {
+          event: "attendance.recover.denied",
+          userKey,
+          reason: "recovery_window_expired",
+        },
+        "복구 기간이 지났어요",
+      );
+      throw new ForbiddenException("복구 기간이 지났어요.");
+    }
 
-      // 만회는 끊김을 감지한 당일(KST)에만 유효 — 오늘 체크인 기록이 아니면 만료.
-      if (this.dayStartMs(attendance.lastCheckedDate) !== today) {
-        this.logger.warn(
-          {
-            event: "attendance.recover.denied",
-            userKey,
-            reason: "recovery_window_expired",
-          },
-          "복구 기간이 지났어요",
-        );
-        throw new ForbiddenException("복구 기간이 지났어요.");
-      }
+    const restored = nextCycleDay(attendance.recoverableDay);
+    attendance.cycleDay = restored;
+    attendance.recoverableDay = null;
 
-      const restored = nextCycleDay(attendance.recoverableDay);
-      attendance.cycleDay = restored;
-      attendance.recoverableDay = null;
-
-      em.create(AdView, {
-        type: AdType.ATTENDANCE_RECOVERY,
-        user: em.getReference(User, userKey),
-      });
-
-      // 복구로 도달한 위치가 마일스톤이면 같은 트랜잭션에서 보상 적재.
-      const milestone = rewardedDayFor(restored);
-      if (milestone != null) {
-        this.pointService.enqueueGrant(em, userKey, PointReason.ATTENDANCE);
-      }
-      await em.flush();
-
-      return { newDay: restored, rewardedDay: milestone };
+    this.em.create(AdView, {
+      type: AdType.ATTENDANCE_RECOVERY,
+      user: this.em.getReference(User, userKey),
     });
+
+    const milestone = rewardedDayFor(restored);
+    if (milestone != null) {
+      this.pointService.enqueueGrant(this.em, userKey, PointReason.ATTENDANCE);
+    }
+    await this.em.flush();
 
     this.logger.log(
       {
         event: "attendance.recover.succeeded",
         userKey,
-        cycleDay: newDay,
-        rewardedDay,
+        cycleDay: restored,
+        rewardedDay: milestone,
       },
       "연속 출석 복구 완료",
     );
 
-    return { cycleDay: newDay, rewardedDay };
+    return { cycleDay: restored, rewardedDay: milestone };
   }
 
   // 복구를 포기하고 끊긴 채로 새로 시작한다. 이미 리셋된 cycleDay는 두고
   // 복구 대상(recoverableDay)만 비워 카드가 정상 상태로 돌아가게 한다.
+  @Transactional()
   async declineRecovery(userKey: number): Promise<AttendanceStatusResponse> {
-    await this.em.transactional(async (em) => {
-      const attendance = await em.findOne(
-        Attendance,
-        { userKey },
-        { lockMode: LockMode.PESSIMISTIC_WRITE },
-      );
+    const attendance = await this.em.findOne(
+      Attendance,
+      { userKey },
+      { lockMode: LockMode.PESSIMISTIC_WRITE },
+    );
 
-      if (attendance && attendance.recoverableDay != null) {
-        attendance.recoverableDay = null;
-        await em.flush();
-      }
-    });
+    if (attendance && attendance.recoverableDay != null) {
+      attendance.recoverableDay = null;
+      await this.em.flush();
+    }
 
     this.logger.log(
       { event: "attendance.recover.declined", userKey },

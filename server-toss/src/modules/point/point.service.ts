@@ -93,12 +93,11 @@ export class PointService {
   async getPointSummary(
     userKey: number,
   ): Promise<{ totalPoints: number; todayPoints: number }> {
-    const em = this.em.fork();
     const { start, end } = getSeoulDayRange();
 
     const [logs, pendingRequests] = await Promise.all([
-      em.find(PointLog, { user: userKey }),
-      em.find(PointGrantRequest, {
+      this.em.find(PointLog, { user: userKey }),
+      this.em.find(PointGrantRequest, {
         user: userKey,
         status: {
           $in: [

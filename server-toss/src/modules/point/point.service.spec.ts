@@ -3,7 +3,6 @@ import {
   ExternalPromotionError,
   ExternalTransportError,
 } from "src/common/errors/external.errors";
-import { PointGrantStatus } from "./entity/point-grant-request.entity";
 import { PointReason } from "./entity/point-log.entity";
 import { PROMOTION_AMOUNT } from "./point.contants";
 import { PointService } from "./point.service";
@@ -32,7 +31,6 @@ const buildEntityManager = (countResult: number | number[] = 0) => {
     flush: jest.fn(async () => undefined),
     getReference: jest.fn(),
     find: jest.fn().mockResolvedValue([] as unknown[]),
-    fork: jest.fn(),
     nativeDelete: jest.fn().mockResolvedValue(0 as number),
   };
 };
