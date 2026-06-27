@@ -1,4 +1,5 @@
 import { EntityManager, LockMode } from "@mikro-orm/core";
+import { Transactional } from "@mikro-orm/decorators/legacy";
 import {
   ConflictException,
   ForbiddenException,
@@ -56,94 +57,85 @@ export class ChanceService {
     return { count: this.computeAvailable(chance, todayStart) };
   }
 
+  @Transactional()
   async chargeByAd(
     userKey: number,
     payload: AdSdkPayload,
   ): Promise<{ count: number }> {
     this.chanceWhitelistValidator.validateAdGroup(userKey, payload);
 
-    return this.em.transactional(async (em) => {
-      const todayStart = getSeoulDayRange().start;
-      const chance = await this.findOrCreate(em, userKey);
+    const todayStart = getSeoulDayRange().start;
+    const chance = await this.findOrCreate(userKey);
 
-      const userRef = em.getReference(User, userKey);
-      const adView = em.create(AdView, {
-        type: AdType.DRAWING,
-        user: userRef,
-      });
-      em.persist(adView);
-
-      chance.count += 1;
-      this.successLog(userKey, "ad", chance.count, {
-        adGroupId: payload.adGroupId,
-      });
-      return { count: this.computeAvailable(chance, todayStart) };
+    const userRef = this.em.getReference(User, userKey);
+    const adView = this.em.create(AdView, {
+      type: AdType.DRAWING,
+      user: userRef,
     });
+    this.em.persist(adView);
+
+    chance.count += 1;
+    this.successLog(userKey, "ad", chance.count, {
+      adGroupId: payload.adGroupId,
+    });
+    return { count: this.computeAvailable(chance, todayStart) };
   }
 
   // 친구 초대(공유) 적립.
   // - 당일 초대 N건째: N < shareDailyChargeLimit(3)이면 기회 +1, 아니면 기회 없이 ShareLog만 기록.
   // - N >= inviteDailyLimit(5)이면 더 받을 보상이 없으므로 거부.
   // 기회를 못 받는 4·5번째 초대도 ShareLog는 남겨, 친구초대 일일 미션 진행에 사용된다.
+  @Transactional()
   async chargeByShare(
     userKey: number,
     payload: ShareSdkPayload,
   ): Promise<{ count: number; chanceGranted: boolean }> {
     this.chanceWhitelistValidator.validateShareModule(userKey, payload);
 
-    return this.em.transactional(async (em) => {
-      const { start, end } = getSeoulDayRange();
-      const chance = await this.findOrCreate(em, userKey); // play_chances 행 잠금 → 직렬화
+    const { start, end } = getSeoulDayRange();
+    const chance = await this.findOrCreate(userKey);
 
-      const beforeCount = await em.count(ShareLog, {
-        user: { userKey },
-        createdAt: { $gte: start, $lt: end },
-      });
-      // 더 받을 보상이 없는 상한(5) 초과는 기록 전에 거부.
-      if (beforeCount >= this.inviteDailyLimit) {
-        this.denyLog(userKey, "share", "daily_cap", payload);
-        throw new ForbiddenException("오늘 친구 초대를 모두 완료했어요.");
-      }
-
-      const userRef = em.getReference(User, userKey);
-      em.persist(
-        em.create(ShareLog, {
-          user: userRef,
-          channel: ShareChannel.CONTACTS_VIRAL,
-          moduleId: payload.moduleId,
-        }),
-      );
-
-      await em.flush();
-      const inviteCount = await em.count(ShareLog, {
-        user: { userKey },
-        createdAt: { $gte: start, $lt: end },
-      });
-
-      // 기회 지급 한도 내(처음 3건)에서만 +1. 초과분은 기록만(미션 진행에 사용).
-      const chanceGranted = inviteCount <= this.shareDailyChargeLimit;
-      if (chanceGranted) chance.count += 1;
-
-      // 같은 트랜잭션에서 친구초대 미션을 ShareLog 실개수로 멱등 동기화 → 드리프트 불가.
-      await this.missionService.syncInviteProgress(em, userKey, inviteCount);
-
-      this.successLog(userKey, "share", chance.count, {
-        channel: payload.channel,
-        chanceGranted,
-        inviteCount,
-      });
-      return { count: this.computeAvailable(chance, start), chanceGranted };
+    const beforeCount = await this.em.count(ShareLog, {
+      user: { userKey },
+      createdAt: { $gte: start, $lt: end },
     });
+    if (beforeCount >= this.inviteDailyLimit) {
+      this.denyLog(userKey, "share", "daily_cap", payload);
+      throw new ForbiddenException("오늘 친구 초대를 모두 완료했어요.");
+    }
+
+    const userRef = this.em.getReference(User, userKey);
+    this.em.persist(
+      this.em.create(ShareLog, {
+        user: userRef,
+        channel: ShareChannel.CONTACTS_VIRAL,
+        moduleId: payload.moduleId,
+      }),
+    );
+
+    await this.em.flush();
+    const inviteCount = await this.em.count(ShareLog, {
+      user: { userKey },
+      createdAt: { $gte: start, $lt: end },
+    });
+
+    const chanceGranted = inviteCount <= this.shareDailyChargeLimit;
+    if (chanceGranted) chance.count += 1;
+
+    await this.missionService.syncInviteProgress(userKey, inviteCount);
+
+    this.successLog(userKey, "share", chance.count, {
+      channel: payload.channel,
+      chanceGranted,
+      inviteCount,
+    });
+    return { count: this.computeAvailable(chance, start), chanceGranted };
   }
 
-  async consumeWithEntityManager(
-    em: EntityManager,
-    userKey: number,
-  ): Promise<{ count: number }> {
+  async consume(userKey: number): Promise<{ count: number }> {
     const todayStart = getSeoulDayRange().start;
-    const chance = await this.findOrCreate(em, userKey);
+    const chance = await this.findOrCreate(userKey);
 
-    // 당일 첫 플레이는 무료 — 충전분(count)을 차감하지 않고 무료 사용일만 갱신한다.
     if (this.isFreeAvailable(chance.lastResetAt, todayStart)) {
       chance.lastResetAt = todayStart;
       this.successLog(userKey, "consume", chance.count, { free: true });
@@ -160,25 +152,20 @@ export class ChanceService {
     return { count: chance.count };
   }
 
-  // 변경(차감/충전) 경로 전용. PESSIMISTIC_WRITE로 행을 잠가 동시 변경을 직렬화한다.
-  private async findOrCreate(
-    em: EntityManager,
-    userKey: number,
-  ): Promise<PlayChance> {
-    const existing = await em.findOne(
+  private async findOrCreate(userKey: number): Promise<PlayChance> {
+    const existing = await this.em.findOne(
       PlayChance,
       { userKey },
       { lockMode: LockMode.PESSIMISTIC_WRITE },
     );
     if (existing) return existing;
 
-    // 새 행: lastResetAt을 epoch로 둬서 무료 플레이가 아직 사용 가능한 상태로 만든다.
-    const created = em.create(PlayChance, {
+    const created = this.em.create(PlayChance, {
       userKey,
       count: 0,
       lastResetAt: new Date(0),
     });
-    em.persist(created);
+    this.em.persist(created);
     return created;
   }
 

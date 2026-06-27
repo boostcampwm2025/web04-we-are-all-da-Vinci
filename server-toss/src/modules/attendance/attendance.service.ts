@@ -104,11 +104,7 @@ export class AttendanceService {
 
       const milestone = rewardedDayFor(newDay);
       if (milestone != null) {
-        this.pointService.enqueueGrant(
-          this.em,
-          userKey,
-          PointReason.ATTENDANCE,
-        );
+        this.pointService.enqueueGrant(userKey, PointReason.ATTENDANCE);
       }
       await this.em.flush();
 

@@ -63,11 +63,7 @@ export class PointService {
     await this.pointGrantRequestRepository.getEntityManager().flush();
   }
 
-  // 호출자의 트랜잭션 EntityManager로 보상 요청(PENDING)만 적재한다. flush는 하지 않으며
-  // 호출자 트랜잭션 커밋 시 함께 반영된다. 출석 등 상태 전이와 같은 원자 경계에서 적재해
-  // "상태는 바뀌었는데 보상만 누락"되는 상황을 막는 용도.
   enqueueGrant(
-    em: EntityManager,
     userKey: number,
     reason: PointReason,
     pointAmount: number = PROMOTION_AMOUNT,
@@ -76,8 +72,8 @@ export class PointService {
       throw new RangeError("pointAmount는 1 이상의 정수여야 해요");
     }
 
-    em.create(PointGrantRequest, {
-      user: em.getReference(User, userKey),
+    this.em.create(PointGrantRequest, {
+      user: this.em.getReference(User, userKey),
       reason,
       pointAmount,
       status: PointGrantStatus.PENDING,

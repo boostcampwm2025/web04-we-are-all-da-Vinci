@@ -160,7 +160,6 @@ describe("출석 서비스", () => {
       expect(result.rewardedDay).toBe(3);
       expect(attendance.cycleDay).toBe(3);
       expect(pointService.enqueueGrant).toHaveBeenCalledWith(
-        expect.anything(),
         1234,
         PointReason.ATTENDANCE,
       );

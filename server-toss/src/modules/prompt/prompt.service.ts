@@ -1,5 +1,5 @@
 import { preprocessStrokes } from "@davinci/similarity";
-import { EntityManager, EntityRepository } from "@mikro-orm/core";
+import { EntityRepository } from "@mikro-orm/core";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import type { Stroke } from "@toss/shared";
@@ -31,18 +31,11 @@ export class PromptService {
 
   async getPromptByDate(
     date: Date,
-    em?: EntityManager,
   ): Promise<{ promptId: number; strokes: Stroke[] }> {
-    const daily = em
-      ? await em.findOne(
-          DailyPrompt,
-          { promptDate: date },
-          { populate: ["prompt"] },
-        )
-      : await this.dailyRepo.findOne(
-          { promptDate: date },
-          { populate: ["prompt"] },
-        );
+    const daily = await this.dailyRepo.findOne(
+      { promptDate: date },
+      { populate: ["prompt"] },
+    );
 
     if (!daily) {
       this.logger.warn(

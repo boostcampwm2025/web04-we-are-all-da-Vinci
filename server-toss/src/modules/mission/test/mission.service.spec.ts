@@ -7,6 +7,7 @@ jest.mock("src/common/util/time.util", () => ({
   getSeoulMonthStart: () => new Date("2026-04-30T15:00:00.000Z"),
 }));
 
+import { EntityManager } from "@mikro-orm/core";
 import { Test } from "@nestjs/testing";
 import { PointService } from "src/modules/point/point.service";
 import {
@@ -69,7 +70,6 @@ describe("MissionService", () => {
       findActiveByObjective: jest.fn(async () => []),
       findActiveDrawingMissions: jest.fn(async () => []),
       lockActiveForUpdate: jest.fn(async () => undefined),
-      flush: jest.fn(async () => undefined),
     };
 
     assignMissionService = {
@@ -94,6 +94,7 @@ describe("MissionService", () => {
           provide: MissionService,
           useFactory: (
             userMissionRepo,
+            em,
             processor,
             assignSvc,
             tutorialSvc,
@@ -101,6 +102,7 @@ describe("MissionService", () => {
           ) =>
             new MissionService(
               userMissionRepo,
+              em,
               processor,
               assignSvc,
               tutorialSvc,
@@ -108,6 +110,7 @@ describe("MissionService", () => {
             ),
           inject: [
             USER_MISSION_REPO_TOKEN,
+            EntityManager,
             MissionProcessor,
             AssignMissionService,
             TutorialMissionService,
@@ -115,6 +118,14 @@ describe("MissionService", () => {
           ],
         },
         { provide: USER_MISSION_REPO_TOKEN, useValue: userMissionRepository },
+        {
+          provide: EntityManager,
+          useValue: {
+            findOne: jest.fn(async () => null),
+            find: jest.fn(async () => []),
+            flush: jest.fn(async () => undefined),
+          },
+        },
         { provide: AssignMissionService, useValue: assignMissionService },
         { provide: TutorialMissionService, useValue: tutorialMissionService },
         {
@@ -222,7 +233,8 @@ describe("MissionService", () => {
 
         expect(result.completed).toEqual([]);
         expect(result.metaCompleted).toEqual([]);
-        expect(userMissionRepository.flush).toHaveBeenCalled();
+        const em = (service as unknown as { em: { flush: jest.Mock } }).em;
+        expect(em.flush).toHaveBeenCalled();
       });
     });
 
@@ -391,6 +403,8 @@ describe("MissionService", () => {
   });
 
   describe("친구초대 미션 동기화는 ShareLog 실개수를 단일 소스로 멱등하게 반영해요", () => {
+    let emMock: Record<string, jest.Mock>;
+
     const buildInviteMission = (currentCount: number): UserMission =>
       buildUserMission({
         mission: buildMission({
@@ -404,20 +418,17 @@ describe("MissionService", () => {
         currentCount,
       });
 
-    // 호출자(트랜잭션) em을 모사 — findOne은 활성 INVITE 미션, find는 주간 메타를 돌려준다.
-    const buildEm = (
-      invite: UserMission | null,
-      metas: UserMission[] = [],
-    ) => ({
-      findOne: jest.fn(async () => invite),
-      find: jest.fn(async () => metas),
-    });
+    const setupEm = (invite: UserMission | null, metas: UserMission[] = []) => {
+      emMock = (service as unknown as { em: Record<string, jest.Mock> }).em;
+      emMock.findOne.mockResolvedValue(invite);
+      emMock.find.mockResolvedValue(metas);
+    };
 
     it("당일 누적 초대 횟수를 그대로 진행도로 설정해요", async () => {
       const uq = buildInviteMission(0);
-      const em = buildEm(uq);
+      setupEm(uq);
 
-      await service.syncInviteProgress(em as never, 1234, 1);
+      await service.syncInviteProgress(1234, 1);
 
       expect(uq.currentCount).toBe(1);
       expect(uq.completedAt).toBeNull();
@@ -426,21 +437,19 @@ describe("MissionService", () => {
 
     it("이전 진행이 누락돼도 다음 호출이 실제 초대 횟수로 보정해요", async () => {
       const uq = buildInviteMission(2);
-      const em = buildEm(uq);
+      setupEm(uq);
 
-      await service.syncInviteProgress(em as never, 1234, 4);
+      await service.syncInviteProgress(1234, 4);
 
       expect(uq.currentCount).toBe(4);
       expect(uq.completedAt).toBeNull();
     });
 
     it("진행도를 전달된 초대 수 실값으로 설정해요", async () => {
-      // chargeByShare가 유일 작성자이고 같은 트랜잭션에서 단조 증가 실값을 넘기므로,
-      // 별도 보정 없이 inviteCount를 그대로 반영한다.
       const uq = buildInviteMission(0);
-      const em = buildEm(uq);
+      setupEm(uq);
 
-      await service.syncInviteProgress(em as never, 1234, 3);
+      await service.syncInviteProgress(1234, 3);
 
       expect(uq.currentCount).toBe(3);
       expect(uq.completedAt).toBeNull();
@@ -448,15 +457,14 @@ describe("MissionService", () => {
 
     it("다섯 번째 초대로 채워지면 완료 처리하고 5원을 한 번만 같은 트랜잭션에 적재해요", async () => {
       const uq = buildInviteMission(4);
-      const em = buildEm(uq);
+      setupEm(uq);
 
-      await service.syncInviteProgress(em as never, 1234, 5);
+      await service.syncInviteProgress(1234, 5);
 
       expect(uq.currentCount).toBe(5);
       expect(uq.completedAt).not.toBeNull();
       expect(pointService.enqueueGrant).toHaveBeenCalledTimes(1);
       expect(pointService.enqueueGrant).toHaveBeenCalledWith(
-        em,
         1234,
         expect.anything(),
         5,
@@ -473,17 +481,17 @@ describe("MissionService", () => {
         }),
         currentCount: 3,
       });
-      const em = buildEm(uq, [meta]);
+      setupEm(uq, [meta]);
 
-      await service.syncInviteProgress(em as never, 1234, 5);
+      await service.syncInviteProgress(1234, 5);
 
       expect(meta.currentCount).toBe(4);
     });
 
     it("미배정/완료 상태(em.findOne null)면 아무 지급도 하지 않아요", async () => {
-      const em = buildEm(null);
+      setupEm(null);
 
-      await service.syncInviteProgress(em as never, 1234, 5);
+      await service.syncInviteProgress(1234, 5);
 
       expect(pointService.enqueueGrant).not.toHaveBeenCalled();
     });
