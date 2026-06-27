@@ -1,3 +1,5 @@
+import { UniqueConstraintViolationException } from "@mikro-orm/core";
+import type { EntityManager } from "@mikro-orm/mysql";
 import type { ConfigService } from "@nestjs/config";
 import type { PromptService } from "../prompt/prompt.service";
 import type { NotificationSender } from "./port/notification-sender.interface";
@@ -56,11 +58,9 @@ const notificationKey = (input: {
   referenceId: string;
 }) => `${input.userKey}:${input.type}:${input.referenceId}`;
 
-class InMemorySentNotificationRepository {
+class InMemoryNotificationStore {
   private sequence = 0n;
-  private readonly records = new Map<string, StoredNotification>();
-
-  constructor(private readonly userKeys: number[]) {}
+  readonly records = new Map<string, StoredNotification>();
 
   get size() {
     return this.records.size;
@@ -74,55 +74,20 @@ class InMemorySentNotificationRepository {
     return count;
   }
 
-  async findAgreedUserKeysWithNoDrawingIn(): Promise<number[]> {
-    return this.userKeys;
-  }
-
-  async tryInsert(input: {
-    userKey: number;
-    type: string;
-    referenceId: string;
-    sentAt: Date;
-  }): Promise<SentNotification | false> {
-    const key = notificationKey(input);
-    if (this.records.has(key)) return false;
-
-    const record = {
+  createEntity(data: Record<string, unknown>): StoredNotification {
+    return {
       id: (this.sequence += 1n),
-      userKey: input.userKey,
-      type: input.type,
-      referenceId: input.referenceId,
-      sentAt: input.sentAt,
-      createdAt: input.sentAt,
-      updatedAt: input.sentAt,
+      ...data,
       status: SENT_NOTIFICATION_STATUS.IN_FLIGHT,
     } as StoredNotification;
-
-    this.records.set(key, record);
-    return record;
   }
 
-  async updateStatus(
-    entity: SentNotification,
-    status: SentNotificationStatus,
-  ): Promise<void> {
-    const record = entity as StoredNotification;
-    record.status = status;
-  }
-
-  async updateStatusMany(
-    entities: SentNotification[],
-    status: SentNotificationStatus,
-  ): Promise<void> {
-    for (const entity of entities) {
-      const record = entity as StoredNotification;
-      record.status = status;
+  flush(entity: StoredNotification): void {
+    const key = notificationKey(entity);
+    if (this.records.has(key)) {
+      throw new UniqueConstraintViolationException(new Error("duplicate"));
     }
-  }
-
-  async deleteOne(entity: SentNotification): Promise<void> {
-    const record = entity as StoredNotification;
-    this.records.delete(notificationKey(record));
+    this.records.set(key, entity);
   }
 }
 
@@ -130,6 +95,24 @@ const buildFlow = (opts: {
   userKeys: number[];
   responses?: TossMessengerResponse[];
 }) => {
+  const store = new InMemoryNotificationStore();
+  let pendingEntity: StoredNotification | null = null;
+
+  const em = {
+    create: jest.fn((_ctor: unknown, data: Record<string, unknown>) => {
+      pendingEntity = store.createEntity(data);
+      return pendingEntity;
+    }),
+    flush: jest.fn(async () => {
+      if (pendingEntity) {
+        store.flush(pendingEntity);
+        pendingEntity = null;
+      }
+    }),
+    clear: jest.fn(),
+    nativeUpdate: jest.fn().mockResolvedValue(0),
+  } as unknown as EntityManager;
+
   const configService = {
     get: jest.fn((key: string) => {
       if (key === "DAILY_PROMPT_NOTIFICATION_ENABLED") return "true";
@@ -147,24 +130,13 @@ const buildFlow = (opts: {
       .mockImplementation(async () => opts.responses?.shift() ?? okResponse()),
   } as unknown as jest.Mocked<NotificationSender>;
 
-  const sentNotificationRepository = new InMemorySentNotificationRepository(
-    opts.userKeys,
-  );
+  const sentNotificationRepository = {
+    findAgreedUserKeysWithNoDrawingIn: jest
+      .fn()
+      .mockResolvedValue(opts.userKeys),
+  } as unknown as jest.Mocked<SentNotificationRepository>;
 
-  const counterMock = () => ({
-    labels: jest.fn().mockReturnValue({ inc: jest.fn() }),
-  });
-  const histogramMock = () => ({
-    labels: jest.fn().mockReturnValue({ observe: jest.fn() }),
-  });
-
-  const notificationService = new NotificationService(
-    sentNotificationRepository as unknown as SentNotificationRepository,
-    notificationSender,
-    counterMock() as never,
-    histogramMock() as never,
-    counterMock() as never,
-  );
+  const notificationService = new NotificationService(em, notificationSender);
   const promptService = {
     getPromptByDate: jest.fn().mockResolvedValue({ promptId: 1, strokes: [] }),
   } as unknown as jest.Mocked<PromptService>;
@@ -172,11 +144,11 @@ const buildFlow = (opts: {
     {} as never,
     configService,
     notificationService,
-    sentNotificationRepository as unknown as SentNotificationRepository,
+    sentNotificationRepository,
     promptService,
   );
 
-  return { scheduler, sentNotificationRepository, notificationSender };
+  return { scheduler, store, notificationSender };
 };
 
 describe("알림 로컬 검증 흐름", () => {
@@ -190,15 +162,13 @@ describe("알림 로컬 검증 흐름", () => {
   });
 
   it("대상 조회부터 Toss payload와 발송 기록 멱등성까지 검증해요", async () => {
-    const { scheduler, sentNotificationRepository, notificationSender } =
-      buildFlow({
-        userKeys: [101, 202],
-      });
+    const { scheduler, store, notificationSender } = buildFlow({
+      userKeys: [101, 202],
+    });
 
     await scheduler.run();
     await scheduler.run();
 
-    // 두 사용자 각각 1번 호출. 두 번째 run은 UNIQUE 차단으로 skip.
     expect(notificationSender.sendMessage).toHaveBeenCalledTimes(2);
     expect(notificationSender.sendMessage).toHaveBeenNthCalledWith(1, {
       userKey: 101,
@@ -210,52 +180,41 @@ describe("알림 로컬 검증 흐름", () => {
       templateSetCode: "daily_prompt_v1",
       context: {},
     });
-    expect(sentNotificationRepository.size).toBe(2);
-    expect(
-      sentNotificationRepository.countByStatus(
-        SENT_NOTIFICATION_STATUS.DELIVERED,
-      ),
-    ).toBe(2);
+    expect(store.size).toBe(2);
+    expect(store.countByStatus(SENT_NOTIFICATION_STATUS.DELIVERED)).toBe(2);
   });
 
   it("Toss 실패 응답은 row를 보존(status=FAILED)해서 다음 실행에서 UNIQUE로 차단해요", async () => {
-    const { scheduler, sentNotificationRepository, notificationSender } =
-      buildFlow({
-        userKeys: [303],
-        responses: [failResponse, okResponse()],
-      });
+    const { scheduler, store, notificationSender } = buildFlow({
+      userKeys: [303],
+      responses: [failResponse, okResponse()],
+    });
 
     await scheduler.run();
 
-    // 실패해도 row는 남고 status는 FAILED. 다음 cron에서 UNIQUE로 차단.
     expect(notificationSender.sendMessage).toHaveBeenCalledTimes(1);
-    expect(sentNotificationRepository.size).toBe(1);
-    expect(
-      sentNotificationRepository.countByStatus(SENT_NOTIFICATION_STATUS.FAILED),
-    ).toBe(1);
+    expect(store.size).toBe(1);
+    expect(store.countByStatus(SENT_NOTIFICATION_STATUS.FAILED)).toBe(1);
 
     await scheduler.run();
 
-    // UNIQUE 차단으로 두 번째 cron에서는 토스 호출 안 일어남.
-    // = 같은 사용자에게 중복 발송 안 됨.
     expect(notificationSender.sendMessage).toHaveBeenCalledTimes(1);
-    expect(sentNotificationRepository.size).toBe(1);
+    expect(store.size).toBe(1);
   });
 
   it("스케줄러가 KST 오늘 날짜를 daily_prompt referenceId로 사용해요", async () => {
-    const { scheduler, sentNotificationRepository } = buildFlow({
+    const { scheduler, store } = buildFlow({
       userKeys: [404],
     });
-    const tryInsert = jest.spyOn(sentNotificationRepository, "tryInsert");
 
     await scheduler.run();
 
-    expect(tryInsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        userKey: 404,
-        type: NOTIFICATION_TYPE.DAILY_PROMPT,
-        referenceId: "2026-05-26",
-      }),
-    );
+    const records = [...store.records.values()];
+    expect(records).toHaveLength(1);
+    expect(records[0]).toMatchObject({
+      userKey: 404,
+      type: NOTIFICATION_TYPE.DAILY_PROMPT,
+      referenceId: "2026-05-26",
+    });
   });
 });

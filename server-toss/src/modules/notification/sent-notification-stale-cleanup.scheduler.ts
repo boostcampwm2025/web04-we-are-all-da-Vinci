@@ -2,7 +2,7 @@ import { EntityManager, RequestContext } from "@mikro-orm/core";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Cron } from "@nestjs/schedule";
-import { SentNotificationRepository } from "./sent-notification.repository";
+import { NotificationService } from "./notification.service";
 
 // 매 시간 정각(KST). 환경변수 NOTIFICATION_STALE_CLEANUP_CRON으로 오버라이드 가능.
 const STALE_CLEANUP_CRON =
@@ -23,7 +23,7 @@ export class SentNotificationStaleCleanupScheduler {
   constructor(
     private readonly em: EntityManager,
     private readonly configService: ConfigService,
-    private readonly sentNotificationRepository: SentNotificationRepository,
+    private readonly notificationService: NotificationService,
   ) {}
 
   // @Cron은 RequestContext가 없어 em 작업이 막힐 수 있다 → 작업 전용 컨텍스트로 감싼다.
@@ -39,9 +39,7 @@ export class SentNotificationStaleCleanupScheduler {
 
     try {
       const affected =
-        await this.sentNotificationRepository.markStaleInFlightAsFailed(
-          staleBefore,
-        );
+        await this.notificationService.markStaleInFlightAsFailed(staleBefore);
 
       if (affected > 0) {
         // 운영 모니터링 시그널 — warn 레벨로 가시화.

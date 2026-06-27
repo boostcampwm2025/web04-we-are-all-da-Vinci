@@ -266,19 +266,17 @@ export class PointService {
       now.getTime() - FAILED_RETENTION_DAYS * 24 * 60 * 60 * 1000,
     );
 
-    const succeededDeleted =
-      await this.pointGrantRequestRepository.purgeByStatusBefore(
-        PointGrantStatus.SUCCEEDED,
-        succeededCutoff,
-        PURGE_BATCH_SIZE,
-      );
+    const succeededDeleted = await this.purgeByStatusBefore(
+      PointGrantStatus.SUCCEEDED,
+      succeededCutoff,
+      PURGE_BATCH_SIZE,
+    );
 
-    const failedDeleted =
-      await this.pointGrantRequestRepository.purgeByStatusBefore(
-        PointGrantStatus.FAILED,
-        failedCutoff,
-        PURGE_BATCH_SIZE,
-      );
+    const failedDeleted = await this.purgeByStatusBefore(
+      PointGrantStatus.FAILED,
+      failedCutoff,
+      PURGE_BATCH_SIZE,
+    );
 
     this.logger.log(
       {
@@ -291,5 +289,30 @@ export class PointService {
     );
 
     return { succeededDeleted, failedDeleted };
+  }
+
+  private async purgeByStatusBefore(
+    status: PointGrantStatus,
+    cutoff: Date,
+    batchSize: number,
+  ): Promise<number> {
+    const targets = await this.em.find(
+      PointGrantRequest,
+      {
+        status,
+        processedAt: { $lt: cutoff },
+      },
+      {
+        fields: ["id"],
+        orderBy: { processedAt: "ASC" },
+        limit: batchSize,
+        disableIdentityMap: true,
+      },
+    );
+
+    const ids = targets.map((target) => target.id);
+    if (ids.length === 0) return 0;
+
+    return this.em.nativeDelete(PointGrantRequest, { id: { $in: ids } });
   }
 }

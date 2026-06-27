@@ -1,5 +1,6 @@
-import { InjectRepository } from "@mikro-orm/nestjs";
+import { EntityManager } from "@mikro-orm/mysql";
 import { Injectable } from "@nestjs/common";
+import { Transactional } from "@mikro-orm/decorators/legacy";
 import {
   type MyRankingResponse,
   type RankingListResponse,
@@ -13,8 +14,8 @@ import {
 import { Ranking } from "./ranking.entity";
 import { Drawing } from "../drawing/drawing.entity";
 import { User } from "../user/user.entity";
-import { Transactional } from "@mikro-orm/decorators/legacy";
 import { DrawingRepository } from "../drawing/drawing.repository";
+import { getSeoulDayRange } from "src/common/util/time.util";
 
 // updateRanking 결과. 알림 트리거(OVERTAKEN) 발송을 위해 변화 정보를 반환한다.
 // changed=false면 점수가 더 낮아 갱신 안 함. 그 외엔 newRank·overtakenUserKeys 사용.
@@ -31,9 +32,8 @@ const OVERTAKEN_LIMIT = 100;
 @Injectable()
 export class RankingService {
   constructor(
-    @InjectRepository(Ranking)
+    private readonly em: EntityManager,
     private readonly rankingRepository: RankingRepository,
-    @InjectRepository(Drawing)
     private readonly drawingRepository: DrawingRepository,
   ) {}
 
@@ -60,7 +60,14 @@ export class RankingService {
       });
 
     if (!existing) {
-      await this.rankingRepository.saveOne(user, drawing);
+      this.em.create(Ranking, {
+        userKey: user.userKey,
+        nickname: user.nickname,
+        drawingId: drawing.id,
+        score: drawing.score,
+        strokes: drawing.strokes,
+        submittedAt: drawing.createdAt,
+      });
     } else {
       existing.update(
         drawing.id,
@@ -68,8 +75,8 @@ export class RankingService {
         drawing.score,
         drawing.createdAt,
       );
-      await this.rankingRepository.getEntityManager().flush();
     }
+    await this.em.flush();
 
     // 갱신 후 본인의 새 순위 계산
     const myRanking = await this.rankingRepository.findMyRanking(user.userKey);
@@ -129,5 +136,12 @@ export class RankingService {
       state: "FOUND",
       ranking: result,
     };
+  }
+
+  async cleanupRanking(): Promise<void> {
+    const { start } = getSeoulDayRange();
+    await this.em.nativeDelete(Ranking, {
+      submittedAt: { $lt: start },
+    });
   }
 }

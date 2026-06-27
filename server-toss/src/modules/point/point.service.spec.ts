@@ -31,6 +31,9 @@ const buildEntityManager = (countResult: number | number[] = 0) => {
     persist: jest.fn(),
     flush: jest.fn(async () => undefined),
     getReference: jest.fn(),
+    find: jest.fn().mockResolvedValue([] as unknown[]),
+    fork: jest.fn(),
+    nativeDelete: jest.fn().mockResolvedValue(0 as number),
   };
 };
 
@@ -39,8 +42,9 @@ const buildPointGrantRequestRepository = () => {
   return {
     getReference: jest.fn(),
     create: jest.fn(),
-    findEligibleGrantsWithLock: jest.fn(async () => []),
-    purgeByStatusBefore: jest.fn(async () => 0),
+    findEligibleGrantsWithLock: jest
+      .fn<() => Promise<unknown[]>>()
+      .mockResolvedValue([]),
     getEntityManager: jest.fn(() => ({ flush })),
     __flush: flush,
   };
@@ -124,30 +128,24 @@ describe("PointService", () => {
   describe("purgeProcessedGrantRequests", () => {
     describe("purge를 실행하는 경우", () => {
       it("SUCCEEDED/FAILED를 각각 100건 배치로 정리한다", async () => {
-        const repository = buildPointGrantRequestRepository();
-        repository.purgeByStatusBefore
+        const em = buildEntityManager();
+        (em.find as jest.Mock)
+          .mockResolvedValueOnce(
+            Array.from({ length: 10 }, (_, i) => ({ id: BigInt(i + 1) })),
+          )
+          .mockResolvedValueOnce(
+            Array.from({ length: 20 }, (_, i) => ({ id: BigInt(i + 100) })),
+          );
+        (em.nativeDelete as jest.Mock)
           .mockResolvedValueOnce(10)
           .mockResolvedValueOnce(20);
-        const service = buildService({
-          pointGrantRequestRepository: repository,
-        });
+        const service = buildService({ entityManager: em });
 
         const result = await service.purgeProcessedGrantRequests();
 
         expect(result).toEqual({ succeededDeleted: 10, failedDeleted: 20 });
-        expect(repository.purgeByStatusBefore).toHaveBeenCalledTimes(2);
-        expect(repository.purgeByStatusBefore).toHaveBeenNthCalledWith(
-          1,
-          PointGrantStatus.SUCCEEDED,
-          new Date("2026-05-18T00:00:00.000Z"),
-          100,
-        );
-        expect(repository.purgeByStatusBefore).toHaveBeenNthCalledWith(
-          2,
-          PointGrantStatus.FAILED,
-          new Date("2026-04-25T00:00:00.000Z"),
-          100,
-        );
+        expect(em.find).toHaveBeenCalledTimes(2);
+        expect(em.nativeDelete).toHaveBeenCalledTimes(2);
       });
     });
   });

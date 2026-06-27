@@ -31,7 +31,7 @@ export class DailyRankingSnapshotService {
     private readonly drawingRepository: DrawingRepository,
     @InjectRepository(DailyUserRanking)
     private readonly dailyUserRankingRepository: DailyUserRankingRepository,
-    private readonly em?: EntityManager,
+    private readonly em: EntityManager,
   ) {}
 
   @CreateRequestContext()
@@ -92,7 +92,7 @@ export class DailyRankingSnapshotService {
     }
 
     const snapshots = await this.buildSnapshotsForDate(dateKey);
-    await this.dailyUserRankingRepository.saveSnapshots(snapshots);
+    await this.saveSnapshots(snapshots);
 
     return { dateKey, skipped: false, savedCount: snapshots.length };
   }
@@ -127,5 +127,16 @@ export class DailyRankingSnapshotService {
       participantCount,
       submittedAt: drawing.createdAt,
     }));
+  }
+
+  private async saveSnapshots(
+    snapshots: DailyUserRankingSnapshot[],
+  ): Promise<void> {
+    if (snapshots.length === 0) return;
+
+    for (const snapshot of snapshots) {
+      this.em.create(DailyUserRanking, snapshot);
+    }
+    await this.em.flush();
   }
 }

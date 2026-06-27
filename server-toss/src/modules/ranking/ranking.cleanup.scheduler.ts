@@ -1,6 +1,6 @@
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { Injectable, Logger } from "@nestjs/common";
-import { RankingRepository } from "./ranking.repository";
+import { RankingService } from "./ranking.service";
 import { DailyRankingSnapshotService } from "../dailyRanking/daily-ranking-snapshot.service";
 
 @Injectable()
@@ -8,7 +8,7 @@ export class RankingCleanupScheduler {
   private readonly logger = new Logger(RankingCleanupScheduler.name);
 
   constructor(
-    private readonly rankingRepository: RankingRepository,
+    private readonly rankingService: RankingService,
     private readonly dailyRankingSnapshotService: DailyRankingSnapshotService,
   ) {}
 
@@ -16,7 +16,7 @@ export class RankingCleanupScheduler {
   async handleRankingSnapshotCleanup() {
     try {
       await this.dailyRankingSnapshotService.createYesterdaySnapshot();
-      await this.rankingRepository.cleanupRanking();
+      await this.rankingService.cleanupRanking();
     } catch (err) {
       this.logger.error(
         { event: "ranking.cleanup.scheduler.failed", err },

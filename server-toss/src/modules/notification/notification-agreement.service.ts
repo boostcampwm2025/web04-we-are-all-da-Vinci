@@ -1,3 +1,5 @@
+import { UniqueConstraintViolationException } from "@mikro-orm/core";
+import { EntityManager } from "@mikro-orm/mysql";
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type {
@@ -11,6 +13,7 @@ import {
   type NotificationAgreementStatus,
   type NotificationType,
 } from "./notification.constants";
+import { NotificationAgreement } from "./notification-agreement.entity";
 import { NotificationAgreementRepository } from "./notification-agreement.repository";
 
 const toIsoOrNull = (date: Date | null | undefined): string | null =>
@@ -34,6 +37,7 @@ const mapEventToStatus = (
 @Injectable()
 export class NotificationAgreementService {
   constructor(
+    private readonly em: EntityManager,
     private readonly configService: ConfigService,
     private readonly notificationAgreementRepository: NotificationAgreementRepository,
   ) {}
@@ -134,7 +138,7 @@ export class NotificationAgreementService {
     const status = mapEventToStatus(input.eventType);
     const now = new Date();
 
-    const agreement = await this.notificationAgreementRepository.upsertStatus({
+    const upsertInput = {
       userKey: input.userKey,
       type: input.type,
       templateCode,
@@ -144,7 +148,9 @@ export class NotificationAgreementService {
       rejectedAt:
         status === NOTIFICATION_AGREEMENT_STATUS.REJECTED ? now : undefined,
       lastEventAt: now,
-    });
+    };
+
+    const agreement = await this.upsertAgreementStatus(upsertInput);
 
     return {
       status: toPublicStatus(agreement.status),
@@ -153,5 +159,55 @@ export class NotificationAgreementService {
       rejectedAt: toIsoOrNull(agreement.rejectedAt),
       lastEventAt: toIsoOrNull(agreement.lastEventAt),
     };
+  }
+
+  private async upsertAgreementStatus(input: {
+    userKey: number;
+    type: NotificationType;
+    templateCode: string;
+    status: NotificationAgreementStatus;
+    agreedAt?: Date | null;
+    rejectedAt?: Date | null;
+    lastEventAt: Date;
+  }): Promise<NotificationAgreement> {
+    const existing =
+      await this.notificationAgreementRepository.findByUserTypeTemplate(input);
+    if (existing) {
+      return this.applyStatus(existing, input);
+    }
+
+    try {
+      const entity = this.em.create(NotificationAgreement, input);
+      await this.em.flush();
+      return entity;
+    } catch (err) {
+      if (err instanceof UniqueConstraintViolationException) {
+        const conflicted =
+          await this.notificationAgreementRepository.findByUserTypeTemplate(
+            input,
+          );
+        if (conflicted) {
+          return this.applyStatus(conflicted, input);
+        }
+      }
+      throw err;
+    }
+  }
+
+  private async applyStatus(
+    entity: NotificationAgreement,
+    input: {
+      status: NotificationAgreementStatus;
+      agreedAt?: Date | null;
+      rejectedAt?: Date | null;
+      lastEventAt: Date;
+    },
+  ): Promise<NotificationAgreement> {
+    entity.status = input.status;
+    entity.agreedAt = input.agreedAt ?? entity.agreedAt ?? null;
+    entity.rejectedAt = input.rejectedAt ?? entity.rejectedAt ?? null;
+    entity.lastEventAt = input.lastEventAt;
+    await this.em.flush();
+    return entity;
   }
 }

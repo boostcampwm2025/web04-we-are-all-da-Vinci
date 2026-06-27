@@ -1,15 +1,15 @@
+import { EntityManager } from "@mikro-orm/mysql";
+import { Injectable } from "@nestjs/common";
+import { Transactional } from "@mikro-orm/decorators/legacy";
 import {
   RankingService,
   type RankingChangeResult,
 } from "src/modules/ranking/ranking.service";
+import { MissionService } from "src/modules/mission/service/mission.service";
 import { User } from "src/modules/user/user.entity";
+import { Prompt } from "src/modules/prompt/prompt.entity";
 import { Drawing } from "../drawing.entity";
 import { SaveDrawingDto } from "../dto/save-drawing.dto";
-import { Injectable } from "@nestjs/common";
-import { DrawingRepository } from "../drawing.repository";
-import { InjectRepository } from "@mikro-orm/nestjs";
-import { Transactional } from "@mikro-orm/decorators/legacy";
-import { MissionService } from "src/modules/mission/service/mission.service";
 
 export type SaveDrawingResult = {
   drawing: Drawing;
@@ -19,8 +19,7 @@ export type SaveDrawingResult = {
 @Injectable()
 export class SaveDrawingService {
   constructor(
-    @InjectRepository(Drawing)
-    private readonly drawingRepository: DrawingRepository,
+    private readonly em: EntityManager,
     private readonly rankingService: RankingService,
     private readonly missionService: MissionService,
   ) {}
@@ -32,13 +31,14 @@ export class SaveDrawingService {
   ): Promise<SaveDrawingResult> {
     const { promptId, strokes, similarity } = dto;
 
-    const drawing = await this.drawingRepository.saveDrawing(
-      user,
-      promptId,
-      JSON.stringify(strokes),
-      JSON.stringify(similarity),
-      similarity.score,
-    );
+    const drawing = new Drawing();
+    drawing.user = user;
+    drawing.prompt = this.em.getReference(Prompt, BigInt(promptId));
+    drawing.strokes = JSON.stringify(strokes);
+    drawing.similarity = JSON.stringify(similarity);
+    drawing.score = similarity.score;
+    this.em.persist(drawing);
+    await this.em.flush();
 
     const rankingChange = await this.rankingService.updateRanking(
       user,

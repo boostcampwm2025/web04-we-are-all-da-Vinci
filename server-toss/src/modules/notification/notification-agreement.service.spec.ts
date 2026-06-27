@@ -21,15 +21,24 @@ const buildService = () => {
 
   const notificationAgreementRepository = {
     findByUserTypeTemplate: jest.fn(),
-    upsertStatus: jest.fn(),
+    findAgreedUserKeysAmong: jest.fn(),
   } as unknown as jest.Mocked<NotificationAgreementRepository>;
 
+  const em = {
+    create: jest.fn(
+      (_entity: unknown, data: Record<string, unknown>) =>
+        data as unknown as NotificationAgreement,
+    ),
+    flush: jest.fn().mockResolvedValue(undefined),
+  };
+
   const service = new NotificationAgreementService(
+    em as never,
     configService,
     notificationAgreementRepository,
   );
 
-  return { service, configService, notificationAgreementRepository };
+  return { service, configService, notificationAgreementRepository, em };
 };
 
 describe("NotificationAgreementService", () => {
@@ -69,9 +78,13 @@ describe("NotificationAgreementService", () => {
   it.each(["newAgreement", "alreadyAgreed"] as const)(
     "%s 이벤트를 AGREED 상태로 저장한다",
     async (eventType) => {
-      const { service, notificationAgreementRepository } = buildService();
+      const { service, notificationAgreementRepository, em } = buildService();
       const now = new Date("2026-05-26T03:00:00.000Z");
-      notificationAgreementRepository.upsertStatus.mockResolvedValue({
+      // 기존 레코드 없음 → 새로 생성
+      notificationAgreementRepository.findByUserTypeTemplate.mockResolvedValue(
+        null,
+      );
+      em.create.mockReturnValue({
         userKey: 123,
         type: NOTIFICATION_TYPE.DAILY_PROMPT,
         templateCode: TEMPLATE_CODE,
@@ -79,15 +92,16 @@ describe("NotificationAgreementService", () => {
         agreedAt: now,
         rejectedAt: null,
         lastEventAt: now,
-      } as NotificationAgreement);
+      } as unknown as NotificationAgreement);
 
       const result = await service.saveDailyPromptAgreement({
         userKey: 123,
         eventType,
       });
 
-      expect(notificationAgreementRepository.upsertStatus).toHaveBeenCalledWith(
-        {
+      expect(em.create).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
           userKey: 123,
           type: NOTIFICATION_TYPE.DAILY_PROMPT,
           templateCode: TEMPLATE_CODE,
@@ -95,7 +109,7 @@ describe("NotificationAgreementService", () => {
           agreedAt: now,
           rejectedAt: undefined,
           lastEventAt: now,
-        },
+        }),
       );
       expect(result.status).toBe("agreed");
       expect(result.agreedAt).toBe("2026-05-26T03:00:00.000Z");
@@ -103,9 +117,12 @@ describe("NotificationAgreementService", () => {
   );
 
   it("agreementRejected 이벤트를 REJECTED 상태로 저장한다", async () => {
-    const { service, notificationAgreementRepository } = buildService();
+    const { service, notificationAgreementRepository, em } = buildService();
     const now = new Date("2026-05-26T03:00:00.000Z");
-    notificationAgreementRepository.upsertStatus.mockResolvedValue({
+    notificationAgreementRepository.findByUserTypeTemplate.mockResolvedValue(
+      null,
+    );
+    em.create.mockReturnValue({
       userKey: 123,
       type: NOTIFICATION_TYPE.DAILY_PROMPT,
       templateCode: TEMPLATE_CODE,
@@ -113,22 +130,25 @@ describe("NotificationAgreementService", () => {
       agreedAt: null,
       rejectedAt: now,
       lastEventAt: now,
-    } as NotificationAgreement);
+    } as unknown as NotificationAgreement);
 
     const result = await service.saveDailyPromptAgreement({
       userKey: 123,
       eventType: "agreementRejected",
     });
 
-    expect(notificationAgreementRepository.upsertStatus).toHaveBeenCalledWith({
-      userKey: 123,
-      type: NOTIFICATION_TYPE.DAILY_PROMPT,
-      templateCode: TEMPLATE_CODE,
-      status: NOTIFICATION_AGREEMENT_STATUS.REJECTED,
-      agreedAt: undefined,
-      rejectedAt: now,
-      lastEventAt: now,
-    });
+    expect(em.create).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        userKey: 123,
+        type: NOTIFICATION_TYPE.DAILY_PROMPT,
+        templateCode: TEMPLATE_CODE,
+        status: NOTIFICATION_AGREEMENT_STATUS.REJECTED,
+        agreedAt: undefined,
+        rejectedAt: now,
+        lastEventAt: now,
+      }),
+    );
     expect(result.status).toBe("rejected");
     expect(result.rejectedAt).toBe("2026-05-26T03:00:00.000Z");
   });

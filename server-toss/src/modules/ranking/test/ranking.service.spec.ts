@@ -46,7 +46,11 @@ describe("랭킹 서비스", () => {
       } as unknown as RankingRepository;
       const drawingRepository = {} as unknown as DrawingRepository;
 
-      const rankingService = new RankingService(repository, drawingRepository);
+      const rankingService = new RankingService(
+        {} as never,
+        repository,
+        drawingRepository,
+      );
 
       await expect(rankingService.findPodium()).resolves.toEqual({
         podium: [
@@ -83,7 +87,11 @@ describe("랭킹 서비스", () => {
         findDrawingDetailsByIds,
       } as unknown as DrawingRepository;
 
-      const rankingService = new RankingService(repository, drawingRepository);
+      const rankingService = new RankingService(
+        {} as never,
+        repository,
+        drawingRepository,
+      );
 
       await expect(rankingService.findRankingList()).resolves.toEqual({
         updatedAt: "2026-04-18T00:00:00.000Z",
@@ -146,7 +154,11 @@ describe("랭킹 서비스", () => {
         ]),
       } as unknown as DrawingRepository;
 
-      const rankingService = new RankingService(repository, drawingRepository);
+      const rankingService = new RankingService(
+        {} as never,
+        repository,
+        drawingRepository,
+      );
 
       await expect(rankingService.findRankingList(123)).resolves.toEqual({
         updatedAt: "2026-04-18T00:00:00.000Z",
@@ -194,7 +206,11 @@ describe("랭킹 서비스", () => {
           findMyRanking,
         } as unknown as RankingRepository;
         const drawingRepository = {} as unknown as DrawingRepository;
-        const service = new RankingService(repository, drawingRepository);
+        const service = new RankingService(
+          {} as never,
+          repository,
+          drawingRepository,
+        );
 
         await expect(service.findMyRanking(11)).resolves.toEqual({
           state: "FOUND",
@@ -214,7 +230,11 @@ describe("랭킹 서비스", () => {
         const repository = { findMyRanking } as unknown as RankingRepository;
         const drawingRepository = {} as unknown as DrawingRepository;
 
-        const service = new RankingService(repository, drawingRepository);
+        const service = new RankingService(
+          {} as never,
+          repository,
+          drawingRepository,
+        );
 
         await expect(service.findMyRanking(11)).resolves.toEqual({
           state: "NOT_SUBMITTED",
