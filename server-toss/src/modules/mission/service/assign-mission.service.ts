@@ -2,7 +2,7 @@ import { EntityManager } from "@mikro-orm/mysql";
 import { Transactional } from "@mikro-orm/decorators/legacy";
 import { Injectable, Logger } from "@nestjs/common";
 import { User } from "src/modules/user/user.entity";
-import { Mission, MissionPeriod } from "../entity/mission.entity";
+import { MissionPeriod } from "../entity/mission.entity";
 import { UserMission } from "../entity/user-mission.entity";
 import { MissionWindow } from "../mission-window";
 import { DAILY_RANDOM_COUNT, WEEKLY_RANDOM_COUNT } from "../mission.constants";
