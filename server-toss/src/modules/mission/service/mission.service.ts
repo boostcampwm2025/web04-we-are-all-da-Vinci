@@ -1,7 +1,8 @@
-import { EntityManager } from "@mikro-orm/mysql";
 import { Transactional } from "@mikro-orm/decorators/legacy";
-import { InjectRepository } from "@mikro-orm/nestjs";
-import { Injectable } from "@nestjs/common";
+import { EntityManager } from "@mikro-orm/mysql";
+import { Injectable, Logger } from "@nestjs/common";
+import { PointReason } from "../../point/entity/point-log.entity";
+import { PointService } from "../../point/point.service";
 import { MyMissionsResponseDto } from "../dto/my-missions-response.dto";
 import { TodayMissionsResponseDto } from "../dto/today-missions-response.dto";
 import { ObjectiveType } from "../entity/mission.entity";
@@ -14,16 +15,15 @@ import type {
   DrawingContext,
 } from "../mission.types";
 import type { UserMissionRepository } from "../repository/user-mission.repository";
-import { PointReason } from "../../point/entity/point-log.entity";
-import { PointService } from "../../point/point.service";
 import { AssignMissionService } from "./assign-mission.service";
 import { MissionProcessor } from "./mission.processor";
 import { TutorialMissionService } from "./tutorial-mission.service";
 
 @Injectable()
 export class MissionService {
+  private readonly logger = new Logger(MissionService.name);
+
   constructor(
-    @InjectRepository(UserMission)
     private readonly userMissionRepo: UserMissionRepository,
     private readonly em: EntityManager,
     private readonly processor: MissionProcessor,
@@ -99,13 +99,14 @@ export class MissionService {
     const tutorialMeta =
       await this.tutorialMissionService.findActiveMeta(userKey);
 
-    const result = await this.processor.executeProgressCycle(
-      userKey,
+    const result = this.processor.executeProgressCycle(
       [...drawingActive, ...tutorialDrawing],
       [...weeklyMeta, ...tutorialMeta],
       context,
       window,
     );
+
+    this.grantRewards(userKey, [...result.completed, ...result.metaCompleted]);
 
     await this.tutorialMissionService.recordCompletionIfFinished(
       userKey,
@@ -138,13 +139,14 @@ export class MissionService {
     const tutorialMeta =
       await this.tutorialMissionService.findActiveMeta(userKey);
 
-    const result = await this.processor.executeProgressCycle(
-      userKey,
+    const result = this.processor.executeProgressCycle(
       tutorialActive,
       tutorialMeta,
       context,
       window,
     );
+
+    this.grantRewards(userKey, [...result.completed, ...result.metaCompleted]);
 
     await this.tutorialMissionService.recordCompletionIfFinished(
       userKey,
@@ -181,13 +183,7 @@ export class MissionService {
 
     if (invite.currentCount >= required) {
       invite.completedAt = window.now;
-      if (invite.mission.rewardAmount > 0) {
-        this.pointService.enqueueGrant(
-          userKey,
-          PointReason.MISSION,
-          invite.mission.rewardAmount,
-        );
-      }
+      this.grantRewards(userKey, [invite]);
       await this.progressDailyCompletionMeta(userKey, window);
     }
   }
@@ -213,14 +209,31 @@ export class MissionService {
         !meta.completedAt
       ) {
         meta.completedAt = window.now;
-        if (meta.mission.rewardAmount > 0) {
-          this.pointService.enqueueGrant(
-            userKey,
-            PointReason.MISSION,
-            meta.mission.rewardAmount,
-          );
-        }
+        this.grantRewards(userKey, [meta]);
       }
+    }
+  }
+
+  private grantRewards(userKey: number, completed: UserMission[]): void {
+    for (const uq of completed) {
+      if (uq.mission.rewardAmount === 0) continue;
+
+      this.pointService.enqueueGrant(
+        userKey,
+        PointReason.MISSION,
+        uq.mission.rewardAmount,
+      );
+
+      this.logger.log(
+        {
+          event: "mission.complete.succeeded",
+          userKey,
+          missionId: uq.mission.id.toString(),
+          rewardType: uq.mission.rewardType,
+          rewardAmount: uq.mission.rewardAmount,
+        },
+        "미션 완료",
+      );
     }
   }
 }

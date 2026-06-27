@@ -279,7 +279,7 @@ describe("MissionService", () => {
 
         expect(uq.completedAt).not.toBeNull();
         // 미션의 rewardAmount(기본 10)가 그대로 지급 금액으로 전달된다
-        expect(pointService.savePointGrantRequest).toHaveBeenCalledWith(
+        expect(pointService.enqueueGrant).toHaveBeenCalledWith(
           1234,
           expect.anything(),
           10,

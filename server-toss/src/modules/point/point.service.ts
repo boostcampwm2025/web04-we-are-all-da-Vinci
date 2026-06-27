@@ -40,29 +40,6 @@ export class PointService {
   ) {}
 
   @Transactional()
-  async savePointGrantRequest(
-    userKey: number,
-    reason: PointReason,
-    pointAmount: number = PROMOTION_AMOUNT,
-  ): Promise<void> {
-    if (!Number.isInteger(pointAmount) || pointAmount <= 0) {
-      throw new RangeError("pointAmount는 1 이상의 정수여야 해요");
-    }
-
-    const user = this.em.getReference(User, userKey);
-
-    this.em.create(PointGrantRequest, {
-      user,
-      reason,
-      pointAmount,
-      status: PointGrantStatus.PENDING,
-      maxAttemptCount: PROMOTION_MAX_RETRIES,
-      attemptCount: 0,
-    });
-
-    await this.em.flush();
-  }
-
   enqueueGrant(
     userKey: number,
     reason: PointReason,
