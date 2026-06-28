@@ -178,6 +178,7 @@ export class NotificationAgreementService {
 
     try {
       const entity = this.em.create(NotificationAgreement, input);
+      this.em.persist(entity);
       await this.em.flush();
       return entity;
     } catch (err) {
