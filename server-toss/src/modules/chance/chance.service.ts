@@ -132,6 +132,7 @@ export class ChanceService {
     return { count: this.computeAvailable(chance, start), chanceGranted };
   }
 
+  @Transactional()
   async consume(userKey: number): Promise<{ count: number }> {
     const todayStart = getSeoulDayRange().start;
     const chance = await this.findOrCreate(userKey);

@@ -1,4 +1,3 @@
-import { Transactional } from "@mikro-orm/decorators/legacy";
 import { Injectable } from "@nestjs/common";
 import type { PromptResponse } from "@toss/shared";
 import { ChanceService } from "../chance/chance.service";
@@ -11,7 +10,6 @@ export class PlayService {
     private readonly promptService: PromptService,
   ) {}
 
-  @Transactional()
   async start(userKey: number, date: Date): Promise<PromptResponse> {
     const prompt = await this.promptService.getPromptByDate(date);
     await this.chanceService.consume(userKey);
