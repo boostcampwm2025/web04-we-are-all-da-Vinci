@@ -1,24 +1,21 @@
+import { Transactional } from "@mikro-orm/decorators/legacy";
 import { EntityManager } from "@mikro-orm/mysql";
 import { Injectable } from "@nestjs/common";
+import { getSeoulDayRange } from "src/common/util/time.util";
+import { Drawing } from "../drawing/drawing.entity";
+import { DrawingRepository } from "../drawing/drawing.repository";
+import { User } from "../user/user.entity";
+import { Ranking } from "./ranking.entity";
 import {
-  CreateRequestContext,
-  Transactional,
-} from "@mikro-orm/decorators/legacy";
-import {
-  type MyRankingResponse,
-  type RankingListResponse,
-  type PodiumResponse,
-} from "./types/ranking.type";
+  mapRankingToPodiumItem,
+  mapRankingToRankingGalleryItem,
+} from "./ranking.mapper";
 import { RankingRepository } from "./ranking.repository";
 import {
-  mapRankingToRankingGalleryItem,
-  mapRankingToPodiumItem,
-} from "./ranking.mapper";
-import { Ranking } from "./ranking.entity";
-import { Drawing } from "../drawing/drawing.entity";
-import { User } from "../user/user.entity";
-import { DrawingRepository } from "../drawing/drawing.repository";
-import { getSeoulDayRange } from "src/common/util/time.util";
+  type MyRankingResponse,
+  type PodiumResponse,
+  type RankingListResponse,
+} from "./types/ranking.type";
 
 // updateRanking 결과. 알림 트리거(OVERTAKEN) 발송을 위해 변화 정보를 반환한다.
 // changed=false면 점수가 더 낮아 갱신 안 함. 그 외엔 newRank·overtakenUserKeys 사용.
@@ -141,7 +138,6 @@ export class RankingService {
     };
   }
 
-  @CreateRequestContext()
   async cleanupRanking(): Promise<void> {
     const { start } = getSeoulDayRange();
     await this.em.nativeDelete(Ranking, {

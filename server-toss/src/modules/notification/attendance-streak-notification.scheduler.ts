@@ -37,7 +37,9 @@ export class AttendanceStreakNotificationScheduler {
     private readonly attendanceService: AttendanceService,
   ) {}
 
-  @CreateRequestContext()
+  @CreateRequestContext(
+    (self: AttendanceStreakNotificationScheduler) => self.em,
+  )
   @Cron(ATTENDANCE_STREAK_CRON, { timeZone: "Asia/Seoul" })
   async handleAttendanceStreakBroadcast(): Promise<void> {
     await this.run();

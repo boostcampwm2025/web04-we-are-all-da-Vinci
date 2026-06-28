@@ -1,11 +1,10 @@
 import { preprocessStrokes } from "@davinci/similarity";
-import { EntityRepository } from "@mikro-orm/core";
-import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import type { Stroke } from "@toss/shared";
 import { DrawingAccessService } from "../drawing/service/drawing-access.service";
 import { UserService } from "../user/user.service";
 import { DailyPrompt } from "./daily-prompt.entity";
+import { EntityManager } from "@mikro-orm/mysql";
 
 type Preprocessed = ReturnType<typeof preprocessStrokes>;
 
@@ -16,8 +15,7 @@ export class PromptService {
   private readonly cacheDisabled = process.env.DISABLE_PROMPT_CACHE === "true";
 
   constructor(
-    @InjectRepository(DailyPrompt)
-    private readonly dailyRepo: EntityRepository<DailyPrompt>,
+    private readonly em: EntityManager,
     private readonly userService: UserService,
     private readonly drawingAccessService: DrawingAccessService,
   ) {}
@@ -32,7 +30,8 @@ export class PromptService {
   async getPromptByDate(
     date: Date,
   ): Promise<{ promptId: number; strokes: Stroke[] }> {
-    const daily = await this.dailyRepo.findOne(
+    const daily = await this.em.findOne(
+      DailyPrompt,
       { promptDate: date },
       { populate: ["prompt"] },
     );

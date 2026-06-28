@@ -1,8 +1,5 @@
 import { EntityManager } from "@mikro-orm/core";
-import {
-  CreateRequestContext,
-  Transactional,
-} from "@mikro-orm/decorators/legacy";
+import { Transactional } from "@mikro-orm/decorators/legacy";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable, Logger } from "@nestjs/common";
 import {
@@ -133,7 +130,6 @@ export class PointService {
     return requests;
   }
 
-  @CreateRequestContext()
   async settleGrantRequests() {
     const requests = await this.lockAndFetchEligibleGrants();
 
@@ -247,7 +243,6 @@ export class PointService {
     );
   }
 
-  @CreateRequestContext()
   async purgeProcessedGrantRequests(): Promise<{
     succeededDeleted: number;
     failedDeleted: number;

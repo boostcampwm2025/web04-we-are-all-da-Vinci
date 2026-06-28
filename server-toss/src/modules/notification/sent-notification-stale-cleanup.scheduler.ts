@@ -27,7 +27,9 @@ export class SentNotificationStaleCleanupScheduler {
     private readonly notificationService: NotificationService,
   ) {}
 
-  @CreateRequestContext()
+  @CreateRequestContext(
+    (self: SentNotificationStaleCleanupScheduler) => self.em,
+  )
   @Cron(STALE_CLEANUP_CRON, { timeZone: "Asia/Seoul" })
   async handleCleanup(): Promise<void> {
     await this.run();
