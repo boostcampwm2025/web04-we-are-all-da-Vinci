@@ -1,7 +1,6 @@
 import { UniqueConstraintViolationException } from "@mikro-orm/core";
 import { Transactional } from "@mikro-orm/decorators/legacy";
 import { EntityManager } from "@mikro-orm/mysql";
-import { InjectRepository } from "@mikro-orm/nestjs";
 import {
   Injectable,
   InternalServerErrorException,
@@ -10,7 +9,6 @@ import {
 import { TutorialMissionService } from "src/modules/mission/service/tutorial-mission.service";
 import { generateNickname } from "src/modules/user/lib/nickname-generator";
 import { User } from "src/modules/user/user.entity";
-import { UserRepository } from "src/modules/user/user.repository";
 import { AdView } from "../chance/ad-view.entity";
 import { PlayChance } from "../chance/play-chance.entity";
 import { ShareLog } from "../chance/share-log.entity";
@@ -29,8 +27,6 @@ const NICKNAME_RETRY_LIMIT = 5;
 @Injectable()
 export class UserService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: UserRepository,
     private readonly tutorialMissionService: TutorialMissionService,
     private readonly em: EntityManager,
   ) {}
@@ -41,7 +37,7 @@ export class UserService {
     gender?: string;
     birthday?: Date;
   }): Promise<User> {
-    const existing = await this.userRepository.findOne({
+    const existing = await this.em.findOne(User, {
       userKey: data.userKey,
     });
 
@@ -57,7 +53,7 @@ export class UserService {
   }
 
   async getUserInfo(userKey: number): Promise<User> {
-    const user = await this.userRepository.findOne({ userKey });
+    const user = await this.em.findOne(User, { userKey });
     if (!user) throw new NotFoundException("사용자를 찾을 수 없어요.");
     return user;
   }
@@ -86,7 +82,7 @@ export class UserService {
 
     await this.em.nativeDelete(Attendance, { userKey: user.userKey });
 
-    await this.userRepository.nativeDelete({ userKey: user.userKey });
+    await this.em.nativeDelete(User, { userKey: user.userKey });
   }
 
   private async createWithNickname(data: {
@@ -120,7 +116,7 @@ export class UserService {
     data: { userKey: number; name: string; gender?: string; birthday?: Date },
     nickname: string,
   ): Promise<User> {
-    const user = this.userRepository.create({
+    const user = this.em.create(User, {
       userKey: data.userKey,
       name: data.name,
       nickname,

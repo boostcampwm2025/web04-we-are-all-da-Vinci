@@ -1,12 +1,7 @@
-import { EntityManager } from "@mikro-orm/core";
-import { InjectRepository } from "@mikro-orm/nestjs";
+import { EntityManager } from "@mikro-orm/mysql";
 import { Injectable, Logger } from "@nestjs/common";
 import { User } from "src/modules/user/user.entity";
-import {
-  ObjectiveType,
-  Mission,
-  MissionPeriod,
-} from "../entity/mission.entity";
+import { ObjectiveType, MissionPeriod } from "../entity/mission.entity";
 import { UserMission } from "../entity/user-mission.entity";
 import { MissionWindow } from "../mission-window";
 import { TUTORIAL_EPOCH } from "../mission.constants";
@@ -18,16 +13,12 @@ import { UserMissionRepository } from "../repository/user-mission.repository";
 export class TutorialMissionService {
   private readonly logger = new Logger(TutorialMissionService.name);
 
-  // 튜토리얼이 끝난 유저를 캐시
-  // 유저 액션에 반복해서 튜토리얼을 체크하는 동작을 방지하기 위함.
   private readonly completedCache = new Set<number>();
 
   constructor(
-    @InjectRepository(Mission)
-    private readonly missionRepository: MissionRepository,
-    @InjectRepository(UserMission)
-    private readonly userMissionRepository: UserMissionRepository,
     private readonly em: EntityManager,
+    private readonly missionRepository: MissionRepository,
+    private readonly userMissionRepository: UserMissionRepository,
   ) {}
 
   // ─── 완료 게이트 ───
@@ -78,16 +69,18 @@ export class TutorialMissionService {
 
   private async assignTutorialMissions(userKey: number): Promise<void> {
     const missions = await this.missionRepository.findTutorial();
+    const userRef = this.em.getReference(User, userKey);
 
     for (const mission of missions) {
-      this.userMissionRepository.createForUser(
-        userKey,
+      const uq = this.em.create(UserMission, {
+        user: userRef,
         mission,
-        TUTORIAL_EPOCH,
-      );
+        createdAt: TUTORIAL_EPOCH,
+      });
+      this.em.persist(uq);
     }
 
-    await this.userMissionRepository.flush();
+    await this.em.flush();
 
     this.logger.log(
       {

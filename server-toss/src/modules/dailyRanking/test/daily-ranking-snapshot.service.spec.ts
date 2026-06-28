@@ -1,16 +1,24 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import { DailyRankingSnapshotService } from "../daily-ranking-snapshot.service";
 
+const buildEm = () => ({
+  create: jest.fn((_entity: unknown, data: unknown) => data),
+  flush: jest.fn(async () => undefined),
+});
+
 const createService = ({
   drawingRepository = {},
   dailyUserRankingRepository = {},
+  em = buildEm(),
 }: {
   drawingRepository?: Record<string, unknown>;
   dailyUserRankingRepository?: Record<string, unknown>;
+  em?: Record<string, unknown>;
 }) =>
   new DailyRankingSnapshotService(
     drawingRepository as never,
     dailyUserRankingRepository as never,
+    em as never,
   );
 
 describe("일별 랭킹 스냅샷 서비스", () => {
@@ -86,15 +94,15 @@ describe("일별 랭킹 스냅샷 서비스", () => {
           },
         ]),
       };
-      const saveSnapshots = jest.fn().mockResolvedValue(undefined);
       const dailyUserRankingRepository = {
         findExistingDates: jest.fn().mockResolvedValue(new Set(["2026-05-26"])),
         hasSnapshotForDate: jest.fn().mockResolvedValue(false),
-        saveSnapshots,
       };
+      const em = buildEm();
       const service = createService({
         drawingRepository,
         dailyUserRankingRepository,
+        em,
       });
 
       const result = await service.backfillMissingSnapshots(
@@ -106,7 +114,8 @@ describe("일별 랭킹 스냅샷 서비스", () => {
         createdDateCount: 1,
         savedRankingCount: 1,
       });
-      expect(saveSnapshots).toHaveBeenCalledTimes(1);
+      expect(em.create).toHaveBeenCalledTimes(1);
+      expect(em.flush).toHaveBeenCalledTimes(1);
     });
   });
 

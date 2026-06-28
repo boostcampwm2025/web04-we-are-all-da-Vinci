@@ -49,18 +49,20 @@ describe("TutorialMissionService", () => {
       findActiveTutorialByObjective: jest.fn(async () => []),
       findActiveTutorialMeta: jest.fn(async () => []),
       countIncompleteTutorial: jest.fn(async () => 0),
-      createForUser: jest.fn(),
-      flush: jest.fn(async () => undefined),
     };
 
     em = {
       findOne: jest.fn(async () => null),
+      getReference: jest.fn((_entity, key) => ({ userKey: key })),
+      create: jest.fn((_entity, data) => data),
+      persist: jest.fn(),
+      flush: jest.fn(async () => undefined),
     };
 
     service = new TutorialMissionService(
+      em as unknown as EntityManager,
       missionRepository as unknown as MissionRepository,
       userMissionRepository as unknown as UserMissionRepository,
-      em as unknown as EntityManager,
     );
   });
 
@@ -115,8 +117,9 @@ describe("TutorialMissionService", () => {
 
       await service.ensureTutorialAssigned(USER_KEY);
 
-      expect(userMissionRepository.createForUser).toHaveBeenCalledTimes(2);
-      expect(userMissionRepository.flush).toHaveBeenCalled();
+      expect(em.create).toHaveBeenCalledTimes(2);
+      expect(em.persist).toHaveBeenCalledTimes(2);
+      expect(em.flush).toHaveBeenCalled();
     });
 
     it("이미 보유 중이면 다시 할당하지 않는다", async () => {
@@ -126,7 +129,7 @@ describe("TutorialMissionService", () => {
 
       await service.ensureTutorialAssigned(USER_KEY);
 
-      expect(userMissionRepository.createForUser).not.toHaveBeenCalled();
+      expect(em.create).not.toHaveBeenCalled();
     });
   });
 
