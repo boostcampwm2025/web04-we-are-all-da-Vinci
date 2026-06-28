@@ -1,11 +1,7 @@
 import { EntityManager } from "@mikro-orm/mysql";
 import { Injectable, Logger } from "@nestjs/common";
 import { User } from "src/modules/user/user.entity";
-import {
-  ObjectiveType,
-  Mission,
-  MissionPeriod,
-} from "../entity/mission.entity";
+import { ObjectiveType, MissionPeriod } from "../entity/mission.entity";
 import { UserMission } from "../entity/user-mission.entity";
 import { MissionWindow } from "../mission-window";
 import { TUTORIAL_EPOCH } from "../mission.constants";
