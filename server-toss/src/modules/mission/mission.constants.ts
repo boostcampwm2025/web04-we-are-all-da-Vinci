@@ -6,6 +6,9 @@ export const WEEKLY_RANDOM_COUNT = 1;
 /** 튜토리얼 미션의 고정 createdAt — 사용자당 1행 보장 */
 export const TUTORIAL_EPOCH = new Date("2026-01-01T00:00:00.000Z");
 
+/** 도전 미션의 고정 createdAt — 사용자당 미션당 1행 보장 */
+export const CHALLENGE_EPOCH = new Date("2026-01-02T00:00:00.000Z");
+
 /** POST /missions/action의 actionType → ObjectiveType 매핑 */
 export const ACTION_TYPE_TO_OBJECTIVE: Record<string, ObjectiveType> = {
   visit_ranking: ObjectiveType.VISIT_RANKING,

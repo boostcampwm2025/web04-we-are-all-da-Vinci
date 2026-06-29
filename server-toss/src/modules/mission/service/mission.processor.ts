@@ -99,7 +99,8 @@ export class MissionProcessor {
   }
 
   private completeIfFulfilled(uq: UserMission, now: Date): boolean {
-    if (uq.currentCount < uq.mission.requiredCount) return false;
+    if (uq.currentCount < (uq.requiredCount ?? uq.mission.requiredCount))
+      return false;
     uq.completedAt = now;
     return true;
   }

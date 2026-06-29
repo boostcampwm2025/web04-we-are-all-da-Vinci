@@ -88,4 +88,7 @@ export class Mission extends BaseEntity {
     default: ProgressPeriod.NONE,
   })
   progressPeriod: ProgressPeriod = ProgressPeriod.NONE;
+
+  @Property({ name: "increment_step", type: "int", nullable: true })
+  incrementStep?: Opt<number | null>;
 }

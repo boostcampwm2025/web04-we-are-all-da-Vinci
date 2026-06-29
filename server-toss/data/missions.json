@@ -167,7 +167,8 @@
     "requiredCount": 15,
     "threshold": null,
     "rewardType": "point",
-    "rewardAmount": 5
+    "rewardAmount": 5,
+    "incrementStep": 15
   },
   {
     "title": "도전! 매일 그리기",
@@ -178,6 +179,7 @@
     "threshold": null,
     "rewardType": "point",
     "rewardAmount": 5,
-    "progressPeriod": "day"
+    "progressPeriod": "day",
+    "incrementStep": 10
   }
 ]

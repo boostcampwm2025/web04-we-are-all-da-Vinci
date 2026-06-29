@@ -19,6 +19,7 @@ import {
 } from "../entity/mission.entity";
 import { UserMission } from "../entity/user-mission.entity";
 import { AssignMissionService } from "../service/assign-mission.service";
+import { ChallengeMissionService } from "../service/challenge-mission.service";
 import { MissionProcessor } from "../service/mission.processor";
 import { MissionService } from "../service/mission.service";
 import { TutorialMissionService } from "../service/tutorial-mission.service";
@@ -60,6 +61,7 @@ describe("MissionService", () => {
   let userMissionRepository: Record<string, jest.Mock>;
   let assignMissionService: { ensureMissionsAssigned: jest.Mock };
   let tutorialMissionService: Record<string, jest.Mock>;
+  let challengeMissionService: Record<string, jest.Mock>;
   let pointService: Record<string, jest.Mock>;
 
   beforeEach(async () => {
@@ -83,6 +85,13 @@ describe("MissionService", () => {
       recordCompletionIfFinished: jest.fn(async () => undefined),
     };
 
+    challengeMissionService = {
+      ensureAssigned: jest.fn(async () => undefined),
+      findActiveDrawing: jest.fn(async () => []),
+      findAll: jest.fn(async () => []),
+      resetCompletedForNextTier: jest.fn(),
+    };
+
     pointService = {
       savePointGrantRequest: jest.fn(async () => undefined),
       enqueueGrant: jest.fn(),
@@ -98,6 +107,7 @@ describe("MissionService", () => {
             processor,
             assignSvc,
             tutorialSvc,
+            challengeSvc,
             pointSvc,
           ) =>
             new MissionService(
@@ -106,6 +116,7 @@ describe("MissionService", () => {
               processor,
               assignSvc,
               tutorialSvc,
+              challengeSvc,
               pointSvc,
             ),
           inject: [
@@ -114,6 +125,7 @@ describe("MissionService", () => {
             MissionProcessor,
             AssignMissionService,
             TutorialMissionService,
+            ChallengeMissionService,
             PointService,
           ],
         },
@@ -128,6 +140,7 @@ describe("MissionService", () => {
         },
         { provide: AssignMissionService, useValue: assignMissionService },
         { provide: TutorialMissionService, useValue: tutorialMissionService },
+        { provide: ChallengeMissionService, useValue: challengeMissionService },
         {
           provide: MissionProcessor,
           useFactory: (pointSvc: PointService) =>

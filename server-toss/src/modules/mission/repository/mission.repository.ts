@@ -13,4 +13,8 @@ export class MissionRepository extends EntityRepository<Mission> {
   async findTutorial(): Promise<Mission[]> {
     return this.find({ period: MissionPeriod.TUTORIAL });
   }
+
+  async findChallenge(): Promise<Mission[]> {
+    return this.find({ period: MissionPeriod.CONTINUOUSLY });
+  }
 }

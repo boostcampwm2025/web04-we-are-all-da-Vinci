@@ -135,6 +135,35 @@ export class UserMissionRepository extends EntityRepository<UserMission> {
     );
   }
 
+  async findChallengeMissions(userKey: number): Promise<UserMission[]> {
+    return this.find(
+      {
+        user: { userKey },
+        mission: { period: MissionPeriod.CONTINUOUSLY },
+      },
+      { populate: ["mission"] },
+    );
+  }
+
+  async findActiveChallengeMissions(userKey: number): Promise<UserMission[]> {
+    return this.find(
+      {
+        user: { userKey },
+        completedAt: null,
+        mission: {
+          period: MissionPeriod.CONTINUOUSLY,
+          objectiveType: {
+            $nin: [
+              ObjectiveType.MISSION_COMPLETED,
+              ObjectiveType.TUTORIAL_COMPLETED,
+            ],
+          },
+        },
+      },
+      { populate: ["mission"] },
+    );
+  }
+
   async countIncompleteTutorial(userKey: number): Promise<number> {
     return this.count({
       user: { userKey },

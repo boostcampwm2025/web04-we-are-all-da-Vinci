@@ -16,6 +16,7 @@ import type {
 } from "../mission.types";
 import type { UserMissionRepository } from "../repository/user-mission.repository";
 import { AssignMissionService } from "./assign-mission.service";
+import { ChallengeMissionService } from "./challenge-mission.service";
 import { MissionProcessor } from "./mission.processor";
 import { TutorialMissionService } from "./tutorial-mission.service";
 
@@ -29,6 +30,7 @@ export class MissionService {
     private readonly processor: MissionProcessor,
     private readonly assignMissionService: AssignMissionService,
     private readonly tutorialMissionService: TutorialMissionService,
+    private readonly challengeMissionService: ChallengeMissionService,
     private readonly pointService: PointService,
   ) {}
 
@@ -41,6 +43,7 @@ export class MissionService {
   ): Promise<MyMissionsResponseDto> {
     const window = MissionWindow.now();
     await this.assignMissionService.ensureMissionsAssigned(userKey, window);
+    await this.challengeMissionService.ensureAssigned(userKey);
     return this.queryMyMissions(userKey, window);
   }
 
@@ -65,8 +68,14 @@ export class MissionService {
     );
     const tutorialMissions =
       await this.userMissionRepo.findTutorialMissions(userKey);
+    const challengeMissions =
+      await this.challengeMissionService.findAll(userKey);
 
-    return MissionMapper.toResponse(missions, tutorialMissions);
+    return MissionMapper.toResponse(
+      missions,
+      tutorialMissions,
+      challengeMissions,
+    );
   }
 
   // ─── 그림 제출 이벤트 (daily/weekly + tutorial SUBMIT/SCORE/RETRY) ───
@@ -78,6 +87,7 @@ export class MissionService {
   ): Promise<CycleResult> {
     const window = MissionWindow.now();
     await this.assignMissionService.ensureMissionsAssigned(userKey, window);
+    await this.challengeMissionService.ensureAssigned(userKey);
     // 같은 유저 동시 요청 직렬화 — 활성 미션 조회 전에 행을 잠근다
     await this.userMissionRepo.lockActiveForUpdate(userKey);
 
@@ -89,6 +99,8 @@ export class MissionService {
     // 튜토리얼은 완료 게이트 뒤 — 완료 유저는 쿼리 없이 []
     const tutorialDrawing =
       await this.tutorialMissionService.findActiveDrawing(userKey);
+    const challengeDrawing =
+      await this.challengeMissionService.findActiveDrawing(userKey);
 
     const weeklyMeta = await this.userMissionRepo.findActiveByObjective(
       userKey,
@@ -100,7 +112,7 @@ export class MissionService {
       await this.tutorialMissionService.findActiveMeta(userKey);
 
     const result = this.processor.executeProgressCycle(
-      [...drawingActive, ...tutorialDrawing],
+      [...drawingActive, ...tutorialDrawing, ...challengeDrawing],
       [...weeklyMeta, ...tutorialMeta],
       context,
       window,
@@ -108,6 +120,7 @@ export class MissionService {
 
     this.grantRewards(userKey, [...result.completed, ...result.metaCompleted]);
 
+    this.challengeMissionService.resetCompletedForNextTier(result);
     await this.tutorialMissionService.recordCompletionIfFinished(
       userKey,
       result,
