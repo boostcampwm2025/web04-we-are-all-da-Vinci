@@ -1,17 +1,18 @@
 import { EntityManager } from "@mikro-orm/mysql";
 import { Injectable, Logger } from "@nestjs/common";
 import { User } from "src/modules/user/user.entity";
-import {
-  ObjectiveType,
-  Mission,
-  MissionPeriod,
-} from "../entity/mission.entity";
+import { ObjectiveType, MissionPeriod } from "../entity/mission.entity";
 import { UserMission } from "../entity/user-mission.entity";
 import { MissionWindow } from "../mission-window";
 import { TUTORIAL_EPOCH } from "../mission.constants";
-import type { CycleResult } from "../mission.types";
+import type {
+  BaseActionContext,
+  CycleResult,
+  DrawingContext,
+} from "../mission.types";
 import { MissionRepository } from "../repository/mission.repository";
 import { UserMissionRepository } from "../repository/user-mission.repository";
+import { MissionProcessor } from "./mission.processor";
 
 @Injectable()
 export class TutorialMissionService {
@@ -23,6 +24,7 @@ export class TutorialMissionService {
     private readonly em: EntityManager,
     private readonly missionRepository: MissionRepository,
     private readonly userMissionRepository: UserMissionRepository,
+    private readonly processor: MissionProcessor,
   ) {}
 
   // ─── 완료 게이트 ───
@@ -94,6 +96,45 @@ export class TutorialMissionService {
       },
       "튜토리얼 미션 배정 완료",
     );
+  }
+
+  // ─── 진행 + 후처리 캡슐화 ───
+
+  async processDrawing(
+    userKey: number,
+    context: DrawingContext,
+    window: MissionWindow,
+  ): Promise<CycleResult> {
+    const active = await this.findActiveDrawing(userKey);
+    const meta = await this.findActiveMeta(userKey);
+    const result = this.processor.executeProgressCycle(
+      active,
+      meta,
+      context,
+      window,
+    );
+    await this.recordCompletionIfFinished(userKey, result, window);
+    return result;
+  }
+
+  async processAction(
+    userKey: number,
+    context: BaseActionContext,
+    window: MissionWindow,
+  ): Promise<CycleResult> {
+    const active = await this.findActiveByObjective(
+      userKey,
+      context.objectiveType,
+    );
+    const meta = await this.findActiveMeta(userKey);
+    const result = this.processor.executeProgressCycle(
+      active,
+      meta,
+      context,
+      window,
+    );
+    await this.recordCompletionIfFinished(userKey, result, window);
+    return result;
   }
 
   // ─── 완료 판정 — 사이클에서 튜토리얼 완료가 나왔을 때만 ───

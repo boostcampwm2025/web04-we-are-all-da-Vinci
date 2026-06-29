@@ -20,6 +20,13 @@ import { ChallengeMissionService } from "./challenge-mission.service";
 import { MissionProcessor } from "./mission.processor";
 import { TutorialMissionService } from "./tutorial-mission.service";
 
+function mergeCycleResults(...results: CycleResult[]): CycleResult {
+  return {
+    completed: results.flatMap((r) => r.completed),
+    metaCompleted: results.flatMap((r) => r.metaCompleted),
+  };
+}
+
 @Injectable()
 export class MissionService {
   private readonly logger = new Logger(MissionService.name);
@@ -78,7 +85,7 @@ export class MissionService {
     );
   }
 
-  // ─── 그림 제출 이벤트 (daily/weekly + tutorial SUBMIT/SCORE/RETRY) ───
+  // ─── 그림 제출 이벤트 ───
 
   @Transactional()
   async onDrawingSubmitted(
@@ -88,50 +95,28 @@ export class MissionService {
     const window = MissionWindow.now();
     await this.assignMissionService.ensureMissionsAssigned(userKey, window);
     await this.challengeMissionService.ensureAssigned(userKey);
-    // 같은 유저 동시 요청 직렬화 — 활성 미션 조회 전에 행을 잠근다
     await this.userMissionRepo.lockActiveForUpdate(userKey);
 
-    const drawingActive = await this.userMissionRepo.findActiveDrawingMissions(
+    const regular = await this.processRegularMissions(userKey, context, window);
+    const tutorial = await this.tutorialMissionService.processDrawing(
       userKey,
-      window.todayStart,
-      window.weekStart,
+      context,
+      window,
     );
-    // 튜토리얼은 완료 게이트 뒤 — 완료 유저는 쿼리 없이 []
-    const tutorialDrawing =
-      await this.tutorialMissionService.findActiveDrawing(userKey);
-    const challengeDrawing =
-      await this.challengeMissionService.findActiveDrawing(userKey);
-
-    const weeklyMeta = await this.userMissionRepo.findActiveByObjective(
+    const challenge = await this.challengeMissionService.processDrawing(
       userKey,
-      ObjectiveType.MISSION_COMPLETED,
-      window.todayStart,
-      window.weekStart,
-    );
-    const tutorialMeta =
-      await this.tutorialMissionService.findActiveMeta(userKey);
-
-    const result = this.processor.executeProgressCycle(
-      [...drawingActive, ...tutorialDrawing, ...challengeDrawing],
-      [...weeklyMeta, ...tutorialMeta],
       context,
       window,
     );
 
+    const result = mergeCycleResults(regular, tutorial, challenge);
     this.grantRewards(userKey, [...result.completed, ...result.metaCompleted]);
-
-    this.challengeMissionService.resetCompletedForNextTier(result);
-    await this.tutorialMissionService.recordCompletionIfFinished(
-      userKey,
-      result,
-      window,
-    );
     await this.em.flush();
 
     return result;
   }
 
-  // 미션 액션 (방문, 공유 등)
+  // ─── 미션 액션 (방문, 공유 등) ───
 
   @Transactional()
   async onActionReported(
@@ -140,35 +125,36 @@ export class MissionService {
   ): Promise<CycleResult> {
     const window = MissionWindow.now();
     await this.assignMissionService.ensureMissionsAssigned(userKey, window);
-    // 같은 유저 동시 요청 직렬화 — 활성 미션 조회 전에 행을 잠근다
     await this.userMissionRepo.lockActiveForUpdate(userKey);
 
-    const tutorialActive =
-      await this.tutorialMissionService.findActiveByObjective(
-        userKey,
-        context.objectiveType,
-      );
-
-    const tutorialMeta =
-      await this.tutorialMissionService.findActiveMeta(userKey);
-
-    const result = this.processor.executeProgressCycle(
-      tutorialActive,
-      tutorialMeta,
+    const result = await this.tutorialMissionService.processAction(
+      userKey,
       context,
       window,
     );
-
     this.grantRewards(userKey, [...result.completed, ...result.metaCompleted]);
-
-    await this.tutorialMissionService.recordCompletionIfFinished(
-      userKey,
-      result,
-      window,
-    );
     await this.em.flush();
 
     return result;
+  }
+
+  private async processRegularMissions(
+    userKey: number,
+    context: DrawingContext,
+    window: MissionWindow,
+  ): Promise<CycleResult> {
+    const active = await this.userMissionRepo.findActiveDrawingMissions(
+      userKey,
+      window.todayStart,
+      window.weekStart,
+    );
+    const meta = await this.userMissionRepo.findActiveByObjective(
+      userKey,
+      ObjectiveType.MISSION_COMPLETED,
+      window.todayStart,
+      window.weekStart,
+    );
+    return this.processor.executeProgressCycle(active, meta, context, window);
   }
 
   async syncInviteProgress(

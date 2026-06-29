@@ -3,10 +3,12 @@ import { Injectable, Logger } from "@nestjs/common";
 import { User } from "src/modules/user/user.entity";
 import { MissionPeriod } from "../entity/mission.entity";
 import { UserMission } from "../entity/user-mission.entity";
+import { MissionWindow } from "../mission-window";
 import { CHALLENGE_EPOCH } from "../mission.constants";
-import type { CycleResult } from "../mission.types";
+import type { CycleResult, DrawingContext } from "../mission.types";
 import { MissionRepository } from "../repository/mission.repository";
 import { UserMissionRepository } from "../repository/user-mission.repository";
+import { MissionProcessor } from "./mission.processor";
 
 @Injectable()
 export class ChallengeMissionService {
@@ -18,6 +20,7 @@ export class ChallengeMissionService {
     private readonly em: EntityManager,
     private readonly missionRepository: MissionRepository,
     private readonly userMissionRepository: UserMissionRepository,
+    private readonly processor: MissionProcessor,
   ) {}
 
   async ensureAssigned(userKey: number): Promise<void> {
@@ -44,6 +47,22 @@ export class ChallengeMissionService {
 
   async findAll(userKey: number): Promise<UserMission[]> {
     return this.userMissionRepository.findChallengeMissions(userKey);
+  }
+
+  async processDrawing(
+    userKey: number,
+    context: DrawingContext,
+    window: MissionWindow,
+  ): Promise<CycleResult> {
+    const active = await this.findActiveDrawing(userKey);
+    const result = this.processor.executeProgressCycle(
+      active,
+      [],
+      context,
+      window,
+    );
+    this.resetCompletedForNextTier(result);
+    return result;
   }
 
   resetCompletedForNextTier(result: CycleResult): void {
