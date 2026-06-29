@@ -13,6 +13,7 @@ export enum MissionPeriod {
   DAILY = "daily",
   WEEKLY = "weekly",
   TUTORIAL = "tutorial",
+  CONTINUOUSLY = "continuously",
 }
 
 export enum ObjectiveType {

@@ -164,8 +164,8 @@
     "period": "continuously",
     "isFixed": true,
     "objectiveType": "submit",
-    "requiredCount": null,
-    "threshold": 15,
+    "requiredCount": 15,
+    "threshold": null,
     "rewardType": "point",
     "rewardAmount": 5
   },
@@ -174,8 +174,8 @@
     "period": "continuously",
     "isFixed": true,
     "objectiveType": "daily_submit",
-    "requiredCount": null,
-    "threshold": 10,
+    "requiredCount": 10,
+    "threshold": null,
     "rewardType": "point",
     "rewardAmount": 5,
     "progressPeriod": "day"
