@@ -17,7 +17,7 @@ export class Drawing extends BaseEntity {
   @PrimaryKey({ type: "bigint" })
   id!: bigint;
 
-  @Property({ fieldName: "strokes", type: "text" })
+  @Property({ fieldName: "strokes", type: "mediumtext" })
   strokes!: string;
 
   @Property({ fieldName: "similarity", type: "text" })

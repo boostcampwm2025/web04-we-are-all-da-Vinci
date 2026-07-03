@@ -5,6 +5,6 @@ export class Prompt {
   @PrimaryKey({ type: "bigint" })
   id!: bigint;
 
-  @Property({ type: "text" })
+  @Property({ type: "mediumtext" })
   strokes!: string;
 }

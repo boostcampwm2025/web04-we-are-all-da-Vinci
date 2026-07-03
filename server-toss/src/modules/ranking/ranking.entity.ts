@@ -27,7 +27,7 @@ export class Ranking extends BaseEntity {
   @Property({ type: "varchar(20)", length: 20 })
   nickname!: string;
 
-  @Property({ fieldName: "strokes", type: "text" })
+  @Property({ fieldName: "strokes", type: "mediumtext" })
   strokes!: string;
 
   @Property({ fieldName: "score", type: "double" })
