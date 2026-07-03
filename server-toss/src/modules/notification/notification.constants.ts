@@ -1,6 +1,7 @@
 export const NOTIFICATION_TYPE = {
   DAILY_PROMPT: "daily_prompt",
   OVERTAKEN: "overtaken",
+  ATTENDANCE_STREAK: "attendance_streak",
 } as const;
 
 export type NotificationType =

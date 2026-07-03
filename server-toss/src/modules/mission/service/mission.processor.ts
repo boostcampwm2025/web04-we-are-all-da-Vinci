@@ -41,6 +41,7 @@ export class MissionProcessor {
       [ObjectiveType.VISIT_MISSION_TAB]: simpleAction,
       [ObjectiveType.VISIT_DRAWING_DETAIL]: simpleAction,
       [ObjectiveType.SHARE]: simpleAction,
+      [ObjectiveType.INVITE]: simpleAction,
     };
   }
 

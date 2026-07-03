@@ -36,6 +36,19 @@ const ChanceCountResponseSchema: SchemaObject = {
   required: ["count"],
 };
 
+const ChargeResultResponseSchema: SchemaObject = {
+  type: "object",
+  properties: {
+    count: { type: "integer", minimum: 0 },
+    chanceGranted: {
+      type: "boolean",
+      description:
+        "이번 요청으로 기회가 실제 지급됐는지. 공유는 일일 지급 한도 초과 시 기회 없이 미션만 진행돼 false가 될 수 있다.",
+    },
+  },
+  required: ["count"],
+};
+
 const ChargeRequestBodySchema: SchemaObject = {
   oneOf: [
     {
@@ -103,7 +116,7 @@ export class ChanceController {
   })
   @ApiOkResponse({
     description: "적립 후 잔여 그리기 기회",
-    schema: ChanceCountResponseSchema,
+    schema: ChargeResultResponseSchema,
   })
   @ApiUnauthorizedResponse({ description: "인증이 필요해요." })
   @ApiForbiddenResponse({
@@ -116,6 +129,7 @@ export class ChanceController {
     if (body.source === "ad") {
       return this.chanceService.chargeByAd(user.userKey, body.sdkPayload);
     }
+    // 친구초대 미션 진행은 chargeByShare 트랜잭션 내부에서 원자적으로 처리된다.
     return this.chanceService.chargeByShare(user.userKey, body.sdkPayload);
   }
 }

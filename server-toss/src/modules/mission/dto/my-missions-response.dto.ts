@@ -4,6 +4,7 @@ export interface MyMission {
   userMissionId: number;
   missionId: number;
   title: string;
+  objectiveType: string;
   currentCount: number;
   requiredCount: number;
   rewardType: string;

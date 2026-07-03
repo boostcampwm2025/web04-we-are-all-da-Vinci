@@ -97,6 +97,7 @@ export const useFullScreenAd = (
         }
 
         let wasShown = false;
+        let earnedReward = false;
         let reward: AdRewardData | undefined;
         let done = false;
 
@@ -112,15 +113,18 @@ export const useFullScreenAd = (
             }
             // 광고가 실제 화면에 렌더링된 시점(수익 발생 시점). impression 없이 종료된 경우 충전 트리거하지 않는다.
             if (event.type === "impression") wasShown = true;
-            // 보상형: 사용자가 시청을 완료해 리워드를 획득한 시점. 이 데이터로만 보상 인정.
-            if (event.type === "userEarnedReward") reward = event.data;
+            // 보상형: 사용자가 시청을 완료해 리워드를 획득한 시점.
+            if (event.type === "userEarnedReward") {
+              earnedReward = true;
+              reward = event.data;
+            }
             if (event.type === "dismissed") {
               if (done) return;
               done = true;
               reloadAd();
-              // 보상형은 userEarnedReward가 있어야만 성공으로 인정한다.
+              // 보상형은 userEarnedReward가 발생한 경우에만 성공으로 인정한다.
               if (rewarded) {
-                if (reward) resolve(reward);
+                if (earnedReward) resolve(reward);
                 else reject(new Error("reward_not_earned"));
                 return;
               }

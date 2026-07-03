@@ -18,7 +18,13 @@ export type Attribution = Partial<Record<UtmKey, string>> & {
 
 // 알림 deep link에서 사용하는 utm_source 값. 서버 측 templateSetCode 본문에
 // `intoss://we-are-all-da-vinci/?utm_source=daily-prompt&...` 형식으로 박는다.
-const NOTIFICATION_UTM_SOURCES = new Set(["daily-prompt", "overtaken"]);
+// FSD상 shared는 feature/notification config를 직접 참조하지 않으므로 슬러그를 여기 두되,
+// 알림 타입 추가 시 feature/notification/config의 알림 종류와 동기화해야 한다.
+const NOTIFICATION_UTM_SOURCES = new Set([
+  "daily-prompt",
+  "overtaken",
+  "attendance-streak",
+]);
 
 const isNotificationSource = (source: string | undefined): boolean =>
   !!source && NOTIFICATION_UTM_SOURCES.has(source);

@@ -1,11 +1,6 @@
-import { serverTossApi } from "@/shared/api";
 import { formatLocalDate } from "@/shared/lib";
 import { useEffect, useState } from "react";
-
-const DAILY_PROMPT_TEMPLATE_CODE =
-  import.meta.env.VITE_TOSS_TEMPLATE_DAILY_PROMPT?.trim();
-const OVERTAKEN_TEMPLATE_CODE =
-  import.meta.env.VITE_TOSS_TEMPLATE_OVERTAKEN?.trim();
+import { fetchEnabledAgreements } from "./fetchEnabledAgreements";
 
 // 게임 완료 후, 아직 응답하지 않은(unknown) 알림 동의가 하나라도 있으면 동의 시트를
 // 하루 1회 자동 노출한다.
@@ -22,20 +17,10 @@ export const useNotificationAutoPrompt = (enabled: boolean) => {
 
     let cancelled = false;
     void (async () => {
-      const [daily, overtaken] = await Promise.all([
-        DAILY_PROMPT_TEMPLATE_CODE
-          ? serverTossApi
-              .getDailyPromptNotificationAgreement()
-              .catch(() => null)
-          : null,
-        OVERTAKEN_TEMPLATE_CODE
-          ? serverTossApi.getOvertakenNotificationAgreement().catch(() => null)
-          : null,
-      ]);
+      const results = await fetchEnabledAgreements();
       if (cancelled) return;
 
-      const hasPending =
-        daily?.status === "unknown" || overtaken?.status === "unknown";
+      const hasPending = results.some((result) => result.status === "unknown");
       if (hasPending) {
         localStorage.setItem(shownKey, "1");
         setOpen(true);

@@ -37,11 +37,11 @@ const baseStatus: AttendanceStatusResponse = {
 const pointSummary: PointSummaryResponse = { totalPoints: 30, todayPoints: 5 };
 
 describe("연속 출석 통계 카드", () => {
-  it("출석 마일스톤 + 미션 포인트를 합쳐 내일 최대 포인트를 보여준다", () => {
+  it("출석 마일스톤 + 미션 포인트를 합쳐 내일 받을 포인트를 보여준다", () => {
     renderCard(baseStatus, pointSummary, 4);
 
     // 출석 5원 + 미션 4원 = 9원 (강조 span으로 분리 렌더)
-    expect(screen.getByText(/내일도 참여하면 최대/)).toBeInTheDocument();
+    expect(screen.getByText(/내일도 참여하면 최소/)).toBeInTheDocument();
     expect(screen.getByText("9원")).toBeInTheDocument();
     expect(screen.getByText("2일")).toBeInTheDocument();
   });
@@ -69,5 +69,32 @@ describe("연속 출석 통계 카드", () => {
     expect(
       screen.getByText("매일 출석하고 토스포인트를 받아요"),
     ).toBeInTheDocument();
+  });
+
+  it("끊김 복구가 가능하면 광고 이어가기 버튼을 보여준다", () => {
+    render(
+      <MemoryRouter>
+        <StreakStatsCard
+          status={{ ...baseStatus, recoverable: true, previousDay: 1 }}
+          onRecovered={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "광고 보고 이어가기" }),
+    ).toBeInTheDocument();
+  });
+
+  it("복구 불가 상태면 광고 이어가기 버튼을 보여주지 않는다", () => {
+    render(
+      <MemoryRouter>
+        <StreakStatsCard status={baseStatus} onRecovered={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: "광고 보고 이어가기" }),
+    ).not.toBeInTheDocument();
   });
 });

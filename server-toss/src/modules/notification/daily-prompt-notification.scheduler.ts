@@ -16,7 +16,7 @@ import { SentNotificationRepository } from "./sent-notification.repository";
 // DAILY_PROMPT_CRON 환경변수로 식을 오버라이드할 수 있다 (예: "* * * * *").
 // 데코레이터는 클래스 로드 시점에 평가되므로 NestJS 부팅 전에 dotenv가
 // 환경변수를 채우는 흐름을 신뢰한다.
-const DAILY_PROMPT_SEND_HOUR_KST = 18;
+const DAILY_PROMPT_SEND_HOUR_KST = 20;
 const DEFAULT_DAILY_PROMPT_CRON = `0 ${DAILY_PROMPT_SEND_HOUR_KST} * * *`;
 const DAILY_PROMPT_CRON =
   process.env.DAILY_PROMPT_CRON ?? DEFAULT_DAILY_PROMPT_CRON;

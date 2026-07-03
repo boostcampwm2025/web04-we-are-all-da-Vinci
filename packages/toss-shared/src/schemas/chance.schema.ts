@@ -38,5 +38,7 @@ export const ChargeRequestSchema = z.discriminatedUnion("source", [
 ]);
 export type ChargeRequest = z.infer<typeof ChargeRequestSchema>;
 
-export const ChargeResponseSchema = MyChanceResponseSchema;
+export const ChargeResponseSchema = MyChanceResponseSchema.extend({
+  chanceGranted: z.boolean().optional(),
+});
 export type ChargeResponse = z.infer<typeof ChargeResponseSchema>;

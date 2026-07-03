@@ -1,4 +1,5 @@
 import { EntityManager, LockMode } from "@mikro-orm/core";
+import { InjectRepository } from "@mikro-orm/nestjs";
 import { ForbiddenException, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type {
@@ -13,6 +14,7 @@ import { PointReason } from "src/modules/point/entity/point-log.entity";
 import { PointService } from "src/modules/point/point.service";
 import { User } from "src/modules/user/user.entity";
 import { Attendance } from "./attendance.entity";
+import { AttendanceRepository } from "./attendance.repository";
 import { nextCycleDay, rewardedDayFor, tomorrowMaxPoint } from "./lib/cycle";
 
 @Injectable()
@@ -23,10 +25,21 @@ export class AttendanceService {
   constructor(
     private readonly em: EntityManager,
     private readonly pointService: PointService,
+    @InjectRepository(Attendance)
+    private readonly attendanceRepository: AttendanceRepository,
     configService: ConfigService,
   ) {
     this.recoveryAdGroupId = configService.getOrThrow<string>(
       "ATTENDANCE_AD_GROUP_ID",
+    );
+  }
+
+  // 오늘(KST) 출석하지 않은 사용자 전수 — 연속 출석 중단 알림 발송 대상.
+  // last_checked_date < 오늘 시작이면 오늘 미체크인(어제·그저께·장기 휴면 포함).
+  async findUncheckedInTodayUserKeys(): Promise<number[]> {
+    const todayStart = getSeoulDayRange().start;
+    return this.attendanceRepository.findUserKeysByLastCheckedBefore(
+      todayStart,
     );
   }
 
@@ -161,6 +174,8 @@ export class AttendanceService {
     }
 
     const { newDay, rewardedDay } = await this.em.transactional(async (em) => {
+      // 자정 경계 race 방지를 위해 today를 트랜잭션 내부에서 계산한다.
+      const today = getSeoulDayRange().start.getTime();
       const attendance = await em.findOne(
         Attendance,
         { userKey },
@@ -177,6 +192,19 @@ export class AttendanceService {
           "복구할 연속 출석이 없어요",
         );
         throw new ForbiddenException("복구할 연속 출석이 없어요.");
+      }
+
+      // 만회는 끊김을 감지한 당일(KST)에만 유효 — 오늘 체크인 기록이 아니면 만료.
+      if (this.dayStartMs(attendance.lastCheckedDate) !== today) {
+        this.logger.warn(
+          {
+            event: "attendance.recover.denied",
+            userKey,
+            reason: "recovery_window_expired",
+          },
+          "복구 기간이 지났어요",
+        );
+        throw new ForbiddenException("복구 기간이 지났어요.");
       }
 
       const restored = nextCycleDay(attendance.recoverableDay);
@@ -211,6 +239,30 @@ export class AttendanceService {
     return { cycleDay: newDay, rewardedDay };
   }
 
+  // 복구를 포기하고 끊긴 채로 새로 시작한다. 이미 리셋된 cycleDay는 두고
+  // 복구 대상(recoverableDay)만 비워 카드가 정상 상태로 돌아가게 한다.
+  async declineRecovery(userKey: number): Promise<AttendanceStatusResponse> {
+    await this.em.transactional(async (em) => {
+      const attendance = await em.findOne(
+        Attendance,
+        { userKey },
+        { lockMode: LockMode.PESSIMISTIC_WRITE },
+      );
+
+      if (attendance && attendance.recoverableDay != null) {
+        attendance.recoverableDay = null;
+        await em.flush();
+      }
+    });
+
+    this.logger.log(
+      { event: "attendance.recover.declined", userKey },
+      "연속 출석 복구 포기",
+    );
+
+    return this.getStatus(userKey);
+  }
+
   async getStatus(userKey: number): Promise<AttendanceStatusResponse> {
     const today = getSeoulDayRange().start.getTime();
     const attendance = await this.em.findOne(Attendance, { userKey });
@@ -226,12 +278,13 @@ export class AttendanceService {
     }
 
     const checkedToday = this.dayStartMs(attendance.lastCheckedDate) === today;
+    const recoverable = attendance.recoverableDay != null && checkedToday;
 
     return {
       cycleDay: attendance.cycleDay,
       checkedToday,
-      recoverable: attendance.recoverableDay != null,
-      previousDay: attendance.recoverableDay ?? null,
+      recoverable,
+      previousDay: recoverable ? attendance.recoverableDay : null,
       tomorrowMaxPoint: tomorrowMaxPoint(attendance.cycleDay),
     };
   }

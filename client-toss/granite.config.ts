@@ -3,7 +3,7 @@ import { defineConfig } from "@apps-in-toss/web-framework/config";
 export default defineConfig({
   appName: "we-are-all-da-vinci",
   brand: {
-    displayName: "우리 모두 다빈치",
+    displayName: "똑같이 그려봐",
     primaryColor: "#0166FE",
     icon: "https://static.toss.im/appsintoss/23215/f7b34a41-2e40-405f-8323-35f7208b7998.png",
   },

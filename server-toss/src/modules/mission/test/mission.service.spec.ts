@@ -85,24 +85,33 @@ describe("MissionService", () => {
 
     pointService = {
       savePointGrantRequest: jest.fn(async () => undefined),
+      enqueueGrant: jest.fn(),
     };
 
     const module = await Test.createTestingModule({
       providers: [
         {
           provide: MissionService,
-          useFactory: (userMissionRepo, processor, assignSvc, tutorialSvc) =>
+          useFactory: (
+            userMissionRepo,
+            processor,
+            assignSvc,
+            tutorialSvc,
+            pointSvc,
+          ) =>
             new MissionService(
               userMissionRepo,
               processor,
               assignSvc,
               tutorialSvc,
+              pointSvc,
             ),
           inject: [
             USER_MISSION_REPO_TOKEN,
             MissionProcessor,
             AssignMissionService,
             TutorialMissionService,
+            PointService,
           ],
         },
         { provide: USER_MISSION_REPO_TOKEN, useValue: userMissionRepository },
@@ -378,6 +387,105 @@ describe("MissionService", () => {
       await service.onDrawingSubmitted(1234, drawingContext);
 
       expect(uq.currentCount).toBe(2);
+    });
+  });
+
+  describe("친구초대 미션 동기화는 ShareLog 실개수를 단일 소스로 멱등하게 반영해요", () => {
+    const buildInviteMission = (currentCount: number): UserMission =>
+      buildUserMission({
+        mission: buildMission({
+          objectiveType: ObjectiveType.INVITE,
+          period: MissionPeriod.DAILY,
+          requiredCount: 5,
+          rewardType: RewardType.POINT,
+          rewardAmount: 5,
+          progressPeriod: ProgressPeriod.NONE,
+        }),
+        currentCount,
+      });
+
+    // 호출자(트랜잭션) em을 모사 — findOne은 활성 INVITE 미션, find는 주간 메타를 돌려준다.
+    const buildEm = (
+      invite: UserMission | null,
+      metas: UserMission[] = [],
+    ) => ({
+      findOne: jest.fn(async () => invite),
+      find: jest.fn(async () => metas),
+    });
+
+    it("당일 누적 초대 횟수를 그대로 진행도로 설정해요", async () => {
+      const uq = buildInviteMission(0);
+      const em = buildEm(uq);
+
+      await service.syncInviteProgress(em as never, 1234, 1);
+
+      expect(uq.currentCount).toBe(1);
+      expect(uq.completedAt).toBeNull();
+      expect(pointService.enqueueGrant).not.toHaveBeenCalled();
+    });
+
+    it("이전 진행이 누락돼도 다음 호출이 실제 초대 횟수로 보정해요", async () => {
+      const uq = buildInviteMission(2);
+      const em = buildEm(uq);
+
+      await service.syncInviteProgress(em as never, 1234, 4);
+
+      expect(uq.currentCount).toBe(4);
+      expect(uq.completedAt).toBeNull();
+    });
+
+    it("진행도를 전달된 초대 수 실값으로 설정해요", async () => {
+      // chargeByShare가 유일 작성자이고 같은 트랜잭션에서 단조 증가 실값을 넘기므로,
+      // 별도 보정 없이 inviteCount를 그대로 반영한다.
+      const uq = buildInviteMission(0);
+      const em = buildEm(uq);
+
+      await service.syncInviteProgress(em as never, 1234, 3);
+
+      expect(uq.currentCount).toBe(3);
+      expect(uq.completedAt).toBeNull();
+    });
+
+    it("다섯 번째 초대로 채워지면 완료 처리하고 5원을 한 번만 같은 트랜잭션에 적재해요", async () => {
+      const uq = buildInviteMission(4);
+      const em = buildEm(uq);
+
+      await service.syncInviteProgress(em as never, 1234, 5);
+
+      expect(uq.currentCount).toBe(5);
+      expect(uq.completedAt).not.toBeNull();
+      expect(pointService.enqueueGrant).toHaveBeenCalledTimes(1);
+      expect(pointService.enqueueGrant).toHaveBeenCalledWith(
+        em,
+        1234,
+        expect.anything(),
+        5,
+      );
+    });
+
+    it("미션 완료 시 주간 메타(일일 미션 완료 수)도 1 증가시켜요", async () => {
+      const uq = buildInviteMission(4);
+      const meta = buildUserMission({
+        mission: buildMission({
+          objectiveType: ObjectiveType.MISSION_COMPLETED,
+          period: MissionPeriod.WEEKLY,
+          requiredCount: 7,
+        }),
+        currentCount: 3,
+      });
+      const em = buildEm(uq, [meta]);
+
+      await service.syncInviteProgress(em as never, 1234, 5);
+
+      expect(meta.currentCount).toBe(4);
+    });
+
+    it("미배정/완료 상태(em.findOne null)면 아무 지급도 하지 않아요", async () => {
+      const em = buildEm(null);
+
+      await service.syncInviteProgress(em as never, 1234, 5);
+
+      expect(pointService.enqueueGrant).not.toHaveBeenCalled();
     });
   });
 });

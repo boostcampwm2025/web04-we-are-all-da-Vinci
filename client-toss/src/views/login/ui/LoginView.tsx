@@ -17,7 +17,7 @@ const LoginView = () => {
             <Top.UpperAssetContent
               content={
                 <img
-                  alt="우리 모두 다빈치"
+                  alt="똑같이 그려봐"
                   src={logoImg}
                   className="h-19 w-19 rounded-[14px]"
                 />
@@ -26,7 +26,7 @@ const LoginView = () => {
           }
           title={
             <Top.TitleParagraph size={28}>
-              우리 모두 다빈치에서
+              똑같이 그려봐에서
               <br />
               토스로 로그인할까요?
             </Top.TitleParagraph>

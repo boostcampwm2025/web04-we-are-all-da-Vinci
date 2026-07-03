@@ -3,8 +3,13 @@ import { FUNNEL_EVENTS, toError, trackClick } from "@/shared/lib";
 import { contactsViral } from "@apps-in-toss/web-framework";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+export interface InviteChargeResult {
+  count: number;
+  chanceGranted: boolean;
+}
+
 interface UseInviteFriendArgs {
-  onCharged?: (count: number) => void;
+  onCharged?: (result: InviteChargeResult) => void;
   onError?: (error: Error) => void;
 }
 
@@ -53,18 +58,22 @@ export const useInviteFriend = ({
         onEvent: async (event) => {
           if (event.type === "sendViral") {
             try {
-              const { count } = await serverTossApi.chargeChanceByShare({
-                channel: "contactsViral",
-                moduleId: id,
-                rewardAmount: event.data.rewardAmount,
-                rewardUnit: event.data.rewardUnit,
-              });
+              const { count, chanceGranted } =
+                await serverTossApi.chargeChanceByShare({
+                  channel: "contactsViral",
+                  moduleId: id,
+                  rewardAmount: event.data.rewardAmount,
+                  rewardUnit: event.data.rewardUnit,
+                });
+              // 기회 한도 초과분은 chanceGranted=false(서버 미반환 시 지급으로 간주).
+              const granted = chanceGranted ?? true;
               trackClick(FUNNEL_EVENTS.shareInviteRewardSuccess, {
                 reward_amount: event.data.rewardAmount,
                 reward_unit: event.data.rewardUnit,
                 chance_count: count,
+                chance_granted: granted,
               });
-              onCharged?.(count);
+              onCharged?.({ count, chanceGranted: granted });
             } catch (err) {
               trackClick(FUNNEL_EVENTS.shareInviteRewardFailed, {
                 reason: err instanceof Error ? err.message : String(err),

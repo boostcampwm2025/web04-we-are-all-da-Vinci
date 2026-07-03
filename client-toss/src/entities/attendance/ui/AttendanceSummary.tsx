@@ -27,7 +27,7 @@ const renderSubText = (
   if (maxTomorrow > 0) {
     return (
       <>
-        내일도 참여하면 최대 <PointHighlight>{maxTomorrow}원</PointHighlight>
+        내일도 참여하면 최소 <PointHighlight>{maxTomorrow}원</PointHighlight>
       </>
     );
   }
@@ -47,6 +47,8 @@ const AttendanceSummary = ({
   status,
   missionMaxPoint = 0,
 }: AttendanceSummaryProps) => {
+  // 끊김(복구 가능)이면 오늘이 1일차여도 "1일 연속 출석 중!"이 아니라 끊김 상태를 안내한다.
+  const isBroken = status?.recoverable === true && status.previousDay != null;
   const streakText = status ? `${status.cycleDay}` : "-";
 
   return (
@@ -55,18 +57,34 @@ const AttendanceSummary = ({
         aria-hidden
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-(--color-page) text-2xl leading-none"
       >
-        🔥
+        {isBroken ? "💔" : "🔥"}
       </span>
       <div>
-        <p className="leading-tight font-bold text-(--color-black)">
-          <span className="text-[22px] text-(--color-toss-blue)">
-            {streakText}일
-          </span>{" "}
-          <span className="text-base">연속 출석 중!</span>
-        </p>
-        <p className="mt-1 text-[13px] text-(--color-grey)">
-          {renderSubText(status, missionMaxPoint)}
-        </p>
+        {isBroken ? (
+          <>
+            <p className="leading-tight font-bold text-(--color-black)">
+              <span className="text-[22px] text-(--color-toss-blue)">
+                {status.previousDay}일
+              </span>{" "}
+              <span className="text-base">연속출석 중이에요</span>
+            </p>
+            <p className="mt-1 text-[13px] text-(--color-grey)">
+              오늘까지 이어갈 수 있어요
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="leading-tight font-bold text-(--color-black)">
+              <span className="text-[22px] text-(--color-toss-blue)">
+                {streakText}일
+              </span>{" "}
+              <span className="text-base">연속출석 중!</span>
+            </p>
+            <p className="mt-1 text-[13px] text-(--color-grey)">
+              {renderSubText(status, missionMaxPoint)}
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

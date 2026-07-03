@@ -24,12 +24,15 @@ interface ChallengeCardProps {
   cta: ReactNode;
   podium?: PodiumResponse["podium"];
   participantCount?: number;
+  // 친구 초대 적립 성공 시 호출 — 오늘의 미션 진행도를 재조회한다.
+  onInvited?: () => void;
 }
 
 const ChallengeCard = ({
   cta,
   podium,
   participantCount,
+  onInvited,
 }: ChallengeCardProps) => {
   const [shareOpen, setShareOpen] = useState(false);
   const topScore = podium && podium.length > 0 ? `${podium[0].score}점` : "-";
@@ -92,7 +95,11 @@ const ChallengeCard = ({
         </Button>
       </div>
 
-      <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} />
+      <ShareSheet
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        onInvited={onInvited}
+      />
     </section>
   );
 };

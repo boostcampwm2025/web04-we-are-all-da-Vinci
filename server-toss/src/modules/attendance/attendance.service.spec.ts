@@ -62,21 +62,51 @@ const buildConfigService = () => ({
   }),
 });
 
+const buildAttendanceRepository = () => ({
+  findUserKeysByLastCheckedBefore: jest.fn(async () => [] as number[]),
+});
+
 const buildService = (
   em: unknown,
   pointService = buildPointService(),
   configService = buildConfigService(),
+  attendanceRepository = buildAttendanceRepository(),
 ) => ({
   service: new AttendanceService(
     em as never,
     pointService as never,
+    attendanceRepository as never,
     configService as never,
   ),
   pointService,
+  attendanceRepository,
 });
 
 describe("출석 서비스", () => {
   afterEach(() => jest.clearAllMocks());
+
+  describe("연속 출석 중단 알림 대상 조회", () => {
+    it("오늘(KST) 시작 시각 이전으로 마지막 출석한 사용자를 리포지토리에서 조회한다", async () => {
+      const { em } = buildEm(null);
+      const attendanceRepository = buildAttendanceRepository();
+      attendanceRepository.findUserKeysByLastCheckedBefore.mockResolvedValue([
+        101, 202,
+      ]);
+      const { service } = buildService(
+        em,
+        buildPointService(),
+        buildConfigService(),
+        attendanceRepository,
+      );
+
+      const result = await service.findUncheckedInTodayUserKeys();
+
+      expect(result).toEqual([101, 202]);
+      expect(
+        attendanceRepository.findUserKeysByLastCheckedBefore,
+      ).toHaveBeenCalledWith(TODAY_START);
+    });
+  });
 
   describe("체크인 — 첫 출석", () => {
     it("출석 행을 생성하고 1일차 started를 반환한다", async () => {
@@ -252,6 +282,59 @@ describe("출석 서비스", () => {
         service.recover(1234, { adGroupId: RECOVERY_AD_GROUP }),
       ).rejects.toThrow(ForbiddenException);
     });
+
+    it("끊김 감지 당일이 지났으면(오늘 체크인 기록 아님) ForbiddenException으로 만료된다", async () => {
+      const attendance = {
+        userKey: 1234,
+        cycleDay: 1,
+        lastCheckedDate: YESTERDAY_START,
+        recoverableDay: 2,
+      };
+      const { em } = buildEm(attendance);
+      const { service } = buildService(em);
+
+      await expect(
+        service.recover(1234, { adGroupId: RECOVERY_AD_GROUP }),
+      ).rejects.toThrow(ForbiddenException);
+      expect(attendance.cycleDay).toBe(1);
+      expect(attendance.recoverableDay).toBe(2);
+    });
+  });
+
+  describe("복구 포기(새롭게 시작)", () => {
+    it("cycleDay는 그대로 두고 복구 대상만 비워 recoverable=false 현황을 반환한다", async () => {
+      const attendance = {
+        userKey: 1234,
+        cycleDay: 1,
+        lastCheckedDate: TODAY_START,
+        recoverableDay: 2,
+      };
+      const { em } = buildEm(attendance);
+      const { service } = buildService(em);
+
+      const result = await service.declineRecovery(1234);
+
+      expect(attendance.recoverableDay).toBeNull();
+      expect(attendance.cycleDay).toBe(1);
+      expect(result.recoverable).toBe(false);
+      expect(result.previousDay).toBeNull();
+    });
+
+    it("복구 대상이 없으면 아무것도 비우지 않고 현황만 반환한다(멱등)", async () => {
+      const attendance = {
+        userKey: 1234,
+        cycleDay: 3,
+        lastCheckedDate: TODAY_START,
+        recoverableDay: null,
+      };
+      const { em } = buildEm(attendance);
+      const { service } = buildService(em);
+
+      const result = await service.declineRecovery(1234);
+
+      expect(em.flush).not.toHaveBeenCalled();
+      expect(result.cycleDay).toBe(3);
+    });
   });
 
   describe("현황 조회", () => {
@@ -284,6 +367,37 @@ describe("출석 서비스", () => {
       expect(result.cycleDay).toBe(2);
       expect(result.checkedToday).toBe(true);
       expect(result.tomorrowMaxPoint).toBe(5);
+    });
+
+    it("끊김을 감지한 당일에는 recoverable=true와 직전 위치를 노출한다", async () => {
+      const { em } = buildEm({
+        userKey: 1234,
+        cycleDay: 1,
+        lastCheckedDate: TODAY_START,
+        recoverableDay: 2,
+      });
+      const { service } = buildService(em);
+
+      const result = await service.getStatus(1234);
+
+      expect(result.recoverable).toBe(true);
+      expect(result.previousDay).toBe(2);
+    });
+
+    it("당일이 지나면(오늘 체크인 기록 아님) recoverableDay가 남아 있어도 만료돼 recoverable=false다", async () => {
+      const { em } = buildEm({
+        userKey: 1234,
+        cycleDay: 1,
+        lastCheckedDate: YESTERDAY_START,
+        recoverableDay: 2,
+      });
+      const { service } = buildService(em);
+
+      const result = await service.getStatus(1234);
+
+      expect(result.checkedToday).toBe(false);
+      expect(result.recoverable).toBe(false);
+      expect(result.previousDay).toBeNull();
     });
   });
 });

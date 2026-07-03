@@ -87,8 +87,11 @@ const DashboardView = () => {
       attendanceCheckIn.result === null,
   );
 
-  const { missions: todayMissions, isLoading: isMissionsLoading } =
-    useTodayMissions();
+  const {
+    missions: todayMissions,
+    isLoading: isMissionsLoading,
+    refetch: refetchMissions,
+  } = useTodayMissions();
   const missionMaxPoint = todayMissions.reduce(
     (sum, mission) => sum + mission.rewardAmount,
     0,
@@ -182,11 +185,13 @@ const DashboardView = () => {
             status={attendanceStatus ?? undefined}
             pointSummary={pointSummary ?? undefined}
             missionMaxPoint={missionMaxPoint}
+            onRecovered={refreshAttendance}
           />
           <ChallengeCard
             cta={cta}
             podium={podium}
             participantCount={participantCount}
+            onInvited={refetchMissions}
           />
           <TodayMissionCard
             missions={todayMissions}
@@ -212,7 +217,7 @@ const DashboardView = () => {
       />
 
       <ExitDialog
-        title="우리 모두 다빈치를 종료할까요?"
+        title="똑같이 그려봐를 종료할까요?"
         confirmLabel="종료하기"
         cancelLabel="계속 둘러보기"
       />

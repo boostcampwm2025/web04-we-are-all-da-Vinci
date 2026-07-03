@@ -26,6 +26,7 @@ export enum ObjectiveType {
   VISIT_MISSION_TAB = "visit_mission_tab",
   VISIT_DRAWING_DETAIL = "visit_drawing_detail",
   SHARE = "share",
+  INVITE = "invite",
   TUTORIAL_COMPLETED = "tutorial_completed",
 }
 

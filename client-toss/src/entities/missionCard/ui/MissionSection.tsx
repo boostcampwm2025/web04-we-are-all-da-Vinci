@@ -1,19 +1,21 @@
 import type { MissionItem } from "@toss/shared";
 import { ListHeader } from "@toss/tds-mobile";
+import type { ReactNode } from "react";
 import type { MissionSectionConfig } from "../config/constants";
 import MissionCard from "./MissionCard";
 
 interface MissionSectionProps {
   missions: MissionItem[];
   section: MissionSectionConfig;
-  // 미션 진행 기간(예: "6월 16일 ~ 6월 22일"). 헤더 우측에 노출한다.
   rangeLabel?: string;
+  renderAction?: (mission: MissionItem) => ReactNode;
 }
 
 const MissionSection = ({
   missions,
   section,
   rangeLabel,
+  renderAction,
 }: MissionSectionProps) => {
   if (missions.length === 0) return null;
 
@@ -31,7 +33,7 @@ const MissionSection = ({
         }
         right={
           rangeLabel ? (
-            <span className="pr-(--page-px) text-[13px] text-(--color-grey)">
+            <span className="shrink-0 pr-(--page-px) text-[13px] whitespace-nowrap text-(--color-grey)">
               {rangeLabel}
             </span>
           ) : undefined
@@ -39,7 +41,11 @@ const MissionSection = ({
       />
       <div className="mt-2 flex flex-col gap-3 px-(--page-px)">
         {missions.map((mission) => (
-          <MissionCard key={mission.userMissionId} mission={mission} />
+          <MissionCard
+            key={mission.userMissionId}
+            mission={mission}
+            action={renderAction?.(mission)}
+          />
         ))}
       </div>
     </section>

@@ -17,7 +17,7 @@
     "qa:ci": "tsx scripts/qa.ts --ci"
   },
   "dependencies": {
-    "@apps-in-toss/web-framework": "^2.6.0",
+    "@apps-in-toss/web-framework": "^2.9.2",
     "@emotion/react": "^11.14.0",
     "@toss/shared": "workspace:*",
     "@toss/tds-colors": "^0.1.0",

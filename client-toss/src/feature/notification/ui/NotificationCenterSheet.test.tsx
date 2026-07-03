@@ -6,6 +6,8 @@ const getOvertaken = vi.fn();
 const saveOvertaken = vi.fn();
 const getDailyPrompt = vi.fn();
 const saveDailyPrompt = vi.fn();
+const getAttendanceStreak = vi.fn();
+const saveAttendanceStreak = vi.fn();
 
 vi.mock("@/shared/api", () => ({
   serverTossApi: {
@@ -14,6 +16,9 @@ vi.mock("@/shared/api", () => ({
     getDailyPromptNotificationAgreement: () => getDailyPrompt(),
     saveDailyPromptNotificationAgreement: (body: unknown) =>
       saveDailyPrompt(body),
+    getAttendanceStreakNotificationAgreement: () => getAttendanceStreak(),
+    saveAttendanceStreakNotificationAgreement: (body: unknown) =>
+      saveAttendanceStreak(body),
   },
 }));
 
@@ -35,9 +40,11 @@ describe("알림 설정 시트 토글", () => {
     vi.clearAllMocks();
     vi.stubEnv("VITE_TOSS_TEMPLATE_OVERTAKEN", "OVT_CODE");
     vi.stubEnv("VITE_TOSS_TEMPLATE_DAILY_PROMPT", "DP_CODE");
-    // 기본: 일일 프롬프트는 미동의(OFF), 랭킹 추월은 동의(ON) 상태로 시작.
+    vi.stubEnv("VITE_TOSS_TEMPLATE_ATTENDANCE_STREAK", "ATT_CODE");
+    // 기본: 일일 프롬프트·연속 출석은 미동의(OFF), 랭킹 추월은 동의(ON) 상태로 시작.
     getDailyPrompt.mockResolvedValue({ status: "unknown" });
     getOvertaken.mockResolvedValue({ status: "agreed" });
+    getAttendanceStreak.mockResolvedValue({ status: "unknown" });
   });
 
   afterEach(() => {
@@ -99,5 +106,28 @@ describe("알림 설정 시트 토글", () => {
 
     expect(sdk).toHaveBeenCalledTimes(1);
     expect(screen.queryByText("알림 끄기")).toBeNull();
+  });
+
+  it("연속 출석 알림 행도 config 기반으로 렌더되고 꺼진 상태에서 누르면 SDK를 호출한다", async () => {
+    const Sheet = await loadSheet();
+    const sdk = await loadSdk();
+    render(<Sheet open onClose={vi.fn()} />);
+
+    await waitFor(() => expect(getAttendanceStreak).toHaveBeenCalled());
+
+    fireEvent.click(screen.getByText("연속 출석 알림"));
+
+    expect(sdk).toHaveBeenCalledTimes(1);
+  });
+
+  it("템플릿 코드(env)가 없는 알림 타입은 행을 노출하지 않는다", async () => {
+    vi.stubEnv("VITE_TOSS_TEMPLATE_ATTENDANCE_STREAK", "");
+    const Sheet = await loadSheet();
+    render(<Sheet open onClose={vi.fn()} />);
+
+    await waitFor(() => expect(getOvertaken).toHaveBeenCalled());
+
+    expect(screen.queryByText("연속 출석 알림")).toBeNull();
+    expect(getAttendanceStreak).not.toHaveBeenCalled();
   });
 });

@@ -266,12 +266,28 @@ const buildIntegration = (opts: {
 const triggerRankingChange = (
   emitter: EventEmitter2,
   overtakenUserKeys: number[],
-  day = "2026-05-29",
-) =>
-  emitter.emitAsync(
+  options: {
+    day?: string;
+    triggerDrawingId?: bigint;
+    triggerUserKey?: number;
+  } = {},
+) => {
+  const {
+    day = "2026-05-29",
+    triggerDrawingId = 12345n,
+    triggerUserKey = 999,
+  } = options;
+  return emitter.emitAsync(
     RANKING_CHANGED_EVENT,
-    new RankingChangedEvent(999, 12345n, 1, overtakenUserKeys, day),
+    new RankingChangedEvent(
+      triggerUserKey,
+      triggerDrawingId,
+      1,
+      overtakenUserKeys,
+      day,
+    ),
   );
+};
 
 describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름", () => {
   it("추월된 동의자 모두에게 알림이 발송되고 status=DELIVERED로 끝나요", async () => {
@@ -309,9 +325,9 @@ describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름",
         SENT_NOTIFICATION_STATUS.DELIVERED,
       ),
     ).toBe(2);
-    // referenceId는 user별로 분리돼야 일일 1회 제한이 user 단위로 동작.
+    // referenceId는 추월 사건(제출 그림 id)+user로 구성돼 추월당할 때마다 분리된다.
     const record101 = sentNotificationRepository.findByUser(101)[0];
-    expect(record101.referenceId).toBe("2026-05-29_101");
+    expect(record101.referenceId).toBe("12345_101");
     expect(record101.type).toBe(NOTIFICATION_TYPE.OVERTAKEN);
   });
 
@@ -376,7 +392,7 @@ describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름",
     }
   });
 
-  it("같은 day에 같은 사용자가 두 번째로 추월되어도 중복 발송 안 돼요", async () => {
+  it("같은 추월 사건(동일 제출)이 중복 처리되면 한 번만 발송돼요", async () => {
     const { eventEmitter, sentNotificationRepository, notificationSender } =
       buildIntegration({
         agreements: [
@@ -387,11 +403,12 @@ describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름",
         ],
       });
 
+    // 같은 triggerDrawingId(기본값)로 두 번 emit → 동일 이벤트 중복 처리.
     await triggerRankingChange(eventEmitter, [101]);
     await triggerRankingChange(eventEmitter, [101]);
 
-    // 두 번째 트리거에서도 listener는 호출되지만 reserve가 false 반환 → already_sent
-    // 첫 번째 호출만 토스에 도달함.
+    // 두 번째 트리거에서도 listener는 호출되지만 같은 referenceId라 reserve가 false 반환
+    // → already_sent. 첫 번째 호출만 토스에 도달함(멱등).
     expect(notificationSender.sendMessage).toHaveBeenCalledTimes(1);
     expect(sentNotificationRepository.findByUser(101)).toHaveLength(1);
     expect(
@@ -399,6 +416,62 @@ describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름",
         SENT_NOTIFICATION_STATUS.DELIVERED,
       ),
     ).toBe(1);
+  });
+
+  it("다른 사람의 제출로 같은 사용자가 다시 추월되면 매번 발송돼요", async () => {
+    const { eventEmitter, sentNotificationRepository, notificationSender } =
+      buildIntegration({
+        agreements: [
+          {
+            userKey: 101,
+            status: NOTIFICATION_AGREEMENT_STATUS.AGREED,
+          },
+        ],
+      });
+
+    // 추월자·제출이 다르면 triggerDrawingId가 달라 referenceId가 분리된다.
+    await triggerRankingChange(eventEmitter, [101], {
+      triggerUserKey: 901,
+      triggerDrawingId: 1001n,
+    });
+    await triggerRankingChange(eventEmitter, [101], {
+      triggerUserKey: 902,
+      triggerDrawingId: 1002n,
+    });
+
+    expect(notificationSender.sendMessage).toHaveBeenCalledTimes(2);
+    expect(sentNotificationRepository.findByUser(101)).toHaveLength(2);
+    expect(
+      sentNotificationRepository.countByStatus(
+        SENT_NOTIFICATION_STATUS.DELIVERED,
+      ),
+    ).toBe(2);
+  });
+
+  it("같은 사람이 다른 제출로 같은 사용자를 다시 추월해도 매번 발송돼요", async () => {
+    const { eventEmitter, sentNotificationRepository, notificationSender } =
+      buildIntegration({
+        agreements: [
+          {
+            userKey: 101,
+            status: NOTIFICATION_AGREEMENT_STATUS.AGREED,
+          },
+        ],
+      });
+
+    // 같은 추월자(triggerUserKey 동일)라도 제출이 다르면(triggerDrawingId 상이) 매번 발송.
+    // (점수 엎치락뒤치락: A가 X 추월 → X가 A 추월 → A가 X 다시 추월)
+    await triggerRankingChange(eventEmitter, [101], {
+      triggerUserKey: 901,
+      triggerDrawingId: 2001n,
+    });
+    await triggerRankingChange(eventEmitter, [101], {
+      triggerUserKey: 901,
+      triggerDrawingId: 2002n,
+    });
+
+    expect(notificationSender.sendMessage).toHaveBeenCalledTimes(2);
+    expect(sentNotificationRepository.findByUser(101)).toHaveLength(2);
   });
 
   it("OVERTAKEN_NOTIFICATION_ENABLED=false면 listener가 즉시 스킵해요", async () => {
