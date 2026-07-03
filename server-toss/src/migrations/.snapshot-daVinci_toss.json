@@ -487,19 +487,19 @@
         },
         "strokes": {
           "name": "strokes",
-          "type": "text",
+          "type": "mediumtext",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
           "unique": false,
-          "length": 65535,
+          "length": 16777215,
           "precision": null,
           "scale": null,
           "default": null,
           "comment": null,
           "enumItems": [],
-          "mappedType": "text"
+          "mappedType": "unknown"
         },
         "similarity": {
           "name": "similarity",
@@ -1631,19 +1631,19 @@
         },
         "strokes": {
           "name": "strokes",
-          "type": "text",
+          "type": "mediumtext",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
           "unique": false,
-          "length": 65535,
+          "length": 16777215,
           "precision": null,
           "scale": null,
           "default": null,
           "comment": null,
           "enumItems": [],
-          "mappedType": "text"
+          "mappedType": "unknown"
         }
       },
       "indexes": [
@@ -1731,19 +1731,19 @@
         },
         "strokes": {
           "name": "strokes",
-          "type": "text",
+          "type": "mediumtext",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
           "unique": false,
-          "length": 65535,
+          "length": 16777215,
           "precision": null,
           "scale": null,
           "default": null,
           "comment": null,
           "enumItems": [],
-          "mappedType": "text"
+          "mappedType": "unknown"
         },
         "drawing_id": {
           "name": "drawing_id",
