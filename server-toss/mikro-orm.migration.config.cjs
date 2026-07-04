@@ -54,6 +54,7 @@ module.exports = defineConfig({
   debug: process.env.NODE_ENV !== "production",
   forceUtcTimezone: true, // UTC로 시간 설정 고정
   allowGlobalContext: process.env.NODE_ENV === "test", // 테스트환경의 전역 em 사용을 위한 설정
+  preferTs: false, // 이 config는 dist(컴파일된 JS) 전용 — 마이그레이션/시더 모두 alias 이미 해석된 dist를 사용
   extensions: [Migrator, SeedManager],
   migrations: {
     snapshot: process.env.NODE_ENV !== "production",

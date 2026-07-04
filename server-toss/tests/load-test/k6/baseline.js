@@ -8,10 +8,9 @@ const BASE_URL = __ENV.BASE_URL || "http://localhost:3000";
 const TEST_AD_GROUP_ID = __ENV.TEST_AD_GROUP_ID || "TEST_AD_GROUP";
 
 const optionsConfig = JSON.parse(open("./options.json"));
-const STAGES = optionsConfig.scenarios.baseline.stages;
-const MAX_VUS = Math.max(...STAGES.map((stage) => stage.target));
+const MAX_VUS = Number(__ENV.VUS);
 
-export const options = optionsConfig;
+export const options = { thresholds: optionsConfig.thresholds };
 
 const users = new SharedArray("users", function () {
   return JSON.parse(open("../fixtures/tokens.json"));
@@ -190,7 +189,7 @@ export function handleSummary(data) {
     outputs[`${resultDir}/summary.json`] = JSON.stringify(data, null, 2);
     outputs[`${resultDir}/report.html`] = generateHtmlReport(data, {
       maxVUs: MAX_VUS,
-      stages: STAGES,
+      stages: [{ duration: __ENV.DURATION ?? "", target: MAX_VUS }],
       thresholds: optionsConfig.thresholds,
     });
   }

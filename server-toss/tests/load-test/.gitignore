@@ -11,3 +11,5 @@ docker/tempo/data
 docker/tempo/data/*
 
 results/
+
+fixtures/state.json

@@ -1,0 +1,125 @@
+export class Runner {
+  _config;
+  _compose;
+  _k6;
+  _token;
+
+  constructor(config, compose, k6, token) {
+    this._config = config;
+    this._compose = compose;
+    this._k6 = k6;
+    this._token = token;
+  }
+
+  async run() {
+    await this._stage(
+      "Load Test",
+      async () => {
+        try {
+          await this._compose.down();
+        } catch {}
+
+        // MySQL
+        await this._stage(
+          "MySQL",
+          async () => {
+            await this._compose.up(["davinci-mysql"]);
+            await this._compose.waitHealthy("davinci-mysql");
+          },
+          {
+            onError: async () => {
+              await this._compose.logs("davinci-mysql");
+            },
+          },
+        );
+
+        // 마이그레이션
+        if (this._config.database.migrate) {
+          await this._stage("Migration", async () => {
+            await this._compose.run("davinci-migrate", [
+              "pnpm",
+              "exec",
+              "mikro-orm",
+              "migration:up",
+              "--config",
+              "mikro-orm.migration.config.cjs",
+            ]);
+          });
+        }
+
+        // 시드 데이터 주입
+        await this._stage("Seed", async () => {
+          await this._compose.run("davinci-migrate", [
+            "pnpm",
+            "exec",
+            "mikro-orm",
+            "seeder:run",
+            "--config",
+            "mikro-orm.migration.config.cjs",
+            "--class",
+            "LoadTestSeeder",
+          ]);
+        });
+
+        // 토큰 주입
+        await this._stage("Token Generate", async () => {
+          await this._token.generate(this._config.tokens.count);
+        });
+
+        // 서버 실행
+        await this._stage(
+          "App",
+          async () => {
+            await this._compose.up(["davinci-app"]);
+            await this._compose.waitHealthy("davinci-app");
+          },
+          {
+            onError: async () => {
+              await this._compose.logs("davinci-app");
+            },
+          },
+        );
+
+        // 웜업 스테이지
+        if (this._config.warmup.enabled) {
+          await this._stage("Warmup", async () => {
+            await this._k6.run(this._config.warmup);
+          });
+        }
+
+        // 메인 스테이지
+        await this._stage("Main", async () => {
+          await this._k6.run(this._config.main);
+        });
+      },
+      {
+        onFinally: async () => {
+          await this._compose.down();
+        },
+      },
+    );
+  }
+
+  /**
+   *
+   * @param {string} name
+   * @param {() => Promise<void>} fn
+   * @param {{ onError?: () => Promise<void>, onFinally?: () => Promise<void> }} options
+   */
+  async _stage(name, fn, options = {}) {
+    console.log(`[${name}] start`);
+    try {
+      await fn();
+      console.log(`[${name}] done`);
+    } catch (err) {
+      if (options?.onError) {
+        await options.onError();
+      }
+      throw new Error(`[${name}] 에러`, { cause: err });
+    } finally {
+      if (options?.onFinally) {
+        await options.onFinally();
+      }
+    }
+  }
+}
