@@ -14,7 +14,7 @@ export class Migration20260630000000 extends Migration {
   override down(): void {
     this.addSql("alter table `missions` drop column `increment_step`;");
     this.addSql(
-      "alter table `mission` modify colum `period` enum('daily','weekly','tutorial') not null",
+      "alter table `missions` modify column `period` enum('daily','weekly','tutorial') not null",
     );
 
     this.addSql(
