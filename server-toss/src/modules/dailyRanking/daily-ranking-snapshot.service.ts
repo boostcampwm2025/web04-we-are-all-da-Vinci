@@ -34,7 +34,7 @@ export class DailyRankingSnapshotService {
     private readonly em: EntityManager,
   ) {}
 
-  @CreateRequestContext()
+  @CreateRequestContext((self: DailyRankingSnapshotService) => self.em)
   async backfillMissingSnapshots(reference = new Date()): Promise<{
     targetDateCount: number;
     createdDateCount: number;

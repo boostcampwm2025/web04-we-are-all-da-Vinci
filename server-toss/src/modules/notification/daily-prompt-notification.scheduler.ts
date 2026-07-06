@@ -34,7 +34,7 @@ export class DailyPromptNotificationScheduler {
     private readonly promptService: PromptService,
   ) {}
 
-  @CreateRequestContext()
+  @CreateRequestContext((self: DailyPromptNotificationScheduler) => self.em)
   @Cron(DAILY_PROMPT_CRON, { timeZone: "Asia/Seoul" })
   async handleDailyPromptBroadcast(): Promise<void> {
     await this.run();

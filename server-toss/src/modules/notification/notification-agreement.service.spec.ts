@@ -29,6 +29,7 @@ const buildService = () => {
       (_entity: unknown, data: Record<string, unknown>) =>
         data as unknown as NotificationAgreement,
     ),
+    persist: jest.fn((data: Record<string, unknown>) => data as unknown),
     flush: jest.fn().mockResolvedValue(undefined),
   };
 

@@ -31,12 +31,14 @@ export class SaveDrawingService {
   ): Promise<SaveDrawingResult> {
     const { promptId, strokes, similarity } = dto;
 
-    const drawing = new Drawing();
-    drawing.user = user;
-    drawing.prompt = this.em.getReference(Prompt, BigInt(promptId));
-    drawing.strokes = JSON.stringify(strokes);
-    drawing.similarity = JSON.stringify(similarity);
-    drawing.score = similarity.score;
+    const drawing = this.em.create(Drawing, {
+      user,
+      prompt: this.em.getReference(Prompt, BigInt(promptId)),
+      strokes: JSON.stringify(strokes),
+      similarity: JSON.stringify(similarity),
+      score: similarity.score,
+    });
+
     this.em.persist(drawing);
     await this.em.flush();
 
