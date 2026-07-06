@@ -199,6 +199,27 @@ describe("ChallengeMissionService", () => {
       expect(uq.completedAt).toBeUndefined();
     });
 
+    it("1000을 넘어서면 1000으로 캡한다", () => {
+      const uq = buildUserMission({ requiredCount: 990 });
+      const result: CycleResult = { completed: [uq], metaCompleted: [] };
+
+      service.resetCompletedForNextTier(result);
+
+      expect(uq.requiredCount).toBe(1000);
+    });
+
+    it("이미 1000에 도달했어도 완료 시마다 반복 리셋된다", () => {
+      const uq = buildUserMission({ requiredCount: 1000, level: 10 });
+      const result: CycleResult = { completed: [uq], metaCompleted: [] };
+
+      service.resetCompletedForNextTier(result);
+
+      expect(uq.requiredCount).toBe(1000);
+      expect(uq.currentCount).toBe(0);
+      expect(uq.level).toBe(11);
+      expect(uq.completedAt).toBeUndefined();
+    });
+
     it("requiredCount 오버라이드가 없으면 마스터 requiredCount를 기준으로 늘린다", () => {
       const uq = buildUserMission({ requiredCount: null });
       const result: CycleResult = { completed: [uq], metaCompleted: [] };

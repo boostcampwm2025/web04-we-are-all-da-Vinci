@@ -4,7 +4,10 @@ import { User } from "src/modules/user/user.entity";
 import { MissionPeriod } from "../entity/mission.entity";
 import { UserMission } from "../entity/user-mission.entity";
 import { MissionWindow } from "../mission-window";
-import { CHALLENGE_EPOCH } from "../mission.constants";
+import {
+  CHALLENGE_EPOCH,
+  CHALLENGE_MAX_REQUIRED_COUNT,
+} from "../mission.constants";
 import type { CycleResult, DrawingContext } from "../mission.types";
 import { MissionRepository } from "../repository/mission.repository";
 import { UserMissionRepository } from "../repository/user-mission.repository";
@@ -76,7 +79,10 @@ export class ChallengeMissionService {
       if (step == null) continue;
 
       const prevRequired = uq.requiredCount ?? uq.mission.requiredCount;
-      uq.requiredCount = prevRequired + step;
+      uq.requiredCount = Math.min(
+        prevRequired + step,
+        CHALLENGE_MAX_REQUIRED_COUNT,
+      );
       uq.currentCount = 0;
       uq.level += 1;
       uq.completedAt = undefined;
