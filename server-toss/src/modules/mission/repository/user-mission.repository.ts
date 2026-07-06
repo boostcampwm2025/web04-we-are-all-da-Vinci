@@ -70,6 +70,7 @@ export class UserMissionRepository extends EntityRepository<UserMission> {
             $nin: [
               ObjectiveType.MISSION_COMPLETED,
               ObjectiveType.TUTORIAL_COMPLETED,
+              ObjectiveType.INVITE,
             ],
           },
         },
