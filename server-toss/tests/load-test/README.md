@@ -33,7 +33,7 @@ pnpm load-test
 
 1. **MySQL** — `davinci-mysql` 컨테이너 기동 + 헬스체크 대기
 2. **Migration** (`database.migrate: true`일 때만) — `davinci-migrate` 서비스에서 `mikro-orm migration:up` 실행
-3. **Seed** — `davinci-migrate`에서 `mikro-orm seeder:run --class <seed 이름>` 실행
+3. **Seed** — `davinci-migrate`에서 `mikro-orm seeder:run --class LoadTestSeeder` 실행, `database.seed`에 지정한 수만큼 유저/드로잉 생성
 4. **Token Generate** — `davinci-migrate`에서 JWT 토큰을 발급해 `fixtures/tokens.json`에 저장
 5. **App** — `davinci-app` 컨테이너 기동 + 헬스체크 대기
 6. **Warmup** (`warmup.enabled: true`일 때만) — k6로 `warmup` 설정만큼 가볍게 워밍업
@@ -54,7 +54,7 @@ docker:
 
 database:
   migrate: true # false면 Migration 단계 생략
-  seed: large # LoadTestSeeder 등 seeder 클래스 선택용 (현재 runner.js는 값 그대로 안 씀 — TODO)
+  seed: 1000 # 시드할 유저 수 (SEED_DRAWING_USER_COUNT 환경변수로 davinci-migrate에 전달됨)
 
 tokens:
   count: 1000 # 발급할 JWT 토큰 수

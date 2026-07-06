@@ -10,6 +10,6 @@ docker/env/.env
 docker/tempo/data
 docker/tempo/data/*
 
-results/
+results
 
 fixtures/state.json

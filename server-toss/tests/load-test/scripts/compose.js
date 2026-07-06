@@ -1,10 +1,14 @@
+import path from "node:path";
 import { Process } from "./exec.js";
 import { sleep } from "./utils.js";
 
 export class Compose {
   _composeFile;
   constructor(composeFile) {
-    this._composeFile = composeFile;
+    this._composeFile = path.resolve(
+      import.meta.dirname,
+      `../docker/${composeFile}`,
+    );
   }
 
   /**
@@ -13,7 +17,7 @@ export class Compose {
    */
   async up(services) {
     const args = [...this._command(["up", "-d", ...services])];
-    await Process.run("docker", args);
+    await Process.run({ command: "docker", args });
   }
 
   /**
@@ -21,7 +25,7 @@ export class Compose {
    */
   async down() {
     const args = [...this._command(["down", "-v"])];
-    await Process.run("docker", args);
+    await Process.run({ command: "docker", args });
   }
 
   /**
@@ -50,10 +54,17 @@ export class Compose {
    *
    * @param {string} service
    * @param {string[]} args
+   * @param {Record<string, string|number>} env
    */
-  async run(service, args = []) {
-    const cmd = [...this._command(["run", "--rm", service, ...args])];
-    await Process.run("docker", cmd);
+  async run(service, args = [], env = {}) {
+    const envArgs = Object.entries(env).flatMap(([key, value]) => [
+      "-e",
+      `${key}=${value}`,
+    ]);
+    const cmd = [
+      ...this._command(["run", "--rm", ...envArgs, service, ...args]),
+    ];
+    await Process.run({ command: "docker", args: cmd });
   }
 
   /**
@@ -62,7 +73,7 @@ export class Compose {
    */
   async logs(service) {
     const args = [...this._command(["logs", service])];
-    await Process.run("docker", args);
+    await Process.run({ command: "docker", args });
   }
 
   /**

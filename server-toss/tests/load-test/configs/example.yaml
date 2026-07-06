@@ -6,7 +6,7 @@ docker:
 
 database:
   migrate: true
-  seed: large
+  seed: 1000
 
 tokens:
   count: 1000
