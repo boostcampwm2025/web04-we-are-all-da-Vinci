@@ -5,7 +5,7 @@ import { PointReason } from "../../point/entity/point-log.entity";
 import { PointService } from "../../point/point.service";
 import { MyMissionsResponseDto } from "../dto/my-missions-response.dto";
 import { TodayMissionsResponseDto } from "../dto/today-missions-response.dto";
-import { ObjectiveType } from "../entity/mission.entity";
+import { ObjectiveType, RewardType } from "../entity/mission.entity";
 import { UserMission } from "../entity/user-mission.entity";
 import { MissionWindow } from "../mission-window";
 import { MissionMapper } from "../mission.mapper";
@@ -217,11 +217,13 @@ export class MissionService {
     for (const uq of completed) {
       if (uq.mission.rewardAmount === 0) continue;
 
-      this.pointService.enqueueGrant(
-        userKey,
-        PointReason.MISSION,
-        uq.mission.rewardAmount,
-      );
+      if (uq.mission.rewardType === RewardType.POINT) {
+        this.pointService.enqueueGrant(
+          userKey,
+          PointReason.MISSION,
+          uq.mission.rewardAmount,
+        );
+      }
 
       this.logger.log(
         {
