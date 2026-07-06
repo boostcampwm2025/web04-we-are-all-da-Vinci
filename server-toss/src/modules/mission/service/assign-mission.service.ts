@@ -1,7 +1,8 @@
+import { EntityManager } from "@mikro-orm/mysql";
 import { Transactional } from "@mikro-orm/decorators/legacy";
-import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable, Logger } from "@nestjs/common";
-import { Mission, MissionPeriod } from "../entity/mission.entity";
+import { User } from "src/modules/user/user.entity";
+import { MissionPeriod } from "../entity/mission.entity";
 import { UserMission } from "../entity/user-mission.entity";
 import { MissionWindow } from "../mission-window";
 import { DAILY_RANDOM_COUNT, WEEKLY_RANDOM_COUNT } from "../mission.constants";
@@ -12,9 +13,8 @@ import { UserMissionRepository } from "../repository/user-mission.repository";
 export class AssignMissionService {
   private readonly logger = new Logger(AssignMissionService.name);
   constructor(
-    @InjectRepository(Mission)
+    private readonly em: EntityManager,
     private readonly missionRepository: MissionRepository,
-    @InjectRepository(UserMission)
     private readonly userMissionRepository: UserMissionRepository,
   ) {}
 
@@ -79,7 +79,7 @@ export class AssignMissionService {
 
     const all = [...dailyMissions, ...weeklyMissions];
     if (all.length > 0) {
-      await this.userMissionRepository.flush();
+      await this.em.flush();
     }
 
     this.logger.log(
@@ -109,9 +109,16 @@ export class AssignMissionService {
       ...this.pickRandom(randomMissions, randomCount),
     ];
 
-    return selected.map((mission) =>
-      this.userMissionRepository.createForUser(userKey, mission, periodStart),
-    );
+    const userRef = this.em.getReference(User, userKey);
+    return selected.map((mission) => {
+      const uq = this.em.create(UserMission, {
+        user: userRef,
+        mission,
+        createdAt: periodStart,
+      });
+      this.em.persist(uq);
+      return uq;
+    });
   }
 
   private isDuplicateKeyError(err: unknown): boolean {

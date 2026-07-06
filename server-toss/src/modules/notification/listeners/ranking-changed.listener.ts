@@ -1,4 +1,5 @@
-import { EntityManager, RequestContext } from "@mikro-orm/core";
+import { EntityManager } from "@mikro-orm/core";
+import { CreateRequestContext } from "@mikro-orm/decorators/legacy";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
@@ -33,15 +34,11 @@ export class RankingChangedListener {
     private readonly notificationService: NotificationService,
   ) {}
 
+  @CreateRequestContext((self: RankingChangedListener) => self.em)
   @OnEvent(RANKING_CHANGED_EVENT, { async: true, promisify: true })
   async handle(event: RankingChangedEvent): Promise<void> {
-    // 핸들러 전체를 try/catch로 감싼다. 사용자 그림 제출 응답은 이미 끝났고,
-    // 알림 핸들러 예외가 EventEmitter2의 unhandledRejection으로 새면 프로세스
-    // 안정성에 영향. 단건 발송 루프 안의 try/catch는 사용자별 격리용으로 별도 유지.
-    // @OnEvent는 HTTP 요청 밖이라 RequestContext(fork em)가 없다 → RequestContext.create로
-    // 감싸지 않으면 dispatch 내부 em 작업이 allowGlobalContext=false에서 막힌다.
     try {
-      await RequestContext.create(this.em, () => this.dispatch(event));
+      await this.dispatch(event);
     } catch (err) {
       this.logger.error(
         {

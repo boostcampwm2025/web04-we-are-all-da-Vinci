@@ -1,8 +1,5 @@
 import { EntityManager } from "@mikro-orm/core";
-import {
-  CreateRequestContext,
-  Transactional,
-} from "@mikro-orm/decorators/legacy";
+import { Transactional } from "@mikro-orm/decorators/legacy";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable, Logger } from "@nestjs/common";
 import {
@@ -51,7 +48,7 @@ export class PointService {
 
     const user = this.em.getReference(User, userKey);
 
-    this.pointGrantRequestRepository.create({
+    this.em.create(PointGrantRequest, {
       user,
       reason,
       pointAmount,
@@ -60,14 +57,10 @@ export class PointService {
       attemptCount: 0,
     });
 
-    await this.pointGrantRequestRepository.getEntityManager().flush();
+    await this.em.flush();
   }
 
-  // 호출자의 트랜잭션 EntityManager로 보상 요청(PENDING)만 적재한다. flush는 하지 않으며
-  // 호출자 트랜잭션 커밋 시 함께 반영된다. 출석 등 상태 전이와 같은 원자 경계에서 적재해
-  // "상태는 바뀌었는데 보상만 누락"되는 상황을 막는 용도.
   enqueueGrant(
-    em: EntityManager,
     userKey: number,
     reason: PointReason,
     pointAmount: number = PROMOTION_AMOUNT,
@@ -76,8 +69,8 @@ export class PointService {
       throw new RangeError("pointAmount는 1 이상의 정수여야 해요");
     }
 
-    em.create(PointGrantRequest, {
-      user: em.getReference(User, userKey),
+    this.em.create(PointGrantRequest, {
+      user: this.em.getReference(User, userKey),
       reason,
       pointAmount,
       status: PointGrantStatus.PENDING,
@@ -93,12 +86,11 @@ export class PointService {
   async getPointSummary(
     userKey: number,
   ): Promise<{ totalPoints: number; todayPoints: number }> {
-    const em = this.em.fork();
     const { start, end } = getSeoulDayRange();
 
     const [logs, pendingRequests] = await Promise.all([
-      em.find(PointLog, { user: userKey }),
-      em.find(PointGrantRequest, {
+      this.em.find(PointLog, { user: userKey }),
+      this.em.find(PointGrantRequest, {
         user: userKey,
         status: {
           $in: [
@@ -133,12 +125,11 @@ export class PointService {
       await this.pointGrantRequestRepository.findEligibleGrantsWithLock();
 
     requests.forEach((request) => request.processing());
-    await this.pointGrantRequestRepository.getEntityManager().flush();
+    await this.em.flush();
 
     return requests;
   }
 
-  @CreateRequestContext()
   async settleGrantRequests() {
     const requests = await this.lockAndFetchEligibleGrants();
 
@@ -201,7 +192,7 @@ export class PointService {
   @Transactional()
   async savePointIdempotencyKey(request: PointGrantRequest, key: string) {
     request.setPointIdempotencyKey(key);
-    await this.pointGrantRequestRepository.getEntityManager().flush();
+    await this.em.flush();
   }
 
   @Transactional()
@@ -252,7 +243,6 @@ export class PointService {
     );
   }
 
-  @CreateRequestContext()
   async purgeProcessedGrantRequests(): Promise<{
     succeededDeleted: number;
     failedDeleted: number;
@@ -266,19 +256,17 @@ export class PointService {
       now.getTime() - FAILED_RETENTION_DAYS * 24 * 60 * 60 * 1000,
     );
 
-    const succeededDeleted =
-      await this.pointGrantRequestRepository.purgeByStatusBefore(
-        PointGrantStatus.SUCCEEDED,
-        succeededCutoff,
-        PURGE_BATCH_SIZE,
-      );
+    const succeededDeleted = await this.purgeByStatusBefore(
+      PointGrantStatus.SUCCEEDED,
+      succeededCutoff,
+      PURGE_BATCH_SIZE,
+    );
 
-    const failedDeleted =
-      await this.pointGrantRequestRepository.purgeByStatusBefore(
-        PointGrantStatus.FAILED,
-        failedCutoff,
-        PURGE_BATCH_SIZE,
-      );
+    const failedDeleted = await this.purgeByStatusBefore(
+      PointGrantStatus.FAILED,
+      failedCutoff,
+      PURGE_BATCH_SIZE,
+    );
 
     this.logger.log(
       {
@@ -291,5 +279,30 @@ export class PointService {
     );
 
     return { succeededDeleted, failedDeleted };
+  }
+
+  private async purgeByStatusBefore(
+    status: PointGrantStatus,
+    cutoff: Date,
+    batchSize: number,
+  ): Promise<number> {
+    const targets = await this.em.find(
+      PointGrantRequest,
+      {
+        status,
+        processedAt: { $lt: cutoff },
+      },
+      {
+        fields: ["id"],
+        orderBy: { processedAt: "ASC" },
+        limit: batchSize,
+        disableIdentityMap: true,
+      },
+    );
+
+    const ids = targets.map((target) => target.id);
+    if (ids.length === 0) return 0;
+
+    return this.em.nativeDelete(PointGrantRequest, { id: { $in: ids } });
   }
 }

@@ -1,7 +1,5 @@
 import { EntityRepository, QueryOrder, sql } from "@mikro-orm/mysql";
 import { Ranking } from "./ranking.entity";
-import { Drawing } from "../drawing/drawing.entity";
-import { User } from "../user/user.entity";
 import { getSeoulDayRange } from "src/common/util/time.util";
 
 export class RankingRepository extends EntityRepository<Ranking> {
@@ -129,18 +127,6 @@ export class RankingRepository extends EntityRepository<Ranking> {
     });
   }
 
-  async saveOne(user: User, drawing: Drawing) {
-    this.em.create(Ranking, {
-      userKey: user.userKey,
-      nickname: user.nickname,
-      drawingId: drawing.id,
-      score: drawing.score,
-      strokes: drawing.strokes,
-      submittedAt: drawing.createdAt,
-    });
-    await this.em.flush();
-  }
-
   /**
    * 트리거 사용자가 oldScore → newScore로 올랐을 때 추월된 사용자 목록.
    * 범위: oldScore <= score < newScore. 정렬: 영향 큰 순서로 score DESC.
@@ -171,14 +157,5 @@ export class RankingRepository extends EntityRepository<Ranking> {
       ],
     );
     return rows.map((row) => row.user_key);
-  }
-
-  async cleanupRanking() {
-    const { start } = getSeoulDayRange();
-    await this.nativeDelete({
-      submittedAt: {
-        $lt: start,
-      },
-    });
   }
 }

@@ -47,47 +47,6 @@ describe("DrawingRespository", () => {
     }
   });
 
-  describe("saveDrawing 메소드는", () => {
-    describe("유효한 입력이면", () => {
-      it("drawing을 저장하고 저장된 엔티티를 반환한다", async () => {
-        const strokes = JSON.stringify([
-          { points: [[1], [2]], color: [0, 0, 0] },
-        ]);
-        const similarity = JSON.stringify({
-          score: 87,
-          strokeMatchSimilarity: 85,
-          shapeSimilarity: 88,
-          penalty: 5,
-        });
-
-        const saved = await repository.saveDrawing(
-          givenUser,
-          Number(givenPrompt.id),
-          strokes,
-          similarity,
-          87,
-        );
-
-        expect(saved.id).toBeDefined();
-        expect(saved.score).toBe(87);
-        expect(saved.strokes).toBe(strokes);
-        expect(saved.similarity).toBe(similarity);
-
-        const persisted = await orm.em
-          .fork()
-          .findOneOrFail(
-            Drawing,
-            { id: saved.id },
-            { populate: ["user", "prompt"] },
-          );
-
-        expect(persisted.user.userKey).toBe(givenUser.userKey);
-        expect(persisted.prompt.id).toBe(givenPrompt.id);
-        expect(persisted.score).toBe(87);
-      });
-    });
-  });
-
   describe("findDrawingById 메소드는", () => {
     describe("존재하는 drawingId면", () => {
       it("user 정보가 포함된 그림을 반환한다", async () => {

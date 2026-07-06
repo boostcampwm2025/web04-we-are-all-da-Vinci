@@ -11,12 +11,8 @@ describe("PlayService", () => {
     promptResult?: unknown;
     promptError?: Error;
   }) => {
-    const fork = {};
-    const em = {
-      transactional: jest.fn(async (callback) => callback(fork)),
-    };
     const chanceService = {
-      consumeWithEntityManager: jest.fn().mockResolvedValue({ count: 0 }),
+      consume: jest.fn().mockResolvedValue({ count: 0 }),
     };
     const promptService = {
       getPromptByDate: jest.fn(async () => {
@@ -26,15 +22,9 @@ describe("PlayService", () => {
     };
 
     return {
-      fork,
-      em,
       chanceService,
       promptService,
-      service: new PlayService(
-        em as never,
-        chanceService as never,
-        promptService as never,
-      ),
+      service: new PlayService(chanceService as never, promptService as never),
     };
   };
 
@@ -43,16 +33,13 @@ describe("PlayService", () => {
       promptId: 278,
       strokes: [{ points: [[1], [2]], color: [0, 0, 0] }],
     };
-    const { fork, chanceService, promptService, service } = buildService({
+    const { chanceService, promptService, service } = buildService({
       promptResult: prompt,
     });
 
     await expect(service.start(760442640, date)).resolves.toEqual(prompt);
-    expect(promptService.getPromptByDate).toHaveBeenCalledWith(date, fork);
-    expect(chanceService.consumeWithEntityManager).toHaveBeenCalledWith(
-      fork,
-      760442640,
-    );
+    expect(promptService.getPromptByDate).toHaveBeenCalledWith(date);
+    expect(chanceService.consume).toHaveBeenCalledWith(760442640);
   });
 
   it("프롬프트가 없으면 기회를 소비하지 않고 NotFoundException을 던진다", async () => {
@@ -63,6 +50,6 @@ describe("PlayService", () => {
     await expect(service.start(760442640, date)).rejects.toBeInstanceOf(
       NotFoundException,
     );
-    expect(chanceService.consumeWithEntityManager).not.toHaveBeenCalled();
+    expect(chanceService.consume).not.toHaveBeenCalled();
   });
 });

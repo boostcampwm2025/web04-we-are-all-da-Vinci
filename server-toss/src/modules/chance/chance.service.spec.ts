@@ -34,13 +34,10 @@ interface EmApi {
   persist: jest.Mock;
   getReference: jest.Mock;
   flush: jest.Mock;
-  transactional: jest.Mock;
 }
 
 const buildEm = (existing: PlayChance | null, todayShareLogs = 0) => {
   const persisted: unknown[] = [];
-  // ShareLog 생성 시 카운트가 늘도록 상태를 둔다 → chargeByShare가 insert 후 다시 세는
-  // 실제 동작(삽입 전 N, 삽입 후 N+1)을 모사한다.
   let shareLogCount = todayShareLogs;
   const em: EmApi = {
     findOne: jest.fn(async () => existing),
@@ -62,9 +59,6 @@ const buildEm = (existing: PlayChance | null, todayShareLogs = 0) => {
     }),
     getReference: jest.fn((_entity, key) => ({ userKey: key })),
     flush: jest.fn(async () => undefined),
-    transactional: jest.fn(async (callback: (em: EmApi) => Promise<unknown>) =>
-      callback(em),
-    ),
   };
   return { em, persisted };
 };
@@ -164,7 +158,7 @@ describe("ChanceService", () => {
   });
 
   describe("lost update 회귀 방지 (getMyChance 읽기 전용 불변식)", () => {
-    it("getMyChance는 persist/flush/transactional을 호출하지 않는다", async () => {
+    it("getMyChance는 persist/flush를 호출하지 않는다", async () => {
       const existing = buildExisting({
         count: 2,
         lastResetAt: YESTERDAY_START,
@@ -176,7 +170,6 @@ describe("ChanceService", () => {
 
       expect(em.persist).not.toHaveBeenCalled();
       expect(em.flush).not.toHaveBeenCalled();
-      expect(em.transactional).not.toHaveBeenCalled();
     });
 
     it("getMyChance는 row 객체를 수정하지 않는다", async () => {
@@ -194,7 +187,7 @@ describe("ChanceService", () => {
     });
   });
 
-  describe("consumeWithEntityManager", () => {
+  describe("consume", () => {
     it("당일 첫 플레이는 무료 — 충전분을 차감하지 않고 lastResetAt만 오늘로 갱신한다", async () => {
       const existing = buildExisting({
         count: 4,
@@ -203,9 +196,9 @@ describe("ChanceService", () => {
       const { em } = buildEm(existing);
       const service = buildService(em);
 
-      await expect(
-        service.consumeWithEntityManager(em as never, 1),
-      ).resolves.toEqual({ count: 4 });
+      await expect(service.consume(1)).resolves.toEqual({
+        count: 4,
+      });
       expect(existing.count).toBe(4);
       expect(existing.lastResetAt).toEqual(TODAY_START);
     });
@@ -218,9 +211,9 @@ describe("ChanceService", () => {
       const { em } = buildEm(existing);
       const service = buildService(em);
 
-      await expect(
-        service.consumeWithEntityManager(em as never, 1),
-      ).resolves.toEqual({ count: 0 });
+      await expect(service.consume(1)).resolves.toEqual({
+        count: 0,
+      });
       expect(existing.lastResetAt).toEqual(TODAY_START);
     });
 
@@ -229,9 +222,9 @@ describe("ChanceService", () => {
       const { em } = buildEm(existing);
       const service = buildService(em);
 
-      await expect(
-        service.consumeWithEntityManager(em as never, 1),
-      ).resolves.toEqual({ count: 2 });
+      await expect(service.consume(1)).resolves.toEqual({
+        count: 2,
+      });
       expect(existing.count).toBe(2);
     });
 
@@ -240,9 +233,9 @@ describe("ChanceService", () => {
       const { em } = buildEm(existing);
       const service = buildService(em);
 
-      await expect(
-        service.consumeWithEntityManager(em as never, 1),
-      ).rejects.toBeInstanceOf(ConflictException);
+      await expect(service.consume(1)).rejects.toBeInstanceOf(
+        ConflictException,
+      );
       expect(existing.count).toBe(0);
     });
 
@@ -250,9 +243,9 @@ describe("ChanceService", () => {
       const { em, persisted } = buildEm(null);
       const service = buildService(em);
 
-      await expect(
-        service.consumeWithEntityManager(em as never, 1),
-      ).resolves.toEqual({ count: 0 });
+      await expect(service.consume(1)).resolves.toEqual({
+        count: 0,
+      });
       const created = persisted.find((p) => p instanceof PlayChance);
       expect(created).toBeDefined();
       expect(created?.lastResetAt).toEqual(TODAY_START);
@@ -268,7 +261,7 @@ describe("ChanceService", () => {
       const { em } = buildEm(existing);
       const service = buildService(em);
 
-      await service.consumeWithEntityManager(em as never, 1);
+      await service.consume(1);
 
       expect(existing.count).toBe(4);
       // 무료를 소진했으므로 이후 조회는 충전분 4만 반환
@@ -348,7 +341,7 @@ describe("ChanceService", () => {
       expect(existing.count).toBe(2);
       expect(persisted.find((p) => p instanceof ShareLog)).toBeDefined();
       // 같은 트랜잭션에서 ShareLog 실개수(1)로 미션 동기화를 호출한다.
-      expect(missionService.syncInviteProgress).toHaveBeenCalledWith(em, 1, 1);
+      expect(missionService.syncInviteProgress).toHaveBeenCalledWith(1, 1);
       expect(chanceWhitelistValidator.validateShareModule).toHaveBeenCalledWith(
         1,
         expect.objectContaining({
@@ -414,31 +407,6 @@ describe("ChanceService", () => {
       ).rejects.toBeInstanceOf(ForbiddenException);
       expect(existing.count).toBe(3);
       expect(persisted.find((p) => p instanceof ShareLog)).toBeUndefined();
-    });
-  });
-
-  describe("transactional 래핑", () => {
-    it("chargeByAd가 em.transactional 내부에서 실행된다", async () => {
-      const existing = buildExisting({ count: 0, lastResetAt: TODAY_START });
-      const { em } = buildEm(existing);
-      const service = buildService(em);
-
-      await service.chargeByAd(1, { adGroupId: ALLOWED_AD_GROUP });
-
-      expect(em.transactional).toHaveBeenCalled();
-    });
-
-    it("chargeByShare가 em.transactional 내부에서 실행된다", async () => {
-      const existing = buildExisting({ count: 0, lastResetAt: TODAY_START });
-      const { em } = buildEm(existing, 0);
-      const service = buildService(em);
-
-      await service.chargeByShare(1, {
-        channel: "contactsViral",
-        moduleId: ALLOWED_MODULE,
-      });
-
-      expect(em.transactional).toHaveBeenCalled();
     });
   });
 });

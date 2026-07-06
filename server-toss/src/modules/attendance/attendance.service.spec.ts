@@ -29,7 +29,6 @@ interface EmApi {
   persist: jest.Mock;
   getReference: jest.Mock;
   flush: jest.Mock;
-  transactional: jest.Mock;
 }
 
 const buildEm = (existing: Partial<Attendance> | null) => {
@@ -43,9 +42,6 @@ const buildEm = (existing: Partial<Attendance> | null) => {
     persist: jest.fn(),
     getReference: jest.fn((_entity, key) => ({ userKey: key })),
     flush: jest.fn(async () => undefined),
-    transactional: jest.fn(async (cb: (em: EmApi) => Promise<unknown>) =>
-      cb(em),
-    ),
   };
   return { em, created };
 };
@@ -164,7 +160,6 @@ describe("출석 서비스", () => {
       expect(result.rewardedDay).toBe(3);
       expect(attendance.cycleDay).toBe(3);
       expect(pointService.enqueueGrant).toHaveBeenCalledWith(
-        expect.anything(),
         1234,
         PointReason.ATTENDANCE,
       );
@@ -266,7 +261,7 @@ describe("출석 서비스", () => {
       await expect(
         service.recover(1234, { adGroupId: "ait.v2.live.other" }),
       ).rejects.toThrow(ForbiddenException);
-      expect(em.transactional).not.toHaveBeenCalled();
+      expect(em.findOne).not.toHaveBeenCalled();
     });
 
     it("복구할 연속 출석이 없으면 ForbiddenException", async () => {
