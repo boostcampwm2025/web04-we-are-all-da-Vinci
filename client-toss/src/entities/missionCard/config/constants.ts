@@ -7,6 +7,10 @@ export const MISSION_SECTIONS = {
     label: "주간 미션",
     accentColor: "var(--color-toss-blue)",
   },
+  challenge: {
+    label: "도전 미션",
+    accentColor: "var(--color-gold)",
+  },
 } as const;
 
 export type MissionSectionConfig =
