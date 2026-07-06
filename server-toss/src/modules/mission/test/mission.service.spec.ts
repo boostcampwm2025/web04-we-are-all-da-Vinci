@@ -116,8 +116,8 @@ describe("MissionService", () => {
             pointSvc,
           ) =>
             new MissionService(
-              userMissionRepo,
               em,
+              userMissionRepo,
               processor,
               assignSvc,
               tutorialSvc,

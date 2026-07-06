@@ -14,7 +14,7 @@ import type {
   CycleResult,
   DrawingContext,
 } from "../mission.types";
-import type { UserMissionRepository } from "../repository/user-mission.repository";
+import { UserMissionRepository } from "../repository/user-mission.repository";
 import { AssignMissionService } from "./assign-mission.service";
 import { ChallengeMissionService } from "./challenge-mission.service";
 import { MissionProcessor } from "./mission.processor";
@@ -32,8 +32,8 @@ export class MissionService {
   private readonly logger = new Logger(MissionService.name);
 
   constructor(
-    private readonly userMissionRepo: UserMissionRepository,
     private readonly em: EntityManager,
+    private readonly userMissionRepo: UserMissionRepository,
     private readonly processor: MissionProcessor,
     private readonly assignMissionService: AssignMissionService,
     private readonly tutorialMissionService: TutorialMissionService,

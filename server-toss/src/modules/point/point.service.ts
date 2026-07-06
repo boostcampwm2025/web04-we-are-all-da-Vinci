@@ -36,7 +36,6 @@ export class PointService {
     private readonly pointGrantExecuter: PointGrantExecuter,
   ) {}
 
-  @Transactional()
   enqueueGrant(
     userKey: number,
     reason: PointReason,
