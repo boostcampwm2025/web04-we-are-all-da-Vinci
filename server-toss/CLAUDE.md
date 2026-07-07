@@ -8,7 +8,7 @@ Apps-in-Toss 미니앱(`client-toss`)용 NestJS 11.x **REST 전용** 백엔드. 
 
 - **날짜를 직접 `new Date()`로 결정하지 말 것.** KST 기준 유틸만 사용 — `common/util/today.ts`의 `getTodayKst()`(KST 오늘의 UTC 자정 Date) 또는 `common/util/time.util.ts`의 `getSeoulDayRange()`(`[start, end)` 범위).
 - **`ZodError`를 `BadRequestException` 등으로 감싸지 말 것.** 컨트롤러는 `@Body(new ZodValidationPipe(Schema))`를 쓰고 파이프가 `ZodError`를 그대로 throw → 전역 `ZodExceptionFilter`가 400으로 변환한다. 감싸면 필터를 우회해 응답 포맷이 갈라진다.
-- **서비스·시드에서 `em.fork()` 필수.** `allowGlobalContext`는 테스트 환경(`NODE_ENV=test`)에서만 켜진다.
+- **서비스에서 `em.fork()` 금지.** HTTP 요청은 미들웨어가 EM 컨텍스트를 자동 제공하고, Cron/이벤트는 `@CreateRequestContext()` 데코레이터로 확보한다. `em.fork()`는 부팅 시드(`seeders/`, `*.seed.ts`)에서만 허용. `allowGlobalContext`는 테스트 환경(`NODE_ENV=test`)에서만 켜진다.
 - **유사도는 서버에서 재계산.** `POST /drawing`은 클라가 보낸 유사도 값을 저장하지 않고 서버가 다시 계산해 저장한다. 클라이언트는 `promptId`를 보내지 않으며, 서버가 오늘 날짜의 `daily_prompts`로 자동 매칭한다 (프롬프트 조작 차단).
 - **로그는 `(logObject, "한국어 메시지")` 2인자 필수.** 객체만 넘기거나 문자열 한 줄 로그 금지. `logObject`의 첫 키는 항상 `event: "<domain>.<action>.<outcome>"` → "로깅" 절 참조.
 - **MikroORM v7에 `persistAndFlush` 없음** → `em.persist(e); await em.flush()`.
@@ -124,7 +124,22 @@ src/
 ## 컨벤션
 
 - **KST 날짜**: `getTodayKst()` / `getSeoulDayRange()`만 사용 (위 "반드시 지킬 규칙" 참조). 컨트롤러·서비스가 직접 `new Date()`로 날짜를 결정하지 말 것.
-- **MikroORM v7**: `persistAndFlush` 없음 → `em.persist(e); await em.flush()`. 서비스·시드에서는 `em.fork()` 필수 (`allowGlobalContext`는 `NODE_ENV=test`에서만 활성).
+- **MikroORM v7**: `persistAndFlush` 없음 → `em.persist(e); await em.flush()`.
+- **EM 컨텍스트 & 트랜잭션 규칙**:
+  - **HTTP 요청**: `RequestContextHelper` 미들웨어(`common/middleware/`)가 `RequestContext.create()`로 요청 스코프 EM을 자동 제공. 서비스에서 `em.fork()` 금지.
+  - **Cron / 이벤트 리스너** (HTTP 컨텍스트 없는 진입점): 메서드에 `@CreateRequestContext()` 데코레이터를 붙여 EM 컨텍스트 확보. `em.fork()` 금지.
+  - **부팅 시드** (`seeders/`, `*.seed.ts` 등 NestJS 요청 스코프 밖): `em.fork()` 수동 사용 허용 — 유일한 예외.
+  - **트랜잭션**: `@Transactional()` 데코레이터 방식이 표준. `em.transactional()` 프로그래밍 방식은 콜백 안에서 lock mode 등 세밀한 제어가 필요할 때만 사용.
+  - **EM을 메서드 인자로 전달하지 않는다.** MikroORM의 `getContext()`는 `TransactionContext`(AsyncLocalStorage) → `RequestContext`(AsyncLocalStorage) → global EM 순으로 해석한다. 따라서 서비스 A의 `@Transactional()` 메서드 안에서 서비스 B를 호출하면, B의 `this.em`도 같은 트랜잭션 fork EM을 자동으로 사용한다. 크로스 서비스 호출에서도 `this.em`만 사용하면 트랜잭션 원자성이 보장되므로, 트랜잭션 EM을 인자로 넘길 필요가 없다.
+  - `allowGlobalContext`는 `NODE_ENV=test`에서만 활성 — 프로덕션/개발에서 EM 컨텍스트 없이 접근하면 런타임 에러.
+- **EM vs Repository 역할 분리**:
+  - `this.em` — CUD(`create`, `persist`, `flush`, `getReference`, `nativeDelete`) + 단순 조회(`findOne`/`find`/`count` — PK·간단 필터 조건).
+  - 커스텀 Repository(`extends EntityRepository<T>`) — 복잡한 쿼리(QueryBuilder, 조인, raw SQL, 집계, 페이지네이션 등)를 이름 있는 메서드로 캡슐화할 때만 사용. Repository에 CUD 로직을 넣지 않는다.
+  - `repo.getEntityManager()` 금지 — EM이 필요하면 서비스에서 직접 DI.
+- **커스텀 Repository 등록 규칙**:
+  - 엔티티: `@Entity({ repository: () => XxxRepository })` + `[EntityRepositoryType]?: XxxRepository` 타입 힌트.
+  - 클래스명은 `{EntityName}Repository` 컨벤션을 따르면 NestJS DI 자동 등록 → 서비스에서 `@InjectRepository()` 없이 `constructor(private readonly xxxRepository: XxxRepository)` 직접 주입 가능.
+  - 복잡한 쿼리가 없는 엔티티는 커스텀 Repository를 만들지 않는다 — `this.em`으로 충분.
 - **Zod 검증** (NestJS 기본 `ValidationPipe`/`class-validator` 미사용):
   - 컨트롤러: `@Body(new ZodValidationPipe(Schema))`. 파이프가 `ZodError`를 그대로 throw → 전역 `ZodExceptionFilter`가 400 + issues로 변환.
   - `ZodError`를 `BadRequestException`으로 감싸지 말 것 — `@Catch(ZodError)` 필터를 우회해 응답 포맷이 갈라진다.

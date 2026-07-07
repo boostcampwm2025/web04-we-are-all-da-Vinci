@@ -13,7 +13,7 @@ describe("랭킹 정리 스케줄러", () => {
   describe("handleRankingSnapshotCleanup 메소드는", () => {
     describe("실행되면", () => {
       it("어제 랭킹 스냅샷을 저장한 뒤 기존 랭킹을 정리한다", async () => {
-        const cleanupRanking = jest.fn().mockResolvedValue(undefined);
+        const cleanupRanking = jest.fn().mockResolvedValue(undefined as never);
         const createYesterdaySnapshot = jest.fn().mockResolvedValue({
           dateKey: "2026-05-28",
           skipped: false,
@@ -21,6 +21,7 @@ describe("랭킹 정리 스케줄러", () => {
         });
 
         const scheduler = new RankingCleanupScheduler(
+          {} as never,
           { cleanupRanking } as never,
           { createYesterdaySnapshot } as never,
         );
@@ -44,6 +45,7 @@ describe("랭킹 정리 스케줄러", () => {
           .mockImplementation(() => undefined);
 
         const scheduler = new RankingCleanupScheduler(
+          {} as never,
           { cleanupRanking } as never,
           { createYesterdaySnapshot } as never,
         );
@@ -63,6 +65,7 @@ describe("랭킹 정리 스케줄러", () => {
           .mockImplementation(() => undefined);
 
         const scheduler = new RankingCleanupScheduler(
+          {} as never,
           { cleanupRanking } as never,
           { createYesterdaySnapshot } as never,
         );

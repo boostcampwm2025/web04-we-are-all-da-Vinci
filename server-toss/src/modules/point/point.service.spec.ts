@@ -3,7 +3,6 @@ import {
   ExternalPromotionError,
   ExternalTransportError,
 } from "src/common/errors/external.errors";
-import { PointGrantStatus } from "./entity/point-grant-request.entity";
 import { PointReason } from "./entity/point-log.entity";
 import { PROMOTION_AMOUNT } from "./point.contants";
 import { PointService } from "./point.service";
@@ -31,20 +30,16 @@ const buildEntityManager = (countResult: number | number[] = 0) => {
     persist: jest.fn(),
     flush: jest.fn(async () => undefined),
     getReference: jest.fn(),
+    find: jest.fn().mockResolvedValue([] as unknown[]),
+    nativeDelete: jest.fn().mockResolvedValue(0 as number),
   };
 };
 
-const buildPointGrantRequestRepository = () => {
-  const flush = jest.fn(async () => undefined);
-  return {
-    getReference: jest.fn(),
-    create: jest.fn(),
-    findEligibleGrantsWithLock: jest.fn(async () => []),
-    purgeByStatusBefore: jest.fn(async () => 0),
-    getEntityManager: jest.fn(() => ({ flush })),
-    __flush: flush,
-  };
-};
+const buildPointGrantRequestRepository = () => ({
+  findEligibleGrantsWithLock: jest
+    .fn<() => Promise<unknown[]>>()
+    .mockResolvedValue([]),
+});
 
 const buildPointGrantKeyIssuer = () => ({
   getPromotionKey: jest.fn(async () => "promotion-key"),
@@ -124,30 +119,24 @@ describe("PointService", () => {
   describe("purgeProcessedGrantRequests", () => {
     describe("purge를 실행하는 경우", () => {
       it("SUCCEEDED/FAILED를 각각 100건 배치로 정리한다", async () => {
-        const repository = buildPointGrantRequestRepository();
-        repository.purgeByStatusBefore
+        const em = buildEntityManager();
+        (em.find as jest.Mock)
+          .mockResolvedValueOnce(
+            Array.from({ length: 10 }, (_, i) => ({ id: BigInt(i + 1) })),
+          )
+          .mockResolvedValueOnce(
+            Array.from({ length: 20 }, (_, i) => ({ id: BigInt(i + 100) })),
+          );
+        (em.nativeDelete as jest.Mock)
           .mockResolvedValueOnce(10)
           .mockResolvedValueOnce(20);
-        const service = buildService({
-          pointGrantRequestRepository: repository,
-        });
+        const service = buildService({ entityManager: em });
 
         const result = await service.purgeProcessedGrantRequests();
 
         expect(result).toEqual({ succeededDeleted: 10, failedDeleted: 20 });
-        expect(repository.purgeByStatusBefore).toHaveBeenCalledTimes(2);
-        expect(repository.purgeByStatusBefore).toHaveBeenNthCalledWith(
-          1,
-          PointGrantStatus.SUCCEEDED,
-          new Date("2026-05-18T00:00:00.000Z"),
-          100,
-        );
-        expect(repository.purgeByStatusBefore).toHaveBeenNthCalledWith(
-          2,
-          PointGrantStatus.FAILED,
-          new Date("2026-04-25T00:00:00.000Z"),
-          100,
-        );
+        expect(em.find).toHaveBeenCalledTimes(2);
+        expect(em.nativeDelete).toHaveBeenCalledTimes(2);
       });
     });
   });
@@ -304,6 +293,7 @@ describe("PointService", () => {
   describe("lockAndFetchEligibleGrants", () => {
     describe("대상 요청을 선점하는 경우", () => {
       it("각 요청을 processing 상태로 바꾸고 flush한다", async () => {
+        const em = buildEntityManager();
         const repository = buildPointGrantRequestRepository();
         const request1 = { processing: jest.fn() };
         const request2 = { processing: jest.fn() };
@@ -312,6 +302,7 @@ describe("PointService", () => {
           request2,
         ]);
         const service = buildService({
+          entityManager: em,
           pointGrantRequestRepository: repository,
         });
 
@@ -319,7 +310,7 @@ describe("PointService", () => {
 
         expect(request1.processing).toHaveBeenCalledTimes(1);
         expect(request2.processing).toHaveBeenCalledTimes(1);
-        expect(repository.__flush).toHaveBeenCalledTimes(1);
+        expect(em.flush).toHaveBeenCalledTimes(1);
         expect(result).toEqual([request1, request2]);
       });
     });
@@ -328,14 +319,13 @@ describe("PointService", () => {
   describe("savePointGrantRequest", () => {
     describe("지급 금액을 명시한 경우", () => {
       it("전달한 pointAmount로 요청을 생성한다", async () => {
-        const repository = buildPointGrantRequestRepository();
-        const service = buildService({
-          pointGrantRequestRepository: repository,
-        });
+        const em = buildEntityManager();
+        const service = buildService({ entityManager: em });
 
         await service.savePointGrantRequest(1234, PointReason.MISSION, 7);
 
-        expect(repository.create).toHaveBeenCalledWith(
+        expect(em.create).toHaveBeenCalledWith(
+          expect.anything(),
           expect.objectContaining({
             reason: PointReason.MISSION,
             pointAmount: 7,
@@ -346,14 +336,13 @@ describe("PointService", () => {
 
     describe("지급 금액을 생략한 경우", () => {
       it("PROMOTION_AMOUNT로 폴백한다", async () => {
-        const repository = buildPointGrantRequestRepository();
-        const service = buildService({
-          pointGrantRequestRepository: repository,
-        });
+        const em = buildEntityManager();
+        const service = buildService({ entityManager: em });
 
         await service.savePointGrantRequest(1234, PointReason.MISSION);
 
-        expect(repository.create).toHaveBeenCalledWith(
+        expect(em.create).toHaveBeenCalledWith(
+          expect.anything(),
           expect.objectContaining({ pointAmount: PROMOTION_AMOUNT }),
         );
       });

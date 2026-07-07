@@ -1,4 +1,5 @@
 import { Test } from "@nestjs/testing";
+import { EntityManager } from "@mikro-orm/mysql";
 import {
   Mission,
   MissionPeriod,
@@ -10,6 +11,7 @@ import { UserMission } from "../entity/user-mission.entity";
 import { MissionWindow } from "../mission-window";
 import { AssignMissionService } from "../service/assign-mission.service";
 
+const EM_TOKEN = EntityManager;
 const MISSION_REPO_TOKEN = "MissionRepository";
 const USER_MISSION_REPO_TOKEN = "UserMissionRepository";
 
@@ -55,28 +57,32 @@ describe("미션 배정 서비스", () => {
   let service: AssignMissionService;
   let missionRepository: Record<string, jest.Mock>;
   let userMissionRepository: Record<string, jest.Mock>;
+  let em: Record<string, jest.Mock>;
 
   beforeEach(async () => {
+    em = {
+      getReference: jest.fn((_entity, key) => ({ userKey: key })),
+      create: jest.fn((_entity, data) => data),
+      persist: jest.fn(),
+      flush: jest.fn(async () => undefined),
+    };
     missionRepository = {
       findFixed: jest.fn(async () => [buildMission()]),
       findRandom: jest.fn(async () => []),
     };
     userMissionRepository = {
       findCurrentMissions: jest.fn(async () => []),
-      createForUser: jest.fn((_userKey, mission, periodStart) =>
-        buildUserMission({ mission, createdAt: periodStart }),
-      ),
-      flush: jest.fn(async () => undefined),
     };
 
     const module = await Test.createTestingModule({
       providers: [
         {
           provide: AssignMissionService,
-          useFactory: (missionRepo, userMissionRepo) =>
-            new AssignMissionService(missionRepo, userMissionRepo),
-          inject: [MISSION_REPO_TOKEN, USER_MISSION_REPO_TOKEN],
+          useFactory: (emVal, missionRepo, userMissionRepo) =>
+            new AssignMissionService(emVal, missionRepo, userMissionRepo),
+          inject: [EM_TOKEN, MISSION_REPO_TOKEN, USER_MISSION_REPO_TOKEN],
         },
+        { provide: EM_TOKEN, useValue: em },
         { provide: MISSION_REPO_TOKEN, useValue: missionRepository },
         { provide: USER_MISSION_REPO_TOKEN, useValue: userMissionRepository },
       ],
@@ -97,7 +103,7 @@ describe("미션 배정 서비스", () => {
       expect(missionRepository.findFixed).toHaveBeenCalledWith(
         MissionPeriod.WEEKLY,
       );
-      expect(userMissionRepository.flush).toHaveBeenCalled();
+      expect(em.flush).toHaveBeenCalled();
     });
   });
 
@@ -155,7 +161,7 @@ describe("미션 배정 서비스", () => {
       await service.ensureMissionsAssigned(1, window);
 
       expect(missionRepository.findFixed).not.toHaveBeenCalled();
-      expect(userMissionRepository.flush).not.toHaveBeenCalled();
+      expect(em.flush).not.toHaveBeenCalled();
     });
   });
 
@@ -164,7 +170,7 @@ describe("미션 배정 서비스", () => {
       const dupError = Object.assign(new Error("Duplicate entry"), {
         code: "ER_DUP_ENTRY",
       });
-      userMissionRepository.flush.mockRejectedValue(dupError);
+      em.flush.mockRejectedValue(dupError);
 
       await expect(
         service.ensureMissionsAssigned(1, window),
@@ -174,9 +180,7 @@ describe("미션 배정 서비스", () => {
 
   describe("중복 키가 아닌 에러가 발생하면", () => {
     it("에러를 다시 throw한다", async () => {
-      userMissionRepository.flush.mockRejectedValue(
-        new Error("Connection lost"),
-      );
+      em.flush.mockRejectedValue(new Error("Connection lost"));
 
       await expect(service.ensureMissionsAssigned(1, window)).rejects.toThrow(
         "Connection lost",

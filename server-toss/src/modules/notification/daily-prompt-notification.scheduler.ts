@@ -1,4 +1,5 @@
-import { EntityManager, RequestContext } from "@mikro-orm/core";
+import { EntityManager } from "@mikro-orm/core";
+import { CreateRequestContext } from "@mikro-orm/decorators/legacy";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Cron } from "@nestjs/schedule";
@@ -33,12 +34,10 @@ export class DailyPromptNotificationScheduler {
     private readonly promptService: PromptService,
   ) {}
 
-  // @Cron은 HTTP 요청 밖이라 RequestContext(fork em)가 없다. RequestContext.create로
-  // 감싸 이 작업 전용 em 컨텍스트를 만든다. 없으면 allowGlobalContext=false에서
-  // 내부 em 작업이 ValidationError로 막힌다.
+  @CreateRequestContext((self: DailyPromptNotificationScheduler) => self.em)
   @Cron(DAILY_PROMPT_CRON, { timeZone: "Asia/Seoul" })
   async handleDailyPromptBroadcast(): Promise<void> {
-    await RequestContext.create(this.em, () => this.run());
+    await this.run();
   }
 
   /** 테스트에서 직접 호출하기 위한 진입점 */

@@ -1,3 +1,5 @@
+import { CreateRequestContext } from "@mikro-orm/decorators/legacy";
+import { EntityManager } from "@mikro-orm/mysql";
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { PointService } from "../point.service";
@@ -6,8 +8,12 @@ import { PointService } from "../point.service";
 export class PointGrantPurgeScheduler {
   private readonly logger = new Logger(PointGrantPurgeScheduler.name);
 
-  constructor(private readonly pointService: PointService) {}
+  constructor(
+    private readonly em: EntityManager,
+    private readonly pointService: PointService,
+  ) {}
 
+  @CreateRequestContext((self: PointGrantPurgeScheduler) => self.em)
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, { timeZone: "Asia/Seoul" })
   async purgeProcessedRequests() {
     try {
