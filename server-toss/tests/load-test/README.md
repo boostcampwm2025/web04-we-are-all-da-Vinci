@@ -36,10 +36,10 @@ pnpm load-test
 3. **Seed** — `davinci-migrate`에서 `mikro-orm seeder:run --class LoadTestSeeder` 실행, `database.seed`에 지정한 수만큼 유저/드로잉 생성
 4. **Token Generate** — `davinci-migrate`에서 JWT 토큰을 발급해 `fixtures/tokens.json`에 저장
 5. **App** — `davinci-app` 컨테이너 기동 + 헬스체크 대기
-6. **Warmup** (`warmup.enabled: true`일 때만) — k6로 `warmup` 설정만큼 가볍게 워밍업
-7. **Main** — k6로 `main` 설정만큼 본 테스트 실행
+6. **Warmup** (`warmup.enabled: true`일 때만) — k6로 `warmup` 설정만큼 가볍게 워밍업(결과 저장 없음)
+7. **Main** — k6로 `main` 설정만큼 본 테스트 실행, 결과를 `results/<timestamp>/`에 저장
 
-어느 단계에서든 실패하면 즉시 에러를 던지고, 마지막에 항상 `docker compose down`으로 정리한다.
+어느 단계에서든 실패하면 즉시 에러를 던지고, 마지막에 항상 각 스테이지 소요시간을 `metadata.json`에 기록한 뒤 `docker compose down`으로 정리한다.
 
 `davinci-migrate`는 배포용 슬림 이미지(`davinci-app`)가 아니라 **Dockerfile의 `builder` 스테이지**를 재사용한다 — devDependencies(`@mikro-orm/cli` 등)와 TS 소스가 다 있어야 마이그레이션/시드/토큰 생성이 가능하기 때문. `tests/load-test/` 디렉토리는 루트 `.dockerignore`가 빌드 컨텍스트에서 제외하므로, `docker/compose.yml`의 `davinci-migrate` 서비스가 이를 volume mount로 다시 끌어와 스크립트 접근과 `fixtures/tokens.json` 출력 영속화를 둘 다 해결한다.
 
@@ -94,9 +94,17 @@ docker compose -f tests/load-test/docker/compose.yml down
 - `baseline.js`는 `--env VUS=<n>`/`--env DURATION=<d>`로 넘어온 값을 읽어 토큰 라운드로빈 인덱싱(`MAX_VUS`)과 리포트에 쓴다.
 - k6는 **threshold(SLA) 위반 시 exit code 99**를 반환하는데, 이는 "테스트 인프라 실패"가 아니라 "테스트는 정상 종료됐고 SLA를 위반했다"는 뜻이라 `k6-runner.js`가 `[0, 99]`를 정상 종료로 취급한다. 콘솔에 `[k6] threshold(SLA) 위반` 경고만 찍고 파이프라인은 계속 진행된다.
 
-### 결과 저장 (미구현)
+### 결과 저장
 
-예전 `run-test.sh`가 하던 `results/<timestamp>/{report.html,dashboard.html,raw-metrics.json.gz,config.json}` 저장 및 Grafana 트레이스 구간 매칭용 `runStartedAt`/`runEndedAt` 기록은 새 JS 오케스트레이터에는 아직 없다. 현재는 k6 stdout summary만 출력된다. `scripts/compare-results.js`로 비교하려면 별도로 `k6 run --out json=... `등을 수동으로 붙여 결과를 만들어야 한다.
+실행할 때마다 `results/<YYYYMMDD-HHMMSS>/`(gitignore됨)를 만들어 아래를 저장한다(`scripts/result.js`의 `Result`):
+
+- `config.yaml` — 실행에 사용한 설정 파일 원본
+- `stdout.log`, `stderr.log` — Main 단계 k6 프로세스 출력
+- `summary.json` — k6 `handleSummary`가 쓰는 원본 메트릭 (`baseline.js`, `compare-results.js` 입력으로 바로 사용 가능)
+- `report.html` — `report-template.js`로 만든 HTML 리포트
+- `metadata.json` — 전체 `startedAt`/`finishedAt` + 스테이지별(`MySQL`/`Migration`/`Seed`/`Token Generate`/`App`/`Warmup`/`Main`) 소요시간(ms)
+
+Warmup 단계는 결과를 저장하지 않는다(`K6Runner.warmup()`은 `--no-summary`로 실행). `scripts/compare-results.js`는 이제 별도 수동 작업 없이 두 `results/<run>` 디렉토리를 바로 비교할 수 있다.
 
 #### compare-results.js
 
