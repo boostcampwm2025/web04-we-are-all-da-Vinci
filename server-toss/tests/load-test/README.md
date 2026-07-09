@@ -5,7 +5,7 @@
 | 서비스                  | 스펙                 | 포트           |
 | ----------------------- | -------------------- | -------------- |
 | App (NestJS)            | 1 vCPU, 1GB, Node 22 | 3000           |
-| MySQL 8.4               | 1 vCPU, 1GB          | 3306           |
+| MySQL 8.4               | 1 vCPU, 2GB          | 3306           |
 | OpenTelemetry Collector | 640MB                | 4318(receiver) |
 | Tempo                   | 640MB                | 4317(receiver) |
 | Grafana                 | 1GB                  | 3100           |
@@ -25,13 +25,13 @@ OpenTelemetry Collector/Tempo/Grafana는 `obs` profile로 묶여 있어 기본 �
 pnpm load-test
 ```
 
-한 번에 Docker 기동 → 마이그레이션 → 시드 → 토큰 생성 → 앱 기동 → k6(warmup → main)까지 전부 실행하고, 끝나면(성공/실패 무관) 컨테이너를 정리한다. 실행 순서와 설정은 `configs/example.yaml`로 제어한다.
+한 번에 Docker 실행 → 마이그레이션 → 시드 → 토큰 생성 → 앱 실행 → k6(warmup → main)까지 전부 실행하고, 끝나면(성공/실패 무관) 컨테이너를 정리한다. 실행 순서와 설정은 `configs/example.yaml`로 제어한다.
 
 ### 파이프라인 구성
 
 `scripts/load-test.js`가 진입점이고, `scripts/runner.js`의 `Runner`가 아래 순서로 단계를 실행한다(각 단계는 `[이름] start`/`done` 로그로 구분됨):
 
-1. **MySQL** — `davinci-mysql` 컨테이너 기동 + 헬스체크 대기
+1. **MySQL** — `davinci-mysql` 컨테이너 실행 + 헬스체크 대기
 2. **Migration** (`database.migrate: true`일 때만) — `davinci-migrate` 서비스에서 `mikro-orm migration:up` 실행
 3. **Seed** — `davinci-migrate`에서 `mikro-orm seeder:run --class LoadTestSeeder` 실행, `database.seed`에 지정한 수만큼 유저/드로잉 생성
 4. **Token Generate** — `davinci-migrate`에서 JWT 토큰을 발급해 `fixtures/tokens.json`에 저장
@@ -41,7 +41,7 @@ pnpm load-test
 
 어느 단계에서든 실패하면 즉시 에러를 던지고, 마지막에 항상 각 스테이지 소요시간을 `metadata.json`에 기록한 뒤 `docker compose down`으로 정리한다.
 
-`davinci-migrate`는 배포용 슬림 이미지(`davinci-app`)가 아니라 **Dockerfile의 `builder` 스테이지**를 재사용한다 — devDependencies(`@mikro-orm/cli` 등)와 TS 소스가 다 있어야 마이그레이션/시드/토큰 생성이 가능하기 때문. `tests/load-test/` 디렉토리는 루트 `.dockerignore`가 빌드 컨텍스트에서 제외하므로, `docker/compose.yml`의 `davinci-migrate` 서비스가 이를 volume mount로 다시 끌어와 스크립트 접근과 `fixtures/tokens.json` 출력 영속화를 둘 다 해결한다.
+`davinci-migrate`는 배포용 슬림 이미지(`davinci-app`)가 아니라 **Dockerfile의 `builder` 스테이지**를 재사용한다 — devDependencies(`@mikro-orm/cli` 등)와 TS 소스가 다 있어야 마이그레이션/시드/토큰 생성이 가능하기 때문. `tests/load-test/` 디렉토리는 루트 `.dockerignore`가 빌드 컨텍스트에서 제외하므로, `docker/compose.yml`의 `davinci-migrate` 서비스가 이를 volume mount로 다시 끌어와 스크립트 접근과 `fixtures/tokens.json` 저장을 모두 책임진다.
 
 ### 설정: `configs/example.yaml`
 
@@ -49,8 +49,8 @@ pnpm load-test
 name: example
 
 docker:
-  profile:
-    - obs # obs 붙이면 otel-collector/tempo/grafana도 같이 뜸 (아직 compose.js에서 실제로 소비하진 않음)
+  profiles:
+    - obs # obs 붙이면 otel-collector/tempo/grafana도 같이 뜸
 
 database:
   migrate: true # false면 Migration 단계 생략
@@ -71,7 +71,11 @@ main:
   scenario: "baseline"
 ```
 
-새 설정 파일을 만들고 싶으면 `configs/` 아래 파일을 추가하고 `scripts/load-test.js`가 읽는 경로를 바꾸면 된다(아직 CLI 인자로 config 경로를 받진 않음).
+새 설정 파일을 만들고 싶으면 `configs/` 아래 파일을 추가하고 `pnpm load-test <파일명>`으로 실행하면 된다. 인자를 생략하면 `example.yaml`을 읽는다.
+
+```bash
+pnpm load-test staging.yaml   # configs/staging.yaml 사용
+```
 
 ### npm scripts
 
@@ -102,7 +106,7 @@ docker compose -f tests/load-test/docker/compose.yml down
 - `stdout.log`, `stderr.log` — Main 단계 k6 프로세스 출력
 - `summary.json` — k6 `handleSummary`가 쓰는 원본 메트릭 (`baseline.js`, `compare-results.js` 입력으로 바로 사용 가능)
 - `report.html` — `report-template.js`로 만든 HTML 리포트
-- `metadata.json` — 전체 `startedAt`/`finishedAt` + 스테이지별(`MySQL`/`Migration`/`Seed`/`Token Generate`/`App`/`Warmup`/`Main`) 소요시간(ms)
+- `metadata.json` — `runId`(결과 디렉토리명과 동일) + 전체 `startedAt`/`finishedAt` + 스테이지별(`MySQL`/`Migration`/`Seed`/`Token Generate`/`App`/`Warmup`/`Main`) 소요시간(ms). `obs` profile일 때만 `grafana`(URL)와 `traceQuery`(`run.id=<runId>`)도 함께 기록된다.
 
 Warmup 단계는 결과를 저장하지 않는다(`K6Runner.warmup()`은 `--no-summary`로 실행). `scripts/compare-results.js`는 이제 별도 수동 작업 없이 두 `results/<run>` 디렉토리를 바로 비교할 수 있다.
 
@@ -132,3 +136,5 @@ http://localhost:3100
 ```
 
 서비스명: `davinci-app-1`
+
+`davinci-app`은 실행마다 고유한 `run.id`(=`runId`) 리소스 속성을 달고 트레이스를 보낸다(`src/instrumentation.ts`). Grafana → Explore → Tempo 데이터소스 → Search에서 `metadata.json`의 `traceQuery` 값(`run.id=<runId>`)으로 검색하면 이번 실행의 트레이스만 걸러볼 수 있다.

@@ -19,6 +19,7 @@ if (process.env.OTEL_ENABLED !== "true") {
   const sdk = new NodeSDK({
     resource: resourceFromAttributes({
       [ATTR_SERVICE_NAME]: process.env.OTEL_SERVICE_NAME ?? "davinci-app-1",
+      ...(process.env.RUN_ID && { "run.id": process.env.RUN_ID }),
     }),
     traceExporter: new OTLPTraceExporter({
       url:

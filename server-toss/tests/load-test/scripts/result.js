@@ -4,6 +4,7 @@ import path from "node:path";
 
 export class Result {
   _directory;
+  _runId;
   _metadata;
 
   constructor() {
@@ -15,6 +16,9 @@ export class Result {
    */
   create() {
     const dirname = this._getFormattedName();
+
+    this._runId = dirname;
+    this._metadata.runId = dirname;
 
     this._directory = path.resolve(
       import.meta.dirname,
@@ -30,9 +34,12 @@ export class Result {
     return this._directory;
   }
 
+  getRunId() {
+    return this._runId;
+  }
+
   saveMetadata(metadata) {
-    this._metadata["startedAt"] = metadata.startedAt;
-    this._metadata["finishedAt"] = metadata.finishedAt;
+    Object.assign(this._metadata, metadata);
   }
 
   recordStage(name, duration) {

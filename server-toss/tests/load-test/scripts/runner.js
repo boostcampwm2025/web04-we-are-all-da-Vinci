@@ -89,7 +89,10 @@ export class Runner {
         await this._stage(
           "App",
           async () => {
-            await this._compose.up({ services: ["davinci-app"] });
+            await this._compose.up({
+              services: ["davinci-app"],
+              env: { RUN_ID: this._result.getRunId() },
+            });
             await this._compose.waitHealthy("davinci-app");
           },
           {
@@ -116,7 +119,18 @@ export class Runner {
       },
       {
         onFinally: async () => {
-          this._result.saveMetadata({ startedAt, finishedAt: new Date() });
+          const obsEnabled =
+            Array.isArray(this._config.docker?.profiles) &&
+            this._config.docker.profiles.length > 0;
+
+          this._result.saveMetadata({
+            startedAt,
+            finishedAt: new Date(),
+            ...(obsEnabled && {
+              grafana: "http://localhost:3100",
+              traceQuery: `run.id=${this._result.getRunId()}`,
+            }),
+          });
           this._result.flush();
           await this._compose.down({});
         },

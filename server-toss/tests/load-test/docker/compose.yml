@@ -33,7 +33,7 @@ services:
     networks:
       - load-net
     environment:
-      NODE_ENV: test
+      NODE_ENV: production
       PORT: 3000
       MYSQL_DATABASE: load_test
       MYSQL_HOST: davinci-mysql
@@ -46,6 +46,7 @@ services:
       OTEL_TRACES_SAMPLER: traceidratio
       OTEL_TRACES_SAMPLER_ARG: "1.0"
       EXTERNAL_API: flaky
+      RUN_ID: ${RUN_ID:-none}
     env_file:
       - ./env/.env
     healthcheck:

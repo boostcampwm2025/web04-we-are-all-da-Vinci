@@ -8,7 +8,8 @@ import { Runner } from "./runner.js";
 import { TokenGenerator } from "./token-generator.js";
 
 async function run() {
-  const { config, path } = ConfigHelper.load("example.yaml");
+  const configFile = process.argv[2] ?? "example.yaml";
+  const { config, path } = ConfigHelper.load(configFile);
   const compose = new Compose("compose.yml");
   const k6 = new K6Runner();
   const token = new TokenGenerator(compose);
