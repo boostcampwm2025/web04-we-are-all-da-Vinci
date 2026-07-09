@@ -9,14 +9,13 @@ services:
       MYSQL_ALLOW_EMPTY_PASSWORD: true
       MYSQL_DATABASE: load_test
       TZ: UTC
-    command:
-      - --performance-schema=OFF
     cpus: 1.0
-    mem_limit: 1g
+    mem_limit: 2g
     networks:
       - load-net
     volumes:
       - mysql-data:/var/lib/mysql
+      - ./mysql/my.cnf:/etc/mysql/my.cnf
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
       interval: 5s

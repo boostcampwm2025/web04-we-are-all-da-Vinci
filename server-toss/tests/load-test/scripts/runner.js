@@ -19,14 +19,14 @@ export class Runner {
       "Load Test",
       async () => {
         try {
-          await this._compose.down();
+          await this._compose.down({ profiles: this._config.docker.profiles });
         } catch {}
 
         // MySQL
         await this._stage(
           "MySQL",
           async () => {
-            await this._compose.up(["davinci-mysql"]);
+            await this._compose.up({ services: ["davinci-mysql"] });
             await this._compose.waitHealthy("davinci-mysql");
           },
           {
@@ -73,11 +73,23 @@ export class Runner {
           await this._token.generate(this._config.tokens.count);
         });
 
+        // OpenTelemetry 실행
+        if (
+          Array.isArray(this._config.docker?.profiles) &&
+          this._config.docker.profiles.length > 0
+        ) {
+          await this._stage("Observability", async () => {
+            await this._compose.up({
+              profiles: this._config.docker.profiles,
+            });
+          });
+        }
+
         // 서버 실행
         await this._stage(
           "App",
           async () => {
-            await this._compose.up(["davinci-app"]);
+            await this._compose.up({ services: ["davinci-app"] });
             await this._compose.waitHealthy("davinci-app");
           },
           {
@@ -106,7 +118,7 @@ export class Runner {
         onFinally: async () => {
           this._result.saveMetadata({ startedAt, finishedAt: new Date() });
           this._result.flush();
-          await this._compose.down();
+          await this._compose.down({});
         },
       },
     );

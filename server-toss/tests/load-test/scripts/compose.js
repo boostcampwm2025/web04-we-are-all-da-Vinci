@@ -13,18 +13,43 @@ export class Compose {
 
   /**
    *
-   * @param {string[]} services
+   * @param {{services: string[], profiles: string[], env: object}} args
    */
-  async up(services) {
-    const args = [...this._command(["up", "-d", ...services])];
-    await Process.run({ command: "docker", args });
+  async up({ services = [], profiles = [], env = {} }) {
+    const args = [
+      ...this._command([
+        ...profiles.flatMap((profile) => ["--profile", profile]),
+        "up",
+        "-d",
+        ...services,
+      ]),
+    ];
+
+    await Process.run({
+      command: "docker",
+      args,
+      env: {
+        ...process.env,
+        ...env,
+      },
+    });
   }
 
   /**
-   *
+   *  @param {{profiles: string[]}} args
    */
-  async down() {
-    const args = [...this._command(["down", "-v"])];
+  async down({ profiles = [] } = {}) {
+    let args = [...this._command(["down", "-v"])];
+
+    if (Array.isArray(profiles) && profiles.length > 0) {
+      args = [
+        ...this._command([
+          ...profiles.flatMap((profile) => ["--profile", profile]),
+          "down",
+          "-v",
+        ]),
+      ];
+    }
     await Process.run({ command: "docker", args });
   }
 
@@ -40,6 +65,9 @@ export class Compose {
     while (Date.now() < deadline) {
       const state = await this._inspect(await this._getContainerId(service));
 
+      if (!state.Health) {
+        return;
+      }
       if (state.Health.Status === "healthy") {
         return;
       }
@@ -56,15 +84,15 @@ export class Compose {
    * @param {string[]} args
    * @param {Record<string, string|number>} env
    */
-  async run(service, args = [], env = {}) {
+  async run(service, command = [], env = {}) {
     const envArgs = Object.entries(env).flatMap(([key, value]) => [
       "-e",
-      `${key}=${value}`,
+      `${key}=${String(value)}`,
     ]);
-    const cmd = [
-      ...this._command(["run", "--rm", ...envArgs, service, ...args]),
+    const args = [
+      ...this._command(["run", "--rm", ...envArgs, service, ...command]),
     ];
-    await Process.run({ command: "docker", args: cmd });
+    await Process.run({ command: "docker", args, env: process.env });
   }
 
   /**

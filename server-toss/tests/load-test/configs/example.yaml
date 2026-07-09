@@ -1,7 +1,7 @@
 name: example
 
 docker:
-  profile:
+  profiles:
     - obs
 
 database:

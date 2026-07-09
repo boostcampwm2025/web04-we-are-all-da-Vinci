@@ -15,6 +15,7 @@ export class Process {
     command,
     args,
     cwd = process.cwd(),
+    env = process.env,
     allowedExitCodes = [0],
     stdoutFile,
     stderrFile,
@@ -25,6 +26,7 @@ export class Process {
 
       const child = spawn(command, args, {
         cwd,
+        env,
         shell: false,
         stdio: ["inherit", "pipe", "pipe"],
       });
