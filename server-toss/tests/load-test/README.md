@@ -10,131 +10,322 @@
 | Tempo                   | 640MB                | 4317(receiver) |
 | Grafana                 | 1GB                  | 3100           |
 
-OpenTelemetry Collector/Tempo/Grafana는 `obs` profile로 묶여 있어 기본 실행에는 뜨지 않는다.
+# Load Test
 
-### 준비물
+NestJS 서버를 실제 서비스 환경과 유사한 조건에서 부하 테스트하기 위한 환경입니다.
 
-- Docker (Compose)
-- [k6](https://grafana.com/docs/k6/latest/set-up/install-k6/)
+`pnpm load-test` 한 번으로
+
+- Docker 환경 구성
+- DB Migration
+- Seed Data 생성
+- JWT Token 생성
+- Application 실행
+- k6 Warmup / Main Test
+- 결과 저장
+- (선택) OpenTelemetry Trace 수집
+
+까지 모두 자동으로 수행합니다.
+
+---
+
+# Quick Start
+
+## 준비
+
+필요한 프로그램
+
+- Docker Desktop
 - pnpm
-- `docker/env/.env` 파일 (DB 접속 정보, JWT_SECRET 등)
+- k6
 
-### Quick Start
+환경변수
+
+```
+tests/load-test/docker/env/.env
+```
+
+을 준비합니다.
+
+---
+
+## 실행
+
+기본 설정
 
 ```bash
 pnpm load-test
 ```
 
-한 번에 Docker 실행 → 마이그레이션 → 시드 → 토큰 생성 → 앱 실행 → k6(warmup → main)까지 전부 실행하고, 끝나면(성공/실패 무관) 컨테이너를 정리한다. 실행 순서와 설정은 `configs/example.yaml`로 제어한다.
+다른 설정 사용
 
-### 파이프라인 구성
+```bash
+pnpm load-test staging.yaml
+```
 
-`scripts/load-test.js`가 진입점이고, `scripts/runner.js`의 `Runner`가 아래 순서로 단계를 실행한다(각 단계는 `[이름] start`/`done` 로그로 구분됨):
+실행이 끝나면 결과는
 
-1. **MySQL** — `davinci-mysql` 컨테이너 실행 + 헬스체크 대기
-2. **Migration** (`database.migrate: true`일 때만) — `davinci-migrate` 서비스에서 `mikro-orm migration:up` 실행
-3. **Seed** — `davinci-migrate`에서 `mikro-orm seeder:run --class LoadTestSeeder` 실행, `database.seed`에 지정한 수만큼 유저/드로잉 생성
-4. **Token Generate** — `davinci-migrate`에서 JWT 토큰을 발급해 `fixtures/tokens.json`에 저장
-5. **App** — `davinci-app` 컨테이너 기동 + 헬스체크 대기
-6. **Warmup** (`warmup.enabled: true`일 때만) — k6로 `warmup` 설정만큼 가볍게 워밍업(결과 저장 없음)
-7. **Main** — k6로 `main` 설정만큼 본 테스트 실행, 결과를 `results/<timestamp>/`에 저장
+```
+tests/load-test/results/<runId>/
+```
 
-어느 단계에서든 실패하면 즉시 에러를 던지고, 마지막에 항상 각 스테이지 소요시간을 `metadata.json`에 기록한 뒤 `docker compose down`으로 정리한다.
+에 저장됩니다.
 
-`davinci-migrate`는 배포용 슬림 이미지(`davinci-app`)가 아니라 **Dockerfile의 `builder` 스테이지**를 재사용한다 — devDependencies(`@mikro-orm/cli` 등)와 TS 소스가 다 있어야 마이그레이션/시드/토큰 생성이 가능하기 때문. `tests/load-test/` 디렉토리는 루트 `.dockerignore`가 빌드 컨텍스트에서 제외하므로, `docker/compose.yml`의 `davinci-migrate` 서비스가 이를 volume mount로 다시 끌어와 스크립트 접근과 `fixtures/tokens.json` 저장을 모두 책임진다.
+---
 
-### 설정: `configs/example.yaml`
+# 실행 순서
+
+```text
+Load Config
+      │
+      ▼
+MySQL
+      │
+      ▼
+Migration
+      │
+      ▼
+Seed Data
+      │
+      ▼
+Generate Tokens
+      │
+      ▼
+(Optional)
+OpenTelemetry
+      │
+      ▼
+Application
+      │
+      ▼
+Warmup
+      │
+      ▼
+Main Test
+      │
+      ▼
+Save Result
+      │
+      ▼
+docker compose down
+```
+
+모든 Stage는 실행 시간을 기록하며,
+
+중간에 실패하면 즉시 종료한 뒤 Docker 리소스를 정리합니다.
+
+---
+
+# 디렉토리 구조
+
+```
+tests/load-test
+├── configs/          # 실행 설정
+├── docker/           # Docker Compose
+├── fixtures/         # 생성된 토큰
+├── k6/               # 테스트 시나리오
+├── results/          # 실행 결과
+└── scripts/          # JS 오케스트레이터
+```
+
+---
+
+# Config
+
+모든 테스트 조건은
+
+```
+configs/*.yaml
+```
+
+에서 관리합니다.
+
+예시
 
 ```yaml
-name: example
-
-docker:
-  profiles:
-    - obs # obs 붙이면 otel-collector/tempo/grafana도 같이 뜸
-
 database:
-  migrate: true # false면 Migration 단계 생략
-  seed: 1000 # 시드할 유저 수 (SEED_DRAWING_USER_COUNT 환경변수로 davinci-migrate에 전달됨)
+  migrate: true
+  seed: 1000
 
 tokens:
-  count: 1000 # 발급할 JWT 토큰 수
+  count: 1000
 
 warmup:
   enabled: true
   vus: 5
-  durations: 30s
-  scenario: "baseline" # tests/load-test/k6/<scenario>.js
+  duration: 30s
 
 main:
   vus: 100
-  durations: 5m
-  scenario: "baseline"
+  duration: 5m
+
+docker:
+  profiles:
+    - obs
 ```
 
-새 설정 파일을 만들고 싶으면 `configs/` 아래 파일을 추가하고 `pnpm load-test <파일명>`으로 실행하면 된다. 인자를 생략하면 `example.yaml`을 읽는다.
+설정을 변경하면 코드를 수정하지 않고
 
-```bash
-pnpm load-test staging.yaml   # configs/staging.yaml 사용
+- Seed 수
+- Token 수
+- VU
+- Duration
+- Docker Profile
+
+등을 바꿀 수 있습니다.
+
+---
+
+# 결과
+
+매 실행마다
+
+```
+results/<runId>/
 ```
 
-### npm scripts
+가 생성됩니다.
 
-| 명령어                   | 설명                                             |
-| ------------------------ | ------------------------------------------------ |
-| `pnpm load-test`         | 전체 파이프라인 실행 (Docker + 시드 + 토큰 + k6) |
-| `pnpm load-test:compare` | 두 결과 디렉토리 비교                            |
-| `pnpm load-test:clean`   | Docker 컨테이너 + 볼륨 제거                      |
-
-Docker Compose를 직접 조작해야 할 때 (로그 확인 등):
-
-```bash
-docker compose -f tests/load-test/docker/compose.yml logs -f
-docker compose -f tests/load-test/docker/compose.yml down
+```
+config.yaml
+metadata.json
+summary.json
+report.html
+stdout.log
+stderr.log
 ```
 
-### k6 (`k6/baseline.js`, `k6/options.json`)
+| 파일          | 설명                 |
+| ------------- | -------------------- |
+| config.yaml   | 실행에 사용한 설정   |
+| metadata.json | Stage 시간, runId 등 |
+| summary.json  | k6 원본 결과         |
+| report.html   | HTML Report          |
+| stdout.log    | k6 출력              |
+| stderr.log    | 에러 로그            |
 
-- VU/duration은 오로지 `configs/example.yaml`의 `warmup`/`main` 값 → `k6-runner.js`가 `--vus`/`--duration` CLI 플래그로 넘긴다. `k6/options.json`에는 `thresholds`만 두고 `scenarios`는 정의하지 않는다 — k6는 스크립트가 `options.scenarios`를 export하면 CLI `--vus`/`--duration`을 무시하므로, warmup/main을 별개의 두 번의 k6 실행으로 다루는 이 구조와는 `scenarios` 방식이 맞지 않는다.
-- `baseline.js`는 `--env VUS=<n>`/`--env DURATION=<d>`로 넘어온 값을 읽어 토큰 라운드로빈 인덱싱(`MAX_VUS`)과 리포트에 쓴다.
-- k6는 **threshold(SLA) 위반 시 exit code 99**를 반환하는데, 이는 "테스트 인프라 실패"가 아니라 "테스트는 정상 종료됐고 SLA를 위반했다"는 뜻이라 `k6-runner.js`가 `[0, 99]`를 정상 종료로 취급한다. 콘솔에 `[k6] threshold(SLA) 위반` 경고만 찍고 파이프라인은 계속 진행된다.
+---
 
-### 결과 저장
+# Trace 분석
 
-실행할 때마다 `results/<YYYYMMDD-HHMMSS>/`(gitignore됨)를 만들어 아래를 저장한다(`scripts/result.js`의 `Result`):
+Config에
 
-- `config.yaml` — 실행에 사용한 설정 파일 원본
-- `stdout.log`, `stderr.log` — Main 단계 k6 프로세스 출력
-- `summary.json` — k6 `handleSummary`가 쓰는 원본 메트릭 (`baseline.js`, `compare-results.js` 입력으로 바로 사용 가능)
-- `report.html` — `report-template.js`로 만든 HTML 리포트
-- `metadata.json` — `runId`(결과 디렉토리명과 동일) + 전체 `startedAt`/`finishedAt` + 스테이지별(`MySQL`/`Migration`/`Seed`/`Token Generate`/`App`/`Warmup`/`Main`) 소요시간(ms). `obs` profile일 때만 `grafana`(URL)와 `traceQuery`(`run.id=<runId>`)도 함께 기록된다.
-
-Warmup 단계는 결과를 저장하지 않는다(`K6Runner.warmup()`은 `--no-summary`로 실행). `scripts/compare-results.js`는 이제 별도 수동 작업 없이 두 `results/<run>` 디렉토리를 바로 비교할 수 있다.
-
-#### compare-results.js
-
-```bash
-# 콘솔 테이블
-node tests/load-test/scripts/compare-results.js results/run1 results/run2
-
-# PR용 마크다운 테이블
-node tests/load-test/scripts/compare-results.js results/run1 results/run2 --markdown
+```yaml
+docker:
+  profiles:
+    - obs
 ```
 
-### 시드 데이터
+를 추가하면
 
-`LargeUserDrawingSeeder`가 배치 단위로 flush/clear하여 메모리 사용량을 줄임.
+- OpenTelemetry Collector
+- Tempo
+- Grafana
 
-- 기본: 1,000명 유저 (userKey 1,900,000~)
-- 환경변수: `SEED_DRAWING_USER_COUNT`, `SEED_DRAWING_BATCH_SIZE`
+가 함께 실행됩니다.
 
-### 트레이싱
-
-OpenTelemetry + OpenTelemetry Collector + Tempo 트레이스 수집(`obs` profile). 테스트 중/후에 Grafana UI에서 확인:
+Grafana
 
 ```
 http://localhost:3100
 ```
 
-서비스명: `davinci-app-1`
+서비스
 
-`davinci-app`은 실행마다 고유한 `run.id`(=`runId`) 리소스 속성을 달고 트레이스를 보낸다(`src/instrumentation.ts`). Grafana → Explore → Tempo 데이터소스 → Search에서 `metadata.json`의 `traceQuery` 값(`run.id=<runId>`)으로 검색하면 이번 실행의 트레이스만 걸러볼 수 있다.
+```
+davinci-app-1
+```
+
+실행마다
+
+```
+run.id=<runId>
+```
+
+를 Resource Attribute에 넣어 보내므로
+
+Grafana Explore에서 해당 실행의 Trace만 조회할 수 있습니다.
+
+---
+
+# 새로운 Scenario 추가
+
+1.
+
+```
+k6/<name>.js
+```
+
+생성
+
+2.
+
+```
+configs/*.yaml
+```
+
+에서
+
+```yaml
+main:
+  scenario: "<name>"
+```
+
+설정
+
+3.
+
+실행
+
+```
+pnpm load-test
+```
+
+---
+
+# 결과 비교
+
+두 실행 결과 비교
+
+```bash
+pnpm load-test:compare results/run1 results/run2
+```
+
+Markdown 출력
+
+```bash
+pnpm load-test:compare results/run1 results/run2 --markdown
+```
+
+---
+
+# 자주 수정하는 위치
+
+| 하고 싶은 작업   | 수정할 파일        |
+| ---------------- | ------------------ |
+| VU 변경          | configs/\*.yaml    |
+| Duration 변경    | configs/\*.yaml    |
+| Seed 개수 변경   | configs/\*.yaml    |
+| Scenario 추가    | k6/\*.js           |
+| Docker 자원 변경 | docker/compose.yml |
+| 실행 순서 변경   | scripts/runner.js  |
+| 결과 저장 변경   | scripts/result.js  |
+
+---
+
+# 내부 구조
+
+실행 파이프라인은 JS 오케스트레이터가 담당합니다.
+
+```
+Runner
+├── Compose
+├── K6Runner
+├── Result
+├── ConfigHelper
+└── Process
+```
+
+각 컴포넌트는 하나의 책임만 가지도록 분리되어 있으며,
+
+새로운 Stage를 추가하거나 실행 방식을 변경할 때는 `Runner`만 수정하면 됩니다.
