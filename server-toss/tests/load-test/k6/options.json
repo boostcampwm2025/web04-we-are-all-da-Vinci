@@ -1,14 +1,14 @@
 {
   "thresholds": {
     "http_req_failed": ["rate<0.01"],
-    "http_req_duration": ["p(95)<1000", "p(99)<1500"],
-    "http_req_duration{api:myDrawings}": ["p(95)<300"],
-    "http_req_duration{api:podium}": ["p(95)<300"],
-    "http_req_duration{api:start}": ["p(95)<500"],
+    "http_req_duration": ["p(95)<200", "p(99)<500"],
+    "http_req_duration{api:myDrawings}": ["p(95)<200"],
+    "http_req_duration{api:podium}": ["p(95)<200"],
+    "http_req_duration{api:start}": ["p(95)<300"],
     "http_req_duration{api:strokes}": ["p(95)<300"],
-    "http_req_duration{api:submit}": ["p(95)<500"],
-    "http_req_duration{api:myRanking}": ["p(95)<300"],
-    "http_req_duration{api:rankings}": ["p(95)<300"],
-    "http_req_duration{api:chargeChancesByAd}": ["p(95)<500"]
+    "http_req_duration{api:submit}": ["p(95)<300"],
+    "http_req_duration{api:myRanking}": ["p(95)<200"],
+    "http_req_duration{api:rankings}": ["p(95)<200"],
+    "http_req_duration{api:chargeChancesByAd}": ["p(95)<300"]
   }
 }
