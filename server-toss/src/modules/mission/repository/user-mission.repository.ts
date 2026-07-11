@@ -70,6 +70,7 @@ export class UserMissionRepository extends EntityRepository<UserMission> {
             $nin: [
               ObjectiveType.MISSION_COMPLETED,
               ObjectiveType.TUTORIAL_COMPLETED,
+              ObjectiveType.INVITE,
             ],
           },
         },
@@ -129,6 +130,35 @@ export class UserMissionRepository extends EntityRepository<UserMission> {
         mission: {
           period: MissionPeriod.TUTORIAL,
           objectiveType: { $in: [ObjectiveType.SUBMIT, ObjectiveType.SCORE] },
+        },
+      },
+      { populate: ["mission"] },
+    );
+  }
+
+  async findChallengeMissions(userKey: number): Promise<UserMission[]> {
+    return this.find(
+      {
+        user: { userKey },
+        mission: { period: MissionPeriod.CONTINUOUSLY },
+      },
+      { populate: ["mission"] },
+    );
+  }
+
+  async findActiveChallengeMissions(userKey: number): Promise<UserMission[]> {
+    return this.find(
+      {
+        user: { userKey },
+        completedAt: null,
+        mission: {
+          period: MissionPeriod.CONTINUOUSLY,
+          objectiveType: {
+            $nin: [
+              ObjectiveType.MISSION_COMPLETED,
+              ObjectiveType.TUTORIAL_COMPLETED,
+            ],
+          },
         },
       },
       { populate: ["mission"] },

@@ -35,4 +35,12 @@ export class UserMission extends BaseEntity {
   /** 마지막으로 진행(카운트 증가)된 시각. 진행 케이던스 게이트(ProgressLimit) 판단용. */
   @Property({ name: "last_progressed_at", type: "datetime", nullable: true })
   lastProgressedAt?: Opt<Date | null>;
+
+  /** 도전 미션 전용: Mission.requiredCount 오버라이드. null이면 마스터 값 사용. */
+  @Property({ name: "required_count", type: "int", nullable: true })
+  requiredCount?: Opt<number | null>;
+
+  /** 도전 미션 전용: 완료 횟수 (현재 티어 = level + 1). */
+  @Property({ name: "level", type: "int", default: 0 })
+  level: Opt<number> = 0;
 }

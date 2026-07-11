@@ -15,4 +15,5 @@ export class MyMissionsResponseDto {
   dailyMissions!: MyMission[];
   weeklyMissions!: MyMission[];
   tutorialCategories!: TutorialCategoryDto[];
+  challengeMissions!: MyMission[];
 }

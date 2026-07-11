@@ -19,6 +19,7 @@ import {
 } from "../entity/mission.entity";
 import { UserMission } from "../entity/user-mission.entity";
 import { AssignMissionService } from "../service/assign-mission.service";
+import { ChallengeMissionService } from "../service/challenge-mission.service";
 import { MissionProcessor } from "../service/mission.processor";
 import { MissionService } from "../service/mission.service";
 import { TutorialMissionService } from "../service/tutorial-mission.service";
@@ -60,6 +61,7 @@ describe("MissionService", () => {
   let userMissionRepository: Record<string, jest.Mock>;
   let assignMissionService: { ensureMissionsAssigned: jest.Mock };
   let tutorialMissionService: Record<string, jest.Mock>;
+  let challengeMissionService: Record<string, jest.Mock>;
   let pointService: Record<string, jest.Mock>;
 
   beforeEach(async () => {
@@ -76,11 +78,23 @@ describe("MissionService", () => {
       ensureMissionsAssigned: jest.fn(async () => undefined),
     };
 
+    const emptyCycleResult = { completed: [], metaCompleted: [] };
+
     tutorialMissionService = {
       findActiveDrawing: jest.fn(async () => []),
       findActiveByObjective: jest.fn(async () => []),
       findActiveMeta: jest.fn(async () => []),
       recordCompletionIfFinished: jest.fn(async () => undefined),
+      processDrawing: jest.fn(async () => emptyCycleResult),
+      processAction: jest.fn(async () => emptyCycleResult),
+    };
+
+    challengeMissionService = {
+      ensureAssigned: jest.fn(async () => undefined),
+      findActiveDrawing: jest.fn(async () => []),
+      findAll: jest.fn(async () => []),
+      resetCompletedForNextTier: jest.fn(),
+      processDrawing: jest.fn(async () => emptyCycleResult),
     };
 
     pointService = {
@@ -98,14 +112,16 @@ describe("MissionService", () => {
             processor,
             assignSvc,
             tutorialSvc,
+            challengeSvc,
             pointSvc,
           ) =>
             new MissionService(
-              userMissionRepo,
               em,
+              userMissionRepo,
               processor,
               assignSvc,
               tutorialSvc,
+              challengeSvc,
               pointSvc,
             ),
           inject: [
@@ -114,6 +130,7 @@ describe("MissionService", () => {
             MissionProcessor,
             AssignMissionService,
             TutorialMissionService,
+            ChallengeMissionService,
             PointService,
           ],
         },
@@ -128,6 +145,7 @@ describe("MissionService", () => {
         },
         { provide: AssignMissionService, useValue: assignMissionService },
         { provide: TutorialMissionService, useValue: tutorialMissionService },
+        { provide: ChallengeMissionService, useValue: challengeMissionService },
         {
           provide: MissionProcessor,
           useFactory: (pointSvc: PointService) =>
@@ -238,30 +256,8 @@ describe("MissionService", () => {
       });
     });
 
-    // onActionReported는 튜토리얼 전용 — daily/weekly는 onDrawingSubmitted로만 진행
-    describe("액션으로 튜토리얼 미션이 진행되면", () => {
-      it("currentCount를 1 증가시키고 lastProgressedAt을 기록한다", async () => {
-        const uq = buildUserMission({
-          mission: buildMission({
-            period: MissionPeriod.TUTORIAL,
-            objectiveType: ObjectiveType.VISIT_RANKING,
-            requiredCount: 5,
-          }),
-          currentCount: 0,
-        });
-        tutorialMissionService.findActiveByObjective.mockResolvedValue([uq]);
-
-        await service.onActionReported(1234, {
-          objectiveType: ObjectiveType.VISIT_RANKING,
-        });
-
-        expect(uq.currentCount).toBe(1);
-        expect(uq.lastProgressedAt).toBeInstanceOf(Date);
-      });
-    });
-
-    describe("미션이 완료되면", () => {
-      it("completedAt을 설정하고 보상을 지급한다", async () => {
+    describe("튜토리얼 서비스 결과를 집계하면", () => {
+      it("processAction 결과의 완료 미션에 대해 보상을 지급한다", async () => {
         const uq = buildUserMission({
           mission: buildMission({
             period: MissionPeriod.TUTORIAL,
@@ -269,55 +265,23 @@ describe("MissionService", () => {
             requiredCount: 1,
             rewardType: RewardType.POINT,
           }),
-          currentCount: 0,
+          completedAt: new Date(),
         });
-        tutorialMissionService.findActiveByObjective.mockResolvedValue([uq]);
+        tutorialMissionService.processAction.mockResolvedValue({
+          completed: [uq],
+          metaCompleted: [],
+        });
 
         const result = await service.onActionReported(1234, {
           objectiveType: ObjectiveType.VISIT_RANKING,
         });
 
-        expect(uq.completedAt).not.toBeNull();
-        // 미션의 rewardAmount(기본 10)가 그대로 지급 금액으로 전달된다
-        expect(pointService.savePointGrantRequest).toHaveBeenCalledWith(
+        expect(pointService.enqueueGrant).toHaveBeenCalledWith(
           1234,
           expect.anything(),
           10,
         );
         expect(result.completed).toContain(uq);
-      });
-
-      it("같은 카테고리 튜토리얼 메타 카운트를 완료 건수만큼 증가시킨다", async () => {
-        const uq = buildUserMission({
-          id: BigInt(10),
-          mission: buildMission({
-            period: MissionPeriod.TUTORIAL,
-            objectiveType: ObjectiveType.VISIT_RANKING,
-            category: "explore",
-            requiredCount: 1,
-          }),
-          currentCount: 0,
-        });
-        const metaUq = buildUserMission({
-          id: BigInt(20),
-          mission: buildMission({
-            id: BigInt(99),
-            period: MissionPeriod.TUTORIAL,
-            objectiveType: ObjectiveType.TUTORIAL_COMPLETED,
-            category: "explore",
-            requiredCount: 3,
-          }),
-          currentCount: 0,
-        });
-
-        tutorialMissionService.findActiveByObjective.mockResolvedValue([uq]);
-        tutorialMissionService.findActiveMeta.mockResolvedValue([metaUq]);
-
-        await service.onActionReported(1234, {
-          objectiveType: ObjectiveType.VISIT_RANKING,
-        });
-
-        expect(metaUq.currentCount).toBe(1);
       });
     });
   });
@@ -364,23 +328,23 @@ describe("MissionService", () => {
       expect(already.currentCount).toBe(1);
     });
 
-    it("튜토리얼 활성 미션도 게이트드 서비스에서 받아 함께 진행한다", async () => {
+    it("튜토리얼 processDrawing 결과가 최종 결과에 합쳐진다", async () => {
       const tutorialUq = buildUserMission({
         mission: buildMission({
           period: MissionPeriod.TUTORIAL,
           objectiveType: ObjectiveType.SUBMIT,
           requiredCount: 1,
         }),
-        currentCount: 0,
+        completedAt: new Date(),
       });
-      tutorialMissionService.findActiveDrawing.mockResolvedValue([tutorialUq]);
+      tutorialMissionService.processDrawing.mockResolvedValue({
+        completed: [tutorialUq],
+        metaCompleted: [],
+      });
 
       const result = await service.onDrawingSubmitted(1234, drawingContext);
 
       expect(result.completed).toContain(tutorialUq);
-      expect(
-        tutorialMissionService.recordCompletionIfFinished,
-      ).toHaveBeenCalled();
     });
 
     it("progressPeriod=none 미션은 오늘 이미 진행했어도 매 제출마다 진행한다", async () => {

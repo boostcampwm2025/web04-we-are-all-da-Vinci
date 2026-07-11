@@ -5,6 +5,7 @@ import { Mission } from "./entity/mission.entity";
 import { UserMission } from "./entity/user-mission.entity";
 import { MissionController } from "./mission.controller";
 import { AssignMissionService } from "./service/assign-mission.service";
+import { ChallengeMissionService } from "./service/challenge-mission.service";
 import { MissionProcessor } from "./service/mission.processor";
 import { MissionSeedService } from "./service/mission.seed";
 import { MissionService } from "./service/mission.service";
@@ -19,7 +20,8 @@ import { TutorialMissionService } from "./service/tutorial-mission.service";
     MissionSeedService,
     AssignMissionService,
     TutorialMissionService,
+    ChallengeMissionService,
   ],
-  exports: [MissionService, TutorialMissionService],
+  exports: [MissionService, TutorialMissionService, ChallengeMissionService],
 })
 export class MissionModule {}

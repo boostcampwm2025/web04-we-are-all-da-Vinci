@@ -24,6 +24,7 @@ const MissionDefinitionSchema = z.object({
   rewardAmount: z.number().int().min(0),
   category: z.string().max(20).nullable().default(null),
   progressPeriod: z.enum(ProgressPeriod).default(ProgressPeriod.NONE),
+  incrementStep: z.number().int().positive().nullable().default(null),
 });
 
 const MissionsFileSchema = z
@@ -144,6 +145,7 @@ export class MissionSeedService {
           mission.rewardAmount = resolveRewardAmount(def);
           mission.category = def.category ?? undefined;
           mission.progressPeriod = def.progressPeriod;
+          mission.incrementStep = def.incrementStep ?? undefined;
           txEm.persist(mission);
           added++;
           this.logger.log(
@@ -196,6 +198,10 @@ export class MissionSeedService {
     }
     if (mission.progressPeriod !== def.progressPeriod) {
       mission.progressPeriod = def.progressPeriod;
+      changed = true;
+    }
+    if (mission.incrementStep !== (def.incrementStep ?? undefined)) {
+      mission.incrementStep = def.incrementStep ?? undefined;
       changed = true;
     }
     return changed;

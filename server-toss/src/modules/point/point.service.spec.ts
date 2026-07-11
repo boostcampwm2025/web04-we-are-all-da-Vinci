@@ -316,13 +316,13 @@ describe("PointService", () => {
     });
   });
 
-  describe("savePointGrantRequest", () => {
+  describe("enqueueGrant", () => {
     describe("지급 금액을 명시한 경우", () => {
-      it("전달한 pointAmount로 요청을 생성한다", async () => {
+      it("전달한 pointAmount로 요청을 생성한다", () => {
         const em = buildEntityManager();
         const service = buildService({ entityManager: em });
 
-        await service.savePointGrantRequest(1234, PointReason.MISSION, 7);
+        service.enqueueGrant(1234, PointReason.MISSION, 7);
 
         expect(em.create).toHaveBeenCalledWith(
           expect.anything(),
@@ -335,11 +335,11 @@ describe("PointService", () => {
     });
 
     describe("지급 금액을 생략한 경우", () => {
-      it("PROMOTION_AMOUNT로 폴백한다", async () => {
+      it("PROMOTION_AMOUNT로 폴백한다", () => {
         const em = buildEntityManager();
         const service = buildService({ entityManager: em });
 
-        await service.savePointGrantRequest(1234, PointReason.MISSION);
+        service.enqueueGrant(1234, PointReason.MISSION);
 
         expect(em.create).toHaveBeenCalledWith(
           expect.anything(),
