@@ -7,4 +7,9 @@ docker/env/.env
 **/.env
 **/.env.*
 
-results/
+docker/tempo/data
+docker/tempo/data/*
+
+results
+
+fixtures/state.json

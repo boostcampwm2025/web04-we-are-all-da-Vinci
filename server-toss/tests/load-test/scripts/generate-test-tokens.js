@@ -2,19 +2,9 @@
 
 const fs = require("fs/promises");
 const path = require("path");
-const dotenv = require("dotenv");
 const { JwtService } = require("@nestjs/jwt");
 
 const DEFAULT_MIN_USER_KEY = 1_900_000;
-
-function loadEnv() {
-  const projectRoot = path.resolve(__dirname, "../../../");
-  dotenv.config({ path: path.resolve(projectRoot, ".env") });
-  dotenv.config({
-    path: path.resolve(projectRoot, ".env.local"),
-    override: true,
-  });
-}
 
 function parseIntegerArg(name, raw, { min } = {}) {
   if (raw === undefined) return undefined;
@@ -88,7 +78,6 @@ function buildWhere(minUserKey, maxUserKey) {
 }
 
 async function run() {
-  loadEnv();
   require("ts-node/register");
   require("tsconfig-paths/register");
 
@@ -96,16 +85,14 @@ async function run() {
 
   const jwtSecret = process.env.JWT_SECRET;
   if (!jwtSecret) {
-    throw new Error(
-      "JWT_SECRET 환경변수가 필요합니다. .env 또는 .env.local에 설정해주세요.",
-    );
+    throw new Error("JWT_SECRET 환경변수가 필요합니다.");
   }
 
   const { MikroORM } = require("@mikro-orm/mysql");
   const mikroOrmConfig = require("../../../src/mikro-orm.config.ts").default;
   const { User } = require("../../../src/modules/user/user.entity.ts");
 
-  const orm = await MikroORM.init({ ...mikroOrmConfig, host: "127.0.0.1" });
+  const orm = await MikroORM.init(mikroOrmConfig);
 
   try {
     const em = orm.em.fork();

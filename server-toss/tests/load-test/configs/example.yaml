@@ -1,0 +1,23 @@
+name: example
+
+docker:
+  profiles:
+    - obs
+
+database:
+  migrate: true
+  seed: 1000
+
+tokens:
+  count: 1000
+
+warmup:
+  enabled: true
+  vus: 5
+  durations: 30s
+  scenario: "baseline"
+
+main:
+  vus: 100
+  durations: 5m
+  scenario: "baseline"
