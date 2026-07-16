@@ -49,11 +49,11 @@ Use `--curve-steps` to increase Bézier sampling only when curves visibly look a
 The generated JSON must always satisfy:
 
 ```json
-[
 {
+  "date": "yyyy-mm-dd",
   "strokes": [
     {
-      "colors": [0, 0, 0],
+      "color": [0, 0, 0],
       "points": [["x..."], ["y..."]]
     }
   ]
