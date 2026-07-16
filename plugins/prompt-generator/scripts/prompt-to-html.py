@@ -5,6 +5,8 @@ import argparse
 import json
 from pathlib import Path
 
+NORMALIZE_SIZE = 500
+
 
 def validate(prompt):
     strokes = prompt.get("strokes") if isinstance(prompt, dict) else None
@@ -35,12 +37,9 @@ def main():
 <canvas id="prompt" width="{args.width}" height="{args.height}"></canvas>
 <script>
 const prompt = {data}; const canvas = document.querySelector("#prompt"); const ctx = canvas.getContext("2d");
-const points = prompt.strokes.flatMap(({{points}}) => points[0].map((x, i) => [x, points[1][i]]));
-const xs = points.map(([x]) => x), ys = points.map(([, y]) => y); const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
-const padding = 20, scale = Math.min((canvas.width-padding*2)/(maxX-minX || 1), (canvas.height-padding*2)/(maxY-minY || 1));
-const offsetX = (canvas.width-(maxX-minX)*scale)/2-minX*scale, offsetY = (canvas.height-(maxY-minY)*scale)/2-minY*scale;
+const scaleX = canvas.width/{NORMALIZE_SIZE}, scaleY = canvas.height/{NORMALIZE_SIZE};
 ctx.fillStyle="#f8f9f6";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.lineWidth=3;ctx.lineCap="round";ctx.lineJoin="round";
-for (const {{colors, points:[xs,ys]}} of prompt.strokes) {{ ctx.strokeStyle=`rgb(${{colors.join(",")}})`;ctx.beginPath();ctx.moveTo(xs[0]*scale+offsetX,ys[0]*scale+offsetY);for(let i=1;i<xs.length;i++)ctx.lineTo(xs[i]*scale+offsetX,ys[i]*scale+offsetY);ctx.stroke(); }}
+for (const {{colors, points:[xs,ys]}} of prompt.strokes) {{ ctx.strokeStyle=`rgb(${{colors.join(",")}})`;ctx.beginPath();ctx.moveTo(xs[0]*scaleX,ys[0]*scaleY);for(let i=1;i<xs.length;i++)ctx.lineTo(xs[i]*scaleX,ys[i]*scaleY);ctx.stroke(); }}
 </script>'''
     Path(args.output).write_text(html, encoding="utf-8")
     print(f"Rendered {len(prompt['strokes'])} strokes: {args.output}")

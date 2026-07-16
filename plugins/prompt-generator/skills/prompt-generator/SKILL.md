@@ -28,7 +28,7 @@ uv run --with pillow --with scikit-image \
 
 Use VTracer only when a filled-outline SVG is explicitly needed for another purpose; do not use it as the source for drawing prompt strokes.
 
-3. Convert the SVG to the required JSON. The converter preserves SVG `stroke` or `fill` RGB color; VTracer's colored regions are converted to colored drawing paths, not Canvas fills. SVGs without an explicit usable color default to black.
+3. Convert the SVG to the required JSON. The converter preserves SVG `stroke` or `fill` RGB color and maps its `viewBox` coordinates into the client-toss 500×500 normalized canvas space. VTracer's colored regions are converted to colored drawing paths, not Canvas fills. SVGs without an explicit usable color default to black.
 
 ```bash
 python3 plugins/prompt-generator/scripts/svg-to-prompt.py \
