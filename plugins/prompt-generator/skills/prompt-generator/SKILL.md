@@ -11,7 +11,7 @@ Use this skill when a user gives a drawing topic and wants a stroke prompt with 
 
 1. Generate a deliberately clumsy, scribbly raster image for the requested topic on a white background. Use only these five RGB colors: yellow `[250, 204, 21]`, green `[34, 197, 94]`, blue `[59, 130, 246]`, red `[239, 68, 68]`, and black `[0, 0, 0]`. Draw like an old computer paint program made with a mouse: visibly awkward, loose, low-resolution, and slightly confusing, while keeping the subject recognizable. Prefer wobbly contours, sparse details, and uneven proportions. Do not use text, gradients, shadows, or colors outside the palette.
 
-   Draw with colored lines, not colored fills. Leave enclosed interiors white unless another line crosses them. Make the subject readable through differently colored outlines, detail lines, and scribbles; do not use solid color regions, shading, or paint-bucket fills.
+   **Linework is mandatory:** Draw with colored lines, not colored fills. Leave enclosed interiors white unless another line crosses them. Make the subject readable through differently colored outlines, detail lines, and scribbles; do not use solid color regions, shading, or paint-bucket fills.
 
    Use this style prompt as a baseline and adapt it to the requested topic:
 
