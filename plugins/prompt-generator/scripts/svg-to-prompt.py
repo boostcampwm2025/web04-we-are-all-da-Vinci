@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 NUMBER = r"[-+]?(?:\d*\.\d+|\d+\.?)(?:[eE][-+]?\d+)?"
 TOKEN = re.compile(rf"([AaCcHhLlMmQqSsTtVvZz])|({NUMBER})")
 PALETTE = ([250, 204, 21], [34, 197, 94], [59, 130, 246], [239, 68, 68], [0, 0, 0])
-CANVAS_SIZE = 500
+CANVAS_SIZE = 255
 
 
 def matrix_mul(left, right):
@@ -147,7 +147,7 @@ def serialize(color, points):
     }
 
 
-def viewbox(root):
+def svg_canvas(root):
     values = [float(value) for value in re.findall(NUMBER, root.get("viewBox", ""))]
     if len(values) == 4 and values[2] > 0 and values[3] > 0:
         return values
@@ -155,14 +155,14 @@ def viewbox(root):
     height = re.findall(NUMBER, root.get("height", ""))
     if width and height and float(width[0]) > 0 and float(height[0]) > 0:
         return [0, 0, float(width[0]), float(height[0])]
-    raise ValueError("SVG requires a positive viewBox or width and height for 500x500 normalization")
+    raise ValueError("SVG requires a positive viewBox or width and height")
 
 
-def normalize_points(points, bounds, canvas_size):
+def canvas_strokes(strokes, bounds):
     origin_x, origin_y, width, height = bounds
     return [
-        ((x - origin_x) * canvas_size / width, (y - origin_y) * canvas_size / height)
-        for x, y in points
+        (color, [((x - origin_x) * CANVAS_SIZE / width, (y - origin_y) * CANVAS_SIZE / height) for x, y in stroke])
+        for color, stroke in strokes
     ]
 
 
@@ -170,12 +170,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", required=True); parser.add_argument("--output", required=True)
     parser.add_argument("--curve-steps", type=int, default=8)
-    parser.add_argument("--canvas-size", type=float, default=CANVAS_SIZE)
     args = parser.parse_args()
-    if args.curve_steps < 1 or args.canvas_size <= 0: parser.error("curve-steps and canvas-size must be positive")
+    if args.curve_steps < 1: parser.error("curve-steps must be positive")
     root = ET.parse(args.input).getroot()
-    bounds = viewbox(root)
-    strokes = [serialize(color, normalize_points(points, bounds, args.canvas_size)) for color, points in walk(root, (1, 0, 0, 1, 0, 0), [0, 0, 0], args.curve_steps)]
+    raw_strokes = list(walk(root, (1, 0, 0, 1, 0, 0), [0, 0, 0], args.curve_steps))
+    strokes = [serialize(color, points) for color, points in canvas_strokes(raw_strokes, svg_canvas(root))]
     if not strokes: parser.error("No drawable SVG path, polyline, polygon, line, or rect was found")
     with open(args.output, "w", encoding="utf-8") as file: json.dump({"date": "yyyy-mm-dd" ,"strokes": strokes}, file, ensure_ascii=False, indent=2); file.write("\n")
     print(f"Converted {len(strokes)} strokes: {args.output}")

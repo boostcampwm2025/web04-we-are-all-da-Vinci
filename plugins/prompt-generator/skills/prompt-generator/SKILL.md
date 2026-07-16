@@ -28,7 +28,7 @@ uv run --with pillow --with scikit-image \
 
 Use VTracer only when a filled-outline SVG is explicitly needed for another purpose; do not use it as the source for drawing prompt strokes.
 
-3. Convert the SVG to the required JSON. The converter preserves SVG `stroke` or `fill` RGB color and maps its `viewBox` coordinates into the client-toss 500×500 normalized canvas space. VTracer's colored regions are converted to colored drawing paths, not Canvas fills. SVGs without an explicit usable color default to black.
+3. Convert the SVG to the required JSON by mapping its `viewBox` directly to a 255×255 Canvas coordinate space. Do not use the stroke bounds or preview layout to center or resize the JSON: preserve every path's SVG-canvas position and scale. Use SVG width/height only when `viewBox` is absent. Every output point is in the `0..255` Canvas range. VTracer's colored regions are converted to colored drawing paths, not Canvas fills. SVGs without an explicit usable color default to black.
 
 ```bash
 python3 plugins/prompt-generator/scripts/svg-to-prompt.py \
@@ -62,6 +62,6 @@ The generated JSON must always satisfy:
 
 `svg-to-prompt.py` supports `path`, `polyline`, `polygon`, `line`, and `rect`, including nested `transform` attributes and line/quadratic/cubic Bézier commands. vtracer output normally uses paths. It deliberately rejects SVG arc commands because preserving an arc's geometry requires a dedicated conversion; vectorize with vtracer or convert arcs to Bézier paths first.
 
-`prompt-to-html.py` embeds the prompt JSON in a standalone HTML file and renders every path as a 3px round RGB line—never as a filled shape—using the same 20px padded, aspect-ratio-preserving scale and `#f8f9f6` background used by `client-toss` prompt rendering. Open that file in a browser to inspect the completed prompt.
+`prompt-to-html.py` embeds the prompt JSON in a standalone HTML file and renders every path as a 3px round RGB line—never as a filled shape—using the same 20px-padded bounding-box scale and offset as `client-toss` prompt rendering. Use `--width` and `--height` only to test the target Canvas dimensions; they do not alter the 255×255 JSON coordinates.
 
-This output format uses `colors` (plural) and differs from the current `server-toss` `{ points: [x[], y[]], color }` schema. Do not write it to `server-toss/data/promptStrokes.json` unless that application schema is migrated separately.
+The output uses the current `server-toss` stroke schema: `{ points: [x[], y[]], color }`. Wrap the generated `{ date, strokes }` object in the `server-toss/data/promptStrokes.json` array before seeding it.
