@@ -59,9 +59,8 @@ function parseNonNegativeNumber(value, fallback, name) {
 }
 
 function loadPrompt(input, date) {
-  const prompts = JSON.parse(fs.readFileSync(input, "utf8"));
-  if (!Array.isArray(prompts))
-    throw new Error("입력 JSON은 배열이어야 합니다.");
+  const value = JSON.parse(fs.readFileSync(input, "utf8"));
+  const prompts = Array.isArray(value) ? value : [value];
   const prompt = prompts.find((item) => item?.date === date);
   if (!prompt) {
     const dates = prompts
