@@ -10,9 +10,10 @@ Use this skill when a user gives a drawing topic and wants a playable prompt. Th
 ## Topic to prompt workflow
 
 1. Choose the requested `date`; never silently replace an existing date.
-2. Generate one prompt object with `date` and `strokes` in a temporary JSON file. Use a 500×500 coordinate space, generally 3–15 purposeful strokes, and 2–100 points per stroke. Draw the recognizable silhouette first, then meaningful details. Avoid text, disconnected noise, and coordinates outside 0–500 unless the user explicitly asks for them.
-3. Use a small RGB palette. Keep stroke order meaningful because replay animation follows the array order.
-4. Validate the candidate before showing it:
+2. Generate one prompt object with `date` and `strokes` in a temporary JSON file. Use the source data's roughly 250×250 coordinate space; the client scales the prompt to the canvas at render time. Start with one to three long, smooth silhouette strokes, then add only meaningful details. Aim for 5–34 purposeful strokes and roughly 40–850 total points depending on complexity.
+3. Use a small RGB palette of 2–4 colors. Keep stroke order meaningful because replay animation follows the array order.
+4. Make it look hand-drawn rather than assembled from icons: use curved paths with naturally varying point spacing, slight asymmetry, small contour imperfections, and occasional open contours. Do not make every part perfectly mirrored or geometrically closed.
+5. Validate the candidate before showing it:
 
 ```bash
 node plugins/prompt-renderer/scripts/validate-prompt.mjs \
@@ -21,7 +22,7 @@ node plugins/prompt-renderer/scripts/validate-prompt.mjs \
   --output /tmp/prompt-validated.json
 ```
 
-5. Render the validated candidate and show the SVG preview:
+6. Render the validated candidate and show the SVG preview:
 
 ```bash
 node plugins/prompt-renderer/scripts/render-prompt.mjs \
@@ -30,7 +31,7 @@ node plugins/prompt-renderer/scripts/render-prompt.mjs \
   --output /tmp/prompt-2026-07-16.svg
 ```
 
-6. Do not modify `server-toss/data/promptStrokes.json` until the user approves the preview. After approval, append or replace explicitly with `--force true`:
+7. Do not modify `server-toss/data/promptStrokes.json` until the user approves the preview. After approval, append or replace explicitly with `--force true`:
 
 ```bash
 node plugins/prompt-renderer/scripts/validate-prompt.mjs \
