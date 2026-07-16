@@ -37,9 +37,12 @@ report*.json
 # Claude Code
 **/.claude/settings.local.json
 **/.claude/worktrees/
-.agents/
 **/.claude/skills/
 skills-lock.json
+
+.agents/*
+!.agents/plugins/
+!.agents/plugins/marketplace.json
 
 docs
 
@@ -60,3 +63,5 @@ we-are-all-da-vinci.ait
 AGENTS.md
 
 **/tokens.json
+
+__pycache__
