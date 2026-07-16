@@ -17,24 +17,16 @@ Use this skill when a user gives a drawing topic and wants a stroke prompt with 
 
    > Redraw the attached image in the most clumsy, scribbly, and utterly pathetic way possible. Use a white background, and make it look like it was drawn in MS Paint with a mouse. It should be vaguely similar but also not really, kind of matching but also off in a confusing, awkward way, with that low-quality pixel-by-pixel feel that really emphasizes how ridiculously bad it is. Actually, you know what, whatever, just draw it however you want.
 
-2. Install the VTracer CLI when it is absent, then vectorize in true-color mode with aggressive path simplification. Never use binary/BW mode: it discards the RGB line colors. Use spline fitting, color quantization, speckle filtering, and long-segment simplification so a thick raster line becomes one clean drawing stroke instead of many overlapping boundary paths.
+2. Extract centerlines from the PNG before generating SVG. VTracer traces colored regions as filled outlines, so it cannot produce one path per raster line. Run the extractor with `uv`'s ephemeral dependencies; do not create or activate a virtual environment. It generates an SVG containing `fill="none"` RGB paths and collapses each thick raster line to its one-pixel skeleton before it becomes a prompt stroke.
 
 ```bash
-vtracer \
+uv run --with pillow --with scikit-image \
+  python plugins/prompt-generator/scripts/png-to-centerline-svg.py \
   --input /tmp/prompt.png \
-  --output /tmp/prompt.svg \
-  --colormode color \
-  --hierarchical cutout \
-  --mode spline \
-  --filter_speckle 16 \
-  --color_precision 6 \
-  --corner_threshold 60 \
-  --segment_length 12 \
-  --splice_threshold 45 \
-  --path_precision 2
+  --output /tmp/prompt.svg
 ```
 
-If the installed Python package exposes no `vtracer` command, use its equivalent API with `colormode="color"`, `mode="spline"`, `filter_speckle=16`, `color_precision=6`, `corner_threshold=60`, `length_threshold=12`, `splice_threshold=45`, and `path_precision=2`; do not fall back to `binary` or `bw`.
+Use VTracer only when a filled-outline SVG is explicitly needed for another purpose; do not use it as the source for drawing prompt strokes.
 
 3. Convert the SVG to the required JSON. The converter preserves SVG `stroke` or `fill` RGB color; VTracer's colored regions are converted to colored drawing paths, not Canvas fills. SVGs without an explicit usable color default to black.
 
