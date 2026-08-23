@@ -75,7 +75,8 @@ jobs:
         run: |
           docker buildx build \
             -t "${IMAGE_URI}" \
-            ./server
+            -f ./server/Dockerfile \
+            .
 
       - name: Push image
         run: |
