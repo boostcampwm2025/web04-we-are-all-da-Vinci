@@ -9,6 +9,7 @@ on:
       - chore/web-server-gcp
     paths:
       - "server/**"
+      - "packages/shared/**"
       - ".github/workflows/deploy-backend.yml"
       - "deploy/**"
 
