@@ -1,4 +1,4 @@
-name: Deploy Backend to AWS
+name: Deploy Backend
 
 on:
   workflow_dispatch:
@@ -6,75 +6,85 @@ on:
     branches:
       - main
       - develop
+      - chore/web-server-gcp
     paths:
       - "server/**"
       - ".github/workflows/deploy-backend.yml"
       - "deploy/**"
 
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GCP_REGION: ${{ vars.GCP_REGION }}
+  WORKLOAD_IDENTITY_PROVIDER: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
+  ARTIFACT_REPOSITORY: ${{ vars.WEB_ARTIFACT_REPOSITORY }}
+  CLOUD_RUN_SERVICE: ${{ vars.WEB_CLOUD_RUN_SERVICE }}
+  DEPLOY_SERVICE_ACCOUNT: ${{ vars.WEB_DEPLOY_SERVICE_ACCOUNT }}
+
 jobs:
-  prepare:
-    runs-on: self-hosted
-    timeout-minutes: 30
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - name: Copy .env.redis file
-        working-directory: ./infra/deploy/db
-        run: |
-          cp ~/deploy/.env.redis ./.env.redis
-
-          if [ ! -f .env.redis ]; then
-            echo ".env.redis file not exists"
-            exit 1
-          fi 
-
-          echo ".env.redis file copied."
-
-      - name: Ensure Redis running
-        working-directory: ./infra/deploy/db
-        run: |
-          docker compose --env-file .env.redis -f compose.redis.yml up -d
-
   deploy:
-    runs-on: self-hosted
-    timeout-minutes: 30
-    needs: prepare
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
 
     steps:
+      - name: Validate deployment configuration
+        run: |
+          set -euo pipefail
+          required=(
+            GCP_PROJECT_ID 
+            GCP_REGION 
+            ARTIFACT_REPOSITORY 
+            CLOUD_RUN_SERVICE
+            DEPLOY_SERVICE_ACCOUNT 
+            WORKLOAD_IDENTITY_PROVIDER
+          )
+          for name in "${required[@]}"; do
+            if [ -z "${!name}" ]; then
+              echo "Missing GitHub Actions variable: ${name}"
+              exit 1
+            fi
+          done
+
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
-      - name: Copy .env file
-        working-directory: ./deploy
+      - name: Authenticate to Google Cloud with WIF
+        uses: google-github-actions/auth@v3
+        with:
+          service_account: ${{ env.DEPLOY_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          version: ">= 541.0.0"
+
+      - name: Configure Artifact Registry authentication
         run: |
-          cp ~/deploy/.env ./.env
+          gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
 
-          if [ ! -f .env ]; then
-            echo ".env file not exists"
-            exit 1
-          fi 
-
-          echo ".env file copied."
-
-      - name: Blue-Green Release (Compose + Nginx Switch)
-        working-directory: ./deploy
+      - name: Set image URI
         run: |
-          chmod +x ./deploy.sh 
-          ./deploy.sh
+          IMAGE_URI="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REPOSITORY}/server:${GITHUB_SHA}"
+          echo "IMAGE_URI=${IMAGE_URI}" >> "$GITHUB_ENV"
 
-      - name: Show container logs
-        working-directory: ./deploy
-        if: always()
+      - name: Build image
         run: |
-          docker compose -f compose.blue-green.yml logs --tail=50
+          docker buildx build \
+            -t "${IMAGE_URI}" \
+            ./server
 
-      - name: Clean
-        if: always()
-        working-directory: ./deploy
+      - name: Push image
         run: |
-          docker image prune -f --filter "until=336h"     # 14일
-          docker builder prune -f --filter "until=336h"   
-          docker container prune -f --filter "until=168h" # 7일
-          docker network prune -f --filter "until=168h"
+          docker push "${IMAGE_URI}"
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy "${CLOUD_RUN_SERVICE}" \
+            --project="${GCP_PROJECT_ID}" \
+            --region="${GCP_REGION}" \
+            --image="${IMAGE_URI}" \
+            --quiet
