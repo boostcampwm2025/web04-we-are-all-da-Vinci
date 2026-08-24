@@ -6,7 +6,7 @@ on:
     branches:
       - main
       - develop
-      - chore/web-server-gcp
+
     paths:
       - "server/**"
       - "packages/shared/**"
