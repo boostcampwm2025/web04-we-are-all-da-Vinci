@@ -35,11 +35,11 @@ jobs:
         run: |
           set -euo pipefail
           required=(
-            GCP_PROJECT_ID 
-            GCP_REGION 
-            ARTIFACT_REPOSITORY 
+            GCP_PROJECT_ID
+            GCP_REGION
+            ARTIFACT_REPOSITORY
             CLOUD_RUN_SERVICE
-            DEPLOY_SERVICE_ACCOUNT 
+            DEPLOY_SERVICE_ACCOUNT
             WORKLOAD_IDENTITY_PROVIDER
           )
           for name in "${required[@]}"; do
