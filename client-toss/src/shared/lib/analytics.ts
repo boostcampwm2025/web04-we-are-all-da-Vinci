@@ -1,6 +1,6 @@
+import { getAnalyticsInstance } from "@/shared/api/firebase";
 import { Analytics as TossAnalytics } from "@apps-in-toss/web-framework";
 import { logEvent } from "firebase/analytics";
-import { getAnalyticsInstance } from "@/shared/api";
 
 const trackAnalyticsError = () => {
   try {

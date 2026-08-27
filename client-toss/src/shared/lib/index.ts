@@ -1,5 +1,11 @@
 export { trackClick, trackImpression, trackScreen } from "./analytics";
 export { type Attribution, captureAttributionOnce } from "./attribution";
+export {
+  type AuthLoginStage,
+  reportAuthLoginAttempt,
+  reportAuthLoginFailure,
+  reportAuthLoginSuccess,
+} from "./authDiagnostics";
 export { formatLocalDate } from "./formatLocalDate";
 export { formatScore } from "./formatScore";
 export { FUNNEL_EVENTS, type FunnelEventName } from "./funnelEvents";

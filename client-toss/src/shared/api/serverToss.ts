@@ -1,4 +1,10 @@
 import type { MyRankingResponse, RankingListItem } from "@/entities/ranking";
+import {
+  type AuthLoginStage,
+  reportAuthLoginAttempt,
+  reportAuthLoginFailure,
+  reportAuthLoginSuccess,
+} from "@/shared/lib";
 import { appLogin } from "@apps-in-toss/web-framework";
 import type {
   AdSdkPayload,
@@ -54,27 +60,64 @@ export const setCachedNickname = (nickname: string) =>
 
 let reissuePromise: Promise<string> | null = null;
 
+/** 연속 실패 회차. 성공하면 0으로 돌아간다 — 재시도가 실제로 통하는지 보려는 값. */
+let reissueAttempt = 0;
+
 async function reissueToken(): Promise<string> {
   if (reissuePromise) return reissuePromise;
   reissuePromise = (async () => {
-    const { authorizationCode, referrer } = await appLogin();
-    const res = await fetch(`${BASE_URL}${LOGIN_PATH}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ authorizationCode, referrer }),
-    });
-    if (!res.ok) {
-      clearAccessToken();
-      throw new Error("토큰 재발급 실패");
+    // 최초 로그인(토큰 없음)과 만료 재발급은 실패 양상이 다르므로 구분해 기록한다.
+    const isFirstLogin = getToken() === null;
+    const attempt = ++reissueAttempt;
+    const startedAt = Date.now();
+    let stage: AuthLoginStage = "app_login";
+    let httpStatus: number | undefined;
+
+    reportAuthLoginAttempt({ isFirstLogin, attempt });
+
+    try {
+      const { authorizationCode, referrer } = await appLogin();
+
+      stage = "token_issue";
+      const res = await fetch(`${BASE_URL}${LOGIN_PATH}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ authorizationCode, referrer }),
+      });
+      httpStatus = res.status;
+      if (!res.ok) {
+        clearAccessToken();
+        throw new Error("토큰 재발급 실패");
+      }
+
+      stage = "response_schema";
+      const parsed = LoginResponseSchema.safeParse(await res.json());
+      if (!parsed.success) {
+        clearAccessToken();
+        throw new Error("토큰 재발급 응답이 올바르지 않아요");
+      }
+
+      setAccessToken(parsed.data.accessToken);
+      setCachedNickname(parsed.data.nickname);
+      reissueAttempt = 0;
+      reportAuthLoginSuccess({
+        isFirstLogin,
+        attempt,
+        elapsedMs: Date.now() - startedAt,
+      });
+      return parsed.data.accessToken;
+    } catch (error) {
+      // 리포트를 await하지 않는다 — 진단 때문에 에러 전파가 늦어지면 안 된다.
+      void reportAuthLoginFailure({
+        isFirstLogin,
+        attempt,
+        elapsedMs: Date.now() - startedAt,
+        stage,
+        error,
+        httpStatus,
+      });
+      throw error;
     }
-    const parsed = LoginResponseSchema.safeParse(await res.json());
-    if (!parsed.success) {
-      clearAccessToken();
-      throw new Error("토큰 재발급 응답이 올바르지 않아요");
-    }
-    setAccessToken(parsed.data.accessToken);
-    setCachedNickname(parsed.data.nickname);
-    return parsed.data.accessToken;
   })().finally(() => {
     reissuePromise = null;
   });

@@ -1,8 +1,22 @@
+import { appLogin } from "@apps-in-toss/web-framework";
 import type { Stroke } from "@toss/shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { serverTossApi } from "./serverToss";
 
-describe("serverTossApi", () => {
+const { attemptMock, successMock, failureMock } = vi.hoisted(() => ({
+  attemptMock: vi.fn(),
+  successMock: vi.fn(),
+  failureMock: vi.fn(),
+}));
+
+vi.mock("@/shared/lib", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/shared/lib")>()),
+  reportAuthLoginAttempt: attemptMock,
+  reportAuthLoginSuccess: successMock,
+  reportAuthLoginFailure: failureMock,
+}));
+
+describe("앱인토스 API 클라이언트", () => {
   const rankingStrokes: Stroke[] = [
     {
       points: [
@@ -161,7 +175,7 @@ describe("serverTossApi", () => {
     const userInfo = {
       userKey: 760442640,
       name: "Tester",
-      nickname: "테스터닉",
+      nickname: "테스터닉네임",
       gender: null,
       birthday: null,
     };
@@ -300,5 +314,98 @@ describe("serverTossApi", () => {
         headers: expect.any(Headers),
       }),
     );
+  });
+
+  describe("401 이후 토큰 재발급 계측", () => {
+    const loginBody = { accessToken: "new-token", nickname: "테스터닉네임" };
+    const okBody = { state: "NOT_FOUND" };
+
+    const jsonResponse = (body: unknown, ok = true, status = 200) => ({
+      ok,
+      status,
+      text: async () => JSON.stringify(body),
+      json: async () => body,
+    });
+
+    beforeEach(() => {
+      attemptMock.mockClear();
+      successMock.mockClear();
+      failureMock.mockClear();
+      vi.mocked(appLogin).mockResolvedValue({
+        authorizationCode: "test-code",
+        referrer: "SANDBOX",
+      });
+    });
+
+    it("재발급에 성공하면 성공 이벤트를 남기고 원래 요청을 재시도한다", async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(jsonResponse({}, false, 401))
+        .mockResolvedValueOnce(jsonResponse(loginBody))
+        .mockResolvedValueOnce(jsonResponse(okBody));
+      vi.stubGlobal("fetch", fetchMock);
+
+      await serverTossApi.getMyRanking();
+
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        "/api/oauth/toss/login",
+        expect.objectContaining({ method: "POST" }),
+      );
+      expect(successMock).toHaveBeenCalledTimes(1);
+      expect(failureMock).not.toHaveBeenCalled();
+      expect(localStorage.getItem("access_token")).toBe("new-token");
+    });
+
+    it("토큰이 없던 경우를 최초 로그인으로 기록한다", async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(jsonResponse({}, false, 401))
+        .mockResolvedValueOnce(jsonResponse(loginBody))
+        .mockResolvedValueOnce(jsonResponse(okBody));
+      vi.stubGlobal("fetch", fetchMock);
+
+      await serverTossApi.getMyRanking();
+
+      expect(attemptMock).toHaveBeenCalledWith(
+        expect.objectContaining({ isFirstLogin: true }),
+      );
+    });
+
+    it("토스 로그인이 실패하면 app_login 단계로 기록하고 에러를 전파한다", async () => {
+      vi.mocked(appLogin).mockRejectedValue(new Error("appLogin rejected"));
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(jsonResponse({}, false, 401));
+      vi.stubGlobal("fetch", fetchMock);
+
+      await expect(serverTossApi.getMyRanking()).rejects.toThrow(
+        "appLogin rejected",
+      );
+
+      expect(failureMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          stage: "app_login",
+          isFirstLogin: true,
+        }),
+      );
+      expect(successMock).not.toHaveBeenCalled();
+    });
+
+    it("서버가 재발급을 거부하면 token_issue 단계와 상태 코드를 기록한다", async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(jsonResponse({}, false, 401))
+        .mockResolvedValueOnce(jsonResponse({ message: "실패" }, false, 500));
+      vi.stubGlobal("fetch", fetchMock);
+
+      await expect(serverTossApi.getMyRanking()).rejects.toThrow(
+        "토큰 재발급 실패",
+      );
+
+      expect(failureMock).toHaveBeenCalledWith(
+        expect.objectContaining({ stage: "token_issue", httpStatus: 500 }),
+      );
+    });
   });
 });
