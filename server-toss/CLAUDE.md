@@ -13,6 +13,7 @@ Apps-in-Toss 미니앱(`client-toss`)용 NestJS 11.x **REST 전용** 백엔드. 
 - **로그는 `(logObject, "한국어 메시지")` 2인자 필수.** 객체만 넘기거나 문자열 한 줄 로그 금지. `logObject`의 첫 키는 항상 `event: "<domain>.<action>.<outcome>"` → "로깅" 절 참조.
 - **MikroORM v7에 `persistAndFlush` 없음** → `em.persist(e); await em.flush()`.
 - **새 MikroORM 엔티티는 두 곳 모두 등록할 것.** `src/mikro-orm.config.ts`(런타임 — `app.module`이 `forRoot`, 부팅 시 `migrator.up`)와 `mikro-orm.migration.config.cjs`(배포 마이그레이션 CLI — `deploy-toss/Dockerfile`이 `--config …cjs`, `./dist/...`에서 require → `build` 후 반영). 한쪽만 등록하면 로컬에서만 동작하고 **배포 마이그레이션에서 누락**된다.
+- **마이그레이션은 jest로 검증되지 않는다.** raw SQL이라 jest의 MikroORM 모킹으로는 방언 오류(예: MySQL 1093)가 안 잡히고, 배포 파이프라인 `migration:up`에서 처음 실행돼 배포를 깨뜨린다. 새/수정 마이그레이션은 **반드시 실제 MySQL에 적용**해 검증한다: `pnpm infra:mysql:up` → `pnpm --filter server-toss build` → 일회용 DB(`daVinci_toss_migcheck`)에 `migration:fresh`. 커밋/푸시 시 `.claude/hooks/verify-migrations.sh`(PreToolUse 게이트)가 이를 자동 강제하고 실패하면 차단한다(긴급 우회 `SKIP_MIGRATION_CHECK=1`).
 - **테스트 `describe`·`it` 설명은 모두 한국어.** 컴포넌트·클래스·훅 이름이나 HTTP 경로를 그대로 suite 제목으로 쓰지 말 것. ✗ `describe("PointController (e2e)")`, `describe("POST /attendance/check-in")` → ✓ `describe("포인트 API")`, `describe("출석 체크인")`. (새/수정 spec에서 영문 suite 제목은 반드시 한국어 설명으로 바꾼다.)
 
 ## 명령어

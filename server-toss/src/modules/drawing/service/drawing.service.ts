@@ -19,6 +19,7 @@ import { Drawing } from "../drawing.entity";
 import { DrawingRepository } from "../drawing.repository";
 import { SaveDrawingDto } from "../dto/save-drawing.dto";
 import { SaveDrawingService } from "./save-drawing.service";
+import { safeParseStrokes } from "src/common/util/safe-parse.util";
 
 type Similarity = ReturnType<typeof scoreFinalSimilarity>;
 const SLOW_STROKES_DURATION_MS = 500;
@@ -147,7 +148,7 @@ export class DrawingService {
 
     const drawings = myDrawings.map((d) => ({
       drawingId: Number(d.id),
-      strokes: JSON.parse(d.strokes) as Stroke[],
+      strokes: safeParseStrokes(d.strokes),
       similarity: JSON.parse(d.similarity) as SimilarityResponse,
     }));
 
@@ -172,7 +173,7 @@ export class DrawingService {
     return {
       drawingId: Number(drawing.id),
       nickname: drawing.user.nickname,
-      strokes: JSON.parse(drawing.strokes) as Stroke[],
+      strokes: safeParseStrokes(drawing.strokes),
       similarity: JSON.parse(drawing.similarity) as SimilarityResponse,
     };
   }

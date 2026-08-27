@@ -1,6 +1,7 @@
-import type { SimilarityResponse, Stroke } from "@toss/shared";
+import type { SimilarityResponse } from "@toss/shared";
 import { Ranking } from "./ranking.entity";
 import type { PodiumItem, RankingListItem } from "./types/ranking.type";
+import { safeParseStrokes } from "src/common/util/safe-parse.util";
 
 const buildFallbackSimilarity = (score: number): SimilarityResponse => ({
   score,
@@ -44,7 +45,7 @@ export const mapRankingToRankingGalleryItem = (
     drawingId: ranking.drawingId.toString(),
     rank: index + 1,
     isMe: userKey !== undefined && ranking.userKey === userKey,
-    strokes: JSON.parse(drawing?.strokes ?? ranking.strokes) as Stroke[],
+    strokes: safeParseStrokes(drawing?.strokes ?? ranking.strokes),
     similarity: drawing
       ? (JSON.parse(drawing.similarity) as SimilarityResponse)
       : buildFallbackSimilarity(ranking.score),
