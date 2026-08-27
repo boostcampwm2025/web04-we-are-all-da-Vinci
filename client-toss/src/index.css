@@ -44,6 +44,15 @@
     /* radius — card는 카드/큰 표면(16px), inner는 캔버스 안쪽·작은 항목(12px) */
     --radius-card: 16px;
     --radius-inner: 12px;
+
+    --bottom-nav-height: 60px;
+    --bottom-nav-mx: 16px;
+    /* 홈 인디케이터 위로 띄운다. safe-area가 없는 기기에선 12px만 띄움 */
+    --bottom-nav-offset: calc(env(safe-area-inset-bottom) / 2 + 12px);
+    /* 탭바에 가리지 않도록 스크롤 콘텐츠가 확보해야 하는 하단 여백 */
+    --bottom-nav-space: calc(
+      var(--bottom-nav-offset) + var(--bottom-nav-height) + 12px
+    );
   }
 
   html,
@@ -89,6 +98,19 @@
   background-color: var(--color-card);
   box-shadow: var(--card-shadow);
   border-radius: var(--radius-card);
+}
+.tabbar {
+  position: fixed;
+  z-index: 40;
+  left: var(--bottom-nav-mx);
+  right: var(--bottom-nav-mx);
+  bottom: var(--bottom-nav-offset);
+  height: var(--bottom-nav-height);
+  border-radius: calc(var(--bottom-nav-height) / 2);
+  background-color: var(--color-page);
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 @keyframes slide-up-canvas {
