@@ -219,8 +219,8 @@ describe("미션 배정 서비스", () => {
 
       await service.ensureMissionsAssigned(1, window);
 
-      const objectives = userMissionRepository.createForUser.mock.calls.map(
-        (call) => (call[1] as Mission).objectiveType,
+      const objectives = em.create.mock.calls.map(
+        (call) => (call[1] as { mission: Mission }).mission.objectiveType,
       );
       // 중복 PENALTY/SCORE는 각각 1회만, 랜덤 풀이 {SCORE, SUBMIT}로 줄어 2회(SUBMIT)가 항상 포함.
       expect(
