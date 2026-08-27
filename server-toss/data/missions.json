@@ -158,5 +158,28 @@
     "rewardType": "point",
     "rewardAmount": 5,
     "category": "share"
+  },
+  {
+    "title": "도전! 그림 그리기",
+    "period": "continuously",
+    "isFixed": true,
+    "objectiveType": "submit",
+    "requiredCount": 15,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 5,
+    "incrementStep": 15
+  },
+  {
+    "title": "도전! 매일 그리기",
+    "period": "continuously",
+    "isFixed": true,
+    "objectiveType": "daily_submit",
+    "requiredCount": 10,
+    "threshold": null,
+    "rewardType": "point",
+    "rewardAmount": 5,
+    "progressPeriod": "day",
+    "incrementStep": 10
   }
 ]

@@ -17,9 +17,7 @@ import { User } from "src/modules/user/user.entity";
 import { SmallUserDrawingSeeder } from "src/seeders/small-user-drawing.seeder";
 import { SaveDrawingDto } from "../dto/save-drawing.dto";
 import { Drawing } from "../drawing.entity";
-import { DrawingRepository } from "../drawing.repository";
 import { Ranking } from "../../ranking/ranking.entity";
-import { RankingRepository } from "../../ranking/ranking.repository";
 import { RankingService } from "../../ranking/ranking.service";
 import { SaveDrawingService } from "../service/save-drawing.service";
 import { PointService } from "src/modules/point/point.service";
@@ -30,8 +28,6 @@ describe("SaveDrawingService", () => {
   let module: TestingModule;
   let service: SaveDrawingService;
   let rankingService: RankingService;
-  let drawingRepository: DrawingRepository;
-  let rankingRepository: RankingRepository;
   let pointService: { savePointGrantRequest: jest.Mock };
   let missionService: { onDrawingSubmitted: jest.Mock };
 
@@ -83,8 +79,6 @@ describe("SaveDrawingService", () => {
 
     service = module.get<SaveDrawingService>(SaveDrawingService);
     rankingService = module.get<RankingService>(RankingService);
-    drawingRepository = module.get<DrawingRepository>(DrawingRepository);
-    rankingRepository = module.get<RankingRepository>(RankingRepository);
     orm = module.get<MikroORM>(MikroORM);
     (service as unknown as { em: unknown }).em = orm.em;
     (rankingService as unknown as { em: unknown }).em = orm.em;
@@ -115,9 +109,11 @@ describe("SaveDrawingService", () => {
     describe("그림 저장에 실패하면", () => {
       it("랭킹 갱신을 호출하지 않는다", async () => {
         const user = givenUsers[0];
-        jest
-          .spyOn(drawingRepository, "saveDrawing")
-          .mockRejectedValue(new Error("DRAWING_SAVE_FAILED"));
+        const serviceEm = (service as unknown as { em: { persist: unknown } })
+          .em;
+        serviceEm.persist = jest.fn(() => {
+          throw new Error("DRAWING_SAVE_FAILED");
+        });
         const updateRankingSpy = jest.spyOn(rankingService, "updateRanking");
 
         await expect(
@@ -139,7 +135,7 @@ describe("SaveDrawingService", () => {
       it("그림 제출이 롤백된다", async () => {
         const user = givenUsers[1];
         jest
-          .spyOn(rankingRepository, "saveOne")
+          .spyOn(rankingService, "updateRanking")
           .mockRejectedValue(new Error("RANKING_SAVE_FAILED"));
 
         const beforeCount = await orm.em
@@ -229,7 +225,16 @@ describe("SaveDrawingService", () => {
             { user: user.userKey },
             { orderBy: { id: "ASC" } },
           );
-        await rankingRepository.saveOne(user, existingDrawing);
+        const setupEm = orm.em.fork();
+        setupEm.create(Ranking, {
+          userKey: user.userKey,
+          nickname: user.nickname,
+          drawingId: existingDrawing.id,
+          score: existingDrawing.score,
+          strokes: existingDrawing.strokes,
+          submittedAt: existingDrawing.createdAt,
+        });
+        await setupEm.flush();
 
         const beforeDrawingCount = await orm.em
           .fork()

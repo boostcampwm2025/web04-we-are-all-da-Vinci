@@ -1,30 +1,22 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { PointService } from "src/modules/point/point.service";
+import { Injectable } from "@nestjs/common";
 import { PenaltyCommand } from "../command/penalty.command";
 import { ScoreCommand } from "../command/score.command";
 import { SimpleActionCommand } from "../command/simple-action.command";
-import {
-  ObjectiveType,
-  Mission,
-  MissionPeriod,
-  RewardType,
-} from "../entity/mission.entity";
+import { MissionPeriod, ObjectiveType } from "../entity/mission.entity";
 import { UserMission } from "../entity/user-mission.entity";
-import { ProgressLimit } from "../progress-limit";
 import { MissionWindow } from "../mission-window";
 import type {
   ActionContext,
   CycleResult,
   MissionCommand,
 } from "../mission.types";
-import { PointReason } from "../../point/entity/point-log.entity";
+import { ProgressLimit } from "../progress-limit";
 
 @Injectable()
 export class MissionProcessor {
-  private readonly logger = new Logger(MissionProcessor.name);
   private readonly commandMap: Partial<Record<ObjectiveType, MissionCommand>>;
 
-  constructor(private readonly pointService: PointService) {
+  constructor() {
     const simpleAction = new SimpleActionCommand();
     const score = new ScoreCommand();
     const penalty = new PenaltyCommand();
@@ -46,21 +38,18 @@ export class MissionProcessor {
     };
   }
 
-  async executeProgressCycle(
-    userKey: number,
+  executeProgressCycle(
     activeMissions: UserMission[],
     metaMissions: UserMission[],
     context: ActionContext,
     window: MissionWindow,
-  ): Promise<CycleResult> {
+  ): CycleResult {
     const completed = this.progressMissions(activeMissions, context, window);
 
     const metaCompleted =
       completed.length > 0
         ? this.processMetaMissions(metaMissions, completed, window)
         : [];
-
-    await this.grantRewards(userKey, [...completed, ...metaCompleted]);
 
     return { completed, metaCompleted };
   }
@@ -111,43 +100,9 @@ export class MissionProcessor {
   }
 
   private completeIfFulfilled(uq: UserMission, now: Date): boolean {
-    if (uq.currentCount < uq.mission.requiredCount) return false;
+    if (uq.currentCount < (uq.requiredCount ?? uq.mission.requiredCount))
+      return false;
     uq.completedAt = now;
     return true;
-  }
-
-  private async grantRewards(
-    userKey: number,
-    completed: UserMission[],
-  ): Promise<void> {
-    for (const uq of completed) {
-      if (uq.mission.rewardAmount === 0) continue;
-      await this.grantReward(userKey, uq.mission);
-
-      this.logger.log(
-        {
-          event: "mission.complete.succeeded",
-          userKey,
-          missionId: uq.mission.id.toString(),
-          rewardType: uq.mission.rewardType,
-          rewardAmount: uq.mission.rewardAmount,
-        },
-        "미션 완료",
-      );
-    }
-  }
-
-  private async grantReward(userKey: number, mission: Mission): Promise<void> {
-    switch (mission.rewardType) {
-      case RewardType.POINT:
-        await this.pointService.savePointGrantRequest(
-          userKey,
-          PointReason.MISSION,
-          mission.rewardAmount,
-        );
-        break;
-      case RewardType.CHANCE:
-        break;
-    }
   }
 }

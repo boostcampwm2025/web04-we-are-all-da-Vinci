@@ -1,10 +1,11 @@
-import { EntityManager } from "@mikro-orm/core";
 import { Transactional } from "@mikro-orm/decorators/legacy";
-import { InjectRepository } from "@mikro-orm/nestjs";
-import { Injectable } from "@nestjs/common";
+import { EntityManager } from "@mikro-orm/mysql";
+import { Injectable, Logger } from "@nestjs/common";
+import { PointReason } from "../../point/entity/point-log.entity";
+import { PointService } from "../../point/point.service";
 import { MyMissionsResponseDto } from "../dto/my-missions-response.dto";
 import { TodayMissionsResponseDto } from "../dto/today-missions-response.dto";
-import { ObjectiveType } from "../entity/mission.entity";
+import { ObjectiveType, RewardType } from "../entity/mission.entity";
 import { UserMission } from "../entity/user-mission.entity";
 import { MissionWindow } from "../mission-window";
 import { MissionMapper } from "../mission.mapper";
@@ -13,21 +14,30 @@ import type {
   CycleResult,
   DrawingContext,
 } from "../mission.types";
-import type { UserMissionRepository } from "../repository/user-mission.repository";
-import { PointReason } from "../../point/entity/point-log.entity";
-import { PointService } from "../../point/point.service";
+import { UserMissionRepository } from "../repository/user-mission.repository";
 import { AssignMissionService } from "./assign-mission.service";
+import { ChallengeMissionService } from "./challenge-mission.service";
 import { MissionProcessor } from "./mission.processor";
 import { TutorialMissionService } from "./tutorial-mission.service";
 
+function mergeCycleResults(...results: CycleResult[]): CycleResult {
+  return {
+    completed: results.flatMap((r) => r.completed),
+    metaCompleted: results.flatMap((r) => r.metaCompleted),
+  };
+}
+
 @Injectable()
 export class MissionService {
+  private readonly logger = new Logger(MissionService.name);
+
   constructor(
-    @InjectRepository(UserMission)
+    private readonly em: EntityManager,
     private readonly userMissionRepo: UserMissionRepository,
     private readonly processor: MissionProcessor,
     private readonly assignMissionService: AssignMissionService,
     private readonly tutorialMissionService: TutorialMissionService,
+    private readonly challengeMissionService: ChallengeMissionService,
     private readonly pointService: PointService,
   ) {}
 
@@ -40,6 +50,7 @@ export class MissionService {
   ): Promise<MyMissionsResponseDto> {
     const window = MissionWindow.now();
     await this.assignMissionService.ensureMissionsAssigned(userKey, window);
+    await this.challengeMissionService.ensureAssigned(userKey);
     return this.queryMyMissions(userKey, window);
   }
 
@@ -64,11 +75,17 @@ export class MissionService {
     );
     const tutorialMissions =
       await this.userMissionRepo.findTutorialMissions(userKey);
+    const challengeMissions =
+      await this.challengeMissionService.findAll(userKey);
 
-    return MissionMapper.toResponse(missions, tutorialMissions);
+    return MissionMapper.toResponse(
+      missions,
+      tutorialMissions,
+      challengeMissions,
+    );
   }
 
-  // ─── 그림 제출 이벤트 (daily/weekly + tutorial SUBMIT/SCORE/RETRY) ───
+  // ─── 그림 제출 이벤트 ───
 
   @Transactional()
   async onDrawingSubmitted(
@@ -77,46 +94,29 @@ export class MissionService {
   ): Promise<CycleResult> {
     const window = MissionWindow.now();
     await this.assignMissionService.ensureMissionsAssigned(userKey, window);
-    // 같은 유저 동시 요청 직렬화 — 활성 미션 조회 전에 행을 잠근다
+    await this.challengeMissionService.ensureAssigned(userKey);
     await this.userMissionRepo.lockActiveForUpdate(userKey);
 
-    const drawingActive = await this.userMissionRepo.findActiveDrawingMissions(
+    const regular = await this.processRegularMissions(userKey, context, window);
+    const tutorial = await this.tutorialMissionService.processDrawing(
       userKey,
-      window.todayStart,
-      window.weekStart,
+      context,
+      window,
     );
-    // 튜토리얼은 완료 게이트 뒤 — 완료 유저는 쿼리 없이 []
-    const tutorialDrawing =
-      await this.tutorialMissionService.findActiveDrawing(userKey);
-
-    const weeklyMeta = await this.userMissionRepo.findActiveByObjective(
+    const challenge = await this.challengeMissionService.processDrawing(
       userKey,
-      ObjectiveType.MISSION_COMPLETED,
-      window.todayStart,
-      window.weekStart,
-    );
-    const tutorialMeta =
-      await this.tutorialMissionService.findActiveMeta(userKey);
-
-    const result = await this.processor.executeProgressCycle(
-      userKey,
-      [...drawingActive, ...tutorialDrawing],
-      [...weeklyMeta, ...tutorialMeta],
       context,
       window,
     );
 
-    await this.tutorialMissionService.recordCompletionIfFinished(
-      userKey,
-      result,
-      window,
-    );
-    await this.userMissionRepo.flush();
+    const result = mergeCycleResults(regular, tutorial, challenge);
+    this.grantRewards(userKey, [...result.completed, ...result.metaCompleted]);
+    await this.em.flush();
 
     return result;
   }
 
-  // 미션 액션 (방문, 공유 등)
+  // ─── 미션 액션 (방문, 공유 등) ───
 
   @Transactional()
   async onActionReported(
@@ -125,51 +125,45 @@ export class MissionService {
   ): Promise<CycleResult> {
     const window = MissionWindow.now();
     await this.assignMissionService.ensureMissionsAssigned(userKey, window);
-    // 같은 유저 동시 요청 직렬화 — 활성 미션 조회 전에 행을 잠근다
     await this.userMissionRepo.lockActiveForUpdate(userKey);
 
-    const tutorialActive =
-      await this.tutorialMissionService.findActiveByObjective(
-        userKey,
-        context.objectiveType,
-      );
-
-    const tutorialMeta =
-      await this.tutorialMissionService.findActiveMeta(userKey);
-
-    const result = await this.processor.executeProgressCycle(
+    const result = await this.tutorialMissionService.processAction(
       userKey,
-      tutorialActive,
-      tutorialMeta,
       context,
       window,
     );
-
-    await this.tutorialMissionService.recordCompletionIfFinished(
-      userKey,
-      result,
-      window,
-    );
-    await this.userMissionRepo.flush();
+    this.grantRewards(userKey, [...result.completed, ...result.metaCompleted]);
+    await this.em.flush();
 
     return result;
   }
 
-  // 친구 초대 미션 동기화 — 공유 적립(ChanceService.chargeByShare)과 **같은 트랜잭션**에서,
-  // 호출자가 넘긴 em으로 동작한다. inviteCount(= 당일 ShareLog 실제 개수)를 단일 소스로
-  // INVITE 미션 currentCount를 멱등 **설정**(증가 아님)하므로, ShareLog 기록과 원자적으로
-  // 커밋/롤백되어 드리프트가 발생하지 않는다.
-  // 주의: 주입된 repo(this.userMissionRepo)는 이 트랜잭션 fork가 아니므로 쓰지 말고,
-  // 반드시 전달받은 em으로만 조회/변경한다. flush는 호출자 트랜잭션 커밋 시 함께 수행.
+  private async processRegularMissions(
+    userKey: number,
+    context: DrawingContext,
+    window: MissionWindow,
+  ): Promise<CycleResult> {
+    const active = await this.userMissionRepo.findActiveDrawingMissions(
+      userKey,
+      window.todayStart,
+      window.weekStart,
+    );
+    const meta = await this.userMissionRepo.findActiveByObjective(
+      userKey,
+      ObjectiveType.MISSION_COMPLETED,
+      window.todayStart,
+      window.weekStart,
+    );
+    return this.processor.executeProgressCycle(active, meta, context, window);
+  }
+
   async syncInviteProgress(
-    em: EntityManager,
     userKey: number,
     inviteCount: number,
   ): Promise<void> {
     const window = MissionWindow.now();
 
-    // 활성(미완료) 오늘자 INVITE 미션. 미배정/완료 시 null → 멱등하게 종료.
-    const invite = await em.findOne(
+    const invite = await this.em.findOne(
       UserMission,
       {
         user: { userKey },
@@ -182,34 +176,22 @@ export class MissionService {
     if (!invite) return;
 
     const required = invite.mission.requiredCount;
-    // ShareLog 실개수(상한 required)로 그대로 설정. chargeByShare가 유일한 작성자이고
-    // 같은 트랜잭션에서 호출되므로 inviteCount는 단조 증가하는 실값 → 별도 보정(max) 불필요.
     const next = Math.min(inviteCount, required);
     if (next === invite.currentCount) return;
     invite.currentCount = next;
 
     if (invite.currentCount >= required) {
       invite.completedAt = window.now;
-      if (invite.mission.rewardAmount > 0) {
-        // 같은 트랜잭션에 보상 적재(커밋 시 함께 반영) — 상태만 바뀌고 보상 누락 방지.
-        this.pointService.enqueueGrant(
-          em,
-          userKey,
-          PointReason.MISSION,
-          invite.mission.rewardAmount,
-        );
-      }
-      await this.progressDailyCompletionMetaWithEm(em, userKey, window);
+      this.grantRewards(userKey, [invite]);
+      await this.progressDailyCompletionMeta(userKey, window);
     }
   }
 
-  // 주간 메타("일일 미션 N개 완료")를 전달받은 em으로 1 증가시킨다.
-  private async progressDailyCompletionMetaWithEm(
-    em: EntityManager,
+  private async progressDailyCompletionMeta(
     userKey: number,
     window: MissionWindow,
   ): Promise<void> {
-    const metas = await em.find(
+    const metas = await this.em.find(
       UserMission,
       {
         user: { userKey },
@@ -226,15 +208,33 @@ export class MissionService {
         !meta.completedAt
       ) {
         meta.completedAt = window.now;
-        if (meta.mission.rewardAmount > 0) {
-          this.pointService.enqueueGrant(
-            em,
-            userKey,
-            PointReason.MISSION,
-            meta.mission.rewardAmount,
-          );
-        }
+        this.grantRewards(userKey, [meta]);
       }
+    }
+  }
+
+  private grantRewards(userKey: number, completed: UserMission[]): void {
+    for (const uq of completed) {
+      if (uq.mission.rewardAmount === 0) continue;
+
+      if (uq.mission.rewardType === RewardType.POINT) {
+        this.pointService.enqueueGrant(
+          userKey,
+          PointReason.MISSION,
+          uq.mission.rewardAmount,
+        );
+      }
+
+      this.logger.log(
+        {
+          event: "mission.complete.succeeded",
+          userKey,
+          missionId: uq.mission.id.toString(),
+          rewardType: uq.mission.rewardType,
+          rewardAmount: uq.mission.rewardAmount,
+        },
+        "미션 완료",
+      );
     }
   }
 }

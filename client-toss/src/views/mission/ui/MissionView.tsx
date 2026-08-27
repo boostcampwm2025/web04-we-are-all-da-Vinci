@@ -26,6 +26,7 @@ const MissionView = () => {
     dailyMissions,
     weeklyMissions,
     tutorialCategories,
+    challengeMissions,
     isLoading,
     refetch,
   } = useMyMissions();
@@ -106,6 +107,12 @@ const MissionView = () => {
             ) : null
           }
         />
+        {challengeMissions.length > 0 && (
+          <MissionSection
+            missions={challengeMissions}
+            section={MISSION_SECTIONS.challenge}
+          />
+        )}
       </div>
       <div className="mt-1 px-(--card-mx)">
         <BannerAd type="feed" adGroupId={AD_GROUP_IDS.BANNER_FEED} />

@@ -31,6 +31,7 @@ const useMyMissions = () => {
     dailyMissions: data?.dailyMissions ?? [],
     weeklyMissions: data?.weeklyMissions ?? [],
     tutorialCategories: data?.tutorialCategories ?? [],
+    challengeMissions: data?.challengeMissions ?? [],
     isLoading,
     refetch,
   };

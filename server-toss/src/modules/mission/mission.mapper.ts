@@ -15,6 +15,7 @@ export class MissionMapper {
   static toResponse(
     missions: UserMission[],
     tutorialMissions: UserMission[] = [],
+    challengeMissionList: UserMission[] = [],
   ): MyMissionsResponseDto {
     const dailyMissions = missions
       .filter((uq) => uq.mission.period === MissionPeriod.DAILY)
@@ -27,7 +28,16 @@ export class MissionMapper {
     const tutorialCategories =
       MissionMapper.buildTutorialCategories(tutorialMissions);
 
-    return { dailyMissions, weeklyMissions, tutorialCategories };
+    const challengeMissions = challengeMissionList.map(
+      MissionMapper.toMyMission,
+    );
+
+    return {
+      dailyMissions,
+      weeklyMissions,
+      tutorialCategories,
+      challengeMissions,
+    };
   }
 
   /** 대시보드 카드용 경량 매핑 — 완료 여부·이름·포인트만 (오늘의 일일 미션) */
@@ -48,7 +58,7 @@ export class MissionMapper {
     title: uq.mission.title,
     objectiveType: uq.mission.objectiveType,
     currentCount: uq.currentCount,
-    requiredCount: uq.mission.requiredCount,
+    requiredCount: uq.requiredCount ?? uq.mission.requiredCount,
     rewardType: uq.mission.rewardType,
     rewardAmount: uq.mission.rewardAmount,
   });

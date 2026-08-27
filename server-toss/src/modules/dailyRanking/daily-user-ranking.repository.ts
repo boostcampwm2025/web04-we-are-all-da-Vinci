@@ -98,26 +98,4 @@ export class DailyUserRankingRepository extends EntityRepository<DailyUserRankin
       },
     );
   }
-
-  async saveSnapshots(snapshots: DailyUserRankingSnapshot[]): Promise<void> {
-    if (snapshots.length === 0) {
-      return;
-    }
-
-    const entities = snapshots.map((snapshot) =>
-      this.create({
-        rankingDate: snapshot.rankingDate,
-        userKey: snapshot.userKey,
-        nickname: snapshot.nickname,
-        drawingId: snapshot.drawingId,
-        score: snapshot.score,
-        rank: snapshot.rank,
-        participantCount: snapshot.participantCount,
-        submittedAt: snapshot.submittedAt,
-      }),
-    );
-
-    this.getEntityManager().persist(entities);
-    await this.getEntityManager().flush();
-  }
 }

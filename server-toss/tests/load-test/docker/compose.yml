@@ -10,11 +10,12 @@ services:
       MYSQL_DATABASE: load_test
       TZ: UTC
     cpus: 1.0
-    mem_limit: 1g
+    mem_limit: 2g
     networks:
       - load-net
     volumes:
-      - ./mysql/data:/var/lib/mysql
+      - mysql-data:/var/lib/mysql
+      - ./mysql/my.cnf:/etc/mysql/my.cnf
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
       interval: 5s
@@ -22,8 +23,7 @@ services:
       retries: 5
       start_period: 20s
 
-  davinci-app-1:
-    container_name: davinci-app-1
+  davinci-app:
     build:
       context: ../../../../
       dockerfile: server-toss/tests/load-test/docker/Dockerfile
@@ -33,20 +33,108 @@ services:
     networks:
       - load-net
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3000
       MYSQL_DATABASE: load_test
       MYSQL_HOST: davinci-mysql
       MYSQL_PORT: 3306
+      OTEL_SERVICE_NAME: davinci-app-1
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://davinci-otel-collector:4318/v1/traces
+      OTEL_LOGS_EXPORTER: none
+      OTEL_METRICS_EXPORTER: none
+      OTEL_ENABLED: true
+      OTEL_TRACES_SAMPLER: traceidratio
+      OTEL_TRACES_SAMPLER_ARG: "1.0"
+      EXTERNAL_API: flaky
+      RUN_ID: ${RUN_ID:-none}
     env_file:
       - ./env/.env
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     depends_on:
       davinci-mysql:
         condition: service_healthy
     cpus: 1.0
     mem_limit: 1g
 
+  davinci-migrate:
+    build:
+      context: ../../../../
+      dockerfile: server-toss/tests/load-test/docker/Dockerfile
+      target: builder
+    working_dir: /app/server-toss
+    volumes:
+      - ../:/app/server-toss/tests/load-test
+    networks:
+      - load-net
+    environment:
+      NODE_ENV: test
+      MYSQL_DATABASE: load_test
+      MYSQL_HOST: davinci-mysql
+      MYSQL_PORT: 3306
+      MIKRO_ORM_CLI_PREFER_TS: "0"
+    env_file:
+      - ./env/.env
+    depends_on:
+      davinci-mysql:
+        condition: service_healthy
+
+  davinci-otel-collector:
+    profiles: [obs]
+    container_name: davinci-otel-collector
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel/config.yml"]
+    networks:
+      - load-net
+    volumes:
+      - ./otel/otel-collector.yml:/etc/otel/config.yml
+    ports:
+      - "4318:4318"
+    mem_limit: 640m
+    depends_on:
+      - davinci-tempo
+
+  davinci-tempo:
+    profiles: [obs]
+    container_name: davinci-tempo
+    image: grafana/tempo:latest
+    command: ["-config.file=/etc/tempo.yml"]
+    networks:
+      - load-net
+    volumes:
+      - ./tempo/tempo.yml:/etc/tempo.yml
+      - ./tempo/data:/var/tempo
+    mem_limit: 640m
+
+  davinci-grafana:
+    profiles: [obs]
+    container_name: davinci-grafana
+    image: grafana/grafana:latest
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: true
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    networks:
+      - load-net
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3100:3000"
+    depends_on:
+      - davinci-tempo
+
 networks:
   load-net:
     name: load-net
     driver: bridge
+
+volumes:
+  mysql-data:

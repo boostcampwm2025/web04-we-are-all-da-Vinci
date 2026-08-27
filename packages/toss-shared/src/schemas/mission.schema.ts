@@ -28,6 +28,7 @@ export const MyMissionsResponseSchema = z.object({
   dailyMissions: z.array(MissionItemSchema),
   weeklyMissions: z.array(MissionItemSchema),
   tutorialCategories: z.array(TutorialCategorySchema),
+  challengeMissions: z.array(MissionItemSchema),
 });
 export type MyMissionsResponse = z.infer<typeof MyMissionsResponseSchema>;
 

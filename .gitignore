@@ -37,9 +37,12 @@ report*.json
 # Claude Code
 **/.claude/settings.local.json
 **/.claude/worktrees/
-.agents/
 **/.claude/skills/
 skills-lock.json
+
+.agents/*
+!.agents/plugins/
+!.agents/plugins/marketplace.json
 
 docs
 
@@ -60,5 +63,7 @@ we-are-all-da-vinci.ait
 AGENTS.md
 
 **/tokens.json
+
+__pycache__
 # AI 하네스 마이그레이션 검증(.claude/hooks/verify-migrations.sh)의 일회용 DB 스냅샷
 server-toss/src/migrations/.snapshot-daVinci_toss_migcheck.json

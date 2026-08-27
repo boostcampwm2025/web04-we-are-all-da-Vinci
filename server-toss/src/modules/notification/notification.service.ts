@@ -1,3 +1,5 @@
+import { UniqueConstraintViolationException } from "@mikro-orm/core";
+import { EntityManager } from "@mikro-orm/mysql";
 import { Injectable, Logger } from "@nestjs/common";
 import { exponentialBackoff, withRetry } from "src/common/util/retry.util";
 import {
@@ -8,11 +10,11 @@ import {
   BULK_MESSAGE_MIN_RECIPIENTS,
   SENT_NOTIFICATION_STATUS,
   type NotificationType,
+  type SentNotificationStatus,
 } from "./notification.constants";
 import { NotificationSender } from "./port/notification-sender.interface";
 import type { TossMessengerResponse } from "./schemas/toss-messenger.schema";
-import type { SentNotification } from "./sent-notification.entity";
-import { SentNotificationRepository } from "./sent-notification.repository";
+import { SentNotification } from "./sent-notification.entity";
 
 export type SendNotificationInput = {
   targetUserKey: number;
@@ -85,7 +87,7 @@ export class NotificationService {
   private readonly logger = new Logger(NotificationService.name);
 
   constructor(
-    private readonly sentNotificationRepository: SentNotificationRepository,
+    private readonly em: EntityManager,
     private readonly notificationSender: NotificationSender,
   ) {}
 
@@ -109,23 +111,14 @@ export class NotificationService {
       const result = await this.deliverWithRetry(input, record);
 
       if (result.sent) {
-        await this.sentNotificationRepository.updateStatus(
-          record,
-          SENT_NOTIFICATION_STATUS.DELIVERED,
-        );
+        await this.updateStatus(record, SENT_NOTIFICATION_STATUS.DELIVERED);
         return { sent: true };
       }
 
-      await this.sentNotificationRepository.updateStatus(
-        record,
-        SENT_NOTIFICATION_STATUS.FAILED,
-      );
+      await this.updateStatus(record, SENT_NOTIFICATION_STATUS.FAILED);
       return { sent: false, reason: result.reason };
     } catch (err) {
-      await this.sentNotificationRepository.updateStatus(
-        record,
-        SENT_NOTIFICATION_STATUS.FAILED,
-      );
+      await this.updateStatus(record, SENT_NOTIFICATION_STATUS.FAILED);
       this.logger.error(
         {
           event: "notification.send.failed",
@@ -148,8 +141,6 @@ export class NotificationService {
     // reserve 결과(record)를 한 번에 다 쌓아두면 identity map이 누적되어 flush마다
     // 전체 dirty check가 일어나 O(N²)로 악화된다. 청크가 끝날 때마다 em.clear()로
     // identity map을 비워 dirty check 범위를 청크 크기로 고정 → 전체 O(N) 선형 유지.
-    const em = this.sentNotificationRepository.getEntityManager();
-
     let sentCount = 0;
     let skippedCount = 0;
     let failedCount = 0;
@@ -206,7 +197,7 @@ export class NotificationService {
 
       // 청크 처리 완료 → identity map 비움(O(N²) 방지). status 갱신은 이미 끝나
       // record가 detach돼도 안전하다.
-      em.clear();
+      this.em.clear();
     }
 
     return {
@@ -219,16 +210,29 @@ export class NotificationService {
     };
   }
 
+  // 같은 (userKey, type, referenceId)가 이미 있으면 false 반환 (이미 발송 시도됨).
+  // INSERT 성공하면 새 row를 status=IN_FLIGHT로 만들고 반환.
   private async reserve(
     userKey: number,
     input: Pick<SendNotificationInput, "type" | "referenceId">,
   ): Promise<SentNotification | false> {
-    return this.sentNotificationRepository.tryInsert({
+    const entity = this.em.create(SentNotification, {
       userKey,
       type: input.type,
       referenceId: input.referenceId,
       sentAt: new Date(),
+      status: SENT_NOTIFICATION_STATUS.IN_FLIGHT,
     });
+
+    try {
+      await this.em.flush();
+      return entity;
+    } catch (err) {
+      if (err instanceof UniqueConstraintViolationException) {
+        return false;
+      }
+      throw err;
+    }
   }
 
   // withRetry 안에서 deliverReservedSingle을 감싼다.
@@ -346,13 +350,13 @@ export class NotificationService {
         const result = await this.deliverWithRetry(singleInput, target.record);
 
         if (result.sent) {
-          await this.sentNotificationRepository.updateStatus(
+          await this.updateStatus(
             target.record,
             SENT_NOTIFICATION_STATUS.DELIVERED,
           );
           sentCount += 1;
         } else {
-          await this.sentNotificationRepository.updateStatus(
+          await this.updateStatus(
             target.record,
             SENT_NOTIFICATION_STATUS.FAILED,
           );
@@ -360,10 +364,7 @@ export class NotificationService {
         }
         partialFailCount += result.partialFailCount;
       } catch (err) {
-        await this.sentNotificationRepository.updateStatus(
-          target.record,
-          SENT_NOTIFICATION_STATUS.FAILED,
-        );
+        await this.updateStatus(target.record, SENT_NOTIFICATION_STATUS.FAILED);
         failedCount += 1;
         this.logger.error(
           {
@@ -432,7 +433,7 @@ export class NotificationService {
         },
       );
     } catch (err) {
-      await this.sentNotificationRepository.updateStatusMany(
+      await this.updateStatusMany(
         reservedTargets.map((target) => target.record),
         SENT_NOTIFICATION_STATUS.FAILED,
       );
@@ -455,7 +456,7 @@ export class NotificationService {
     }
 
     if (response.resultType !== "SUCCESS") {
-      await this.sentNotificationRepository.updateStatusMany(
+      await this.updateStatusMany(
         reservedTargets.map((target) => target.record),
         SENT_NOTIFICATION_STATUS.FAILED,
       );
@@ -479,7 +480,7 @@ export class NotificationService {
       };
     }
 
-    await this.sentNotificationRepository.updateStatusMany(
+    await this.updateStatusMany(
       reservedTargets.map((target) => target.record),
       SENT_NOTIFICATION_STATUS.DELIVERED,
     );
@@ -515,6 +516,39 @@ export class NotificationService {
         contentId: item.contentId,
         reason: item.reachFailReason,
       })),
+    );
+  }
+
+  private async updateStatus(
+    entity: SentNotification,
+    status: SentNotificationStatus,
+  ): Promise<void> {
+    entity.status = status;
+    await this.em.flush();
+  }
+
+  private async updateStatusMany(
+    entities: SentNotification[],
+    status: SentNotificationStatus,
+  ): Promise<void> {
+    for (const entity of entities) {
+      entity.status = status;
+    }
+    await this.em.flush();
+  }
+
+  // 서버 크래시 등으로 IN_FLIGHT 상태가 영원히 잔존하는 row를 FAILED로 자동 전환.
+  // UNIQUE 제약 때문에 같은 user/day에 재발송도 안 되어 사용자가 영영 알림 못 받음.
+  async markStaleInFlightAsFailed(staleBefore: Date): Promise<number> {
+    return this.em.nativeUpdate(
+      SentNotification,
+      {
+        status: SENT_NOTIFICATION_STATUS.IN_FLIGHT,
+        sentAt: { $lt: staleBefore },
+      },
+      {
+        status: SENT_NOTIFICATION_STATUS.FAILED,
+      },
     );
   }
 }

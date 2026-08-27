@@ -62,10 +62,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [
-            "drawing",
-            "attendance_recovery"
-          ]
+          "enumItems": ["drawing", "attendance_recovery"]
         },
         "user_key": {
           "name": "user_key",
@@ -85,18 +82,14 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "user_key"
-          ],
+          "columnNames": ["user_key"],
           "keyName": "ad_views_user_key_index",
           "unique": false,
           "primary": false,
           "constraint": false
         },
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -106,15 +99,11 @@
       "checks": [],
       "foreignKeys": {
         "ad_views_user_key_foreign": {
-          "columnNames": [
-            "user_key"
-          ],
+          "columnNames": ["user_key"],
           "constraintName": "ad_views_user_key_foreign",
           "localTableName": "ad_views",
           "referencedTableName": "users",
-          "referencedColumnNames": [
-            "user_key"
-          ],
+          "referencedColumnNames": ["user_key"],
           "updateRule": "no action",
           "deleteRule": "no action"
         }
@@ -173,27 +162,21 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "prompt_date"
-          ],
+          "columnNames": ["prompt_date"],
           "keyName": "daily_prompts_prompt_date_unique",
           "unique": true,
           "primary": false,
           "constraint": true
         },
         {
-          "columnNames": [
-            "prompt_id"
-          ],
+          "columnNames": ["prompt_id"],
           "keyName": "daily_prompts_prompt_id_index",
           "unique": false,
           "primary": false,
           "constraint": false
         },
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -203,15 +186,11 @@
       "checks": [],
       "foreignKeys": {
         "daily_prompts_prompt_id_foreign": {
-          "columnNames": [
-            "prompt_id"
-          ],
+          "columnNames": ["prompt_id"],
           "constraintName": "daily_prompts_prompt_id_foreign",
           "localTableName": "daily_prompts",
           "referencedTableName": "prompts",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "updateRule": "no action",
           "deleteRule": "no action"
         }
@@ -390,10 +369,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "ranking_date",
-            "user_key"
-          ],
+          "columnNames": ["ranking_date", "user_key"],
           "keyName": "daily_user_rankings_date_user_unique",
           "unique": true,
           "primary": false,
@@ -401,9 +377,7 @@
           "composite": true
         },
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -541,27 +515,21 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "prompt_id"
-          ],
+          "columnNames": ["prompt_id"],
           "keyName": "drawings_prompt_id_index",
           "unique": false,
           "primary": false,
           "constraint": false
         },
         {
-          "columnNames": [
-            "user_key"
-          ],
+          "columnNames": ["user_key"],
           "keyName": "drawings_user_key_index",
           "unique": false,
           "primary": false,
           "constraint": false
         },
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -571,28 +539,20 @@
       "checks": [],
       "foreignKeys": {
         "drawings_prompt_id_foreign": {
-          "columnNames": [
-            "prompt_id"
-          ],
+          "columnNames": ["prompt_id"],
           "constraintName": "drawings_prompt_id_foreign",
           "localTableName": "drawings",
           "referencedTableName": "prompts",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "updateRule": "no action",
           "deleteRule": "no action"
         },
         "drawings_user_key_foreign": {
-          "columnNames": [
-            "user_key"
-          ],
+          "columnNames": ["user_key"],
           "constraintName": "drawings_user_key_foreign",
           "localTableName": "drawings",
           "referencedTableName": "users",
-          "referencedColumnNames": [
-            "user_key"
-          ],
+          "referencedColumnNames": ["user_key"],
           "updateRule": "no action",
           "deleteRule": "no action"
         }
@@ -665,22 +625,18 @@
         },
         "period": {
           "name": "period",
-          "type": "enum('daily','weekly','tutorial')",
+          "type": "enum('daily','weekly','tutorial','continuously')",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
           "unique": false,
-          "length": 8,
+          "length": 12,
           "precision": null,
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [
-            "daily",
-            "weekly",
-            "tutorial"
-          ]
+          "enumItems": ["daily", "weekly", "tutorial", "continuously"]
         },
         "is_fixed": {
           "name": "is_fixed",
@@ -770,10 +726,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [
-            "point",
-            "chance"
-          ]
+          "enumItems": ["point", "chance"]
         },
         "reward_amount": {
           "name": "reward_amount",
@@ -818,19 +771,27 @@
           "scale": null,
           "default": "'none'",
           "comment": null,
-          "enumItems": [
-            "none",
-            "day",
-            "week",
-            "month"
-          ]
+          "enumItems": ["none", "day", "week", "month"]
+        },
+        "increment_step": {
+          "name": "increment_step",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": 10,
+          "scale": 0,
+          "default": null,
+          "comment": null,
+          "enumItems": []
         }
       },
       "indexes": [
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -998,10 +959,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "type",
-            "status"
-          ],
+          "columnNames": ["type", "status"],
           "keyName": "idx_notification_agreements_type_status",
           "unique": false,
           "primary": false,
@@ -1009,20 +967,14 @@
           "composite": true
         },
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
           "constraint": true
         },
         {
-          "columnNames": [
-            "user_key",
-            "type",
-            "template_code"
-          ],
+          "columnNames": ["user_key", "type", "template_code"],
           "keyName": "uq_notification_agreements_user_type_template",
           "unique": true,
           "primary": false,
@@ -1086,9 +1038,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "user_key"
-          ],
+          "columnNames": ["user_key"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -1176,13 +1126,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [
-            "pending",
-            "processing",
-            "retry",
-            "failed",
-            "succeeded"
-          ]
+          "enumItems": ["pending", "processing", "retry", "failed", "succeeded"]
         },
         "point_amount": {
           "name": "point_amount",
@@ -1212,13 +1156,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [
-            "ad",
-            "share",
-            "drawing",
-            "mission",
-            "attendance"
-          ]
+          "enumItems": ["ad", "share", "drawing", "mission", "attendance"]
         },
         "attempt_count": {
           "name": "attempt_count",
@@ -1328,10 +1266,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "point_grant_status",
-            "created_at"
-          ],
+          "columnNames": ["point_grant_status", "created_at"],
           "keyName": "idx_pgr_status_created_at",
           "unique": false,
           "primary": false,
@@ -1339,10 +1274,7 @@
           "composite": true
         },
         {
-          "columnNames": [
-            "point_grant_status",
-            "locked_at"
-          ],
+          "columnNames": ["point_grant_status", "locked_at"],
           "keyName": "idx_pgr_status_locked_at",
           "unique": false,
           "primary": false,
@@ -1350,10 +1282,7 @@
           "composite": true
         },
         {
-          "columnNames": [
-            "point_grant_status",
-            "next_retry_at"
-          ],
+          "columnNames": ["point_grant_status", "next_retry_at"],
           "keyName": "idx_pgr_status_next_retry_at",
           "unique": false,
           "primary": false,
@@ -1361,18 +1290,14 @@
           "composite": true
         },
         {
-          "columnNames": [
-            "user_key"
-          ],
+          "columnNames": ["user_key"],
           "keyName": "point_grant_requests_user_key_index",
           "unique": false,
           "primary": false,
           "constraint": false
         },
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -1382,15 +1307,11 @@
       "checks": [],
       "foreignKeys": {
         "point_grant_requests_user_key_foreign": {
-          "columnNames": [
-            "user_key"
-          ],
+          "columnNames": ["user_key"],
           "constraintName": "point_grant_requests_user_key_foreign",
           "localTableName": "point_grant_requests",
           "referencedTableName": "users",
-          "referencedColumnNames": [
-            "user_key"
-          ],
+          "referencedColumnNames": ["user_key"],
           "updateRule": "no action",
           "deleteRule": "no action"
         }
@@ -1459,13 +1380,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [
-            "ad",
-            "share",
-            "drawing",
-            "mission",
-            "attendance"
-          ]
+          "enumItems": ["ad", "share", "drawing", "mission", "attendance"]
         },
         "point_amount": {
           "name": "point_amount",
@@ -1500,18 +1415,14 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "user_key"
-          ],
+          "columnNames": ["user_key"],
           "keyName": "point_logs_user_key_index",
           "unique": false,
           "primary": false,
           "constraint": false
         },
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -1521,15 +1432,11 @@
       "checks": [],
       "foreignKeys": {
         "point_logs_user_key_foreign": {
-          "columnNames": [
-            "user_key"
-          ],
+          "columnNames": ["user_key"],
           "constraintName": "point_logs_user_key_foreign",
           "localTableName": "point_logs",
           "referencedTableName": "users",
-          "referencedColumnNames": [
-            "user_key"
-          ],
+          "referencedColumnNames": ["user_key"],
           "updateRule": "no action",
           "deleteRule": "no action"
         }
@@ -1573,9 +1480,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -1728,11 +1633,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "score",
-            "submitted_at",
-            "nickname"
-          ],
+          "columnNames": ["score", "submitted_at", "nickname"],
           "keyName": "idx_ranking_score_submit_nickname",
           "unique": false,
           "primary": false,
@@ -1746,9 +1647,7 @@
           "composite": true
         },
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
@@ -1886,11 +1785,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "type",
-            "status",
-            "sent_at"
-          ],
+          "columnNames": ["type", "status", "sent_at"],
           "keyName": "idx_sent_notifications_type_status_sent_at",
           "unique": false,
           "primary": false,
@@ -1898,10 +1793,7 @@
           "composite": true
         },
         {
-          "columnNames": [
-            "user_key",
-            "sent_at"
-          ],
+          "columnNames": ["user_key", "sent_at"],
           "keyName": "idx_sent_notifications_user_sent_at",
           "unique": false,
           "primary": false,
@@ -1909,20 +1801,14 @@
           "composite": true
         },
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
           "constraint": true
         },
         {
-          "columnNames": [
-            "user_key",
-            "type",
-            "reference_id"
-          ],
+          "columnNames": ["user_key", "type", "reference_id"],
           "keyName": "uq_sent_notifications_user_type_ref",
           "unique": true,
           "primary": false,
@@ -1981,9 +1867,7 @@
           "scale": null,
           "default": null,
           "comment": null,
-          "enumItems": [
-            "contactsViral"
-          ]
+          "enumItems": ["contactsViral"]
         },
         "module_id": {
           "name": "module_id",
@@ -2033,19 +1917,14 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
           "constraint": true
         },
         {
-          "columnNames": [
-            "user_key",
-            "created_at"
-          ],
+          "columnNames": ["user_key", "created_at"],
           "keyName": "share_logs_user_key_created_at_index",
           "unique": false,
           "primary": false,
@@ -2053,9 +1932,7 @@
           "composite": true
         },
         {
-          "columnNames": [
-            "user_key"
-          ],
+          "columnNames": ["user_key"],
           "keyName": "share_logs_user_key_index",
           "unique": false,
           "primary": false,
@@ -2065,15 +1942,11 @@
       "checks": [],
       "foreignKeys": {
         "share_logs_user_key_foreign": {
-          "columnNames": [
-            "user_key"
-          ],
+          "columnNames": ["user_key"],
           "constraintName": "share_logs_user_key_foreign",
           "localTableName": "share_logs",
           "referencedTableName": "users",
-          "referencedColumnNames": [
-            "user_key"
-          ],
+          "referencedColumnNames": ["user_key"],
           "updateRule": "no action",
           "deleteRule": "no action"
         }
@@ -2177,18 +2050,14 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "user_key"
-          ],
+          "columnNames": ["user_key"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
           "constraint": true
         },
         {
-          "columnNames": [
-            "last_checked_date"
-          ],
+          "columnNames": ["last_checked_date"],
           "keyName": "user_attendances_last_checked_date_index",
           "unique": false,
           "primary": false,
@@ -2322,33 +2191,55 @@
           "default": null,
           "comment": null,
           "enumItems": []
+        },
+        "required_count": {
+          "name": "required_count",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": 10,
+          "scale": 0,
+          "default": null,
+          "comment": null,
+          "enumItems": []
+        },
+        "level": {
+          "name": "level",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": 10,
+          "scale": 0,
+          "default": "0",
+          "comment": null,
+          "enumItems": []
         }
       },
       "indexes": [
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
           "constraint": true
         },
         {
-          "columnNames": [
-            "mission_id"
-          ],
+          "columnNames": ["mission_id"],
           "keyName": "user_missions_mission_id_index",
           "unique": false,
           "primary": false,
           "constraint": false
         },
         {
-          "columnNames": [
-            "user_key",
-            "created_at",
-            "mission_id"
-          ],
+          "columnNames": ["user_key", "created_at", "mission_id"],
           "keyName": "user_missions_user_key_created_at_mission_id_unique",
           "unique": true,
           "primary": false,
@@ -2356,9 +2247,7 @@
           "composite": true
         },
         {
-          "columnNames": [
-            "user_key"
-          ],
+          "columnNames": ["user_key"],
           "keyName": "user_missions_user_key_index",
           "unique": false,
           "primary": false,
@@ -2368,28 +2257,20 @@
       "checks": [],
       "foreignKeys": {
         "user_missions_mission_id_foreign": {
-          "columnNames": [
-            "mission_id"
-          ],
+          "columnNames": ["mission_id"],
           "constraintName": "user_missions_mission_id_foreign",
           "localTableName": "user_missions",
           "referencedTableName": "missions",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "updateRule": "no action",
           "deleteRule": "no action"
         },
         "user_missions_user_key_foreign": {
-          "columnNames": [
-            "user_key"
-          ],
+          "columnNames": ["user_key"],
           "constraintName": "user_missions_user_key_foreign",
           "localTableName": "user_missions",
           "referencedTableName": "users",
-          "referencedColumnNames": [
-            "user_key"
-          ],
+          "referencedColumnNames": ["user_key"],
           "updateRule": "no action",
           "deleteRule": "no action"
         }
@@ -2523,18 +2404,14 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "user_key"
-          ],
+          "columnNames": ["user_key"],
           "keyName": "PRIMARY",
           "unique": true,
           "primary": true,
           "constraint": true
         },
         {
-          "columnNames": [
-            "nickname"
-          ],
+          "columnNames": ["nickname"],
           "keyName": "users_nickname_unique",
           "unique": true,
           "primary": false,

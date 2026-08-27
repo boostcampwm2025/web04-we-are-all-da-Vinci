@@ -1,0 +1,20 @@
+{
+  "name": "daVinci-marketplace",
+  "interface": {
+    "displayName": "다빈치 플러그인"
+  },
+  "plugins": [
+    {
+      "name": "prompt-generator",
+      "source": {
+        "source": "local",
+        "path": "./plugins/prompt-generator"
+      },
+      "policy": {
+        "installation": "INSTALLED_BY_DEFAULT",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

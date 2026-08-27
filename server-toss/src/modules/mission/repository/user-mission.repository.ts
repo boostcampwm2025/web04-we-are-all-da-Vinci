@@ -1,8 +1,6 @@
 import { LockMode } from "@mikro-orm/core";
 import { EntityRepository } from "@mikro-orm/mysql";
-import { User } from "src/modules/user/user.entity";
 import { ObjectiveType, MissionPeriod } from "../entity/mission.entity";
-import type { Mission } from "../entity/mission.entity";
 import { UserMission } from "../entity/user-mission.entity";
 
 export class UserMissionRepository extends EntityRepository<UserMission> {
@@ -56,17 +54,6 @@ export class UserMissionRepository extends EntityRepository<UserMission> {
       },
       { populate: ["mission"] },
     );
-  }
-
-  createForUser(
-    userKey: number,
-    mission: Mission,
-    periodStart: Date,
-  ): UserMission {
-    const userRef = this.getEntityManager().getReference(User, userKey);
-    const uq = this.create({ user: userRef, mission, createdAt: periodStart });
-    this.em.persist(uq);
-    return uq;
   }
 
   async findActiveDrawingMissions(
@@ -155,6 +142,35 @@ export class UserMissionRepository extends EntityRepository<UserMission> {
     );
   }
 
+  async findChallengeMissions(userKey: number): Promise<UserMission[]> {
+    return this.find(
+      {
+        user: { userKey },
+        mission: { period: MissionPeriod.CONTINUOUSLY },
+      },
+      { populate: ["mission"] },
+    );
+  }
+
+  async findActiveChallengeMissions(userKey: number): Promise<UserMission[]> {
+    return this.find(
+      {
+        user: { userKey },
+        completedAt: null,
+        mission: {
+          period: MissionPeriod.CONTINUOUSLY,
+          objectiveType: {
+            $nin: [
+              ObjectiveType.MISSION_COMPLETED,
+              ObjectiveType.TUTORIAL_COMPLETED,
+            ],
+          },
+        },
+      },
+      { populate: ["mission"] },
+    );
+  }
+
   async countIncompleteTutorial(userKey: number): Promise<number> {
     return this.count({
       user: { userKey },
@@ -177,9 +193,5 @@ export class UserMissionRepository extends EntityRepository<UserMission> {
         orderBy: { id: "asc" }, // 항상 같은 순서로 잠가 데드락 방지
       },
     );
-  }
-
-  async flush(): Promise<void> {
-    await this.getEntityManager().flush();
   }
 }

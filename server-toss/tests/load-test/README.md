@@ -1,37 +1,331 @@
-## Load Test Environment
+## Load Test
 
-### App Server
+### 테스트 환경 (Docker)
 
-- 1 vCPU
-- 1GB Memory
-- Node.js 22
+| 서비스                  | 스펙                 | 포트           |
+| ----------------------- | -------------------- | -------------- |
+| App (NestJS)            | 1 vCPU, 1GB, Node 22 | 3000           |
+| MySQL 8.4               | 1 vCPU, 2GB          | 3306           |
+| OpenTelemetry Collector | 640MB                | 4318(receiver) |
+| Tempo                   | 640MB                | 4317(receiver) |
+| Grafana                 | 1GB                  | 3100           |
 
-### Database
+# Load Test
 
-- MySQL 8
-- 1 vCPU
-- 1GB Memory
+NestJS 서버를 실제 서비스 환경과 유사한 조건에서 부하 테스트하기 위한 환경입니다.
 
-## 대량 시드 (부하 테스트용)
+`pnpm load-test` 한 번으로
 
-- `LargeUserDrawingSeeder`는 배치 단위로 flush/clear 하도록 구성되어 메모리 사용량을 줄입니다.
-- 기본값:
-  - `SEED_DRAWING_USER_COUNT=1000`
-  - `SEED_DRAWING_BATCH_SIZE=200`
+- Docker 환경 구성
+- DB Migration
+- Seed Data 생성
+- JWT Token 생성
+- Application 실행
+- k6 Warmup / Main Test
+- 결과 저장
+- (선택) OpenTelemetry Trace 수집
 
-```sh
-# 기본 1,000명
-pnpm -F server-toss seed:drawing:large
+까지 모두 자동으로 수행합니다.
+
+---
+
+# Quick Start
+
+## 준비
+
+필요한 프로그램
+
+- Docker Desktop
+- pnpm
+- k6
+
+환경변수
+
+```
+tests/load-test/docker/env/.env
 ```
 
-## 부하 테스트 가이드
+을 준비합니다.
 
-> 도커 컨테이너로 하는 이유는 컨테이너 실행 시 cpu, memory 자원 제한을 두기 위함입니다.
+---
 
-> 컨테이너를 사용하지 않는다면, 컨테이너 빌드/시작 대신에 바로 서버를 실행하면 됩니다.
+## 실행
 
-- [ ] 준비물: `k6`, `Docker`, `.env`
-- [ ] 도커 컴포즈 실행 (`pnpm load-test:docker:run`)
-- [ ] 시드 데이터 생성 (`MYSQL_DATABASE=load_test pnpm seed:drawing:large &&MYSQL_DATABASE=load_test pnpm seed:ranking`)
-- [ ] JWT 토큰 생성 (`MYSQL_DATABASE=load_test pnpm tokens:generate --count 100`)
-- [ ] 테스트 실행 (`k6 run tests/load-test/k6/baseline.js`)
+기본 설정
+
+```bash
+pnpm load-test
+```
+
+다른 설정 사용
+
+```bash
+pnpm load-test staging.yaml
+```
+
+실행이 끝나면 결과는
+
+```
+tests/load-test/results/<runId>/
+```
+
+에 저장됩니다.
+
+---
+
+# 실행 순서
+
+```text
+Load Config
+      │
+      ▼
+MySQL
+      │
+      ▼
+Migration
+      │
+      ▼
+Seed Data
+      │
+      ▼
+Generate Tokens
+      │
+      ▼
+(Optional)
+OpenTelemetry
+      │
+      ▼
+Application
+      │
+      ▼
+Warmup
+      │
+      ▼
+Main Test
+      │
+      ▼
+Save Result
+      │
+      ▼
+docker compose down
+```
+
+모든 Stage는 실행 시간을 기록하며,
+
+중간에 실패하면 즉시 종료한 뒤 Docker 리소스를 정리합니다.
+
+---
+
+# 디렉토리 구조
+
+```
+tests/load-test
+├── configs/          # 실행 설정
+├── docker/           # Docker Compose
+├── fixtures/         # 생성된 토큰
+├── k6/               # 테스트 시나리오
+├── results/          # 실행 결과
+└── scripts/          # JS 오케스트레이터
+```
+
+---
+
+# Config
+
+모든 테스트 조건은
+
+```
+configs/*.yaml
+```
+
+에서 관리합니다.
+
+예시
+
+```yaml
+database:
+  migrate: true
+  seed: 1000
+
+tokens:
+  count: 1000
+
+warmup:
+  enabled: true
+  vus: 5
+  duration: 30s
+
+main:
+  vus: 100
+  duration: 5m
+
+docker:
+  profiles:
+    - obs
+```
+
+설정을 변경하면 코드를 수정하지 않고
+
+- Seed 수
+- Token 수
+- VU
+- Duration
+- Docker Profile
+
+등을 바꿀 수 있습니다.
+
+---
+
+# 결과
+
+매 실행마다
+
+```
+results/<runId>/
+```
+
+가 생성됩니다.
+
+```
+config.yaml
+metadata.json
+summary.json
+report.html
+stdout.log
+stderr.log
+```
+
+| 파일          | 설명                 |
+| ------------- | -------------------- |
+| config.yaml   | 실행에 사용한 설정   |
+| metadata.json | Stage 시간, runId 등 |
+| summary.json  | k6 원본 결과         |
+| report.html   | HTML Report          |
+| stdout.log    | k6 출력              |
+| stderr.log    | 에러 로그            |
+
+---
+
+# Trace 분석
+
+Config에
+
+```yaml
+docker:
+  profiles:
+    - obs
+```
+
+를 추가하면
+
+- OpenTelemetry Collector
+- Tempo
+- Grafana
+
+가 함께 실행됩니다.
+
+Grafana
+
+```
+http://localhost:3100
+```
+
+서비스
+
+```
+davinci-app-1
+```
+
+실행마다
+
+```
+run.id=<runId>
+```
+
+를 Resource Attribute에 넣어 보내므로
+
+Grafana Explore에서 해당 실행의 Trace만 조회할 수 있습니다.
+
+---
+
+# 새로운 Scenario 추가
+
+1.
+
+```
+k6/<name>.js
+```
+
+생성
+
+2.
+
+```
+configs/*.yaml
+```
+
+에서
+
+```yaml
+main:
+  scenario: "<name>"
+```
+
+설정
+
+3.
+
+실행
+
+```
+pnpm load-test
+```
+
+---
+
+# 결과 비교
+
+두 실행 결과 비교
+
+```bash
+pnpm load-test:compare results/run1 results/run2
+```
+
+Markdown 출력
+
+```bash
+pnpm load-test:compare results/run1 results/run2 --markdown
+```
+
+---
+
+# 자주 수정하는 위치
+
+| 하고 싶은 작업   | 수정할 파일        |
+| ---------------- | ------------------ |
+| VU 변경          | configs/\*.yaml    |
+| Duration 변경    | configs/\*.yaml    |
+| Seed 개수 변경   | configs/\*.yaml    |
+| Scenario 추가    | k6/\*.js           |
+| Docker 자원 변경 | docker/compose.yml |
+| 실행 순서 변경   | scripts/runner.js  |
+| 결과 저장 변경   | scripts/result.js  |
+
+---
+
+# 내부 구조
+
+실행 파이프라인은 JS 오케스트레이터가 담당합니다.
+
+```
+Runner
+├── Compose
+├── K6Runner
+├── Result
+├── ConfigHelper
+└── Process
+```
+
+각 컴포넌트는 하나의 책임만 가지도록 분리되어 있으며,
+
+새로운 Stage를 추가하거나 실행 방식을 변경할 때는 `Runner`만 수정하면 됩니다.

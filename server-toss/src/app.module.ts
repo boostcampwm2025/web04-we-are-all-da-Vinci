@@ -22,6 +22,7 @@ import { PromptModule } from "./modules/prompt/prompt.module";
 import { MissionModule } from "./modules/mission/mission.module";
 import { RankingModule } from "./modules/ranking/ranking.module";
 import { UserModule } from "./modules/user/user.module";
+import { TraceAopModule } from "./common/observability/trace-aop.module";
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { UserModule } from "./modules/user/user.module";
         });
       },
     }),
+    ...(process.env.OTEL_ENABLED === "true" ? [TraceAopModule] : []),
     ScheduleModule.forRoot(),
     // 도메인 이벤트 발행/구독. ranking.changed처럼 트랜잭션 커밋 후 비동기
     // 후처리(알림 발송 등)에 사용. in-memory이므로 프로세스 재시작 시 처리 중

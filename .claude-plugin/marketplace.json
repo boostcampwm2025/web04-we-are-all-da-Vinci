@@ -1,0 +1,14 @@
+{
+  "name": "davinci-marketplace",
+  "owner": {
+    "name": "daVinci team"
+  },
+  "description": "Shared Claude Code plugins for the daVinci project.",
+  "plugins": [
+    {
+      "name": "prompt-generator",
+      "source": "./plugins/prompt-generator",
+      "description": "Generate, convert, and preview RGB drawing-stroke prompts."
+    }
+  ]
+}

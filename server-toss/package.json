@@ -33,15 +33,9 @@
     "migration:pending": "mikro-orm migration:pending",
     "migration:down": "mikro-orm migration:down",
     "migration:fresh": "mikro-orm migration:fresh",
-    "load-test:docker:run": "docker compose -f tests/load-test/docker/compose.yml up -d --build",
-    "load-test:docker:stop": "docker compose -f tests/load-test/docker/compose.yml down",
-    "load-test:docker:logs": "docker compose -f tests/load-test/docker/compose.yml logs -f",
-    "load-test:baseline": "k6 run tests/load-test/k6/baseline.js",
-    "load-test:high-stroke": "k6 run tests/load-test/k6/high-stroke.js",
-    "load-test:midnight-ramp": "k6 run tests/load-test/k6/midnight-ramp.js",
-    "load-test:concurrent-submit": "k6 run tests/load-test/k6/concurrent-submit.js",
-    "load-test:verify-ranking": "node ./tests/load-test/scripts/verify-ranking-integrity.js",
-    "tokens:generate": "node ./tests/load-test/scripts/generate-test-tokens.js"
+    "load-test": "node tests/load-test/scripts/load-test.js",
+    "load-test:compare": "node tests/load-test/scripts/compare-results.js",
+    "load-test:clean": "docker compose -f tests/load-test/docker/compose.yml down -v"
   },
   "dependencies": {
     "@davinci/similarity": "workspace:*",
@@ -59,6 +53,13 @@
     "@nestjs/platform-express": "^11.1.17",
     "@nestjs/schedule": "^6.1.1",
     "@nestjs/swagger": "^11.2.6",
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/auto-instrumentations-node": "^0.76.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.218.0",
+    "@opentelemetry/resources": "^2.7.1",
+    "@opentelemetry/sdk-node": "^0.218.0",
+    "@opentelemetry/sdk-trace-node": "^2.7.1",
+    "@opentelemetry/semantic-conventions": "^1.41.1",
     "@toss/shared": "workspace:*",
     "@willsoto/nestjs-prometheus": "^6.1.0",
     "cookie-parser": "^1.4.7",
@@ -95,7 +96,8 @@
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.20.0"
+    "typescript-eslint": "^8.20.0",
+    "yaml": "^2.9.0"
   },
   "jest": {
     "moduleFileExtensions": [

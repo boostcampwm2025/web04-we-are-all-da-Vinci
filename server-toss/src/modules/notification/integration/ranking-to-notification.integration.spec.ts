@@ -1,3 +1,5 @@
+import { UniqueConstraintViolationException } from "@mikro-orm/core";
+import type { EntityManager } from "@mikro-orm/mysql";
 import type { ConfigService } from "@nestjs/config";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { TossTransportError } from "src/external/toss/common/toss.errors";
@@ -20,7 +22,6 @@ import {
 } from "../notification.constants";
 import { NotificationService } from "../notification.service";
 import type { SentNotification } from "../sent-notification.entity";
-import type { SentNotificationRepository } from "../sent-notification.repository";
 
 // drawing 제출 → ranking 갱신 → RankingChangedEvent emit → RankingChangedListener
 //   → NotificationService.send → sent_notifications status 전이 까지의 한 흐름.
@@ -66,7 +67,7 @@ const notificationKey = (input: {
   referenceId: string;
 }) => `${input.userKey}:${input.type}:${input.referenceId}`;
 
-class InMemorySentNotificationRepository {
+class InMemoryNotificationStore {
   private sequence = 0n;
   readonly records = new Map<string, StoredNotification>();
 
@@ -86,51 +87,20 @@ class InMemorySentNotificationRepository {
     return out;
   }
 
-  async tryInsert(input: {
-    userKey: number;
-    type: string;
-    referenceId: string;
-    sentAt: Date;
-  }): Promise<SentNotification | false> {
-    const key = notificationKey(input);
-    if (this.records.has(key)) return false;
-
-    const record = {
+  createEntity(data: Record<string, unknown>): StoredNotification {
+    return {
       id: (this.sequence += 1n),
-      userKey: input.userKey,
-      type: input.type,
-      referenceId: input.referenceId,
-      sentAt: input.sentAt,
-      createdAt: input.sentAt,
-      updatedAt: input.sentAt,
+      ...data,
       status: SENT_NOTIFICATION_STATUS.IN_FLIGHT,
     } as StoredNotification;
-
-    this.records.set(key, record);
-    return record;
   }
 
-  async updateStatus(
-    entity: SentNotification,
-    status: SentNotificationStatus,
-  ): Promise<void> {
-    const record = entity as StoredNotification;
-    record.status = status;
-  }
-
-  async updateStatusMany(
-    entities: SentNotification[],
-    status: SentNotificationStatus,
-  ): Promise<void> {
-    for (const entity of entities) {
-      const record = entity as StoredNotification;
-      record.status = status;
+  flush(entity: StoredNotification): void {
+    const key = notificationKey(entity);
+    if (this.records.has(key)) {
+      throw new UniqueConstraintViolationException(new Error("duplicate"));
     }
-  }
-
-  async deleteOne(entity: SentNotification): Promise<void> {
-    const record = entity as StoredNotification;
-    this.records.delete(notificationKey(record));
+    this.records.set(key, entity);
   }
 }
 
@@ -185,6 +155,25 @@ class InMemoryNotificationAgreementRepository {
 
 const OVERTAKEN_TEMPLATE = "overtaken_v1";
 
+const buildInMemoryEm = (store: InMemoryNotificationStore) => {
+  let pendingEntity: StoredNotification | null = null;
+
+  return {
+    create: jest.fn((_ctor: unknown, data: Record<string, unknown>) => {
+      pendingEntity = store.createEntity(data);
+      return pendingEntity;
+    }),
+    flush: jest.fn(async () => {
+      if (pendingEntity) {
+        store.flush(pendingEntity);
+        pendingEntity = null;
+      }
+    }),
+    clear: jest.fn(),
+    nativeUpdate: jest.fn().mockResolvedValue(0),
+  } as unknown as EntityManager;
+};
+
 const buildIntegration = (opts: {
   enabled?: boolean;
   agreements: Array<{
@@ -205,7 +194,8 @@ const buildIntegration = (opts: {
     }),
   } as unknown as jest.Mocked<ConfigService>;
 
-  const sentNotificationRepository = new InMemorySentNotificationRepository();
+  const store = new InMemoryNotificationStore();
+  const em = buildInMemoryEm(store);
 
   const notificationAgreementRepository =
     new InMemoryNotificationAgreementRepository(
@@ -222,20 +212,7 @@ const buildIntegration = (opts: {
     sendBulkMessage: jest.fn().mockResolvedValue(okResponse()),
   } as unknown as jest.Mocked<NotificationSender>;
 
-  const counterMock = () => ({
-    labels: jest.fn().mockReturnValue({ inc: jest.fn() }),
-  });
-  const histogramMock = () => ({
-    labels: jest.fn().mockReturnValue({ observe: jest.fn() }),
-  });
-
-  const notificationService = new NotificationService(
-    sentNotificationRepository as unknown as SentNotificationRepository,
-    notificationSender,
-    counterMock() as never,
-    histogramMock() as never,
-    counterMock() as never,
-  );
+  const notificationService = new NotificationService(em, notificationSender);
 
   const listener = new RankingChangedListener(
     {} as never,
@@ -256,7 +233,7 @@ const buildIntegration = (opts: {
 
   return {
     eventEmitter,
-    sentNotificationRepository,
+    store,
     notificationAgreementRepository,
     notificationSender,
     configService,
@@ -291,19 +268,18 @@ const triggerRankingChange = (
 
 describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름", () => {
   it("추월된 동의자 모두에게 알림이 발송되고 status=DELIVERED로 끝나요", async () => {
-    const { eventEmitter, sentNotificationRepository, notificationSender } =
-      buildIntegration({
-        agreements: [
-          {
-            userKey: 101,
-            status: NOTIFICATION_AGREEMENT_STATUS.AGREED,
-          },
-          {
-            userKey: 202,
-            status: NOTIFICATION_AGREEMENT_STATUS.AGREED,
-          },
-        ],
-      });
+    const { eventEmitter, store, notificationSender } = buildIntegration({
+      agreements: [
+        {
+          userKey: 101,
+          status: NOTIFICATION_AGREEMENT_STATUS.AGREED,
+        },
+        {
+          userKey: 202,
+          status: NOTIFICATION_AGREEMENT_STATUS.AGREED,
+        },
+      ],
+    });
 
     await triggerRankingChange(eventEmitter, [101, 202]);
 
@@ -319,33 +295,27 @@ describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름",
       expect.objectContaining({ userKey: 202 }),
     );
 
-    expect(sentNotificationRepository.records.size).toBe(2);
-    expect(
-      sentNotificationRepository.countByStatus(
-        SENT_NOTIFICATION_STATUS.DELIVERED,
-      ),
-    ).toBe(2);
-    // referenceId는 추월 사건(제출 그림 id)+user로 구성돼 추월당할 때마다 분리된다.
-    const record101 = sentNotificationRepository.findByUser(101)[0];
+    expect(store.records.size).toBe(2);
+    expect(store.countByStatus(SENT_NOTIFICATION_STATUS.DELIVERED)).toBe(2);
+    const record101 = store.findByUser(101)[0];
     expect(record101.referenceId).toBe("12345_101");
     expect(record101.type).toBe(NOTIFICATION_TYPE.OVERTAKEN);
   });
 
   it("추월된 사용자 중 동의자만 발송돼요", async () => {
-    const { eventEmitter, sentNotificationRepository, notificationSender } =
-      buildIntegration({
-        agreements: [
-          {
-            userKey: 202,
-            status: NOTIFICATION_AGREEMENT_STATUS.AGREED,
-          },
-          {
-            userKey: 303,
-            status: NOTIFICATION_AGREEMENT_STATUS.REJECTED,
-          },
-          // 101은 동의 기록 자체가 없음
-        ],
-      });
+    const { eventEmitter, store, notificationSender } = buildIntegration({
+      agreements: [
+        {
+          userKey: 202,
+          status: NOTIFICATION_AGREEMENT_STATUS.AGREED,
+        },
+        {
+          userKey: 303,
+          status: NOTIFICATION_AGREEMENT_STATUS.REJECTED,
+        },
+        // 101은 동의 기록 자체가 없음
+      ],
+    });
 
     await triggerRankingChange(eventEmitter, [101, 202, 303]);
 
@@ -353,24 +323,22 @@ describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름",
     expect(notificationSender.sendMessage).toHaveBeenCalledWith(
       expect.objectContaining({ userKey: 202 }),
     );
-    // 비동의자는 reserve도 안 됨 (UNIQUE 게이트 이전 단계)
-    expect(sentNotificationRepository.findByUser(101)).toHaveLength(0);
-    expect(sentNotificationRepository.findByUser(303)).toHaveLength(0);
-    expect(sentNotificationRepository.findByUser(202)).toHaveLength(1);
+    expect(store.findByUser(101)).toHaveLength(0);
+    expect(store.findByUser(303)).toHaveLength(0);
+    expect(store.findByUser(202)).toHaveLength(1);
   });
 
   it("토스 transport timeout이면 재시도 후 DELIVERED로 복구돼요", async () => {
     jest.useFakeTimers();
     try {
-      const { eventEmitter, sentNotificationRepository, notificationSender } =
-        buildIntegration({
-          agreements: [
-            {
-              userKey: 101,
-              status: NOTIFICATION_AGREEMENT_STATUS.AGREED,
-            },
-          ],
-        });
+      const { eventEmitter, store, notificationSender } = buildIntegration({
+        agreements: [
+          {
+            userKey: 101,
+            status: NOTIFICATION_AGREEMENT_STATUS.AGREED,
+          },
+        ],
+      });
 
       notificationSender.sendMessage = jest
         .fn()
@@ -382,54 +350,40 @@ describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름",
       await promise;
 
       expect(notificationSender.sendMessage).toHaveBeenCalledTimes(2);
-      expect(
-        sentNotificationRepository.countByStatus(
-          SENT_NOTIFICATION_STATUS.DELIVERED,
-        ),
-      ).toBe(1);
+      expect(store.countByStatus(SENT_NOTIFICATION_STATUS.DELIVERED)).toBe(1);
     } finally {
       jest.useRealTimers();
     }
   });
 
   it("같은 추월 사건(동일 제출)이 중복 처리되면 한 번만 발송돼요", async () => {
-    const { eventEmitter, sentNotificationRepository, notificationSender } =
-      buildIntegration({
-        agreements: [
-          {
-            userKey: 101,
-            status: NOTIFICATION_AGREEMENT_STATUS.AGREED,
-          },
-        ],
-      });
+    const { eventEmitter, store, notificationSender } = buildIntegration({
+      agreements: [
+        {
+          userKey: 101,
+          status: NOTIFICATION_AGREEMENT_STATUS.AGREED,
+        },
+      ],
+    });
 
-    // 같은 triggerDrawingId(기본값)로 두 번 emit → 동일 이벤트 중복 처리.
     await triggerRankingChange(eventEmitter, [101]);
     await triggerRankingChange(eventEmitter, [101]);
 
-    // 두 번째 트리거에서도 listener는 호출되지만 같은 referenceId라 reserve가 false 반환
-    // → already_sent. 첫 번째 호출만 토스에 도달함(멱등).
     expect(notificationSender.sendMessage).toHaveBeenCalledTimes(1);
-    expect(sentNotificationRepository.findByUser(101)).toHaveLength(1);
-    expect(
-      sentNotificationRepository.countByStatus(
-        SENT_NOTIFICATION_STATUS.DELIVERED,
-      ),
-    ).toBe(1);
+    expect(store.findByUser(101)).toHaveLength(1);
+    expect(store.countByStatus(SENT_NOTIFICATION_STATUS.DELIVERED)).toBe(1);
   });
 
   it("다른 사람의 제출로 같은 사용자가 다시 추월되면 매번 발송돼요", async () => {
-    const { eventEmitter, sentNotificationRepository, notificationSender } =
-      buildIntegration({
-        agreements: [
-          {
-            userKey: 101,
-            status: NOTIFICATION_AGREEMENT_STATUS.AGREED,
-          },
-        ],
-      });
+    const { eventEmitter, store, notificationSender } = buildIntegration({
+      agreements: [
+        {
+          userKey: 101,
+          status: NOTIFICATION_AGREEMENT_STATUS.AGREED,
+        },
+      ],
+    });
 
-    // 추월자·제출이 다르면 triggerDrawingId가 달라 referenceId가 분리된다.
     await triggerRankingChange(eventEmitter, [101], {
       triggerUserKey: 901,
       triggerDrawingId: 1001n,
@@ -440,27 +394,20 @@ describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름",
     });
 
     expect(notificationSender.sendMessage).toHaveBeenCalledTimes(2);
-    expect(sentNotificationRepository.findByUser(101)).toHaveLength(2);
-    expect(
-      sentNotificationRepository.countByStatus(
-        SENT_NOTIFICATION_STATUS.DELIVERED,
-      ),
-    ).toBe(2);
+    expect(store.findByUser(101)).toHaveLength(2);
+    expect(store.countByStatus(SENT_NOTIFICATION_STATUS.DELIVERED)).toBe(2);
   });
 
   it("같은 사람이 다른 제출로 같은 사용자를 다시 추월해도 매번 발송돼요", async () => {
-    const { eventEmitter, sentNotificationRepository, notificationSender } =
-      buildIntegration({
-        agreements: [
-          {
-            userKey: 101,
-            status: NOTIFICATION_AGREEMENT_STATUS.AGREED,
-          },
-        ],
-      });
+    const { eventEmitter, store, notificationSender } = buildIntegration({
+      agreements: [
+        {
+          userKey: 101,
+          status: NOTIFICATION_AGREEMENT_STATUS.AGREED,
+        },
+      ],
+    });
 
-    // 같은 추월자(triggerUserKey 동일)라도 제출이 다르면(triggerDrawingId 상이) 매번 발송.
-    // (점수 엎치락뒤치락: A가 X 추월 → X가 A 추월 → A가 X 다시 추월)
     await triggerRankingChange(eventEmitter, [101], {
       triggerUserKey: 901,
       triggerDrawingId: 2001n,
@@ -471,13 +418,13 @@ describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름",
     });
 
     expect(notificationSender.sendMessage).toHaveBeenCalledTimes(2);
-    expect(sentNotificationRepository.findByUser(101)).toHaveLength(2);
+    expect(store.findByUser(101)).toHaveLength(2);
   });
 
   it("OVERTAKEN_NOTIFICATION_ENABLED=false면 listener가 즉시 스킵해요", async () => {
     const {
       eventEmitter,
-      sentNotificationRepository,
+      store,
       notificationSender,
       notificationAgreementRepository,
     } = buildIntegration({
@@ -498,6 +445,6 @@ describe("drawing 제출 → ranking 갱신 → OVERTAKEN 알림 통합 흐름",
 
     expect(findAgreedSpy).not.toHaveBeenCalled();
     expect(notificationSender.sendMessage).not.toHaveBeenCalled();
-    expect(sentNotificationRepository.records.size).toBe(0);
+    expect(store.records.size).toBe(0);
   });
 });

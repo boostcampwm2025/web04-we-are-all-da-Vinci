@@ -1,0 +1,8 @@
+{
+  "name": "prompt-generator",
+  "description": "Generate, convert, and preview RGB drawing-stroke prompts.",
+  "version": "0.1.0",
+  "author": {
+    "name": "daVinci team"
+  }
+}
