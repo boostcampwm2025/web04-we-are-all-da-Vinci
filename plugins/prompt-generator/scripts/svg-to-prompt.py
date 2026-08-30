@@ -3,6 +3,7 @@
 
 import argparse
 import json
+import math
 import re
 import xml.etree.ElementTree as ET
 
@@ -143,7 +144,7 @@ def walk(element, inherited, inherited_color, curve_steps):
 def serialize(color, points):
     return {
         "color": color,
-        "points": [[round(x, 3) for x, _ in points], [round(y, 3) for _, y in points]],
+        "points": [[round(x) for x, _ in points], [round(y) for _, y in points]],
     }
 
 
@@ -166,18 +167,156 @@ def canvas_strokes(strokes, bounds):
     ]
 
 
+def endpoint_direction(points, side, length):
+    endpoint = points[0] if side == 0 else points[-1]
+    indices = range(1, len(points)) if side == 0 else range(len(points) - 2, -1, -1)
+    traveled = 0
+    previous = endpoint
+    for index in indices:
+        current = points[index]
+        traveled += math.dist(previous, current)
+        if traveled >= length:
+            return (current[0] - endpoint[0], current[1] - endpoint[1])
+        previous = current
+    return (previous[0] - endpoint[0], previous[1] - endpoint[1])
+
+
+def vector_angle(first, second):
+    first_length = math.hypot(*first)
+    second_length = math.hypot(*second)
+    if not first_length or not second_length:
+        return 180
+    cosine = sum(a * b for a, b in zip(first, second)) / (first_length * second_length)
+    return math.degrees(math.acos(max(-1, min(1, cosine))))
+
+
+def prune_short_spurs(strokes, max_length, junction_gap=0.5):
+    if max_length <= 0:
+        return strokes
+    endpoints = [
+        (stroke_index, side, points[0] if side == 0 else points[-1])
+        for stroke_index, (_, points) in enumerate(strokes)
+        for side in (0, 1)
+    ]
+    junctions = set()
+    for stroke_index, side, endpoint in endpoints:
+        touching = sum(
+            other_index != stroke_index and math.dist(endpoint, other_endpoint) <= junction_gap
+            for other_index, _, other_endpoint in endpoints
+        )
+        if touching >= 2:
+            junctions.add((stroke_index, side))
+    return [
+        stroke for stroke_index, stroke in enumerate(strokes)
+        if not (
+            sum(math.dist(first, second) for first, second in zip(stroke[1], stroke[1][1:])) <= max_length
+            and sum((stroke_index, side) in junctions for side in (0, 1)) == 1
+        )
+    ]
+
+
+def stitch_strokes(strokes, max_gap, max_angle, tangent_length):
+    if max_gap <= 0:
+        return strokes
+
+    endpoints = []
+    for stroke_index, (color, points) in enumerate(strokes):
+        for side in (0, 1):
+            endpoints.append((stroke_index, side, color, points[0] if side == 0 else points[-1]))
+
+    candidates = []
+    alignment_limit = max(60, max_angle * 1.5)
+    for endpoint_index, (first_index, first_side, color, first_point) in enumerate(endpoints):
+        for second_index, second_side, second_color, second_point in endpoints[endpoint_index + 1:]:
+            if first_index == second_index or color != second_color:
+                continue
+            gap = math.dist(first_point, second_point)
+            if gap > max_gap:
+                continue
+            first_direction = endpoint_direction(strokes[first_index][1], first_side, tangent_length)
+            second_direction = endpoint_direction(strokes[second_index][1], second_side, tangent_length)
+            continuity = vector_angle(first_direction, (-second_direction[0], -second_direction[1]))
+            if continuity > max_angle:
+                continue
+            if gap > 0.5:
+                connector = (second_point[0] - first_point[0], second_point[1] - first_point[1])
+                if (vector_angle((-first_direction[0], -first_direction[1]), connector) > alignment_limit or
+                        vector_angle(connector, second_direction) > alignment_limit):
+                    continue
+            candidates.append((gap + continuity * 0.05, first_index, first_side, second_index, second_side))
+
+    parent = list(range(len(strokes)))
+
+    def find(index):
+        while parent[index] != index:
+            parent[index] = parent[parent[index]]
+            index = parent[index]
+        return index
+
+    connections = {}
+    for _, first_index, first_side, second_index, second_side in sorted(candidates):
+        first_endpoint = (first_index, first_side)
+        second_endpoint = (second_index, second_side)
+        first_root, second_root = find(first_index), find(second_index)
+        if first_endpoint in connections or second_endpoint in connections or first_root == second_root:
+            continue
+        connections[first_endpoint] = second_endpoint
+        connections[second_endpoint] = first_endpoint
+        parent[second_root] = first_root
+
+    merged = []
+    visited = set()
+    for start_index, (color, points) in enumerate(strokes):
+        if start_index in visited:
+            continue
+        component = [index for index in range(len(strokes)) if find(index) == find(start_index)]
+        start_index = next((index for index in component if (index, 0) not in connections or (index, 1) not in connections), start_index)
+        reversed_path = (start_index, 0) in connections
+        current_index = start_index
+        current_points = list(reversed(strokes[current_index][1])) if reversed_path else list(strokes[current_index][1])
+        combined = current_points
+        while True:
+            visited.add(current_index)
+            exit_side = 0 if reversed_path else 1
+            linked = connections.get((current_index, exit_side))
+            if not linked:
+                break
+            next_index, next_side = linked
+            if next_index in visited:
+                break
+            next_points = strokes[next_index][1]
+            reversed_path = next_side == 1
+            oriented = list(reversed(next_points)) if reversed_path else list(next_points)
+            if combined[-1] == oriented[0]:
+                combined.extend(oriented[1:])
+            else:
+                combined.extend(oriented)
+            current_index = next_index
+        merged.append((color, combined))
+    return merged
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", required=True); parser.add_argument("--output", required=True)
     parser.add_argument("--curve-steps", type=int, default=8)
+    parser.add_argument("--stitch-gap", type=float, default=4)
+    parser.add_argument("--stitch-angle", type=float, default=35)
+    parser.add_argument("--tangent-length", type=float, default=4)
+    parser.add_argument("--max-spur-length", type=float, default=3)
     args = parser.parse_args()
-    if args.curve_steps < 1: parser.error("curve-steps must be positive")
+    if (args.curve_steps < 1 or args.stitch_gap < 0 or not 0 <= args.stitch_angle <= 180 or
+            args.tangent_length <= 0 or args.max_spur_length < 0):
+        parser.error("curve-steps and tangent-length must be positive; gaps and lengths cannot be negative; stitch-angle must be 0..180")
     root = ET.parse(args.input).getroot()
     raw_strokes = list(walk(root, (1, 0, 0, 1, 0, 0), [0, 0, 0], args.curve_steps))
-    strokes = [serialize(color, points) for color, points in canvas_strokes(raw_strokes, svg_canvas(root))]
+    canvas = canvas_strokes(raw_strokes, svg_canvas(root))
+    pruned = prune_short_spurs(canvas, args.max_spur_length)
+    stitched = stitch_strokes(pruned, args.stitch_gap, args.stitch_angle, args.tangent_length)
+    strokes = [serialize(color, points) for color, points in stitched]
     if not strokes: parser.error("No drawable SVG path, polyline, polygon, line, or rect was found")
     with open(args.output, "w", encoding="utf-8") as file: json.dump({"date": "yyyy-mm-dd" ,"strokes": strokes}, file, ensure_ascii=False, indent=2); file.write("\n")
-    print(f"Converted {len(strokes)} strokes: {args.output}")
+    print(f"Converted {len(raw_strokes)} SVG paths into {len(strokes)} strokes: {args.output}")
 
 
 if __name__ == "__main__": main()

@@ -1,6 +1,6 @@
 ---
 name: prompt-generator
-description: "Generate deliberately clumsy doodle-style drawing images with a fixed five-color RGB palette, vectorize them with vtracer, convert SVG paths into RGB stroke prompts, and render prompt previews in Canvas HTML. Use when a user needs { strokes: [{ colors, points }] } prompt data, SVG conversion, or an inspectable HTML preview."
+description: "Generate deliberately clumsy doodle-style drawing images with a fixed five-color RGB palette, extract simplified centerline SVG paths, convert them into RGB stroke prompts, and render Canvas HTML previews. Use when a user needs { strokes: [{ color, points }] } prompt data, PNG/SVG conversion, or an inspectable HTML preview."
 ---
 
 # Prompt Generator
@@ -9,7 +9,7 @@ Use this skill when a user gives a drawing topic and wants a stroke prompt with 
 
 ## Topic to prompt workflow
 
-1. Generate a deliberately clumsy, scribbly raster image for the requested topic on a white background. Use only these five RGB colors: yellow `[250, 204, 21]`, green `[34, 197, 94]`, blue `[59, 130, 246]`, red `[239, 68, 68]`, and black `[0, 0, 0]`. Draw like an old computer paint program made with a mouse: visibly awkward, loose, low-resolution, and slightly confusing, while keeping the subject recognizable. Prefer wobbly contours, sparse details, and uneven proportions. Do not use text, gradients, shadows, or colors outside the palette.
+1. Generate a deliberately clumsy, scribbly raster image for the requested topic on a white background. Use only these five RGB colors: yellow `[250, 204, 21]`, green `[34, 197, 94]`, blue `[59, 130, 246]`, red `[239, 68, 68]`, and black `[0, 0, 0]`. This is an allowed palette, not a required set: use only the colors the subject needs, and do not force all five colors into every image. A single-color drawing is valid. Draw like an old computer paint program made with a mouse: visibly awkward, loose, low-resolution, and slightly confusing, while keeping the subject recognizable. Prefer wobbly contours, sparse details, and uneven proportions. Do not use text, gradients, shadows, or colors outside the palette.
 
    **Linework is mandatory:** Draw with colored lines, not colored fills. Leave enclosed interiors white unless another line crosses them. Make the subject readable through differently colored outlines, detail lines, and scribbles; do not use solid color regions, shading, or paint-bucket fills.
 
@@ -28,13 +28,15 @@ uv run --with pillow --with scikit-image \
 
 Use VTracer only when a filled-outline SVG is explicitly needed for another purpose; do not use it as the source for drawing prompt strokes.
 
-3. Convert the SVG to the required JSON by mapping its `viewBox` directly to a 255×255 Canvas coordinate space. Do not use the stroke bounds or preview layout to center or resize the JSON: preserve every path's SVG-canvas position and scale. Use SVG width/height only when `viewBox` is absent. Every output point is in the `0..255` Canvas range. VTracer's colored regions are converted to colored drawing paths, not Canvas fills. SVGs without an explicit usable color default to black.
+3. Convert the SVG to the required JSON by mapping its `viewBox` directly to a 255×255 Canvas coordinate space. Do not use the stroke bounds or preview layout to center or resize the JSON: preserve every path's SVG-canvas position and scale. Use SVG width/height only when `viewBox` is absent. Every output point is a rounded integer in the `0..255` Canvas range. VTracer's colored regions are converted to colored drawing paths, not Canvas fills. SVGs without an explicit usable color default to black.
 
 ```bash
 python3 plugins/prompt-generator/scripts/svg-to-prompt.py \
   --input /tmp/prompt.svg \
   --output /tmp/prompt-strokes.json
 ```
+
+The converter removes centerline spurs up to `--max-spur-length 3`, then stitches nearby same-color path endpoints into longer strokes when their directions continue naturally. Defaults are `--stitch-gap 4`, `--stitch-angle 35`, and `--tangent-length 4` in the 255×255 Canvas coordinate space. Set `--max-spur-length 0` or `--stitch-gap 0` to disable either behavior, or lower the thresholds when small details disappear or separate nearby lines merge incorrectly.
 
 4. Generate a standalone Canvas preview and inspect it before delivering the prompt:
 
