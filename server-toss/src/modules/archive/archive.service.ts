@@ -8,7 +8,6 @@ import type {
   ArchiveDayResponse,
   ArchiveSummaryResponse,
   SimilarityResponse,
-  Stroke,
 } from "@toss/shared";
 import {
   getSeoulDateKey,
@@ -22,6 +21,7 @@ import { DrawingRepository } from "../drawing/drawing.repository";
 import { PromptService } from "../prompt/prompt.service";
 import { Ranking } from "../ranking/ranking.entity";
 import { RankingRepository } from "../ranking/ranking.repository";
+import { safeParseStrokes } from "src/common/util/safe-parse.util";
 
 @Injectable()
 export class ArchiveService {
@@ -173,7 +173,7 @@ export class ArchiveService {
       drawings: drawings.map((drawing) => ({
         drawingId: Number(drawing.id),
         createdAt: toIsoString(drawing.createdAt),
-        strokes: JSON.parse(drawing.strokes) as Stroke[],
+        strokes: safeParseStrokes(drawing.strokes),
         similarity: JSON.parse(drawing.similarity) as SimilarityResponse,
         isRankedDrawing: rankedDrawingId === String(drawing.id),
       })),

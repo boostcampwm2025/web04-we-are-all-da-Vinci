@@ -2,12 +2,16 @@ import { EntityManager } from "@mikro-orm/mysql";
 import { Transactional } from "@mikro-orm/decorators/legacy";
 import { Injectable, Logger } from "@nestjs/common";
 import { User } from "src/modules/user/user.entity";
-import { MissionPeriod } from "../entity/mission.entity";
+import { Mission, MissionPeriod } from "../entity/mission.entity";
 import { UserMission } from "../entity/user-mission.entity";
 import { MissionWindow } from "../mission-window";
 import { DAILY_RANDOM_COUNT, WEEKLY_RANDOM_COUNT } from "../mission.constants";
 import { MissionRepository } from "../repository/mission.repository";
 import { UserMissionRepository } from "../repository/user-mission.repository";
+
+// 미션 슬롯 식별자(시드의 자연 키와 동일 개념, period는 호출 단위로 고정).
+const objectiveKey = (mission: Mission): string =>
+  `${mission.objectiveType}|${mission.category ?? ""}`;
 
 @Injectable()
 export class AssignMissionService {
@@ -101,8 +105,15 @@ export class AssignMissionService {
     periodStart: Date,
     randomCount: number,
   ): Promise<UserMission[]> {
-    const fixedMissions = await this.missionRepository.findFixed(period);
-    const randomMissions = await this.missionRepository.findRandom(period);
+    // 같은 미션 슬롯(objectiveType+category)의 행이 데이터상 중복돼 있어도 하루에
+    // 한 번만 배정되도록 방어적으로 중복을 제거한다(고정 우선, 랜덤 풀 오염 방지).
+    const fixedMissions = this.dedupeByObjective(
+      await this.missionRepository.findFixed(period),
+    );
+    const fixedKeys = new Set(fixedMissions.map((m) => objectiveKey(m)));
+    const randomMissions = this.dedupeByObjective(
+      await this.missionRepository.findRandom(period),
+    ).filter((mission) => !fixedKeys.has(objectiveKey(mission)));
 
     const selected = [
       ...fixedMissions,
@@ -118,6 +129,16 @@ export class AssignMissionService {
       });
       this.em.persist(uq);
       return uq;
+    });
+  }
+
+  private dedupeByObjective(missions: Mission[]): Mission[] {
+    const seen = new Set<string>();
+    return missions.filter((mission) => {
+      const key = objectiveKey(mission);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
     });
   }
 
