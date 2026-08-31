@@ -205,6 +205,7 @@ Required variables:
 - `CORS_ORIGIN` - Comma-separated allowed origins
 - `REDIS_HOST` - Redis server host
 - `REDIS_PORT` - Redis server port
+- `REDIS_USERNAME` - Redis ACL username (optional; defaults to `default`)
 - `REDIS_PASSWORD` - Redis password (optional)
 
 Optional timing overrides:
