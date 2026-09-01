@@ -11,6 +11,7 @@ import {
   trackClick,
   trackScreen,
   useExitGuard,
+  useInFlight,
   useRequiredState,
   useToast,
 } from "@/shared/lib";
@@ -18,6 +19,7 @@ import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";
 import type { SimilarityResponse, Stroke } from "@toss/shared";
 import { Button, ConfirmDialog, Toast } from "@toss/tds-mobile";
+import { match } from "ts-pattern";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -49,37 +51,44 @@ const SubmittedView = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmitAndView = async () => {
-    if (isSubmitting || !routeState) return;
-    setIsSubmitting(true);
+  // 서버의 saveDrawingWithRanking에는 멱등성이 없어 호출마다 그림이 한 장씩 저장된다.
+  // isSubmitting(useState)은 갱신이 다음 렌더에 반영되므로 같은 렌더 사이클의
+  // 두 번째 클릭을 막지 못한다 — 더블탭이면 두 장이 등록되고 랭킹·미션도 두 번 오른다.
+  // isSubmitting은 이제 로딩 표시 전용이다.
+  const guardSubmit = useInFlight<void>();
 
-    try {
-      trackClick(FUNNEL_EVENTS.submittedSubmitClick, {
-        score: routeState.similarity?.score,
-        stroke_count: routeState.strokes.length,
-      });
-      await serverTossApi.submitDrawing(routeState.strokes);
+  const handleSubmitAndView = () =>
+    guardSubmit(async () => {
+      if (!routeState) return;
+      setIsSubmitting(true);
 
-      trackClick(FUNNEL_EVENTS.submittedSubmitSuccess, {
-        score: routeState.similarity?.score,
-        stroke_count: routeState.strokes.length,
-      });
+      try {
+        trackClick(FUNNEL_EVENTS.submittedSubmitClick, {
+          score: routeState.similarity?.score,
+          stroke_count: routeState.strokes.length,
+        });
+        await serverTossApi.submitDrawing(routeState.strokes);
 
-      navigate("/", {
-        replace: true,
-        state: { fromSubmitted: true },
-      });
-    } catch (err) {
-      console.error("제출 실패:", err);
-      trackClick(FUNNEL_EVENTS.submittedSubmitFailed, {
-        reason: err instanceof Error ? err.message : String(err),
-        score: routeState.similarity?.score,
-        stroke_count: routeState.strokes.length,
-      });
-      toast.show("등록에 실패했어요. 다시 시도해주세요.");
-      setIsSubmitting(false);
-    }
-  };
+        trackClick(FUNNEL_EVENTS.submittedSubmitSuccess, {
+          score: routeState.similarity?.score,
+          stroke_count: routeState.strokes.length,
+        });
+
+        navigate("/", {
+          replace: true,
+          state: { fromSubmitted: true },
+        });
+      } catch (err) {
+        console.error("제출 실패:", err);
+        trackClick(FUNNEL_EVENTS.submittedSubmitFailed, {
+          reason: err instanceof Error ? err.message : String(err),
+          score: routeState.similarity?.score,
+          stroke_count: routeState.strokes.length,
+        });
+        toast.show("등록에 실패했어요. 다시 시도해주세요.");
+        setIsSubmitting(false);
+      }
+    });
 
   // 재도전 = 도전 시작과 동일 흐름(기회로 시작 / 광고 보고 시작) → useStartGame 재사용.
   const handleReplay = async () => {
@@ -88,12 +97,15 @@ const SubmittedView = () => {
       : await startWithAd("submitted_replay");
     if (result.ok) return;
 
-    if (result.reason === "no_prompt") {
-      toast.show("그리기 기회가 부족해요.");
-    } else if (result.reason === "error") {
-      toast.show("다시 시도해주세요.");
-    }
-    // ad_not_ready: 버튼이 ready일 때만 연결되므로 정상 흐름엔 도달하지 않음
+    match(result.reason)
+      .with("no_prompt", () => toast.show("그리기 기회가 부족해요."))
+      .with("error", () => toast.show("다시 시도해주세요."))
+      // 버튼이 ready일 때만 연결되므로 정상 흐름엔 도달하지 않지만,
+      // 로드 상태가 클릭 직전에 풀리는 경우까지 침묵하지 않도록 안내한다.
+      .with("ad_not_ready", () =>
+        toast.show("광고를 준비 중이에요. 잠시 후 다시 눌러주세요."),
+      )
+      .exhaustive();
   };
 
   if (!routeState) return null;

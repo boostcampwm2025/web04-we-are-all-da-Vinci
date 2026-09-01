@@ -1,6 +1,5 @@
 import { useToast } from "@/shared/lib";
 import { Button, Toast } from "@toss/tds-mobile";
-import { useState } from "react";
 import {
   ATTENDANCE_RECOVERY_DECLINE_FAIL_MESSAGE,
   ATTENDANCE_RECOVERY_SUCCESS_MESSAGE,
@@ -22,8 +21,10 @@ const AttendanceRecoverButton = ({
   onResolved,
 }: AttendanceRecoverButtonProps) => {
   const toast = useToast();
-  const { recover, decline, isRecovering } = useAttendanceRecovery();
-  const [isDeclining, setIsDeclining] = useState(false);
+  // 중복 실행 방지와 로딩 상태는 훅이 소유한다 — 자원(서버 복구/포기)을 가진 쪽이
+  // 잠금도 가져야 두 진입점(이 카드, 끊김 결과 시트)이 같은 보장을 받는다.
+  const { recover, decline, isRecovering, isDeclining } =
+    useAttendanceRecovery();
 
   const handleRecover = async () => {
     const result = await recover();
@@ -36,10 +37,7 @@ const AttendanceRecoverButton = ({
   };
 
   const handleDecline = async () => {
-    if (isDeclining) return;
-    setIsDeclining(true);
     const ok = await decline();
-    setIsDeclining(false);
     if (ok) onResolved();
     else toast.show(ATTENDANCE_RECOVERY_DECLINE_FAIL_MESSAGE);
   };

@@ -1,6 +1,12 @@
 /// <reference types="@testing-library/jest-dom/vitest" />
 import { serverTossApi } from "@/shared/api";
-import { render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -111,7 +117,7 @@ const renderWithState = (state?: unknown) =>
     </MemoryRouter>,
   );
 
-describe("SubmittedView", () => {
+describe("그림 제출 완료 화면", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
@@ -149,6 +155,36 @@ describe("SubmittedView", () => {
         replace: true,
         state: { fromSubmitted: true },
       });
+    });
+  });
+
+  // 모바일 WebView에서 더블탭은 흔하다. isSubmitting을 useState로 두면
+  // 상태 갱신이 다음 렌더에 반영되므로 같은 렌더 사이클의 두 번째 클릭이 통과한다.
+  // 서버(saveDrawingWithRanking)에 멱등성이 없어 그림이 두 장 저장된다.
+  it("등록 버튼을 같은 렌더 사이클에 두 번 눌러도 제출은 한 번만 일어난다", async () => {
+    vi.useRealTimers();
+    let finishSubmit!: () => void;
+    vi.mocked(serverTossApi.submitDrawing).mockReturnValue(
+      new Promise((resolve) => {
+        finishSubmit = () =>
+          resolve({ drawingId: 1, similarity: mockRouteState.similarity });
+      }) as ReturnType<typeof serverTossApi.submitDrawing>,
+    );
+
+    renderWithState();
+    const button = screen.getByText("이 그림으로 등록");
+
+    await act(async () => {
+      // userEvent는 클릭 사이에 리렌더를 흘려보내므로 재현되지 않는다.
+      // 더블탭은 리렌더를 기다려주지 않으므로 같은 tick에 두 번 보낸다.
+      fireEvent.click(button);
+      fireEvent.click(button);
+    });
+
+    expect(serverTossApi.submitDrawing).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      finishSubmit();
     });
   });
 

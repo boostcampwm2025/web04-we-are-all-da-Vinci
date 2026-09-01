@@ -10,7 +10,6 @@ import { useToast } from "@/shared/lib";
 import { ATTENDANCE_REWARD_POINT } from "@toss/shared";
 import type { AttendanceCheckInResponse } from "@toss/shared";
 import { BottomSheet, Button, Toast } from "@toss/tds-mobile";
-import { useState } from "react";
 
 interface AttendanceResultSheetProps {
   result: AttendanceCheckInResponse | null;
@@ -29,8 +28,9 @@ const AttendanceResultSheet = ({
   onRecovered,
 }: AttendanceResultSheetProps) => {
   const toast = useToast();
-  const { recover, decline, isRecovering } = useAttendanceRecovery();
-  const [isDeclining, setIsDeclining] = useState(false);
+  // 중복 실행 방지와 로딩 상태는 훅이 소유한다(AttendanceRecoverButton과 동일).
+  const { recover, decline, isRecovering, isDeclining } =
+    useAttendanceRecovery();
 
   const isBroken = result?.status === "reset_recoverable";
 
@@ -53,10 +53,7 @@ const AttendanceResultSheet = ({
   };
 
   const handleDecline = async () => {
-    if (isDeclining) return;
-    setIsDeclining(true);
     const ok = await decline();
-    setIsDeclining(false);
     if (ok) {
       onRecovered();
       onClose();
