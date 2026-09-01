@@ -53,7 +53,6 @@ export async function run(): Promise<CheckResult> {
   const files = scanSourceFiles([".ts", ".tsx"]);
 
   for (const { relPath, content } of files) {
-
     // 1. 해요체 검증
     const koreanTexts = extractKoreanTexts(content);
     for (const { text, line } of koreanTexts) {

@@ -1,7 +1,6 @@
 import { scanSourceFiles } from "./lib/scanSourceFiles.js";
 import type { CheckResult } from "./types.js";
 
-
 export async function run(): Promise<CheckResult> {
   const name = "Dark Pattern";
   const details: string[] = [];
