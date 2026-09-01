@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev.js",
-    "build": "ait build",
+    "build": "tsc -b && ait build",
     "lint": "eslint .",
     "preview": "vite preview",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css}\"",
