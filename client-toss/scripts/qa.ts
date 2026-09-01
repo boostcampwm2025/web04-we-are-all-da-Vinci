@@ -6,9 +6,15 @@ import { run as runDarkPattern } from "./qa-checks/dark-pattern.js";
 import { run as runAdIntegration } from "./qa-checks/ad-integration.js";
 import { run as runExternalLinks } from "./qa-checks/external-links.js";
 import { run as runBundleSize } from "./qa-checks/bundle-size.js";
-import type { CheckResult } from "./qa-checks/types.js";
+import type { CheckResult, QaReport } from "./qa-checks/types.js";
+import { writeFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 const ciMode = process.argv.includes("--ci");
+
+const reportPath = process.argv
+  .find((arg) => arg.startsWith("--report-json="))
+  ?.slice("--report-json=".length);
 
 const STATUS_ICON: Record<CheckResult["status"], string> = {
   pass: "PASS",
@@ -41,21 +47,32 @@ async function main() {
   console.log(`${BOLD}══════════════════════════════════════════${RESET}`);
   console.log("");
 
-  const checks = [
-    runTooling,
-    runGraniteConfig,
-    runTdsUsage,
-    runUxWriting,
-    runDarkPattern,
-    runAdIntegration,
-    runExternalLinks,
-    () => runBundleSize(ciMode),
+  const checks: { name: string; run: () => Promise<CheckResult> }[] = [
+    { name: "Tooling (Lint/Types/Test/Format)", run: () => runTooling(ciMode) },
+    { name: "Granite Config", run: runGraniteConfig },
+    { name: "TDS Usage", run: runTdsUsage },
+    { name: "UX Writing", run: runUxWriting },
+    { name: "Dark Pattern", run: runDarkPattern },
+    { name: "Ad Integration", run: runAdIntegration },
+    { name: "External Links", run: runExternalLinks },
+    { name: "Bundle Size", run: () => runBundleSize(ciMode) },
   ];
 
   const results: CheckResult[] = [];
 
-  for (const check of checks) {
-    const result = await check();
+  for (const { name, run } of checks) {
+    let result: CheckResult;
+    try {
+      result = await run();
+    } catch (error) {
+      result = {
+        name,
+        status: "fail",
+        details: [
+          `[FAIL] ${error instanceof Error ? error.message : String(error)}`,
+        ],
+      };
+    }
     results.push(result);
     printResult(result);
     console.log("");
@@ -73,9 +90,18 @@ async function main() {
   console.log(`${BOLD}══════════════════════════════════════════${RESET}`);
   console.log("");
 
-  if (ciMode && (fail > 0 || warn > 0)) {
-    process.exit(1);
-  } else if (fail > 0) {
+  // exit 전에 기록한다. 실패한 실행일수록 리포트가 필요하다.
+  if (reportPath) {
+    const report: QaReport = {
+      ciMode,
+      summary: { pass, warn, fail },
+      results,
+    };
+    writeFileSync(resolve(process.cwd(), reportPath), JSON.stringify(report));
+  }
+
+  // CI에서는 WARN도 실패로 취급한다(앱인토스 심사 기준을 느슨하게 통과시키지 않기 위해).
+  if (fail > 0 || (ciMode && warn > 0)) {
     process.exit(1);
   }
 }
