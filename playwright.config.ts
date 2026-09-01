@@ -74,7 +74,7 @@ export default defineConfig({
     ? [
         {
           command: 'pnpm dev:server',
-          url: 'http://localhost:3000',
+          url: 'http://localhost:3000/health',
           reuseExistingServer: false,
           timeout: 120000,
         },

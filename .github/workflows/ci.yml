@@ -278,6 +278,104 @@ jobs:
         working-directory: server-toss
         run: pnpm run build
 
+  # 게임(client + server)의 실시간 멀티플레이 통합 검증.
+  #
+  # playwright.config.ts에는 이미 `process.env.CI` 분기로 dev 서버 두 개를 띄우는
+  # webServer 설정이 있었지만, 이걸 실행하는 워크플로가 없어 한 번도 돌지 않았다.
+  # 스펙 5개(방 생성·중도 입장·이탈·재시작·초대 링크)가 로컬에서만 존재했다.
+  e2e:
+    name: E2E
+    needs: changes
+    # 게임 클라이언트나 서버가 영향받을 때만 돈다 — 판정은 changes 잡이 이미 했다.
+    if: >-
+      github.event_name == 'push' ||
+      contains(fromJSON(needs.changes.outputs.affected), 'client') ||
+      contains(fromJSON(needs.changes.outputs.affected), 'server')
+    runs-on: ubuntu-latest
+    # 서버가 방 상태를 Redis에 둔다. 로컬 infra/local/compose.yaml과 같은 이미지.
+    services:
+      redis:
+        image: redis:7.2
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      # webServer 분기를 켜는 스위치. 이게 없으면 dev 서버를 띄우지 않아
+      # 테스트가 빈 localhost에 붙는다.
+      CI: "true"
+      NODE_ENV: test
+      PORT: "3000"
+      REDIS_HOST: localhost
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ""
+      CORS_ORIGIN: http://localhost:5173
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # server는 @shared/types의 dist를 참조하므로 패키지 빌드가 필요하다.
+      - name: Setup workspace
+        uses: ./.github/actions/setup-workspace
+
+      # chromium만 받는다. 3종(chromium/firefox/webkit)을 다 돌리면 스펙 5개 x 3배가 되고,
+      # 이 게임은 실시간 동작 검증이 목적이라 브라우저 간 렌더 차이가 관심사가 아니다.
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E
+        run: pnpm test:e2e --project=chromium
+
+      # 실패했을 때야말로 리포트가 필요하다. trace는 config에서 on-first-retry.
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # 브랜치 보호의 required status check로 지정할 **단 하나의** 잡.
+  #
+  # 개별 잡을 required로 걸면 안 되는 이유:
+  # 이 파이프라인은 영향받는 워크스페이스만 실행하므로 나머지 잡은 스킵된다.
+  # 스킵된 잡은 체크를 보고하지 않아, required로 걸면 PR이
+  # "Expected — Waiting for status to be reported"에서 영구히 멈춘다.
+  # 항상 도는 집계 잡 하나만 required로 거는 것이 정석이다.
+  #
+  # 설정: Settings → Rules → protect_main&dev → Require status checks → "CI Gate"
+  # E2E는 아직 needs에 넣지 않는다.
+  # 로컬 CI 조건 실행 결과 9개 중 8개 통과, 1개는 테스트 로케이터 문제로 실패했다.
+  # 검증이 끝나지 않은 잡을 required check에 묶으면 팀 전원의 머지가 막힌다.
+  # E2E가 안정적으로 통과하는 것을 확인한 뒤 이 목록에 추가한다.
+  ci-gate:
+    name: CI Gate
+    needs: [changes, client, server, client-toss, server-toss]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report job results
+        run: |
+          echo "changes:     ${{ needs.changes.result }}"
+          echo "client:      ${{ needs.client.result }}"
+          echo "server:      ${{ needs.server.result }}"
+          echo "client-toss: ${{ needs.client-toss.result }}"
+          echo "server-toss: ${{ needs.server-toss.result }}"
+
+      # 스킵은 통과로 본다 — 영향 없는 워크스페이스가 안 도는 것은 정상이다.
+      # 실패·취소만 막는다. changes 잡이 실패하면(영향 계산 실패) 여기서 걸리므로,
+      # 계산이 깨진 채로 "아무 잡도 안 돌아서 초록불"이 되는 경로가 닫힌다.
+      - name: Fail if any job failed or was cancelled
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: |
+          echo "::error::하나 이상의 잡이 실패했거나 취소되었습니다."
+          exit 1
+
   notify:
     name: Slack Notification
     needs: [changes, client, server, client-toss, server-toss]
