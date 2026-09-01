@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
-import { execSync } from "node:child_process";
 import { resolve } from "node:path";
+import { scanSourceFiles } from "./lib/scanSourceFiles.js";
 import type { CheckResult } from "./types.js";
 
 const ROOT = resolve(import.meta.dirname, "../..");
@@ -35,21 +35,9 @@ export async function run(): Promise<CheckResult> {
   }
 
   // 2. 소스에서 제3자 광고 SDK import 스캔
-  const findCommand =
-    process.platform === "win32"
-      ? `powershell -Command "Get-ChildItem -Path src -Recurse -Include '*.ts','*.tsx' | ForEach-Object { $_.FullName.Substring($PWD.Path.Length + 1).Replace('\\', '/') }"`
-      : 'find src -name "*.ts" -o -name "*.tsx"';
+  const files = scanSourceFiles([".ts", ".tsx"]);
 
-  const files = execSync(findCommand, {
-    cwd: ROOT,
-    encoding: "utf-8",
-  })
-    .trim()
-    .split(/\r?\n/)
-    .filter(Boolean);
-
-  for (const relPath of files) {
-    const content = readFileSync(resolve(ROOT, relPath), "utf-8");
+  for (const { relPath, content } of files) {
     for (const sdk of THIRD_PARTY_AD_SDKS) {
       if (
         content.includes(`from '${sdk}'`) ||
@@ -81,6 +69,7 @@ export async function run(): Promise<CheckResult> {
       "앱인토스 광고 SDK만 사용 중이며, 초기화가 정상 설정되어 있습니다",
     );
   }
+  details.push(`${files.length}개 파일 검사`);
 
   return { name, status, details };
 }
