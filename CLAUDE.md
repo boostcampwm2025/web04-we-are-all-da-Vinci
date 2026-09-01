@@ -132,26 +132,40 @@ pnpm perf:multi
 
 ### CI 파이프라인 (ci.yml)
 
-`dorny/paths-filter`로 변경된 워크스페이스만 CI를 실행한다.
+**어떤 잡을 돌릴지는 의존 그래프에서 계산한다. 이 문서에도 ci.yml에도 매핑을 적지 않는다.**
 
-| 변경 대상                 | 실행되는 Job                                                     |
-| ------------------------- | ---------------------------------------------------------------- |
-| `client/**`               | Client (lint, format, test, build) + Bundle Size (Client)        |
-| `server/**`               | Server (lint, format, test, build)                               |
-| `client-toss/**`          | Client-Toss (lint, format, test, QA, build) + Bundle Size (Toss) |
-| `server-toss/**`          | Server-Toss (lint, format, test, build)                          |
-| `packages/shared/**`      | Client, Server, Bundle Size (Client)                             |
-| `packages/similarity/**`  | Client, Client-Toss, Server-Toss, Bundle Size (Client + Toss)    |
-| `packages/toss-shared/**` | Client-Toss, Server-Toss, Bundle Size (Toss)                     |
-| push to main              | 모든 워크스페이스 (Bundle Size 제외)                             |
+```
+dorny/paths-filter          어떤 디렉터리가 바뀌었나
+   ↓
+scripts/affected-workspaces.mjs   pnpm에게 의존자를 묻는다(전이 폐쇄 포함)
+   ↓
+changes 잡이 배열 출력       예) ["client","server-toss"]
+   ↓
+각 잡의 if는 자기 이름만     contains(fromJSON(needs.changes.outputs.affected), 'client')
+```
 
-- shared 패키지 빌드: `pnpm build:packages`로 전체 빌드 (shared + similarity + toss-shared)
+의존 관계는 각 `package.json`의 `workspace:` 의존이 유일한 출처다. 새 워크스페이스를 추가하거나 의존을 바꿔도 **`ci.yml`은 고치지 않는다.**
+
+> 왜 이렇게 하나: 예전에는 각 잡의 `if:`에 팬아웃을 손으로 적었다. 커밋 `c1884b92`(2026-04-13)에서 `toss-shared → similarity` 의존이 제거됐는데 매핑은 따라오지 않았고, `client-toss` 잡이 4개월간 무관한 변경에 헛돌았다. 이 문서의 표에도 같은 오류가 복제돼 있었다.
+
+영향 범위는 로컬에서 직접 확인할 수 있다.
+
+```bash
+pnpm affected packages-similarity      # ["client","server-toss"]
+pnpm affected '["client","root"]'      # dorny의 changes 출력 형식도 그대로 받는다
+pnpm test:scripts                      # 계산이 pnpm 그래프와 일치하는지 검증
+```
+
+**예외 — 루트 파일**: `pnpm-lock.yaml`, `pnpm-workspace.yaml`, 루트 `package.json`, `.npmrc`, `.github/**`, `scripts/**`는 어느 워크스페이스에도 속하지 않아 그래프로 유도할 수 없다. `root` 필터로 잡아 **전부 실행**한다. 이 목록만 `ci.yml`에 손으로 적혀 있다.
+
+- push to main: 모든 워크스페이스
+- shared 패키지 빌드: `pnpm build:packages` (shared + similarity + toss-shared)
 - client-toss QA: `pnpm qa:ci`로 앱인토스 심사 기준 자동 검증 (granite config, TDS, UX writing, 다크패턴, 광고, 외부 링크, 번들 사이즈)
 
 ### 기타 워크플로우
 
-- `chromatic.yml`: Storybook 비주얼 리그레션 (develop PR, client 변경 시)
-- `lighthouse-ci.yml`: Client 성능 점수 (PR, client 변경 시)
+- `chromatic.yml`: Storybook 비주얼 리그레션 (develop PR, client 또는 packages 변경 시)
+- `lighthouse-ci.yml`: Client 성능 점수 (PR, client 또는 packages 변경 시)
 - `deploy-backend.yml`: Blue-Green 배포 (self-hosted, main push)
 - `deploy-toss-backend.yml`: Toss 서버 배포 (self-hosted, main push)
 

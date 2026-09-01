@@ -11,13 +11,7 @@ jobs:
     name: Detect Changes
     runs-on: ubuntu-latest
     outputs:
-      client: ${{ steps.filter.outputs.client }}
-      server: ${{ steps.filter.outputs.server }}
-      client-toss: ${{ steps.filter.outputs.client-toss }}
-      server-toss: ${{ steps.filter.outputs.server-toss }}
-      packages-shared: ${{ steps.filter.outputs.packages-shared }}
-      packages-similarity: ${{ steps.filter.outputs.packages-similarity }}
-      packages-toss-shared: ${{ steps.filter.outputs.packages-toss-shared }}
+      affected: ${{ steps.affected.outputs.list }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -41,20 +35,14 @@ jobs:
               - 'packages/similarity/**'
             packages-toss-shared:
               - 'packages/toss-shared/**'
-
-  client:
-    name: Client
-    needs: changes
-    if: >-
-      github.event_name == 'push' ||
-      needs.changes.outputs.client == 'true' ||
-      needs.changes.outputs.packages-shared == 'true' ||
-      needs.changes.outputs.packages-similarity == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
+            root:
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'package.json'
+              - '.npmrc'
+              - '.github/workflows/**'
+              - '.github/actions/**'
+              - 'scripts/**'
       - name: Setup pnpm
         uses: pnpm/action-setup@v5
 
@@ -62,25 +50,34 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: "22"
-          cache: "pnpm"
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Verify affected-workspaces script
+        if: steps.filter.outputs.root == 'true'
+        run: node --test scripts/affected-workspaces.test.mjs
 
-      - name: Build shared packages
-        run: pnpm build:packages
-
-      - name: Security Audit
-        working-directory: client
-        id: client-audit
+      - name: Compute affected workspaces
+        id: affected
         run: |
-          pnpm audit --audit-level=high 2>&1 | tee audit-output.txt || true
-          echo "audit_result<<EOF" >> $GITHUB_OUTPUT
-          # 리포트 스크립트가 어차피 앞 2000자만 사용한다. 전체 출력을 GITHUB_OUTPUT으로
-          # 흘리면 후속 스텝(github-script)의 env 크기가 ARG_MAX를 넘겨 spawn이 실패하므로 절단한다.
-          head -c 2000 audit-output.txt >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-        continue-on-error: true
+          LIST=$(node scripts/affected-workspaces.mjs '${{ steps.filter.outputs.changes }}')
+          echo "list=$LIST" >> "$GITHUB_OUTPUT"
+          echo "변경된 필터: ${{ steps.filter.outputs.changes }}"
+          echo "검증할 워크스페이스: $LIST"
+
+  client:
+    name: Client
+    needs: changes
+    if: >-
+      github.event_name == 'push' ||
+      contains(fromJSON(needs.changes.outputs.affected), 'client')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup workspace
+        uses: ./.github/actions/setup-workspace
+        with:
+          build-packages: "false"
 
       - name: Lint
         working-directory: client
@@ -111,39 +108,14 @@ jobs:
     needs: changes
     if: >-
       github.event_name == 'push' ||
-      needs.changes.outputs.server == 'true' ||
-      needs.changes.outputs.packages-shared == 'true'
+      contains(fromJSON(needs.changes.outputs.affected), 'server')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: "22"
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build shared packages
-        run: pnpm build:packages
-
-      - name: Security Audit
-        working-directory: server
-        id: server-audit
-        run: |
-          pnpm audit --audit-level=high 2>&1 | tee audit-output.txt || true
-          echo "audit_result<<EOF" >> $GITHUB_OUTPUT
-          # 리포트 스크립트가 어차피 앞 2000자만 사용한다. 전체 출력을 GITHUB_OUTPUT으로
-          # 흘리면 후속 스텝(github-script)의 env 크기가 ARG_MAX를 넘겨 spawn이 실패하므로 절단한다.
-          head -c 2000 audit-output.txt >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-        continue-on-error: true
+      - name: Setup workspace
+        uses: ./.github/actions/setup-workspace
 
       - name: Lint
         working-directory: server
@@ -170,28 +142,16 @@ jobs:
     needs: changes
     if: >-
       github.event_name == 'push' ||
-      needs.changes.outputs.client-toss == 'true' ||
-      needs.changes.outputs.packages-toss-shared == 'true' ||
-      needs.changes.outputs.packages-similarity == 'true'
+      contains(fromJSON(needs.changes.outputs.affected), 'client-toss')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
+      - name: Setup workspace
+        uses: ./.github/actions/setup-workspace
         with:
-          node-version: "22"
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build shared packages
-        run: pnpm build:packages
+          build-packages: "false"
 
       - name: Lint
         working-directory: client-toss
@@ -214,41 +174,93 @@ jobs:
           json-final-path: ./coverage/coverage-final.json
           name: client-toss
 
+      - name: Build
+        working-directory: client-toss
+        run: pnpm run build
+
       - name: QA Check
         working-directory: client-toss
         run: pnpm run qa:ci
 
-      - name: Build
-        working-directory: client-toss
-        run: pnpm run build
+      - name: Generate QA Report
+        id: qa-report
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'client-toss/qa-report.json';
+            if (!fs.existsSync(path)) {
+              core.setOutput('body', '## 📦 Bundle Size (client-toss)\n\nQA 리포트를 찾을 수 없어요.');
+              return;
+            }
+            const qa = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const bundle = qa.results.find((r) => r.name === 'Bundle Size');
+            if (!bundle?.report) {
+              core.setOutput('body', '## 📦 Bundle Size (client-toss)\n\n번들 측정 결과가 없어요.');
+              return;
+            }
+            const { web, budgets, reference } = bundle.report;
+            const kib = (b) => `${(b / 1024).toFixed(1)} KiB`;
+            const mb = (b) => `${(b / 1024 / 1024).toFixed(2)} MB`;
+            const pct = (u, t) => `${((u / t) * 100).toFixed(1)}%`;
+            const mark = (u, t) => (u > t ? '❌' : '✅');
+
+            const rows = web.files.slice(0, 10).map((f) =>
+              `| \`${f.relPath}\` | ${kib(f.raw)} | ${kib(f.gzip)} | ${kib(f.transfer)} |`).join('\n');
+            const rest = web.files.length - Math.min(10, web.files.length);
+
+            const body = [
+              '## 📦 Bundle Size (client-toss)',
+              '',
+              '| 버킷 | 크기 | 예산 | 사용률 | |',
+              '|---|---:|---:|---:|:--:|',
+              `| JS+CSS (gzip) | ${kib(web.codeGzip)} | ${kib(budgets.codeGzip)} | ${pct(web.codeGzip, budgets.codeGzip)} | ${mark(web.codeGzip, budgets.codeGzip)} |`,
+              `| 전송량 합 | ${kib(web.transfer)} | ${kib(budgets.transfer)} | ${pct(web.transfer, budgets.transfer)} | ${mark(web.transfer, budgets.transfer)} |`,
+              `| 소스맵 | ${web.sourceMapCount}개 | 0개 | — | ${web.sourceMapCount > 0 ? '❌' : '✅'} |`,
+              '',
+              `<details><summary>dist/web 파일별 내역 (${web.fileCount}개)</summary>`,
+              '',
+              '| 파일 | raw | gzip | 전송량 |',
+              '|---|---:|---:|---:|',
+              rows,
+              rest > 0 ? `| _그 외 ${rest}개_ | | | |` : '',
+              '</details>',
+              '',
+              reference?.rnBundles
+                ? `> 참고(게이트 대상 아님) — RN 셸 번들 ${reference.rnBundles.count}개 ${mb(reference.rnBundles.bytes)}, 소스맵 ${reference.sourceMaps.count}개 ${mb(reference.sourceMaps.bytes)}. 빌드마다 최대 1.8MB 변동해 게이트하지 않아요.`
+                : '',
+              '',
+              '> gzip level 9 기준. webp처럼 이미 압축된 파일은 `min(raw, gzip)`으로 계산해요.',
+            ].join('\n');
+
+            // GitHub 코멘트 상한(65,536자) 아래로 고정한다.
+            const MAX = 60000;
+            core.setOutput('body', body.length > MAX
+              ? body.slice(0, MAX) + '\n\n> ⚠️ 리포트가 길어 잘랐어요.'
+              : body);
+
+      - name: Comment Bundle Size
+        if: always() && github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v3
+        with:
+          header: bundle-size
+          skip_unchanged: true
+          message: ${{ steps.qa-report.outputs.body }}
 
   server-toss:
     name: Server-Toss
     needs: changes
     if: >-
       github.event_name == 'push' ||
-      needs.changes.outputs.server-toss == 'true' ||
-      needs.changes.outputs.packages-toss-shared == 'true' ||
-      needs.changes.outputs.packages-similarity == 'true'
+      contains(fromJSON(needs.changes.outputs.affected), 'server-toss')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: "22"
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build shared packages
-        run: pnpm build:packages
+      - name: Setup workspace
+        uses: ./.github/actions/setup-workspace
 
       - name: Lint
         working-directory: server-toss
@@ -266,86 +278,9 @@ jobs:
         working-directory: server-toss
         run: pnpm run build
 
-  bundle-size-client:
-    name: Bundle Size Check (Client)
-    needs: changes
-    if: >-
-      github.event_name == 'pull_request' &&
-      (needs.changes.outputs.client == 'true' || needs.changes.outputs.packages-shared == 'true' || needs.changes.outputs.packages-similarity == 'true')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: "22"
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build shared packages
-        run: pnpm build:packages
-
-      - name: Bundle Size Check
-        uses: preactjs/compressed-size-action@v2
-        continue-on-error: true
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          build-script: "build"
-          cwd: "./client"
-
-  bundle-size-toss:
-    name: Bundle Size Check (Toss)
-    needs: changes
-    if: >-
-      github.event_name == 'pull_request' &&
-      (needs.changes.outputs.client-toss == 'true' || needs.changes.outputs.packages-toss-shared == 'true' || needs.changes.outputs.packages-similarity == 'true')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: "22"
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build shared packages
-        run: pnpm build:packages
-
-      - name: Bundle Size Check
-        uses: preactjs/compressed-size-action@v2
-        continue-on-error: true
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          build-script: "build"
-          cwd: "./client-toss"
-
   notify:
     name: Slack Notification
-    needs:
-      [
-        changes,
-        client,
-        server,
-        client-toss,
-        server-toss,
-        bundle-size-client,
-        bundle-size-toss,
-      ]
+    needs: [changes, client, server, client-toss, server-toss]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
@@ -355,13 +290,8 @@ jobs:
         with:
           status: |
             ${{
-              (needs.client.result == 'success' || needs.client.result == 'skipped') &&
-              (needs.server.result == 'success' || needs.server.result == 'skipped') &&
-              (needs.client-toss.result == 'success' || needs.client-toss.result == 'skipped') &&
-              (needs.server-toss.result == 'success' || needs.server-toss.result == 'skipped') &&
-              (needs.bundle-size-client.result == 'success' || needs.bundle-size-client.result == 'skipped') &&
-              (needs.bundle-size-toss.result == 'success' || needs.bundle-size-toss.result == 'skipped') &&
-              'success' || 'failure'
+              (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled'))
+              && 'failure' || 'success'
             }}
           fields: repo,message,commit,author,action,eventName,ref,workflow
           mention: "here"
