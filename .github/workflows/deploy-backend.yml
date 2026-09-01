@@ -10,6 +10,7 @@ on:
       - "server/**"
       - ".github/workflows/deploy-backend.yml"
       - "deploy/**"
+      - "packages/shared/**"
 
 jobs:
   prepare:
