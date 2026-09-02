@@ -55,6 +55,15 @@ describe("스케줄러와 이벤트 리스너 등록", () => {
     );
   });
 
+  it("포인트 지급 작업은 이전 실행이 끝날 때까지 중복 실행되지 않는다", () => {
+    expect(
+      Reflect.getMetadata(
+        CRON_OPTIONS_METADATA,
+        PointGrantScheduler.prototype.processEligiblePoints,
+      ),
+    ).toEqual(expect.objectContaining({ waitForCompletion: true }));
+  });
+
   it("랭킹 변경 작업이 도메인 이벤트 리스너로 등록된다", () => {
     const metadata = Reflect.getMetadata(
       EVENT_LISTENER_METADATA,
