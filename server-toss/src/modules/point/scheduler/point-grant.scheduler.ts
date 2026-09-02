@@ -11,8 +11,8 @@ export class PointGrantScheduler {
     private readonly pointService: PointService,
   ) {}
 
-  @CreateRequestContext((self: PointGrantScheduler) => self.em)
   @Cron(CronExpression.EVERY_SECOND, { timeZone: "Asia/Seoul" })
+  @CreateRequestContext((self: PointGrantScheduler) => self.em)
   async processEligiblePoints() {
     await this.pointService.settleGrantRequests();
   }
