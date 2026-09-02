@@ -34,8 +34,8 @@ export class RankingChangedListener {
     private readonly notificationService: NotificationService,
   ) {}
 
-  @CreateRequestContext((self: RankingChangedListener) => self.em)
   @OnEvent(RANKING_CHANGED_EVENT, { async: true, promisify: true })
+  @CreateRequestContext((self: RankingChangedListener) => self.em)
   async handle(event: RankingChangedEvent): Promise<void> {
     try {
       await this.dispatch(event);
