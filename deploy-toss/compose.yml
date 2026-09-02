@@ -14,6 +14,7 @@ services:
       - source: toss_public_cert
         target: /run/certs/davinci_public.cert
     environment:
+      - EXTERNAL_API=toss
       - TOSS_CLIENT_KEY_PATH=/run/certs/davinci_private.key
       - TOSS_CLIENT_CERT_PATH=/run/certs/davinci_public.cert
     logging:
