@@ -1,6 +1,6 @@
 {
   "name": "prompt-generator",
-  "version": "0.1.0+codex.20260716143037",
+  "version": "0.1.0+codex.20260830155913",
   "description": "Generate, convert, and preview RGB drawing-stroke prompts.",
   "author": {
     "name": "Local developer"
@@ -9,7 +9,7 @@
   "interface": {
     "displayName": "Prompt Generator",
     "shortDescription": "Convert SVGs to RGB stroke prompts and Canvas previews.",
-    "longDescription": "Generate sketch sources, vectorize them with vtracer, convert paths to RGB stroke prompts, and create Canvas previews matching client-toss scaling.",
+    "longDescription": "Generate sketch sources, extract simplified centerline paths, convert them to RGB stroke prompts, and create Canvas previews matching client-toss scaling.",
     "developerName": "Local developer",
     "category": "Productivity",
     "capabilities": [],
