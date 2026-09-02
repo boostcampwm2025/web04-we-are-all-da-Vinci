@@ -15,8 +15,8 @@ export class RankingCleanupScheduler {
     private readonly dailyRankingSnapshotService: DailyRankingSnapshotService,
   ) {}
 
-  @CreateRequestContext((self: RankingCleanupScheduler) => self.em)
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, { timeZone: "Asia/Seoul" })
+  @CreateRequestContext((self: RankingCleanupScheduler) => self.em)
   async handleRankingSnapshotCleanup() {
     try {
       await this.dailyRankingSnapshotService.createYesterdaySnapshot();

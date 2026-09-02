@@ -46,5 +46,23 @@ jest.mock("@mikro-orm/decorators/legacy", () => ({
   Index: () => () => undefined,
   Unique: () => () => undefined,
   Transactional: () => () => undefined,
-  CreateRequestContext: () => () => undefined,
+  // 실제 데코레이터처럼 메서드를 교체해 등록 메타데이터 유실 회귀를 검출한다.
+  CreateRequestContext:
+    () =>
+    (
+      _target: unknown,
+      _propertyKey: string | symbol,
+      descriptor: PropertyDescriptor,
+    ) => {
+      const originalMethod = descriptor.value as (
+        ...args: unknown[]
+      ) => unknown;
+      descriptor.value = function (
+        this: unknown,
+        ...args: unknown[]
+      ): Promise<unknown> {
+        return Promise.resolve(originalMethod.apply(this, args));
+      };
+      return descriptor;
+    },
 }));

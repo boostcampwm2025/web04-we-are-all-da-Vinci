@@ -13,8 +13,8 @@ export class PointGrantPurgeScheduler {
     private readonly pointService: PointService,
   ) {}
 
-  @CreateRequestContext((self: PointGrantPurgeScheduler) => self.em)
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, { timeZone: "Asia/Seoul" })
+  @CreateRequestContext((self: PointGrantPurgeScheduler) => self.em)
   async purgeProcessedRequests() {
     try {
       await this.pointService.purgeProcessedGrantRequests();
