@@ -189,7 +189,7 @@ const DashboardView = () => {
         onClose={closeToast}
       />
 
-      <main className="min-h-0 flex-1 overflow-y-auto px-(--page-px) pt-3 pb-[calc(env(safe-area-inset-bottom)+72px)]">
+      <main className="min-h-0 flex-1 overflow-y-auto px-(--page-px) pt-3 pb-(--bottom-nav-space)">
         <div className="flex flex-col gap-3">
           <StreakStatsCard
             status={attendanceStatus ?? undefined}

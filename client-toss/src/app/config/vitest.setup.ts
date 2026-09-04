@@ -381,6 +381,11 @@ vi.mock("@apps-in-toss/web-framework", () => ({
   getDeviceId: vi.fn().mockResolvedValue({
     deviceId: "test-device-id",
   }),
+  getPlatformOS: vi.fn().mockReturnValue("android"),
+  getTossAppVersion: vi.fn().mockReturnValue("5.220.0"),
+  getOperationalEnvironment: vi.fn().mockReturnValue("sandbox"),
+  getNetworkStatus: vi.fn().mockResolvedValue("WIFI"),
+  getIsTossLoginIntegratedService: vi.fn().mockResolvedValue(true),
   graniteEvent: {
     addEventListener: vi.fn().mockReturnValue(vi.fn()),
   },

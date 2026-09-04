@@ -6,6 +6,8 @@
 
 const ICON_BASE = "https://static.toss.im/icons/svg";
 
+export const navIconUrl = (name: string) => `${ICON_BASE}/${name}.svg`;
+
 /** 홈 경로 — 피드형 대시보드(DashboardView)가 인덱스 라우트로 동작한다. */
 export const HOME_PATH = "/";
 
@@ -22,25 +24,25 @@ export const NAV_TABS: NavTab[] = [
     id: "home",
     label: "홈",
     path: HOME_PATH,
-    iconUrl: `${ICON_BASE}/icon-home-mono.svg`,
+    iconUrl: navIconUrl("icon-home-mono"),
   },
   {
     id: "archive",
     label: "나의 기록",
     path: "/archive",
-    iconUrl: `${ICON_BASE}/icon-folder-mono.svg`,
+    iconUrl: navIconUrl("icon-folder-mono"),
   },
   {
     id: "mission",
     label: "미션",
     path: "/mission",
-    iconUrl: `${ICON_BASE}/icon-document-mono.svg`,
+    iconUrl: navIconUrl("icon-document-mono"),
   },
   {
     id: "ranking",
     label: "랭킹",
     path: "/ranking",
-    iconUrl: `${ICON_BASE}/icon-trophy-mono.svg`,
+    iconUrl: navIconUrl("icon-trophy-mono"),
   },
 ];
 
