@@ -4,6 +4,7 @@ import {
   setIosSwipeGestureEnabled,
 } from "@apps-in-toss/web-framework";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { captureWarning } from "./observability";
 
 const useExitGuard = () => {
   const [showDialog, setShowDialog] = useState(false);
@@ -28,7 +29,13 @@ const useExitGuard = () => {
   const exit = useCallback(() => {
     unsubRef.current?.();
     unsubRef.current = null;
-    closeView().catch((err) => console.error("미니앱 종료 실패:", err));
+    closeView().catch((err) => {
+      captureWarning("미니앱 종료 SDK 호출 실패", {
+        tags: { error_type: "close_view_failed" },
+        extra: { original: String(err) },
+      });
+      console.error("미니앱 종료 실패:", err);
+    });
   }, []);
 
   return { showDialog, setShowDialog, exit };

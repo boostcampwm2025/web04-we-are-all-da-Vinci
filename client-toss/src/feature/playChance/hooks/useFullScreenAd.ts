@@ -1,4 +1,5 @@
 import { AD_GROUP_IDS } from "@/shared/config";
+import { captureWarning, getErrorMessage } from "@/shared/lib";
 import {
   loadFullScreenAd,
   showFullScreenAd,
@@ -67,6 +68,10 @@ export const useFullScreenAd = (
       },
       onError: (err) => {
         console.error("[광고 로드 실패]", err);
+        captureWarning("전면 광고 로드 실패", {
+          tags: { error_type: "ad_load_failed" },
+          extra: { original: getErrorMessage(err) },
+        });
         clearLoadTimeout();
         setAdStatus("failed");
       },

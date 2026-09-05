@@ -1,6 +1,7 @@
 export { trackClick, trackImpression, trackScreen } from "./analytics";
 export { type Attribution, captureAttributionOnce } from "./attribution";
 export {
+  type AuthLoginSource,
   type AuthLoginStage,
   reportAuthLoginAttempt,
   reportAuthLoginFailure,
@@ -9,8 +10,27 @@ export {
 export { formatLocalDate } from "./formatLocalDate";
 export { formatScore } from "./formatScore";
 export { FUNNEL_EVENTS, type FunnelEventName } from "./funnelEvents";
-export { getAnonymousHash } from "./getAnonymousHash";
+export { getAnonymousHash, resetAnonymousHashCache } from "./getAnonymousHash";
 export { getErrorMessage } from "./getErrorMessage";
+export { getKstDate } from "./getKstDate";
+export {
+  EMPTY_SHEET_PROBE_RESULT,
+  type SheetProbe,
+  type SheetProbeOptions,
+  type SheetProbeResult,
+  startSheetProbe,
+} from "./loginSheetProbe";
+export {
+  AUTH_OBSERVABILITY_TAGS,
+  type CaptureContext,
+  captureError,
+  captureWarning,
+  initObservability,
+  isReportedError,
+  isTossBridgeAvailable,
+  leaveBreadcrumb,
+  setObservabilityUser,
+} from "./observability";
 export { toError } from "./toError";
 export { initTossAdsOnce } from "./tossAds";
 export {

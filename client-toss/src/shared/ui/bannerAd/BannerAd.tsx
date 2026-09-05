@@ -2,7 +2,12 @@ import { TossAds } from "@apps-in-toss/web-framework";
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 import { useViewableImpression } from "@/shared/hooks";
-import { FUNNEL_EVENTS, initTossAdsOnce } from "@/shared/lib";
+import {
+  FUNNEL_EVENTS,
+  captureWarning,
+  getErrorMessage,
+  initTossAdsOnce,
+} from "@/shared/lib";
 
 type BannerType = "list" | "feed";
 
@@ -63,6 +68,10 @@ const BannerAd = ({ adGroupId, type = "list", className }: BannerAdProps) => {
       })
       .catch((error) => {
         console.warn("광고 SDK 초기화 실패:", error);
+        captureWarning("배너 광고 SDK 초기화 실패", {
+          tags: { error_type: "ad_init_failed" },
+          extra: { original: getErrorMessage(error) },
+        });
         if (!canceled) setIsFailed(true);
       });
 

@@ -7,6 +7,8 @@ export const FUNNEL_EVENTS = {
   authLoginAttempt: "auth_login_attempt",
   authLoginSuccess: "auth_login_success",
   authLoginFailed: "auth_login_failed",
+  loginFailed: "login_failed",
+  bridgeMissing: "bridge_missing",
 
   playStartAttempt: "play_start_attempt",
   playStartSuccess: "play_start_success",

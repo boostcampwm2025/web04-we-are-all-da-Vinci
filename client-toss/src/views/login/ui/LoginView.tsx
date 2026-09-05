@@ -6,7 +6,7 @@ import { useLoginFlow } from "@/feature/login";
 import { STEPS } from "../config/steps";
 
 const LoginView = () => {
-  const { handleLogin, isLoading } = useLoginFlow();
+  const { handleLogin, isLoading, errorMessage, attempt } = useLoginFlow();
 
   return (
     <div className="flex flex-col h-full">
@@ -64,16 +64,28 @@ const LoginView = () => {
         </div>
       </div>
 
+      {errorMessage && (
+        <div role="status" aria-live="polite" className="px-(--page-px) pb-3">
+          <Paragraph.Text typography="t6" color="var(--color-red)">
+            {errorMessage}
+          </Paragraph.Text>
+        </div>
+      )}
+
       <BottomCTAButton
         onClick={() => {
-          trackClick(FUNNEL_EVENTS.loginButtonClick);
+          trackClick(FUNNEL_EVENTS.loginButtonClick, {
+            source: "login_view",
+            attempt: attempt + 1,
+            is_retry: attempt > 0,
+          });
           handleLogin();
         }}
         loading={isLoading}
         disabled={isLoading}
         background="default"
       >
-        다음
+        {errorMessage ? "다시 시도하기" : "다음"}
       </BottomCTAButton>
     </div>
   );

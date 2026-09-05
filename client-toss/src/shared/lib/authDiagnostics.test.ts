@@ -31,7 +31,11 @@ describe("로그인 진단 계측", () => {
   });
 
   it("시도 이벤트에 기기·앱버전·환경을 함께 싣는다", () => {
-    reportAuthLoginAttempt({ isFirstLogin: true, attempt: 1 });
+    reportAuthLoginAttempt({
+      isFirstLogin: true,
+      attempt: 1,
+      source: "login_view",
+    });
 
     expect(nameOf()).toBe("auth_login_attempt");
     expect(paramsOf()).toMatchObject({
@@ -40,6 +44,7 @@ describe("로그인 진단 계측", () => {
       operational_environment: "sandbox",
       is_first_login: true,
       attempt: 1,
+      source: "login_view",
     });
   });
 
@@ -47,6 +52,7 @@ describe("로그인 진단 계측", () => {
     reportAuthLoginSuccess({
       isFirstLogin: false,
       attempt: 2,
+      source: "reissue",
       elapsedMs: 350,
     });
 
@@ -54,8 +60,38 @@ describe("로그인 진단 계측", () => {
     expect(paramsOf()).toMatchObject({
       is_first_login: false,
       attempt: 2,
+      source: "reissue",
       elapsed_ms: 350,
     });
+  });
+
+  it("시트 관측 결과가 있으면 파라미터로 펴서 싣는다", () => {
+    reportAuthLoginSuccess({
+      isFirstLogin: true,
+      attempt: 1,
+      source: "login_view",
+      elapsedMs: 9600,
+      sheet: { sheetShown: true, hiddenMs: 8800, transitions: 2 },
+    });
+
+    expect(paramsOf()).toMatchObject({
+      sheet_shown: true,
+      sheet_hidden_ms: 8800,
+      visibility_transitions: 2,
+    });
+  });
+
+  it("시트 관측 결과가 없으면 관련 키를 싣지 않는다", () => {
+    reportAuthLoginSuccess({
+      isFirstLogin: true,
+      attempt: 1,
+      source: "login_view",
+      elapsedMs: 300,
+    });
+
+    expect(paramsOf()).not.toHaveProperty("sheet_shown");
+    expect(paramsOf()).not.toHaveProperty("sheet_hidden_ms");
+    expect(paramsOf()).not.toHaveProperty("visibility_transitions");
   });
 
   it("실패 이벤트에 실패 단계와 네트워크 상태까지 싣는다", async () => {
@@ -64,19 +100,25 @@ describe("로그인 진단 계측", () => {
     await reportAuthLoginFailure({
       isFirstLogin: true,
       attempt: 1,
+      source: "pending_retry",
       elapsedMs: 42,
       stage: "app_login",
       error: new Error("appLogin rejected"),
+      sheet: { sheetShown: false, hiddenMs: 0, transitions: 0 },
     });
 
     expect(nameOf()).toBe("auth_login_failed");
     expect(paramsOf()).toMatchObject({
       stage: "app_login",
+      source: "pending_retry",
       network_status: "OFFLINE",
       is_login_integrated: true,
       elapsed_ms: 42,
       error_name: "Error",
       error_message: "appLogin rejected",
+      sheet_shown: false,
+      sheet_hidden_ms: 0,
+      visibility_transitions: 0,
     });
   });
 
@@ -84,6 +126,7 @@ describe("로그인 진단 계측", () => {
     await reportAuthLoginFailure({
       isFirstLogin: false,
       attempt: 1,
+      source: "reissue",
       elapsedMs: 120,
       stage: "token_issue",
       error: new Error("토큰 재발급 실패"),
@@ -105,6 +148,7 @@ describe("로그인 진단 계측", () => {
     await reportAuthLoginFailure({
       isFirstLogin: true,
       attempt: 1,
+      source: "login_view",
       elapsedMs: 10,
       stage: "app_login",
       error: new Error("appLogin rejected"),
@@ -125,6 +169,7 @@ describe("로그인 진단 계측", () => {
     const pending = reportAuthLoginFailure({
       isFirstLogin: true,
       attempt: 1,
+      source: "login_view",
       elapsedMs: 10,
       stage: "app_login",
       error: new Error("appLogin rejected"),

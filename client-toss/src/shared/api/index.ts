@@ -1,7 +1,9 @@
 export { getAnalyticsInstance, initFirebaseAnalyticsOnce } from "./firebase";
+export { RequestError } from "./requestError";
 export {
   clearAccessToken,
-  RequestError,
+  hasAccessToken,
+  onSessionCleared,
   serverTossApi,
   setAccessToken,
   setCachedNickname,

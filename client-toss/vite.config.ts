@@ -54,8 +54,17 @@ export default defineConfig(({ mode }) => {
       },
       rollupOptions: {
         output: {
-          manualChunks: {
-            "vendor-react": ["react", "react-dom"],
+          manualChunks: (id) => {
+            if (!id.includes("/node_modules/")) return undefined;
+            if (/\/node_modules\/(react|react-dom|scheduler)\//.test(id)) {
+              return "vendor-react";
+            }
+            // 관측 비용이 번들 리포트에서 따로 보이게 분리한다.
+            // Session Replay(rrweb)는 @sentry-internal/replay에 있어 패키지명 나열로는 잡히지 않는다.
+            if (/\/node_modules\/@sentry(-internal)?\//.test(id)) {
+              return "vendor-observability";
+            }
+            return undefined;
           },
         },
       },
