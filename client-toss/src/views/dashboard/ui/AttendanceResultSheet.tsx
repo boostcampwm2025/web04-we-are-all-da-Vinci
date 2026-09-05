@@ -14,7 +14,8 @@ import { BottomSheet, Button, Toast } from "@toss/tds-mobile";
 interface AttendanceResultSheetProps {
   result: AttendanceCheckInResponse | null;
   onClose: () => void;
-  onRecovered: () => void;
+  /** 복구/포기 직후 호출(선택). 현황·포인트 갱신은 mutation이 하므로 부가 동작에만 쓴다. */
+  onRecovered?: () => void;
 }
 
 /**
@@ -44,7 +45,7 @@ const AttendanceResultSheet = ({
   const handleRecover = async () => {
     const outcome = await recover();
     if (outcome.ok) {
-      onRecovered();
+      onRecovered?.();
       onClose();
       toast.show(ATTENDANCE_RECOVERY_SUCCESS_MESSAGE);
       return;
@@ -55,7 +56,7 @@ const AttendanceResultSheet = ({
   const handleDecline = async () => {
     const ok = await decline();
     if (ok) {
-      onRecovered();
+      onRecovered?.();
       onClose();
     } else {
       toast.show(ATTENDANCE_RECOVERY_DECLINE_FAIL_MESSAGE);

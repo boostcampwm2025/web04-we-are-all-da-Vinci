@@ -2,9 +2,9 @@ import {
   DrawingCanvasFrame,
   ReplayDrawingCanvas,
 } from "@/entities/drawingCanvas";
+import { useSubmitDrawing } from "@/entities/myScoreCard";
 import { PhaseHeader } from "@/entities/phaseHeader";
 import { useStartGame } from "@/feature/playChance";
-import { serverTossApi } from "@/shared/api";
 import { AD_GROUP_IDS } from "@/shared/config";
 import {
   FUNNEL_EVENTS,
@@ -50,6 +50,8 @@ const SubmittedView = () => {
   const toast = useToast();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // 제출 성공 시 랭킹·시상대·미션·아카이브 캐시 무효화는 mutation(entities/myScoreCard)이 소유한다.
+  const { mutateAsync: submitDrawing } = useSubmitDrawing();
 
   // 서버의 saveDrawingWithRanking에는 멱등성이 없어 호출마다 그림이 한 장씩 저장된다.
   // isSubmitting(useState)은 갱신이 다음 렌더에 반영되므로 같은 렌더 사이클의
@@ -67,7 +69,7 @@ const SubmittedView = () => {
           score: routeState.similarity?.score,
           stroke_count: routeState.strokes.length,
         });
-        await serverTossApi.submitDrawing(routeState.strokes);
+        await submitDrawing(routeState.strokes);
 
         trackClick(FUNNEL_EVENTS.submittedSubmitSuccess, {
           score: routeState.similarity?.score,

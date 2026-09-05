@@ -2,6 +2,7 @@
 import { serverTossApi } from "@/shared/api";
 import { FUNNEL_EVENTS, trackClick } from "@/shared/lib";
 import { contactsViral } from "@apps-in-toss/web-framework";
+import { withQueryClient } from "@/shared/testing";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useInviteFriend } from "./useInviteFriend";
@@ -18,7 +19,7 @@ vi.mock("@/shared/lib", async () => {
   return { ...actual, trackClick: vi.fn() };
 });
 
-describe("useInviteFriend", () => {
+describe("친구 초대 훅", () => {
   const mockedContactsViral = contactsViral as unknown as ReturnType<
     typeof vi.fn
   > & {
@@ -44,8 +45,9 @@ describe("useInviteFriend", () => {
       const onCharged = vi.fn();
       const onError = vi.fn();
 
-      const { result } = renderHook(() =>
-        useInviteFriend({ onCharged, onError }),
+      const { result } = renderHook(
+        () => useInviteFriend({ onCharged, onError }),
+        { wrapper: withQueryClient() },
       );
 
       await act(async () => {
@@ -78,8 +80,9 @@ describe("useInviteFriend", () => {
       const onCharged = vi.fn();
       const onError = vi.fn();
 
-      const { result } = renderHook(() =>
-        useInviteFriend({ onCharged, onError }),
+      const { result } = renderHook(
+        () => useInviteFriend({ onCharged, onError }),
+        { wrapper: withQueryClient() },
       );
 
       await act(async () => {
@@ -132,7 +135,9 @@ describe("useInviteFriend", () => {
       );
 
       const onCharged = vi.fn();
-      const { result } = renderHook(() => useInviteFriend({ onCharged }));
+      const { result } = renderHook(() => useInviteFriend({ onCharged }), {
+        wrapper: withQueryClient(),
+      });
 
       await act(async () => {
         result.current.start();
@@ -187,8 +192,9 @@ describe("useInviteFriend", () => {
         },
       );
 
-      const { result } = renderHook(() =>
-        useInviteFriend({ onError: vi.fn() }),
+      const { result } = renderHook(
+        () => useInviteFriend({ onError: vi.fn() }),
+        { wrapper: withQueryClient() },
       );
 
       await act(async () => {

@@ -1,17 +1,8 @@
-import { serverTossApi } from "@/shared/api";
-import { useCallback } from "react";
-import type { PodiumResponse } from "../model/types";
-import { useAbortableQuery } from "@/shared/hooks/useAbortableQuery";
+import { useQuery } from "@tanstack/react-query";
+import { podiumQueries } from "../api/podiumQueries";
 
 const usePodium = () => {
-  const queryFn = useCallback(
-    ({ signal }: { signal: AbortSignal }) =>
-      serverTossApi.getPodium({ signal }),
-    [],
-  );
-
-  const { data, isLoading } = useAbortableQuery<PodiumResponse>(queryFn);
-
+  const { data, isLoading } = useQuery(podiumQueries.today());
   return {
     podium: data?.podium,
     participantCount: data?.participantCount,

@@ -17,7 +17,9 @@ export type NotificationTypeConfig = {
   label: string;
   rowTop: string;
   rowBottom: string;
-  get: () => Promise<NotificationAgreementResponse>;
+  get: (options?: {
+    signal?: AbortSignal;
+  }) => Promise<NotificationAgreementResponse>;
   save: (
     body: NotificationAgreementRequest,
   ) => Promise<NotificationAgreementResponse>;

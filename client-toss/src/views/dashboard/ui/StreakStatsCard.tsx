@@ -29,7 +29,7 @@ interface StreakStatsCardProps {
   /** 포인트는 출석과 분리된 리소스(/points/me) — 별도 prop으로 받는다. */
   pointSummary?: PointSummaryResponse;
   missionMaxPoint?: number;
-  /** 끊김 복구 성공 직후 호출 — 출석 현황·포인트를 재조회한다. */
+  /** 끊김 복구/포기 직후 호출(선택). 현황·포인트 갱신은 mutation이 하므로 부가 동작에만 쓴다. */
   onRecovered?: () => void;
 }
 
@@ -64,7 +64,7 @@ const StreakStatsCard = ({
         </button>
       </div>
 
-      {status?.recoverable && onRecovered && (
+      {status?.recoverable && (
         <div className="mt-4">
           <AttendanceRecoverButton onResolved={onRecovered} />
         </div>

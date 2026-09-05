@@ -1,27 +1,13 @@
-import { serverTossApi } from "@/shared/api";
-import { useAbortableQuery } from "@/shared/hooks/useAbortableQuery";
-import { useCallback } from "react";
-
-type DrawingDetail = Awaited<ReturnType<typeof serverTossApi.getDrawing>>;
+import { skipToken, useQuery } from "@tanstack/react-query";
+import { drawingQueries } from "../api/drawingQueries";
 
 const useDrawing = (drawingId: string | undefined) => {
-  const queryFn = useCallback(
-    ({ signal }: { signal: AbortSignal }) => {
-      if (!drawingId) {
-        return Promise.resolve(null);
-      }
-
-      return serverTossApi.getDrawing(drawingId, { signal });
-    },
-    [drawingId],
-  );
-
-  const { data, isLoading } = useAbortableQuery<DrawingDetail | null>(queryFn);
-
-  return {
-    drawing: data,
-    isLoading,
-  };
+  const { data, isLoading } = useQuery({
+    ...drawingQueries.detail(drawingId ?? ""),
+    // id가 없으면 요청하지 않는다(isLoading=false, drawing=null → 호출부의 "찾을 수 없음" 분기).
+    queryFn: drawingId ? drawingQueries.detail(drawingId).queryFn : skipToken,
+  });
+  return { drawing: data ?? null, isLoading };
 };
 
 export { useDrawing };

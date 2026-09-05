@@ -70,21 +70,13 @@ const DashboardView = () => {
     locationState,
   });
 
-  const { status: attendanceStatus, refetch: refetchAttendance } =
-    useAttendanceStatus();
-  // 포인트는 출석과 분리된 리소스(/points/me). 포인트 변동 시 함께 재조회한다.
-  const { summary: pointSummary, refetch: refetchPoints } = usePointSummary();
-  // 출석 체크인·복구로 포인트(마일스톤)가 바뀔 수 있으므로 현황+포인트를 같이 갱신.
-  const refreshAttendance = useCallback(() => {
-    refetchAttendance();
-    refetchPoints();
-  }, [refetchAttendance, refetchPoints]);
+  const { status: attendanceStatus } = useAttendanceStatus();
+  // 포인트는 출석과 분리된 리소스(/points/me). 출석 체크인·복구로 포인트(마일스톤)가 바뀌는
+  // 규칙은 출석 mutation(entities/attendance)이 무효화로 소유한다 — 뷰가 refetch를 묶지 않는다.
+  const { summary: pointSummary } = usePointSummary();
 
   // 게임 자동시작으로 넘어가지 않고 대시보드가 실제 보일 때(playedToday)만 출석 체크인·시트.
-  const attendanceCheckIn = useAttendanceAutoCheckIn({
-    enabled: playedToday,
-    onChecked: refreshAttendance,
-  });
+  const attendanceCheckIn = useAttendanceAutoCheckIn({ enabled: playedToday });
 
   // 알림 시트는 출석 시트와 겹치지 않도록 출석 처리가 끝나고(settled) 출석 시트가 닫힌 뒤에만 띄운다.
   const notificationAutoPrompt = useNotificationAutoPrompt(
@@ -93,19 +85,16 @@ const DashboardView = () => {
       attendanceCheckIn.result === null,
   );
 
-  const {
-    missions: todayMissions,
-    isLoading: isMissionsLoading,
-    refetch: refetchMissions,
-  } = useTodayMissions();
+  const { missions: todayMissions, isLoading: isMissionsLoading } =
+    useTodayMissions();
   const missionMaxPoint = todayMissions.reduce(
     (sum, mission) => sum + mission.rewardAmount,
     0,
   );
 
   // 시상대는 ChallengeCard(최고점·참가자수)와 TodayDavinciCard(top3)가 함께 쓴다.
-  // useAbortableQuery에 dedupe가 없어 각 카드가 호출하면 GET /podium이 2번 나가므로
-  // 뷰에서 1회만 호출해 props로 내려준다.
+  // 쿼리 캐시가 같은 키를 dedupe하므로 각 카드가 호출해도 요청은 1번이지만,
+  // 두 카드가 memo 컴포넌트라 props로 내려주는 구조는 그대로 둔다.
   const { podium, participantCount } = usePodium();
 
   // 포디움 top3는 rank 1~3이고 /rankings/me의 rank도 동일 tie-break이라,
@@ -195,13 +184,11 @@ const DashboardView = () => {
             status={attendanceStatus ?? undefined}
             pointSummary={pointSummary ?? undefined}
             missionMaxPoint={missionMaxPoint}
-            onRecovered={refreshAttendance}
           />
           <ChallengeCard
             cta={cta}
             podium={podium}
             participantCount={participantCount}
-            onInvited={refetchMissions}
           />
           <TodayMissionCard
             missions={todayMissions}
@@ -218,7 +205,6 @@ const DashboardView = () => {
       <AttendanceResultSheet
         result={attendanceCheckIn.result}
         onClose={attendanceCheckIn.close}
-        onRecovered={refreshAttendance}
       />
 
       <NotificationCenterSheet

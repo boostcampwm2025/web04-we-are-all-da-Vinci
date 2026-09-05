@@ -2,6 +2,7 @@
 import { serverTossApi } from "@/shared/api";
 import { formatLocalDate } from "@/shared/lib";
 import { getDeviceId } from "@apps-in-toss/web-framework";
+import { withQueryClient } from "@/shared/testing";
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { useAttendanceAutoCheckIn } from "./useAttendanceAutoCheckIn";
@@ -23,7 +24,9 @@ describe("출석 자동 체크인 훅", () => {
   it("당일 게이트가 닫혀 있으면 체크인하지 않는다", async () => {
     localStorage.setItem(GATE_KEY, formatLocalDate());
 
-    renderHook(() => useAttendanceAutoCheckIn());
+    renderHook(() => useAttendanceAutoCheckIn(), {
+      wrapper: withQueryClient(),
+    });
 
     await waitFor(() => expect(getDeviceId).toHaveBeenCalled());
     expect(mockedApi.checkInAttendance).not.toHaveBeenCalled();
@@ -39,8 +42,9 @@ describe("출석 자동 체크인 훅", () => {
     });
     const onChecked = vi.fn();
 
-    const { result } = renderHook(() =>
-      useAttendanceAutoCheckIn({ onChecked }),
+    const { result } = renderHook(
+      () => useAttendanceAutoCheckIn({ onChecked }),
+      { wrapper: withQueryClient() },
     );
 
     await waitFor(() => expect(result.current.result?.cycleDay).toBe(3));
@@ -57,7 +61,9 @@ describe("출석 자동 체크인 훅", () => {
       rewardedDay: null,
     });
 
-    const { result } = renderHook(() => useAttendanceAutoCheckIn());
+    const { result } = renderHook(() => useAttendanceAutoCheckIn(), {
+      wrapper: withQueryClient(),
+    });
 
     await waitFor(() =>
       expect(localStorage.getItem(GATE_KEY)).toBe(formatLocalDate()),
@@ -68,7 +74,9 @@ describe("출석 자동 체크인 훅", () => {
   it("체크인 실패 시 게이트를 닫지 않아 다음에 재시도된다", async () => {
     mockedApi.checkInAttendance.mockRejectedValue(new Error("network"));
 
-    renderHook(() => useAttendanceAutoCheckIn());
+    renderHook(() => useAttendanceAutoCheckIn(), {
+      wrapper: withQueryClient(),
+    });
 
     await waitFor(() =>
       expect(mockedApi.checkInAttendance).toHaveBeenCalledTimes(1),

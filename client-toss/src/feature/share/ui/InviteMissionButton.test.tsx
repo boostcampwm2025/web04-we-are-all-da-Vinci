@@ -1,8 +1,15 @@
 /// <reference types="@testing-library/jest-dom/vitest" />
+import { withQueryClient } from "@/shared/testing";
+import type { ReactElement } from "react";
 import { PlayChanceProvider } from "@/feature/playChance";
 import { serverTossApi } from "@/shared/api";
 import { contactsViral } from "@apps-in-toss/web-framework";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  render as renderWithoutProviders,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import {
   afterEach,
   beforeEach,
@@ -13,6 +20,10 @@ import {
   vi,
 } from "vitest";
 import InviteMissionButton from "./InviteMissionButton";
+
+// 훅·컴포넌트가 서버 상태 캐시(useQuery/useMutation)를 쓰므로 QueryClientProvider 아래에서 렌더한다.
+const render = (ui: ReactElement) =>
+  renderWithoutProviders(ui, { wrapper: withQueryClient() });
 
 vi.mock("@/shared/api", () => ({
   serverTossApi: {

@@ -1,12 +1,13 @@
+import { archiveQueries } from "@/entities/archive";
 import {
   DrawingCanvasFrame,
   StaticDrawingCanvas,
 } from "@/entities/drawingCanvas";
 import { DrawingScoreDetailSheet } from "@/entities/myScoreCard";
-import { serverTossApi } from "@/shared/api";
+import { userQueries } from "@/entities/user";
 import { AD_GROUP_IDS } from "@/shared/config";
 import { BannerAd } from "@/shared/ui/bannerAd";
-import type { ArchiveDayResponse, ArchiveSummaryResponse } from "@toss/shared";
+import { useQuery } from "@tanstack/react-query";
 import { colors } from "@toss/tds-colors";
 import {
   Asset,
@@ -17,7 +18,7 @@ import {
   TextButton,
   Top,
 } from "@toss/tds-mobile";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 const QUICK_DATE_COUNT = 5;
 
@@ -116,104 +117,42 @@ const SummaryStat = ({ iconName, label, value, unit }: SummaryStatProps) => (
 );
 
 const ArchiveView = () => {
-  const [summary, setSummary] = useState<ArchiveSummaryResponse | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [selectedDay, setSelectedDay] = useState<ArchiveDayResponse | null>(
-    null,
-  );
-  const [isSummaryLoading, setIsSummaryLoading] = useState(true);
-  const [isDayLoading, setIsDayLoading] = useState(false);
+  // 사용자가 고른 날짜/월. null이면 요약의 최신 날짜를 따른다(요약 도착 시점에 effect로 세팅하지 않는다).
+  const [pickedDate, setPickedDate] = useState<string | null>(null);
+  const [pickedMonthKey, setPickedMonthKey] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isScoreDetailOpen, setIsScoreDetailOpen] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [selectedMonthKey, setSelectedMonthKey] = useState<string | null>(null);
-  const [nickname, setNickname] = useState<string | null>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
-  const dayCacheRef = useRef(new Map<string, ArchiveDayResponse>());
 
-  useEffect(() => {
-    const controller = new AbortController();
+  // /user/me·/archive/summary는 영속 대상 — 콜드 진입에도 첫 프레임에 닉네임 칩과 통계가 있다.
+  const { data: me } = useQuery(userQueries.me());
+  const nickname = me?.nickname ?? null;
 
-    serverTossApi
-      .getMe({ signal: controller.signal })
-      .then((me) => setNickname(me.nickname))
-      .catch(() => {});
+  const {
+    data: summary = null,
+    isLoading: isSummaryLoading,
+    isError: isSummaryError,
+  } = useQuery(archiveQueries.summary());
 
-    return () => controller.abort();
-  }, []);
+  const selectedDate = pickedDate ?? summary?.dates[0]?.date ?? null;
+  const selectedMonthKey = pickedMonthKey ?? selectedDate?.slice(0, 7) ?? null;
 
-  useEffect(() => {
-    const controller = new AbortController();
+  // 날짜별 기록은 불변 — 세션 안에서 한 번 본 날짜는 다시 요청하지 않는다(캐시가 dayCache 역할).
+  const {
+    data: selectedDay = null,
+    isLoading: isDayLoading,
+    isError: isDayError,
+  } = useQuery({
+    ...archiveQueries.day(selectedDate ?? ""),
+    enabled: selectedDate != null,
+  });
 
-    const loadSummary = async () => {
-      try {
-        const archiveSummary = await serverTossApi.getArchiveSummary({
-          signal: controller.signal,
-        });
-        if (controller.signal.aborted) return;
-
-        setSummary(archiveSummary);
-        setSelectedDate(archiveSummary.dates[0]?.date ?? null);
-        setSelectedMonthKey(archiveSummary.dates[0]?.date.slice(0, 7) ?? null);
-      } catch {
-        if (!controller.signal.aborted) {
-          setErrorMessage("아카이브를 불러오지 못했어요");
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsSummaryLoading(false);
-        }
-      }
-    };
-
-    loadSummary();
-
-    return () => controller.abort();
-  }, []);
-
-  useEffect(() => {
-    if (!selectedDate) {
-      setSelectedDay(null);
-      return;
-    }
-
-    const cached = dayCacheRef.current.get(selectedDate);
-    if (cached) {
-      setSelectedDay(cached);
-      setActiveIndex(0);
-      return;
-    }
-
-    const controller = new AbortController();
-
-    const loadDay = async () => {
-      setIsDayLoading(true);
-      try {
-        const day = await serverTossApi.getArchiveDay(selectedDate, {
-          signal: controller.signal,
-        });
-        if (controller.signal.aborted) return;
-
-        dayCacheRef.current.set(selectedDate, day);
-        setSelectedDay(day);
-        setActiveIndex(0);
-      } catch {
-        if (!controller.signal.aborted) {
-          setSelectedDay(null);
-          setErrorMessage("선택한 날짜 기록을 불러오지 못했어요");
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsDayLoading(false);
-        }
-      }
-    };
-
-    loadDay();
-
-    return () => controller.abort();
-  }, [selectedDate]);
+  const errorMessage = isSummaryError
+    ? "아카이브를 불러오지 못했어요"
+    : isDayError
+      ? "선택한 날짜 기록을 불러오지 못했어요"
+      : null;
 
   const selectedSummary =
     summary?.dates.find((date) => date.date === selectedDate) ?? null;
@@ -232,8 +171,9 @@ const ArchiveView = () => {
     ) ?? [];
 
   const selectDate = (date: string) => {
-    setSelectedDate(date);
-    setSelectedMonthKey(date.slice(0, 7));
+    setPickedDate(date);
+    setPickedMonthKey(date.slice(0, 7));
+    setActiveIndex(0);
     setIsDatePickerOpen(false);
     setIsScoreDetailOpen(false);
   };
@@ -279,7 +219,7 @@ const ArchiveView = () => {
           <SummaryStat
             iconName="icon-calendar-check-yellow"
             label="그린 날"
-            value={formatNumber(summary?.stats.playDays ?? 0)}
+            value={formatNumber(summary?.stats.playDays ?? null)}
             unit="일"
           />
           <SummaryStat
@@ -297,7 +237,7 @@ const ArchiveView = () => {
           <SummaryStat
             iconName="icon-true-colors"
             label="제출한 그림"
-            value={formatNumber(summary?.stats.totalDrawingCount ?? 0)}
+            value={formatNumber(summary?.stats.totalDrawingCount ?? null)}
             unit="장"
           />
         </div>
@@ -520,7 +460,7 @@ const ArchiveView = () => {
               <button
                 key={monthKey}
                 type="button"
-                onClick={() => setSelectedMonthKey(monthKey)}
+                onClick={() => setPickedMonthKey(monthKey)}
                 className="h-11 shrink-0 rounded-[8px]! px-3 text-[14px] font-bold transition-colors"
                 style={{
                   backgroundColor:

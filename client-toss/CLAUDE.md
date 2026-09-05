@@ -54,7 +54,7 @@ Apps-in-Toss WebView 미니앱 — 그림을 기억해서 따라 그리는 **비
 ## 명령어
 
 ```bash
-pnpm dev            # granite dev (scripts/dev.js — LAN IP를 WEBVIEW_HOST로 주입, 샌드박스 접속용)
+pnpm dev            # 웹 granite dev (scripts/dev.js — LAN IP를 WEBVIEW_HOST로 주입, 샌드박스 접속용. `granite` bin 이름은 RN CLI와 겹쳐 web-framework/bin.js를 경로로 직접 실행)
 pnpm build          # ait build → we-are-all-da-vinci.ait
 pnpm test           # 전체 테스트 (CI와 동일)
 pnpm test <file>    # 단일 파일 — 예: pnpm test src/feature/drawing/model/useDrawingStrokes.test.ts
@@ -69,7 +69,7 @@ pnpm qa             # 앱인토스 심사 기준 자동 검증 / pnpm qa:ci 는 
 
 - 컴포넌트는 **화살표 함수**로 작성, **파일 마지막 줄에서 export** (default 또는 named).
 - FSD 슬라이스 폴더명은 **camelCase** (`phaseHeader`, `myScoreCard`).
-- 상태는 **useState/useEffect 기반** — 전역 스토어(Zustand 등) 없음.
+- **클라이언트 상태는 useState 기반**(전역 스토어 Zustand 등 없음). **서버 상태는 TanStack Query**가 소유한다 — 서버 응답을 컴포넌트 로컬 `useState`/`useEffect`로 들고 있지 말고 `useQuery`/`useMutation`을 쓸 것 → "서버 상태 캐시" 절.
 - TDS `<Toast>` 노출 상태는 컴포넌트마다 `useState` 하지 말고 **`shared/lib`의 `useToast()`**(`{ open, text, show, close }`)로 통일.
 - Tailwind CSS v4 문법, 사용자 문구 해요체 (위 "반드시 지킬 규칙" 참조).
 - **상수·도메인 타입은 사용처에 인라인하지 말고 슬라이스의 `config/`로 분리.** 시간/임계값 등 튜닝 매직 넘버, 슬라이스 외부와 공유하는 도메인 타입이 대상 (예: `feature/drawing/config/scoring.ts`의 `SCORE_DEBOUNCE_MS`, `TREND_THRESHOLD`, `ScoreTrend`). 단일 함수 내부에서만 쓰는 임시 상수는 그대로 둬도 됨.
@@ -92,21 +92,43 @@ views/      dashboard 홈("/", 일일 1회 자동 진입 — model/useDailyAutoS
             ranking(TOP100 갤러리), rankingDetail("/drawing/:drawingId"),
             archive("/archive" 기록 아카이브), mission("/mission" 미션 목록)
             ※ landing은 라우터 밖 — App.tsx의 세션당 1회 진입 게이트
-feature/    drawing(캔버스/툴바·스트로크 모델·채점 훅), login(토스 OAuth 훅),
+feature/    drawing(캔버스/툴바·스트로크 모델·채점 훅),
+            login(토스 OAuth 훅 useLoginFlow·토큰 게이트 RequireToken·useHasAccessToken·
+                  실패 회차 저장소 loginAttemptStore(sessionStorage)·config/constants·loginMessages),
             playChance(도전 시작 단일 훅 useStartGame·기회/광고 충전·하단바 FAB PlayNavButton),
             share(점수공유·친구초대 ShareSheet), notification(알림 동의 토글·벨 버튼)
 entities/   myScoreCard(+useMyDrawings), podium(usePodium 훅 — TOP3, 컴포넌트는 삭제됨),
             ranking(리스트 항목), scoreDetailCard(점수 상세), phaseHeader(단계 헤더),
             attendance(출석 현황·진행 UI), missionCard(오늘의 미션 카드·섹션),
             point(usePointSummary), drawingCanvas(리플레이/정적 캔버스)
-shared/     api(serverTossApi·Firebase Analytics init), hooks(useAbortableQuery),
+            user(userQueries — /user/me), archive(archiveQueries — /archive/*, 훅 없이 뷰가 useQuery)
+shared/     api(serverTossApi·requestError·Firebase Analytics init), hooks(useViewableImpression),
+            config(AD_GROUP_IDS·QUERY_STALE_TIME),
             lib(useCountdown·useExitGuard·useRequiredState·useToast·tossAds·퍼널 계측
-                analytics/attribution/funnelEvents·getAnonymousHash·formatLocalDate 등),
-            ui(bannerAd·score·exitDialog·bottomNav·bottomCTAButton·maskedIcon·rankBadge), assets
-app/config/ router.tsx, AnalyticsTracker(화면 전환 계측), vitest.setup.ts
+                analytics/attribution/funnelEvents·authDiagnostics(auth_login_* 리포터)·
+                loginSheetProbe(appLogin 중 WebView 가림 관측)·getAnonymousHash·formatLocalDate·getKstDate 등),
+            ui(bannerAd·score·exitDialog·bottomNav·bottomCTAButton·maskedIcon·rankBadge), assets,
+            testing(withQueryClient — 테스트 전용 QueryClientProvider 래퍼)
+app/config/ router.tsx, AnalyticsTracker(화면 전환 계측만), ProtectedLayout(토큰 게이트 → PlayChanceProvider →
+            Outlet+하단바(탭 프리페치)+알림 벨), queryClient.ts(+queryPersistence·kstDateWatcher·tabPrefetch),
+            vitest.setup.ts
 ```
 
-`App.tsx`는 `TDSMobileAITProvider`로 감싸고, **세션당 1회 `LandingView` 게이트**(`sessionStorage.landingSeen`)를 거친 뒤 `PlayChanceProvider` + `RouterProvider` + `NotificationBellButton`을 렌더한다. 마운트 시 `initTossAdsOnce`·`initFirebaseAnalyticsOnce`·`captureAttributionOnce`를 1회 호출한다.
+`App.tsx`는 `TDSMobileAITProvider` > `QueryClientProvider`로 감싸고, **세션당 1회 `LandingView` 게이트**(`sessionStorage.landingSeen`)를 거친 뒤 `RouterProvider`만 렌더한다. `PlayChanceProvider`·하단바·`NotificationBellButton`은 토큰이 있어야 의미가 있으므로 라우터 안 `ProtectedLayout`이 마운트한다 → "라우팅" 절. `QueryClientProvider`는 랜딩 게이트 **바깥**이다(랜딩 중에도 캐시·프리페치가 살아 있어야 한다). 마운트 시 `initTossAdsOnce`·`initFirebaseAnalyticsOnce`·`captureAttributionOnce`를 1회 호출하고 `installKstDateWatcher`를 건다.
+
+## 서버 상태 캐시 (TanStack Query v5 + localStorage 영속)
+
+탭 전환은 뷰 전체 언마운트라 캐시가 없으면 재진입마다 값이 `-`로 깜빡인다. 그래서 서버 상태는 `QueryClient`(`app/config/queryClient.ts`)가 언마운트를 넘어 보관하고, **부팅 시 localStorage에서 동기 복원**해 콜드 진입에도 첫 프레임에 마지막 값이 있게 한다.
+
+- **쿼리 정의는 리소스를 소유한 `entities/<slice>/api/*Queries.ts`의 `queryOptions` 팩토리**에 둔다(`attendanceQueries.status()`처럼). `useQuery`·`prefetchQuery`·`invalidateQueries`·영속 필터가 같은 정의를 쓴다. 뷰·feature에서 `queryKey`를 손으로 쓰지 말 것.
+- **"오늘" 단위 리소스는 전부 `getKstDate()`를 queryKey에 넣는다**(`/attendance/me`·`/points/me`·`/missions/*`·`/rankings/*`·`/rankings/podium`·`/archive/summary`). 하루 **경계**는 키가, 하루 **안** 신선도는 `staleTime`(`shared/config/QUERY_STALE_TIME`)이 다스린다. TTL로 자정을 흉내내지 말 것 — 영속 캐시에서 어제 값이 오늘 첫 화면에 뜬다.
+- **훅 어댑터의 `isLoading`은 v5의 `isLoading`(= 값 없음 **그리고** 요청 중)**이다. `isFetching`을 매핑하면 백그라운드 갱신마다 스켈레톤으로 되돌아가 증상이 "매 진입"에서 "갱신마다"로 바뀔 뿐이다. 값 카드는 `data`가 있으면 그대로 그린다.
+- **무효화는 mutation이 소유한다.** 출석 체크인/복구/포기 → 출석+포인트(`entities/attendance/api/attendanceMutations.ts`), 그림 제출 → 랭킹·시상대·미션·아카이브(`entities/myScoreCard/api/drawingMutations.ts`), 미션 액션·친구 초대 → 미션. 뷰에서 `refetch`를 손으로 묶지 말 것.
+- **영속 허용 목록은 `meta: { persist: true }`로 정의 자리에서 선언**한다. `strokes`가 든 큰 응답(`/rankings` TOP100·`/archive/days/:date`·`/drawing/:id`)은 영속하지 않고 `gcTime` 5분(`LARGE_RESPONSE_GC_TIME`).
+- **`PERSIST_BUSTER`(`app/config/queryPersistence.ts`)는 `@toss/shared` 응답 스키마가 바뀌면 반드시 올린다.** 옛 모양의 캐시가 렌더에 들어가는 것을 막는 유일한 장치다. `maxAge` 24h는 피해 상한일 뿐.
+- 전역 기본값: `gcTime` 24h(영속 `maxAge`와 같아야 콜드 복원이 비지 않는다), `retry`는 `RequestError`(HTTP 실패)면 없음·그 외 1회, `refetchOnWindowFocus: false`. 로그아웃·재발급 실패(`clearAccessToken`) 시 `queryClient.clear()`로 메모리·디스크 캐시를 비운다. 401 재발급(`setAccessToken`)에서는 지우지 않는다(같은 사용자, 요청 도중).
+- `/chances/me`(그리기 기회)는 `PlayChanceProvider`가 낙관적 갱신으로 이미 관리하므로 TanStack Query로 옮기지 않았다.
+- 테스트: `useQuery`/`useMutation`을 쓰는 훅·컴포넌트는 `@/shared/testing`의 `withQueryClient()`를 `wrapper`로 넘겨 렌더한다. `setQueryData`는 `meta`를 붙이지 않으므로 영속 필터를 검증할 땐 `fetchQuery(queryOptions)`로 쿼리를 만든다.
 
 ## 도메인 메모
 
@@ -132,7 +154,7 @@ app/config/ router.tsx, AnalyticsTracker(화면 전환 계측), vitest.setup.ts
 
 - **출석(`entities/attendance`)**: `useAttendanceStatus`(현황)·`AttendanceProgress`/`AttendanceSummary`(7일 진행 UI). 대시보드 첫 노출 시 `views/dashboard/model/useAttendanceAutoCheckIn`이 하루 1회 자동 체크인 → 결과를 `AttendanceResultSheet`(연속/끊김) 바텀시트로 안내. 출석 시트와 알림 시트가 겹치지 않게 출석 처리가 끝나고(settled) 닫힌 뒤에만 알림을 띄운다. 끊긴 연속 복구는 보상형 광고를 끝까지 본 경우에만 인정(`useFullScreenAd` 확장).
 - **미션(`entities/missionCard` + `views/mission`)**: `useTodayMissions`(대시보드 카드)·`useMyMissions`(미션 탭), `MissionCard`/`MissionSection`/`MissionCardSkeleton`/`TutorialMissionSection`. 미션 액션 세션키에 KST 날짜 경계를 적용해 자정 넘어가면 액션이 재집계된다. 진행 기간 라벨은 `getDailyMissionRangeLabel`/`getWeeklyMissionRangeLabel`(`lib/missionPeriod`)로 계산 — 디바이스 타임존과 무관하게 KST(일일 0시·주간 월요일) 기준, server-toss 규칙과 동일.
-- **포인트(`entities/point`)**: `usePointSummary` — 출석과 분리된 `/points/me` 리소스. 출석 체크인·복구로 포인트(마일스톤)가 바뀔 수 있으므로 대시보드는 출석 현황과 포인트를 **함께 재조회**한다.
+- **포인트(`entities/point`)**: `usePointSummary` — 출석과 분리된 `/points/me` 리소스. 출석 체크인·복구로 포인트(마일스톤)가 바뀔 수 있으므로 출석 mutation이 출석 현황과 포인트를 **함께 무효화**한다(뷰가 재조회를 묶지 않는다).
 - **리플레이 캔버스(`entities/drawingCanvas`)**: TOP100 갤러리·아카이브 상세에서 획을 시간순으로 다시 그려 보여준다. `useDrawingReplay`·`animateDrawing`(easeout)·`ReplayDrawingCanvas`·`StaticDrawingCanvas`, 화면 안에 들어왔을 때(`isVisible`) 리플레이를 재생한다.
 
 ### TDS 사용
@@ -157,9 +179,20 @@ app/config/ router.tsx, AnalyticsTracker(화면 전환 계측), vitest.setup.ts
 
 ### 라우팅 (`app/config/router.tsx`)
 
-- `createBrowserRouter` 기반. 모든 라우트는 `AnalyticsTracker`(app/config) 하위에 묶여 화면 전환을 계측한다. 샌드박스 앱은 루트(`/`) → `DashboardView`로 진입.
+- `createBrowserRouter` 기반. 트리는 `AnalyticsTracker`(page_view만) → `/login` | `ProtectedLayout`(나머지 전부). 샌드박스 앱은 루트(`/`)로 진입하되, 토큰이 없으면 `ProtectedLayout`의 `RequireToken`이 **렌더 시점에** `<Navigate to="/login" replace/>`로 돌린다 — 대시보드는 마운트되지 않으므로 인증 요청이 한 건도 나가지 않는다.
+- **토큰 게이트 규칙**: 마운트 시 인증 요청을 쏘는 provider·뷰(`PlayChanceProvider`의 `/chances/me` 포함)는 반드시 `ProtectedLayout` 아래에만 둔다. `BottomNav`의 `PlayNavButton`이 `PlayChanceContext`를 쓰므로 하단바도 여기 있다. 리다이렉트는 effect가 아니라 렌더 시점 `<Navigate>`로 한다(`useRequiredState`는 자식을 한 번 렌더하는 레거시 패턴 — 게이트에 쓰지 말 것). 게이트는 `useHasAccessToken`(`useSyncExternalStore(onSessionCleared, hasAccessToken)`)으로 `clearAccessToken()`에 즉시 반응한다.
+- **첫 사용자 흐름**: 랜딩 → `/login`(LoginView, "다음") → `appLogin()` 동의 시트 → 토큰 저장 → `/` → 자동 시작. 실패하면 LoginView에 남아 단계별 문구(`feature/login/config/loginMessages`)와 "다시 시도하기"를 본다. 시트를 자동으로 다시 열지 않는다(다크패턴). 동의 시트 뒤 WebView 리로드 복귀(`login_pending`)는 `MAX_PENDING_AUTO_RETRIES`까지만 자동 재시도한다. 이미 토스 연동된 사용자도 토큰이 없으면 탭 1회를 거친다(기기당 한 번).
 - 라우트: `/login`, `/`, `/memorize`, `/drawing`, `/drawing/:drawingId`(rankingDetail), `/submitted`, `/ranking`, `/archive`, `/mission`.
 - 하단 탭(`shared/ui/bottomNav`)이 노출되는 경로는 `/`·`/archive`·`/mission`·`/ranking`(`NAV_VISIBLE_PATHS`).
+
+### 관측 (Sentry — `shared/lib/observability`)
+
+- `VITE_SENTRY_DSN`이 있을 때만 초기화한다. dev/prod 구분 게이트는 없고 `environment` 태그(`development`/`production`, `VITE_SENTRY_ENVIRONMENT`로 덮어씀)로만 나뉜다 — 로컬 샌드박스 에러도 DSN이 있으면 전송된다.
+- **Session Replay는 에러가 난 세션만** 보낸다(`replaysOnErrorSampleRate: 1`). 트리거는 error/fatal 전부 + **로그인 도메인(`AUTH_OBSERVABILITY_TAGS`, `tags.domain="auth"`)은 warning까지** — 로그인·재발급·`/oauth/toss/login` 실패 보고에 이 태그를 붙인다. 텍스트·입력 전부 마스킹, 미디어 차단, 캔버스 미녹화. 전체 세션 녹화는 `VITE_SENTRY_REPLAY_SESSION_RATE`(0~1, 기본 0)로 켠다.
+- `request()`는 4xx를 `warning`으로 낮춰 보고한다(409 멱등 흡수 등 의도된 분기가 섞여 있어서). 로그인 엔드포인트 밖의 warning은 리플레이를 트리거하지 않는다.
+- 로그인·토큰 재발급은 `leaveBreadcrumb("auth", …)`로 단계를 남긴다(브리지 호출→인가 코드→서버 응답). 로그인 실패 리플레이에서 어디서 멈췄는지 읽는 용도이고 토큰·인가 코드 값은 넣지 않는다.
+- **로그인 실패 fingerprint는 `["login-failed", stage, error.name]` / `["token-reissue-failed", stage, error.name]`**, 태그는 `stage`·`is_first_login`·`error_name`·`attempt`·`source`(+ 메시지에서 뽑은 `error_code`). 브리지 부재는 `["bridge-missing"]` 유지. Sentry `dedupeIntegration`은 기본대로 켜 둔다 — 같은 에러의 연속 재시도는 Sentry에서 접히므로 **재시도 횟수는 GA4 `auth_login_*`의 `attempt`가 진실**이다. `captureError`의 WeakSet 때문에 `request()`가 이미 보고한 `RequestError`(`token_issue` 단계)는 `api-http-error` fingerprint로 남는다.
+- `appLogin()` 앞뒤로 `startSheetProbe()`/`stop()`을 걸어 WebView가 가려졌는지(`sheet_shown`·`sheet_hidden_ms`·`visibility_transitions`)를 `auth_login_success/failed`에 싣는다. 네이티브 동의 시트는 DOM에 없어 이 이벤트가 "시트가 실제로 떴는가"의 유일한 단서다 → `ANALYTICS_FUNNEL.md`의 해석 가이드.
 
 ### 설정
 
@@ -174,6 +207,6 @@ app/config/ router.tsx, AnalyticsTracker(화면 전환 계측), vitest.setup.ts
 
 ## QA / CI
 
-`pnpm qa` (`scripts/qa.ts`) — 8개 자동 검증: tooling, granite-config, tds-usage, ux-writing(해요체·다크패턴 단어), dark-pattern, ad-integration, external-links, bundle-size. 수동 QA(실기기)는 `QA_CHECKLIST.md` 참고.
+`pnpm qa` (`scripts/qa.ts`) — 8개 자동 검증: tooling, granite-config, tds-usage, ux-writing(해요체·다크패턴 단어), dark-pattern, ad-integration, external-links, bundle-size. 수동 QA(실기기)는 `QA_CHECKLIST.md` 참고. ux-writing의 부정 표현 검사("할 수 없"·"불가능"·"이용할 수 없")는 **주석·테스트 문자열까지** 훑고 CI는 WARN도 실패로 보니, 코드 주석과 테스트 픽스처에도 쓰지 말 것(에러 픽스처는 영문).
 
 CI (PR에서 `client-toss/**` 또는 `packages/**` 변경 시): `pnpm lint` → `format:check` → `test:coverage` → `qa:ci`(WARN도 실패) → `build`.

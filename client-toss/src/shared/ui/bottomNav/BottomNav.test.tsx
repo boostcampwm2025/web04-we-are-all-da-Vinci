@@ -28,7 +28,8 @@ describe("하단 플로팅 탭바", () => {
   });
 
   it("칸 수가 가이드 상한인 5개를 넘지 않는다", () => {
-    renderAt("/", <button type="button">테스트 시작</button>);
+    // 칸 수만 세는 픽스처 — raw <button>은 QA(TDS Usage) 검사에 걸리므로 div로 둔다.
+    renderAt("/", <div>테스트 시작</div>);
 
     const nav = screen.getByRole("navigation", { name: "주요 메뉴" });
     const slots = within(nav).getAllByRole("listitem");

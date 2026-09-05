@@ -10,12 +10,12 @@ import {
   MissionCardSkeleton,
   MissionSection,
   TutorialMissionSection,
+  useMissionAction,
   useMyMissions,
 } from "@/entities/missionCard";
 import { AttendanceRecoverButton } from "@/feature/attendanceRecovery";
 import { InviteMissionButton } from "@/feature/share";
 import { AD_GROUP_IDS } from "@/shared/config";
-import { useMissionAction } from "@/shared/hooks";
 import { FUNNEL_EVENTS, trackScreen } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { ATTENDANCE_REWARD_DAYS, ATTENDANCE_REWARD_POINT } from "@toss/shared";
@@ -28,10 +28,8 @@ const MissionView = () => {
     tutorialCategories,
     challengeMissions,
     isLoading,
-    refetch,
   } = useMyMissions();
-  const { status: attendanceStatus, refetch: refetchAttendance } =
-    useAttendanceStatus();
+  const { status: attendanceStatus } = useAttendanceStatus();
 
   useEffect(() => {
     trackScreen(FUNNEL_EVENTS.missionView);
@@ -83,7 +81,7 @@ const MissionView = () => {
             </p>
             {attendanceStatus.recoverable && (
               <div className="mt-4">
-                <AttendanceRecoverButton onResolved={refetchAttendance} />
+                <AttendanceRecoverButton />
               </div>
             )}
           </section>
@@ -103,7 +101,7 @@ const MissionView = () => {
             // 친구초대 미션은 미완료일 때 카드에서 바로 초대를 시작할 수 있게 한다.
             mission.objectiveType === "invite" &&
             mission.currentCount < mission.requiredCount ? (
-              <InviteMissionButton onInvited={refetch} />
+              <InviteMissionButton />
             ) : null
           }
         />

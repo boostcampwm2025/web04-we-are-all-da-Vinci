@@ -1,5 +1,8 @@
+import {
+  useDeclineAttendanceRecovery,
+  useRecoverAttendance,
+} from "@/entities/attendance";
 import { useFullScreenAd } from "@/feature/playChance";
-import { serverTossApi } from "@/shared/api";
 import { AD_GROUP_IDS } from "@/shared/config";
 import {
   FUNNEL_EVENTS,
@@ -29,6 +32,10 @@ export const useAttendanceRecovery = () => {
   );
   const [isRecovering, setIsRecovering] = useState(false);
   const [isDeclining, setIsDeclining] = useState(false);
+  // 복구·포기 성공 시 출석 현황+포인트 무효화는 mutation(entities)이 소유한다 — 호출부가 refetch할 필요 없음.
+  const { mutateAsync: recoverAttendance } = useRecoverAttendance();
+  const { mutateAsync: declineAttendanceRecovery } =
+    useDeclineAttendanceRecovery();
 
   // 복구·포기 각각의 중복 실행을 막는다. isRecovering(useState)은 상태 갱신이
   // 다음 렌더에 반영되므로 같은 렌더 사이클의 두 번째 호출을 통과시킨다 —
@@ -69,9 +76,7 @@ export const useAttendanceRecovery = () => {
         }
 
         try {
-          await serverTossApi.recoverAttendance({
-            adGroupId: RECOVERY_AD_GROUP_ID,
-          });
+          await recoverAttendance({ adGroupId: RECOVERY_AD_GROUP_ID });
           trackClick(FUNNEL_EVENTS.adRewardSuccess, {
             ad_group_id: RECOVERY_AD_GROUP_ID,
           });
@@ -86,7 +91,7 @@ export const useAttendanceRecovery = () => {
           setIsRecovering(false);
         }
       }),
-    [guardRecover, isAdLoaded, reloadAd, showAd],
+    [guardRecover, isAdLoaded, recoverAttendance, reloadAd, showAd],
   );
 
   const decline = useCallback(
@@ -94,7 +99,7 @@ export const useAttendanceRecovery = () => {
       guardDecline(async () => {
         setIsDeclining(true);
         try {
-          await serverTossApi.declineAttendanceRecovery();
+          await declineAttendanceRecovery();
           return true;
         } catch {
           return false;
@@ -102,7 +107,7 @@ export const useAttendanceRecovery = () => {
           setIsDeclining(false);
         }
       }),
-    [guardDecline],
+    [declineAttendanceRecovery, guardDecline],
   );
 
   return {

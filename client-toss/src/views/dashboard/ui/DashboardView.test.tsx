@@ -1,5 +1,5 @@
 /// <reference types="@testing-library/jest-dom/vitest" />
-import { formatLocalDate } from "@/shared/lib";
+import { formatLocalDate, resetAnonymousHashCache } from "@/shared/lib";
 import { getDeviceId } from "@apps-in-toss/web-framework";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -118,11 +118,13 @@ const renderDashboard = (state?: unknown, pathname = "/") =>
     </MemoryRouter>,
   );
 
-describe("DashboardView", () => {
+describe("대시보드 화면", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
     localStorage.clear();
+    // getAnonymousHash는 세션 캐시라 테스트마다 비워야 getDeviceId 모킹이 반영된다.
+    resetAnonymousHashCache();
     vi.mocked(getDeviceId).mockResolvedValue({ deviceId: "test-device" });
     mockUseFullScreenAd.mockImplementation(() => fullScreenAd("ready"));
     mockUsePlayChanceContext.mockImplementation(() => playChance(true));

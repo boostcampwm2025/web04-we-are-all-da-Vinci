@@ -1,5 +1,12 @@
+import { missionQueries } from "@/entities/missionCard";
 import { serverTossApi } from "@/shared/api";
-import { FUNNEL_EVENTS, toError, trackClick } from "@/shared/lib";
+import {
+  FUNNEL_EVENTS,
+  captureWarning,
+  toError,
+  trackClick,
+} from "@/shared/lib";
+import { useQueryClient } from "@tanstack/react-query";
 import { contactsViral } from "@apps-in-toss/web-framework";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -28,6 +35,7 @@ export const useInviteFriend = ({
 }: UseInviteFriendArgs = {}) => {
   const [isInviting, setIsInviting] = useState(false);
   const cleanupRef = useRef<(() => void) | null>(null);
+  const queryClient = useQueryClient();
   const moduleId = import.meta.env.VITE_CONTACTS_VIRAL_MODULE_ID as
     | string
     | undefined;
@@ -46,6 +54,10 @@ export const useInviteFriend = ({
     (err: unknown, fallback: string) => {
       const error = toError(err, fallback);
       onError?.(error);
+      captureWarning("친구 초대 실패", {
+        tags: { error_type: "share_sdk_failed" },
+        extra: { original: error.message },
+      });
       console.error(`[useInviteFriend] ${fallback}`, error);
     },
     [onError],
@@ -67,6 +79,10 @@ export const useInviteFriend = ({
                 });
               // 기회 한도 초과분은 chanceGranted=false(서버 미반환 시 지급으로 간주).
               const granted = chanceGranted ?? true;
+              // 초대는 친구초대 미션을 진행시킨다 — 미션 목록(오늘·전체)을 무효화해 제자리 갱신.
+              void queryClient.invalidateQueries({
+                queryKey: missionQueries.all(),
+              });
               trackClick(FUNNEL_EVENTS.shareInviteRewardSuccess, {
                 reward_amount: event.data.rewardAmount,
                 reward_unit: event.data.rewardUnit,
@@ -104,7 +120,7 @@ export const useInviteFriend = ({
       });
       cleanupRef.current = typeof cleanup === "function" ? cleanup : null;
     },
-    [handleError, onCharged],
+    [handleError, onCharged, queryClient],
   );
 
   const start = useCallback(() => {

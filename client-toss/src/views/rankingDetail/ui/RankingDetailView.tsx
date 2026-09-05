@@ -1,7 +1,7 @@
 import { MyScoreCard, useDrawing } from "@/entities/myScoreCard";
 import { PhaseHeader } from "@/entities/phaseHeader";
 import { AD_GROUP_IDS } from "@/shared/config";
-import { useMissionAction } from "@/shared/hooks";
+import { useMissionAction } from "@/entities/missionCard";
 import { FUNNEL_EVENTS, trackScreen } from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { Score } from "@/shared/ui/score";

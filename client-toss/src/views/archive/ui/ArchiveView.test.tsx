@@ -1,8 +1,18 @@
 /// <reference types="@testing-library/jest-dom/vitest" />
-import { render, screen, waitFor } from "@testing-library/react";
+import { withQueryClient } from "@/shared/testing";
+import type { ReactElement } from "react";
+import {
+  render as renderWithoutProviders,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ArchiveView from "./ArchiveView";
+
+// 훅·컴포넌트가 서버 상태 캐시(useQuery/useMutation)를 쓰므로 QueryClientProvider 아래에서 렌더한다.
+const render = (ui: ReactElement) =>
+  renderWithoutProviders(ui, { wrapper: withQueryClient() });
 
 const getMe = vi.fn();
 const getArchiveSummary = vi.fn();

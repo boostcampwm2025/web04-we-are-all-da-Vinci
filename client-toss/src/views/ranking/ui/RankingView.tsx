@@ -1,5 +1,5 @@
 import { RankingList } from "@/entities/ranking";
-import { useMissionAction } from "@/shared/hooks";
+import { useMissionAction } from "@/entities/missionCard";
 import { FUNNEL_EVENTS, trackScreen } from "@/shared/lib";
 import { Top } from "@toss/tds-mobile";
 import { useEffect } from "react";

@@ -1,3 +1,4 @@
+import { captureError } from "@/shared/lib";
 import type { Stroke } from "@toss/shared";
 import type { RefObject } from "react";
 import { getCanvasBackgroundColor } from "./canvasBackground";
@@ -124,6 +125,10 @@ export const animateDrawing = (
 
       animationId = requestAnimationFrame(animateBySpeed);
     } catch (error) {
+      captureError(error, {
+        tags: { error_type: "replay_animation_failed" },
+        fingerprint: ["replay-animation-failed"],
+      });
       console.error("리플레이 애니메이션 오류로 중단:", error);
       animationId = null;
     }
@@ -164,6 +169,10 @@ export const animateDrawing = (
       }
       animationId = requestAnimationFrame(animateByDuration);
     } catch (error) {
+      captureError(error, {
+        tags: { error_type: "replay_animation_failed" },
+        fingerprint: ["replay-animation-failed"],
+      });
       console.error("리플레이 애니메이션 오류로 중단:", error);
       animationId = null;
     }

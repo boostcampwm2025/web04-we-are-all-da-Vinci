@@ -9,8 +9,8 @@ import {
 import { useAttendanceRecovery } from "../hooks/useAttendanceRecovery";
 
 interface AttendanceRecoverButtonProps {
-  /** 복구/포기로 출석 현황이 바뀐 직후 호출 — 현황을 재조회해 카드를 갱신한다. */
-  onResolved: () => void;
+  /** 복구/포기 직후 호출(선택). 현황·포인트 갱신은 mutation이 하므로 부가 동작에만 쓴다. */
+  onResolved?: () => void;
 }
 
 /**
@@ -29,7 +29,7 @@ const AttendanceRecoverButton = ({
   const handleRecover = async () => {
     const result = await recover();
     if (result.ok) {
-      onResolved();
+      onResolved?.();
       toast.show(ATTENDANCE_RECOVERY_SUCCESS_MESSAGE);
       return;
     }
@@ -38,7 +38,7 @@ const AttendanceRecoverButton = ({
 
   const handleDecline = async () => {
     const ok = await decline();
-    if (ok) onResolved();
+    if (ok) onResolved?.();
     else toast.show(ATTENDANCE_RECOVERY_DECLINE_FAIL_MESSAGE);
   };
 

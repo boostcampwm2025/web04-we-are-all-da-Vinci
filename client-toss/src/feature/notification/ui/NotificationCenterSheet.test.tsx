@@ -24,9 +24,20 @@ vi.mock("@/shared/api", () => ({
 
 type SheetProps = { open: boolean; onClose: () => void };
 
+// vi.resetModules 뒤에 시트와 QueryClientProvider 래퍼를 같은 모듈 레지스트리에서 불러온다 —
+// 따로 불러오면 react-query 인스턴스가 달라 컨텍스트를 못 찾는다.
 const loadSheet = async (): Promise<ComponentType<SheetProps>> => {
-  const mod = await import("./NotificationCenterSheet");
-  return mod.default;
+  const [{ default: Sheet }, { withQueryClient }] = await Promise.all([
+    import("./NotificationCenterSheet"),
+    import("@/shared/testing"),
+  ]);
+  const Wrapper = withQueryClient();
+  const WrappedSheet = (props: SheetProps) => (
+    <Wrapper>
+      <Sheet {...props} />
+    </Wrapper>
+  );
+  return WrappedSheet;
 };
 
 const loadSdk = async () => {
@@ -55,7 +66,8 @@ describe("알림 설정 시트 토글", () => {
     const Sheet = await loadSheet();
     render(<Sheet open onClose={vi.fn()} />);
 
-    await waitFor(() => expect(getOvertaken).toHaveBeenCalled());
+    // 호출 시점이 아니라 캐시에 상태가 실린 시점(스위치 ON)을 기다린다.
+    await screen.findByRole("switch", { checked: true });
 
     fireEvent.click(screen.getByText("랭킹 추월 알림"));
 
@@ -69,7 +81,8 @@ describe("알림 설정 시트 토글", () => {
     const sdk = await loadSdk();
     render(<Sheet open onClose={vi.fn()} />);
 
-    await waitFor(() => expect(getOvertaken).toHaveBeenCalled());
+    // 호출 시점이 아니라 캐시에 상태가 실린 시점(스위치 ON)을 기다린다.
+    await screen.findByRole("switch", { checked: true });
 
     fireEvent.click(screen.getByText("랭킹 추월 알림"));
     fireEvent.click(screen.getByText("알림 끄기"));
@@ -86,7 +99,8 @@ describe("알림 설정 시트 토글", () => {
     const Sheet = await loadSheet();
     render(<Sheet open onClose={vi.fn()} />);
 
-    await waitFor(() => expect(getOvertaken).toHaveBeenCalled());
+    // 호출 시점이 아니라 캐시에 상태가 실린 시점(스위치 ON)을 기다린다.
+    await screen.findByRole("switch", { checked: true });
 
     fireEvent.click(screen.getByText("랭킹 추월 알림"));
     fireEvent.click(screen.getByText("유지하기"));

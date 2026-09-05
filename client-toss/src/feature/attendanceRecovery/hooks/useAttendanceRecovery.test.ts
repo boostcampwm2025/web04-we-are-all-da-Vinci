@@ -4,6 +4,7 @@ import {
   loadFullScreenAd,
   showFullScreenAd,
 } from "@apps-in-toss/web-framework";
+import { withQueryClient } from "@/shared/testing";
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { useAttendanceRecovery } from "./useAttendanceRecovery";
@@ -65,7 +66,9 @@ describe("출석 복구 훅", () => {
     });
 
   it("보상 데이터 없이 userEarnedReward만 발생해도 시청을 인정하고 복구 API를 호출한다", async () => {
-    const { result } = renderHook(() => useAttendanceRecovery());
+    const { result } = renderHook(() => useAttendanceRecovery(), {
+      wrapper: withQueryClient(),
+    });
     loadAd();
 
     let outcome;
@@ -85,7 +88,9 @@ describe("출석 복구 훅", () => {
   });
 
   it("끝까지 보지 않아(userEarnedReward 미발생) dismissed만 오면 복구하지 않는다", async () => {
-    const { result } = renderHook(() => useAttendanceRecovery());
+    const { result } = renderHook(() => useAttendanceRecovery(), {
+      wrapper: withQueryClient(),
+    });
     loadAd();
 
     let outcome;
@@ -101,7 +106,9 @@ describe("출석 복구 훅", () => {
   });
 
   it("광고가 아직 로드되지 않았으면 ad_not_ready를 반환한다", async () => {
-    const { result } = renderHook(() => useAttendanceRecovery());
+    const { result } = renderHook(() => useAttendanceRecovery(), {
+      wrapper: withQueryClient(),
+    });
     // loaded 이벤트를 보내지 않아 isAdLoaded=false 유지.
 
     let outcome;
@@ -115,7 +122,9 @@ describe("출석 복구 훅", () => {
   });
 
   it("새롭게 시작하기는 광고 없이 복구 대상을 비우는 API를 호출한다", async () => {
-    const { result } = renderHook(() => useAttendanceRecovery());
+    const { result } = renderHook(() => useAttendanceRecovery(), {
+      wrapper: withQueryClient(),
+    });
 
     let ok;
     await act(async () => {
@@ -129,7 +138,9 @@ describe("출석 복구 훅", () => {
 
   describe("같은 렌더 사이클에서 두 번 호출돼도", () => {
     it("광고 노출과 복구 API가 각각 한 번만 일어난다", async () => {
-      const { result } = renderHook(() => useAttendanceRecovery());
+      const { result } = renderHook(() => useAttendanceRecovery(), {
+        wrapper: withQueryClient(),
+      });
       loadAd();
 
       await act(async () => {
@@ -148,7 +159,9 @@ describe("출석 복구 훅", () => {
     });
 
     it("두 번째 호출자도 첫 호출의 결과를 그대로 받는다", async () => {
-      const { result } = renderHook(() => useAttendanceRecovery());
+      const { result } = renderHook(() => useAttendanceRecovery(), {
+        wrapper: withQueryClient(),
+      });
       loadAd();
 
       let outcomes: unknown[] = [];
@@ -167,7 +180,9 @@ describe("출석 복구 훅", () => {
     });
 
     it("포기 API도 한 번만 호출된다", async () => {
-      const { result } = renderHook(() => useAttendanceRecovery());
+      const { result } = renderHook(() => useAttendanceRecovery(), {
+        wrapper: withQueryClient(),
+      });
 
       await act(async () => {
         await Promise.all([result.current.decline(), result.current.decline()]);
@@ -178,7 +193,9 @@ describe("출석 복구 훅", () => {
   });
 
   it("광고가 로드되지 않은 채 두 번 눌러도 재로드 요청이 한 번만 나간다", async () => {
-    const { result } = renderHook(() => useAttendanceRecovery());
+    const { result } = renderHook(() => useAttendanceRecovery(), {
+      wrapper: withQueryClient(),
+    });
     const loadCallsBefore = mockLoad.mock.calls.length;
 
     await act(async () => {

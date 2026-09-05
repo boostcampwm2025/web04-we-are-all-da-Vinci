@@ -365,6 +365,15 @@ vi.mock("firebase/app", () => ({
   initializeApp: vi.fn().mockReturnValue({}),
 }));
 
+vi.mock("@sentry/react", () => ({
+  init: vi.fn(),
+  captureException: vi.fn(),
+  captureMessage: vi.fn(),
+  setUser: vi.fn(),
+  replayIntegration: vi.fn(() => ({ name: "Replay" })),
+  addBreadcrumb: vi.fn(),
+}));
+
 vi.mock("firebase/analytics", () => ({
   getAnalytics: vi.fn().mockReturnValue({}),
   isSupported: vi.fn().mockResolvedValue(false),
@@ -373,6 +382,13 @@ vi.mock("firebase/analytics", () => ({
 }));
 
 vi.mock("@apps-in-toss/web-framework", () => ({
+  // Analytics 목이 빠져 있으면 트래킹 코드의 try/catch가 에러를 삼켜
+  // 토스 계측이 미검증인 채 테스트가 통과한다 — 반드시 유지할 것.
+  Analytics: {
+    click: vi.fn().mockResolvedValue(undefined),
+    impression: vi.fn().mockResolvedValue(undefined),
+    screen: vi.fn().mockResolvedValue(undefined),
+  },
   appLogin: vi.fn().mockResolvedValue({
     authorizationCode: "test-code",
     referrer: "SANDBOX" as const,

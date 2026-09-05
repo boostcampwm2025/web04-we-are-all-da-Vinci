@@ -1,9 +1,11 @@
 /// <reference types="@testing-library/jest-dom/vitest" />
+import { withQueryClient } from "@/shared/testing";
+import type { ReactElement } from "react";
 import { serverTossApi } from "@/shared/api";
 import {
   act,
   fireEvent,
-  render,
+  render as renderWithoutProviders,
   screen,
   waitFor,
 } from "@testing-library/react";
@@ -12,6 +14,10 @@ import type { ReactNode } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import SubmittedView from "./SubmittedView";
+
+// 훅·컴포넌트가 서버 상태 캐시(useQuery/useMutation)를 쓰므로 QueryClientProvider 아래에서 렌더한다.
+const render = (ui: ReactElement) =>
+  renderWithoutProviders(ui, { wrapper: withQueryClient() });
 
 const navigateMock = vi.fn();
 const mockChargeByAd = vi.fn().mockResolvedValue(1);

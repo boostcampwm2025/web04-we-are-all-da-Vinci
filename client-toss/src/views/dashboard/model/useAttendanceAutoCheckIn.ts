@@ -1,4 +1,4 @@
-import { serverTossApi } from "@/shared/api";
+import { useCheckInAttendance } from "@/entities/attendance";
 import { formatLocalDate, getAnonymousHash } from "@/shared/lib";
 import type { AttendanceCheckInResponse } from "@toss/shared";
 import { useEffect, useRef, useState } from "react";
@@ -11,11 +11,12 @@ import { useEffect, useRef, useState } from "react";
  * - `localStorage[attendance_${hash}]` 게이트로 기기-당일 중복 호출을 막되, 정확성은 서버 멱등이 보장한다.
  * - 게이트는 **체크인 성공 후에만** 기록한다(실패 시 다음 진입에 재시도 가능).
  * - 결과가 `already`가 아니면(=오늘 첫 체크인) 결과 시트를 띄우도록 `result`로 올린다.
+ * - 출석 현황·포인트 캐시 무효화는 체크인 mutation(entities/attendance)이 소유한다.
  */
 interface UseAttendanceAutoCheckInParams {
   /** 대시보드가 실제로 노출되는 진입일 때만 true(게임 자동시작 진입에서는 false). */
   enabled?: boolean;
-  /** 체크인 성공 직후 호출 — 현황(getStatus)을 갱신해 카드를 최신 상태로 맞춘다. */
+  /** 체크인 성공 직후 호출(선택). 캐시 갱신은 mutation이 하므로 부가 동작에만 쓴다. */
   onChecked?: () => void;
 }
 
@@ -29,6 +30,9 @@ export const useAttendanceAutoCheckIn = ({
   const checkedRef = useRef(false);
   const onCheckedRef = useRef(onChecked);
   onCheckedRef.current = onChecked;
+  const { mutateAsync: checkIn } = useCheckInAttendance();
+  const checkInRef = useRef(checkIn);
+  checkInRef.current = checkIn;
 
   useEffect(() => {
     if (!enabled) return;
@@ -44,7 +48,7 @@ export const useAttendanceAutoCheckIn = ({
         if (checkedRef.current) return;
         checkedRef.current = true;
 
-        const res = await serverTossApi.checkInAttendance();
+        const res = await checkInRef.current();
         localStorage.setItem(gateKey, today);
         onCheckedRef.current?.();
         if (res.status !== "already") setResult(res);

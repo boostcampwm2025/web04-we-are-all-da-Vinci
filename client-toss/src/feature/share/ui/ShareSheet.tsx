@@ -1,6 +1,12 @@
 import { usePlayChanceContext } from "@/feature/playChance";
 import { AD_GROUP_IDS } from "@/shared/config";
-import { FUNNEL_EVENTS, trackClick, useToast } from "@/shared/lib";
+import {
+  FUNNEL_EVENTS,
+  captureWarning,
+  getErrorMessage,
+  trackClick,
+  useToast,
+} from "@/shared/lib";
 import { BannerAd } from "@/shared/ui/bannerAd";
 import { BottomSheet, ListRow, Toast } from "@toss/tds-mobile";
 import {
@@ -76,6 +82,10 @@ const ShareSheet = ({ open, onClose, onInvited }: ShareSheetProps) => {
     onClose();
     shareMyScore().catch((error) => {
       console.error(error);
+      captureWarning("점수 공유 실패", {
+        tags: { error_type: "share_sdk_failed" },
+        extra: { original: getErrorMessage(error) },
+      });
       toast.show("공유에 실패했어요. 잠시 후 다시 시도해주세요.");
     });
   };
