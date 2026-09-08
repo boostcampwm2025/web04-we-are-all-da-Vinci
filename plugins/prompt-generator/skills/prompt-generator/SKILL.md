@@ -29,6 +29,17 @@ If the user supplies several topics, look for a natural action connecting them. 
 
 ## Topic to prompt workflow
 
+When processing more than one generated image, run the complete batch pipeline once instead of invoking each conversion script per image. Pass every image after one `--input`; each input must have a unique filename stem. The command writes `<stem>.svg`, `<stem>.json`, and `<stem>.html` for every image into `--output-dir`:
+
+```bash
+uv run --with pillow --with scikit-image \
+  python plugins/prompt-generator/scripts/batch-generate-prompts.py \
+  --input /tmp/prompts/*.png \
+  --output-dir /tmp/prompts/converted
+```
+
+Use the single-file commands below only for one image or when rerunning an individual stage with custom tuning options.
+
 1. Generate a deliberately clumsy, scribbly raster image for the chosen scene or explicitly requested subject on a white background. State the protagonist, visible action, and necessary prop or situation in the image prompt, not just a list of topic words. Use only these five RGB colors: yellow `[250, 204, 21]`, green `[34, 197, 94]`, blue `[59, 130, 246]`, red `[239, 68, 68]`, and black `[0, 0, 0]`. This is an allowed palette, not a required set: use only the colors the subject needs, and do not force all five colors into every image. A single-color drawing is valid. Draw like an old computer paint program made with a mouse: visibly awkward, loose, low-resolution, and slightly confusing, while keeping the subject recognizable. Prefer wobbly contours, sparse details, and uneven proportions. Do not use text, gradients, shadows, or colors outside the palette.
 
    **Linework is mandatory:** Draw with colored lines, not colored fills. Leave enclosed interiors white unless another line crosses them. Make the subject readable through differently colored outlines, detail lines, and scribbles; do not use solid color regions, shading, or paint-bucket fills.
