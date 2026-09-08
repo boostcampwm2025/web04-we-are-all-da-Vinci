@@ -1,9 +1,5 @@
-import { readFileSync } from "node:fs";
-import { execSync } from "node:child_process";
-import { resolve } from "node:path";
+import { scanSourceFiles } from "./lib/scanSourceFiles.js";
 import type { CheckResult } from "./types.js";
-
-const ROOT = resolve(import.meta.dirname, "../..");
 
 const FORBIDDEN_PATTERNS: { pattern: RegExp; description: string }[] = [
   { pattern: /window\.open\s*\(/, description: "window.open() 호출" },
@@ -30,24 +26,9 @@ export async function run(): Promise<CheckResult> {
   const details: string[] = [];
   let status: CheckResult["status"] = "pass";
 
-  const findCommand =
-    process.platform === "win32"
-      ? `powershell -Command "Get-ChildItem -Path src -Recurse -Include '*.ts','*.tsx' | ForEach-Object { $_.FullName.Substring($PWD.Path.Length + 1).Replace('\\', '/') }"`
-      : 'find src -name "*.ts" -o -name "*.tsx"';
+  const files = scanSourceFiles([".ts", ".tsx"]);
 
-  const files = execSync(findCommand, {
-    cwd: ROOT,
-    encoding: "utf-8",
-  })
-    .trim()
-    .split(/\r?\n/)
-    .filter(Boolean);
-
-  for (const relPath of files) {
-    const filePath = resolve(ROOT, relPath);
-    const content = readFileSync(filePath, "utf-8");
-    const lines = content.split("\n");
-
+  for (const { relPath, lines } of files) {
     for (const { pattern, description } of FORBIDDEN_PATTERNS) {
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
@@ -63,6 +44,7 @@ export async function run(): Promise<CheckResult> {
   if (details.length === 0) {
     details.push("외부 링크 및 앱 설치 유도가 감지되지 않았습니다");
   }
+  details.push(`${files.length}개 파일 검사`);
 
   return { name, status, details };
 }

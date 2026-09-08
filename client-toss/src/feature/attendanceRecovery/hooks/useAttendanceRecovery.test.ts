@@ -126,4 +126,66 @@ describe("출석 복구 훅", () => {
     expect(mockedApi.declineAttendanceRecovery).toHaveBeenCalled();
     expect(mockShow).not.toHaveBeenCalled();
   });
+
+  describe("같은 렌더 사이클에서 두 번 호출돼도", () => {
+    it("광고 노출과 복구 API가 각각 한 번만 일어난다", async () => {
+      const { result } = renderHook(() => useAttendanceRecovery());
+      loadAd();
+
+      await act(async () => {
+        // 사이에 await를 두지 않는다 — 더블탭은 리렌더를 기다려주지 않는다.
+        const both = Promise.all([
+          result.current.recover(),
+          result.current.recover(),
+        ]);
+        showHandlers.onEvent?.({ type: "userEarnedReward" });
+        showHandlers.onEvent?.({ type: "dismissed" });
+        await both;
+      });
+
+      expect(mockShow).toHaveBeenCalledTimes(1);
+      expect(mockedApi.recoverAttendance).toHaveBeenCalledTimes(1);
+    });
+
+    it("두 번째 호출자도 첫 호출의 결과를 그대로 받는다", async () => {
+      const { result } = renderHook(() => useAttendanceRecovery());
+      loadAd();
+
+      let outcomes: unknown[] = [];
+      await act(async () => {
+        const both = Promise.all([
+          result.current.recover(),
+          result.current.recover(),
+        ]);
+        showHandlers.onEvent?.({ type: "userEarnedReward" });
+        showHandlers.onEvent?.({ type: "dismissed" });
+        outcomes = await both;
+      });
+
+      // 거부됨을 받아 엉뚱한 실패 토스트가 뜨지 않아야 한다.
+      expect(outcomes).toEqual([{ ok: true }, { ok: true }]);
+    });
+
+    it("포기 API도 한 번만 호출된다", async () => {
+      const { result } = renderHook(() => useAttendanceRecovery());
+
+      await act(async () => {
+        await Promise.all([result.current.decline(), result.current.decline()]);
+      });
+
+      expect(mockedApi.declineAttendanceRecovery).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("광고가 로드되지 않은 채 두 번 눌러도 재로드 요청이 한 번만 나간다", async () => {
+    const { result } = renderHook(() => useAttendanceRecovery());
+    const loadCallsBefore = mockLoad.mock.calls.length;
+
+    await act(async () => {
+      await Promise.all([result.current.recover(), result.current.recover()]);
+    });
+
+    // reloadAd가 두 번 불리면 loadFullScreenAd 호출도 두 번 늘어난다.
+    expect(mockLoad.mock.calls.length - loadCallsBefore).toBe(1);
+  });
 });

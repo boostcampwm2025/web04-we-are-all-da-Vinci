@@ -33,6 +33,7 @@ npm-debug.log*
 pnpm-debug.log*
 *.csv
 report*.json
+qa-report.json
 
 # Claude Code
 **/.claude/settings.local.json

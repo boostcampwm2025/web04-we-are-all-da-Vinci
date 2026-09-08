@@ -12,6 +12,7 @@ on:
       - "packages/shared/**"
       - ".github/workflows/deploy-backend.yml"
       - "deploy/**"
+      - "packages/shared/**"
 
 permissions:
   contents: read

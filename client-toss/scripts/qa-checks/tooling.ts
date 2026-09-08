@@ -7,21 +7,34 @@ const ROOT = resolve(import.meta.dirname, "../..");
 interface SubCheck {
   label: string;
   command: string;
+  delegatedInCi?: string;
 }
 
 const SUB_CHECKS: SubCheck[] = [
-  { label: "ESLint", command: "pnpm lint" },
-  { label: "TypeScript", command: "npx tsc --noEmit" },
-  { label: "Vitest", command: "pnpm test" },
-  { label: "Prettier", command: "pnpm format:check" },
+  { label: "ESLint", command: "pnpm lint", delegatedInCi: "ci.yml Lint 스텝" },
+  { label: "TypeScript", command: "npx tsc -b --noEmit" },
+  {
+    label: "Vitest",
+    command: "pnpm test",
+    delegatedInCi: "ci.yml Test with Coverage 스텝",
+  },
+  {
+    label: "Prettier",
+    command: "pnpm format:check",
+    delegatedInCi: "ci.yml Format Check 스텝",
+  },
 ];
 
-export async function run(): Promise<CheckResult> {
+export async function run(ciMode = false): Promise<CheckResult> {
   const name = "Tooling (Lint/Types/Test/Format)";
   const details: string[] = [];
   let status: CheckResult["status"] = "pass";
 
-  for (const { label, command } of SUB_CHECKS) {
+  for (const { label, command, delegatedInCi } of SUB_CHECKS) {
+    if (ciMode && delegatedInCi) {
+      details.push(`[SKIP] ${label} — ${delegatedInCi}에서 실행`);
+      continue;
+    }
     try {
       execSync(command, { cwd: ROOT, stdio: "pipe", encoding: "utf-8" });
       details.push(`[PASS] ${label}`);

@@ -1,13 +1,14 @@
-name: 'Chromatic'
+name: "Chromatic"
 
 on:
   pull_request:
     branches:
       - develop
     paths:
-      - 'client/src/**'
-      - 'client/.storybook/**'
-      - 'client/package.json'
+      - "client/src/**"
+      - "client/.storybook/**"
+      - "client/package.json"
+      - "packages/**"
 
   workflow_dispatch:
 
@@ -31,7 +32,7 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

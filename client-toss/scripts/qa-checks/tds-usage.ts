@@ -1,9 +1,5 @@
-import { readFileSync } from "node:fs";
-import { execSync } from "node:child_process";
-import { resolve } from "node:path";
+import { scanSourceFiles } from "./lib/scanSourceFiles.js";
 import type { CheckResult } from "./types.js";
-
-const ROOT = resolve(import.meta.dirname, "../..");
 
 // 소문자만 매치 — 대문자 <Button> 등은 이미 TDS/React 컴포넌트
 const RAW_HTML_RULES: { pattern: RegExp; tdsAlternative: string }[] = [
@@ -32,24 +28,9 @@ export async function run(): Promise<CheckResult> {
   const details: string[] = [];
   let status: CheckResult["status"] = "pass";
 
-  const findCommand =
-    process.platform === "win32"
-      ? `powershell -Command "Get-ChildItem -Path src -Recurse -Filter '*.tsx' | ForEach-Object { $_.FullName.Substring($PWD.Path.Length + 1).Replace('\\', '/') }"`
-      : 'find src -name "*.tsx"';
+  const files = scanSourceFiles([".tsx"]);
 
-  const files = execSync(findCommand, {
-    cwd: ROOT,
-    encoding: "utf-8",
-  })
-    .trim()
-    .split(/\r?\n/)
-    .filter(Boolean);
-
-  for (const relPath of files) {
-    const filePath = resolve(ROOT, relPath);
-    const content = readFileSync(filePath, "utf-8");
-    const lines = content.split("\n");
-
+  for (const { relPath, content, lines } of files) {
     // TDS import가 있는지 확인 (의도적 사용 여부 판단)
     const hasTdsImport = content.includes("@toss/tds-mobile");
 
@@ -89,6 +70,7 @@ export async function run(): Promise<CheckResult> {
   if (details.length === 0) {
     details.push("모든 UI 컴포넌트가 TDS를 사용하고 있습니다");
   }
+  details.push(`${files.length}개 파일 검사`);
 
   return { name, status, details };
 }

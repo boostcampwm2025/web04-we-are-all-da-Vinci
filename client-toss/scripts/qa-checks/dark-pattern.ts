@@ -1,36 +1,14 @@
-import { readFileSync } from "node:fs";
-import { execSync } from "node:child_process";
-import { resolve } from "node:path";
+import { scanSourceFiles } from "./lib/scanSourceFiles.js";
 import type { CheckResult } from "./types.js";
-
-const ROOT = resolve(import.meta.dirname, "../..");
-
-// 앱 플로우: Home(/) → Memorize(/memorize) → Drawing(/drawing) → Submitted(/submitted)
-// 핵심 플로우: memorize (기억 단계), drawing (드로잉 단계)
 
 export async function run(): Promise<CheckResult> {
   const name = "Dark Pattern";
   const details: string[] = [];
   let status: CheckResult["status"] = "pass";
 
-  const findCommand =
-    process.platform === "win32"
-      ? `powershell -Command "Get-ChildItem -Path src -Recurse -Filter '*.tsx' | ForEach-Object { $_.FullName.Substring($PWD.Path.Length + 1).Replace('\\', '/') }"`
-      : 'find src -name "*.tsx"';
+  const files = scanSourceFiles([".tsx"]);
 
-  const files = execSync(findCommand, {
-    cwd: ROOT,
-    encoding: "utf-8",
-  })
-    .trim()
-    .split(/\r?\n/)
-    .filter(Boolean);
-
-  for (const relPath of files) {
-    const filePath = resolve(ROOT, relPath);
-    const content = readFileSync(filePath, "utf-8");
-    const lines = content.split("\n");
-
+  for (const { relPath, content, lines } of files) {
     const isHomeView = relPath.includes("home/") || relPath.includes("Home");
     const isCoreFlow =
       relPath.includes("drawing/") ||
@@ -149,6 +127,7 @@ export async function run(): Promise<CheckResult> {
   if (details.length === 0) {
     details.push("다크패턴이 감지되지 않았습니다");
   }
+  details.push(`${files.length}개 파일 검사`);
 
   return { name, status, details };
 }

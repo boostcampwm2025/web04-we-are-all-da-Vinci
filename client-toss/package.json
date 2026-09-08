@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev.js",
-    "build": "ait build",
+    "build": "tsc -b && ait build",
     "lint": "eslint .",
     "preview": "vite preview",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css}\"",
@@ -14,7 +14,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "qa": "tsx scripts/qa.ts",
-    "qa:ci": "tsx scripts/qa.ts --ci"
+    "qa:ci": "tsx scripts/qa.ts --ci --report-json=qa-report.json"
   },
   "dependencies": {
     "@apps-in-toss/web-framework": "^2.9.2",
@@ -28,6 +28,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-router-dom": "^7.13.0",
+    "ts-pattern": "^5.9.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

@@ -15,6 +15,7 @@ import { ExitDialog } from "@/shared/ui/exitDialog";
 import { Button, Toast } from "@toss/tds-mobile";
 import { useCallback, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { match } from "ts-pattern";
 import { useAttendanceAutoCheckIn } from "../model/useAttendanceAutoCheckIn";
 import { useDailyAutoStart } from "../model/useDailyAutoStart";
 import AttendanceResultSheet from "./AttendanceResultSheet";
@@ -49,8 +50,13 @@ const DashboardView = () => {
     async (source: string) => {
       setError(null);
       const result = await start(source);
-      if (!result.ok && result.reason === "error") {
-        setError("서버 응답이 늦어지고 있어요. 다시 시도해주세요.");
+      if (!result.ok) {
+        match(result.reason)
+          .with("error", () =>
+            setError("서버 응답이 늦어지고 있어요. 다시 시도해주세요."),
+          )
+          .with("no_prompt", "ad_not_ready", () => {})
+          .exhaustive();
       }
       return result;
     },
@@ -111,11 +117,15 @@ const DashboardView = () => {
   const handleAdStart = useCallback(async () => {
     const result = await startWithAd("retry");
     if (result.ok) return;
-    if (result.reason === "no_prompt") {
-      showToast("그리기 기회를 다시 확인했어요. 잠시 후 다시 시도해주세요.");
-    } else if (result.reason === "error") {
-      showToast("일시적 오류가 발생했어요");
-    }
+    match(result.reason)
+      .with("no_prompt", () =>
+        showToast("그리기 기회를 다시 확인했어요. 잠시 후 다시 시도해주세요."),
+      )
+      .with("error", () => showToast("일시적 오류가 발생했어요"))
+      // startWithAd가 실제로 돌려주는 케이스인데 지금은 아무 안내가 없다.
+      // 이 커밋은 동작을 바꾸지 않으므로 침묵을 유지하되 경로를 드러내 둔다.
+      .with("ad_not_ready", () => {})
+      .exhaustive();
   }, [startWithAd, showToast]);
 
   // cta를 useMemo로 — play 상태가 바뀔 때만 새 참조가 되어, 그 외 최상위 state

@@ -13,5 +13,6 @@ export {
   useCountdown,
 } from "./useCountdown";
 export { useExitGuard } from "./useExitGuard";
+export { useInFlight } from "./useInFlight";
 export { useRequiredState } from "./useRequiredState";
 export { useToast } from "./useToast";

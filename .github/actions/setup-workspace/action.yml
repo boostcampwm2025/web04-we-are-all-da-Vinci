@@ -1,0 +1,37 @@
+name: Setup Workspace
+description: pnpm + Node 22 설치, 의존성 설치, 공유 패키지 빌드
+
+# actions/checkout은 여기 넣을 수 없다.
+# 로컬 액션(`uses: ./.github/actions/...`)은 워크스페이스에 체크아웃된 뒤에야
+# action.yml이 존재한다. checkout을 안에 넣으면 액션 자체를 찾지 못한다.
+# → checkout은 호출자 잡에 남긴다(fetch-depth도 호출자가 지정).
+
+inputs:
+  build-packages:
+    description: "pnpm build:packages 실행 여부"
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    # 순서 고정: pnpm → setup-node.
+    # setup-node의 cache:"pnpm"이 pnpm 설치를 전제로 한다.
+    # 커밋 797a06aa에서 이 순서를 정정했으므로 재배열하지 말 것.
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v5
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v5
+      with:
+        node-version: "22"
+        cache: "pnpm"
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile
+
+    - name: Build shared packages
+      if: inputs.build-packages == 'true'
+      shell: bash
+      run: pnpm build:packages

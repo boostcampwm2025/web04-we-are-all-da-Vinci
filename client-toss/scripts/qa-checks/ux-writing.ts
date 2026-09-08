@@ -1,9 +1,5 @@
-import { readFileSync } from "node:fs";
-import { execSync } from "node:child_process";
-import { resolve } from "node:path";
+import { scanSourceFiles } from "./lib/scanSourceFiles.js";
 import type { CheckResult } from "./types.js";
-
-const ROOT = resolve(import.meta.dirname, "../..");
 
 // 격식체 (합니다/습니다) — 해요체로 변경 필요
 const FORMAL_ENDINGS =
@@ -54,23 +50,9 @@ export async function run(): Promise<CheckResult> {
   const details: string[] = [];
   let status: CheckResult["status"] = "pass";
 
-  const findCommand =
-    process.platform === "win32"
-      ? `powershell -Command "Get-ChildItem -Path src -Recurse -Include '*.ts','*.tsx' | ForEach-Object { $_.FullName.Substring($PWD.Path.Length + 1).Replace('\\', '/') }"`
-      : 'find src -name "*.tsx" -o -name "*.ts"';
+  const files = scanSourceFiles([".ts", ".tsx"]);
 
-  const files = execSync(findCommand, {
-    cwd: ROOT,
-    encoding: "utf-8",
-  })
-    .trim()
-    .split(/\r?\n/)
-    .filter(Boolean);
-
-  for (const relPath of files) {
-    const filePath = resolve(ROOT, relPath);
-    const content = readFileSync(filePath, "utf-8");
-
+  for (const { relPath, content } of files) {
     // 1. 해요체 검증
     const koreanTexts = extractKoreanTexts(content);
     for (const { text, line } of koreanTexts) {
@@ -135,6 +117,7 @@ export async function run(): Promise<CheckResult> {
   if (details.length === 0) {
     details.push("UX 라이팅 가이드를 준수하고 있습니다");
   }
+  details.push(`${files.length}개 파일 검사`);
 
   return { name, status, details };
 }
