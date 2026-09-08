@@ -34,8 +34,6 @@ RUN pnpm --filter server-toss build
 FROM builder AS migration
 WORKDIR /app/server-toss
 
-RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
-
 ENV NODE_ENV=production
 CMD ["pnpm", "run", "migration:up", "--config", "mikro-orm.migration.config.cjs"]
 
