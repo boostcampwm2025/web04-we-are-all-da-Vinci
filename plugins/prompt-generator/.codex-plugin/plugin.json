@@ -1,6 +1,6 @@
 {
   "name": "prompt-generator",
-  "version": "0.1.0+codex.20260830155913",
+  "version": "0.1.0+codex.20260908125127",
   "description": "Generate, convert, and preview RGB drawing-stroke prompts.",
   "author": {
     "name": "Local developer"
