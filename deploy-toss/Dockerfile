@@ -4,8 +4,13 @@ WORKDIR /app
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
+ENV COREPACK_DEFAULT_TO_LATEST=0
 
-RUN corepack enable
+ARG PNPM_VERSION=10.20.0
+
+RUN corepack enable && \
+    corepack prepare pnpm@${PNPM_VERSION} --activate
+
 
 FROM base AS builder
 
@@ -38,10 +43,15 @@ FROM base AS deploy
 
 WORKDIR /app 
 
+COPY pnpm-workspace.yaml package.json .npmrc pnpm-lock.yaml ./
 COPY --from=builder /app/packages ./packages 
 COPY --from=builder /app/server-toss ./server-toss
 
-RUN pnpm deploy --filter server-toss --prod /prod/server-toss --legacy --ignore-scripts
+RUN pnpm deploy \
+    --filter server-toss \
+    --prod /prod/server-toss \
+    --legacy \
+    --ignore-scripts
 
 
 FROM node:22-alpine AS runner
