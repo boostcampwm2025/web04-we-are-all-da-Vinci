@@ -5,11 +5,31 @@ description: "Generate deliberately clumsy doodle-style drawing images with a fi
 
 # Prompt Generator
 
-Use this skill when a user gives a drawing topic and wants a stroke prompt with RGB colors.
+Use this skill when a user gives a drawing topic or asks for creative drawing ideas and wants a stroke prompt with RGB colors.
+
+## Choose a coherent scene
+
+For open-ended or random requests, build a scene as **protagonist + visible action + supporting situation**, rather than combining unrelated topic words. Preserve an explicitly requested subject, scene, or combination; do not force a whimsical reinterpretation when the user asks for a simple object drawing.
+
+1. Sample a varied pool of protagonist ideas from animals, foods, and everyday objects. Randomness should broaden the candidates, not decide which combinations must be drawn.
+2. Choose one protagonist and give it a familiar, visually recognizable action. Add a prop or setting only when it helps show that action; one supporting prop is usually enough. Anthropomorphism is useful: a potato can pilot a spaceship, and a banana can sleep under a blanket.
+3. Keep **one whimsical premise** and make the rest of the scene follow naturally from it. Show the protagonist interacting with the prop through its pose, gaze, or contact. Avoid unrelated objects placed side by side, motifs added just to include a topic, and extra surprises that compete with the main action.
+4. Draft candidate scenes internally before generating images (about 10 for an open-ended request, adjusted to the requested output count). Select scenes that pass the checks below; vary protagonists and actions across a batch instead of repeating the same scene with different nouns. Do not generate every candidate unless requested.
+
+Select a scene only when:
+
+- It can be described in one short sentence with a clear action, such as “a potato piloting a spaceship.”
+- The action and relationship are understandable from the drawing without a caption or backstory.
+- Each supporting element helps explain the action or situation; remove decorative extras.
+- The scene remains recognizable with sparse outlines and details on the 255×255 drawing canvas.
+
+Examples: a potato at a spaceship's controls; a banana tucked under a blanket; a cactus brushing its own spines; a snail riding a skateboard. These illustrate the relationship, not a fixed list to reuse.
+
+If the user supplies several topics, look for a natural action connecting them. When the combination feels forced, try a different action or, if selection is allowed, choose another topic. Treat “2–3 topics” as a selection constraint only when explicitly requested, not as the default recipe for creativity.
 
 ## Topic to prompt workflow
 
-1. Generate a deliberately clumsy, scribbly raster image for the requested topic on a white background. Use only these five RGB colors: yellow `[250, 204, 21]`, green `[34, 197, 94]`, blue `[59, 130, 246]`, red `[239, 68, 68]`, and black `[0, 0, 0]`. This is an allowed palette, not a required set: use only the colors the subject needs, and do not force all five colors into every image. A single-color drawing is valid. Draw like an old computer paint program made with a mouse: visibly awkward, loose, low-resolution, and slightly confusing, while keeping the subject recognizable. Prefer wobbly contours, sparse details, and uneven proportions. Do not use text, gradients, shadows, or colors outside the palette.
+1. Generate a deliberately clumsy, scribbly raster image for the chosen scene or explicitly requested subject on a white background. State the protagonist, visible action, and necessary prop or situation in the image prompt, not just a list of topic words. Use only these five RGB colors: yellow `[250, 204, 21]`, green `[34, 197, 94]`, blue `[59, 130, 246]`, red `[239, 68, 68]`, and black `[0, 0, 0]`. This is an allowed palette, not a required set: use only the colors the subject needs, and do not force all five colors into every image. A single-color drawing is valid. Draw like an old computer paint program made with a mouse: visibly awkward, loose, low-resolution, and slightly confusing, while keeping the subject recognizable. Prefer wobbly contours, sparse details, and uneven proportions. Do not use text, gradients, shadows, or colors outside the palette.
 
    **Linework is mandatory:** Draw with colored lines, not colored fills. Leave enclosed interiors white unless another line crosses them. Make the subject readable through differently colored outlines, detail lines, and scribbles; do not use solid color regions, shading, or paint-bucket fills.
 
