@@ -3,6 +3,7 @@ import { Transactional } from "@mikro-orm/decorators/legacy";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { Injectable, Logger } from "@nestjs/common";
 import {
+  ExternalApiError,
   ExternalPromotionError,
   ExternalTransportError,
 } from "src/common/errors/external.errors";
@@ -106,7 +107,7 @@ export class PointService {
     return requests;
   }
 
-  async settleGrantRequests() {
+  async settleGrantRequests(): Promise<PointGrantRequest[]> {
     const requests = await this.lockAndFetchEligibleGrants();
 
     for (const request of requests) {
@@ -123,15 +124,76 @@ export class PointService {
         );
       }
     }
+    return requests;
   }
 
-  async settleGrantRequest(request: PointGrantRequest): Promise<void> {
-    let key: string;
+  async settleGrantRequest(
+    request: PointGrantRequest,
+  ): Promise<PointGrantRequest> {
+    const promotionResult = await this.getPromotionResult(request);
+
+    if (!promotionResult) {
+      // 포인트 지급 내역 존재하지 않음.
+      // ex) 키 발급 후 지급 요청 중 오류난 경우
+      // 그대로 진행해서 키를 재발급한다.
+    } else if (promotionResult === "SUCCESS") {
+      await this.recordGrantSucceeded(request);
+      return request;
+    } else if (promotionResult === "PENDING") {
+      await this.recordGrantWait(request);
+      return request;
+    } else if (promotionResult === "FAILED") {
+      // 포인트 회수되었기 때문에 다시 포인트 지급해야 한다.
+      // 그대로 진행해서 키를 재발급한다.
+    }
+
+    const key = await this.issueAndSavePromotionKey(request);
+
+    if (!key) {
+      return request;
+    }
 
     try {
-      key =
-        request.pointIdempotencyKey ??
-        (await this.issueAndSavePromotionKey(request));
+      await this.grantPromotion(request, key);
+      await this.recordGrantSucceeded(request);
+    } catch (err) {
+      await this.recordGrantOutcomeFromError(request, err);
+    }
+    return request;
+  }
+
+  async getPromotionResult(request: PointGrantRequest) {
+    if (!request.pointIdempotencyKey) {
+      return null;
+    }
+
+    try {
+      return await this.pointGrantExecuter.getPromotionResult(
+        request.user.userKey,
+        request.pointIdempotencyKey,
+      );
+    } catch (err) {
+      if (err instanceof ExternalTransportError) {
+        return "PENDING";
+      }
+      if (err instanceof ExternalApiError && err.statusCode >= 500) {
+        return "PENDING";
+      }
+      if (err instanceof ExternalApiError && err.statusCode >= 400) {
+        // 데이터 구조 오류
+        // TODO: SUSPENDED + 워커 중단
+      }
+    }
+  }
+
+  async issueAndSavePromotionKey(request: PointGrantRequest) {
+    const { user } = request;
+
+    try {
+      const key = await this.pointGrantKeyIssuer.getPromotionKey(user.userKey);
+
+      await this.savePointIdempotencyKey(request, key);
+      return key;
     } catch (err) {
       this.logger.warn(
         {
@@ -142,27 +204,8 @@ export class PointService {
         },
         "프로모션 지급 키 발급 실패 (재시도)",
       );
-      request.retry();
-      await this.em.flush();
-      return;
+      await this.recordGrantRetry(request);
     }
-
-    try {
-      await this.grantPromotion(request, key);
-      await this.recordGrantSucceeded(request);
-    } catch (err) {
-      await this.recordGrantOutcomeFromError(request, err);
-    }
-  }
-
-  async issueAndSavePromotionKey(request: PointGrantRequest) {
-    const { user } = request;
-
-    const key = await this.pointGrantKeyIssuer.getPromotionKey(user.userKey);
-
-    await this.savePointIdempotencyKey(request, key);
-
-    return key;
   }
 
   @Transactional()
@@ -186,10 +229,21 @@ export class PointService {
   }
 
   @Transactional()
+  async recordGrantRetry(request: PointGrantRequest) {
+    request.retry();
+    await this.em.flush();
+  }
+
+  @Transactional()
+  async recordGrantWait(request: PointGrantRequest) {
+    request.wait();
+    await this.em.flush();
+  }
+
+  @Transactional()
   async recordGrantOutcomeFromError(request: PointGrantRequest, err: unknown) {
     if (err instanceof ExternalPromotionError && err.errorCode === "4113") {
-      await this.recordGrantSucceeded(request);
-      return;
+      request.retry();
     } else if (
       err instanceof ExternalTransportError ||
       (err instanceof ExternalPromotionError && err.errorCode === "4110")
