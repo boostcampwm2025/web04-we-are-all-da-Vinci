@@ -1,4 +1,5 @@
 import { UserInfo } from "src/modules/auth/types/auth.types";
+import type { PointGrantResult } from "src/modules/point/port/point-grant-executer.interface";
 
 interface TossBaseResponse {
   resultType: "SUCCESS" | "FAIL";
@@ -42,4 +43,8 @@ export interface TossPromotionKeyResponse extends TossBaseResponse {
 
 export interface TossPromotionExecuteResponse extends TossBaseResponse {
   success?: { key: string };
+}
+
+export interface TossPromotionResultResponse extends TossBaseResponse {
+  success?: PointGrantResult;
 }

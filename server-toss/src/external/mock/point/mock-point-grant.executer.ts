@@ -1,6 +1,9 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { PointGrantExecuter } from "src/modules/point/port/point-grant-executer.interface";
+import {
+  PointGrantExecuter,
+  PointGrantResult,
+} from "src/modules/point/port/point-grant-executer.interface";
 
 @Injectable()
 export class MockPointGrantExecuter extends PointGrantExecuter {
@@ -22,6 +25,18 @@ export class MockPointGrantExecuter extends PointGrantExecuter {
       { event: "mock.promotion.executed", userKey, key, amount },
       "Mock 프로모션 지급 완료",
     );
+  }
+
+  async getPromotionResult(
+    userKey: number,
+    key: string,
+  ): Promise<PointGrantResult | null> {
+    await this.delay();
+    this.logger.debug(
+      { event: "mock.promotion.get_result", userKey, key },
+      "Mock 프로모션 결과 조회 완료",
+    );
+    return "SUCCESS";
   }
 
   private delay(): Promise<void> {

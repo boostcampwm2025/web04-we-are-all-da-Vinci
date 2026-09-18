@@ -4,7 +4,10 @@ import {
   ExternalPromotionError,
   ExternalTransportError,
 } from "src/common/errors/external.errors";
-import { PointGrantExecuter } from "src/modules/point/port/point-grant-executer.interface";
+import {
+  PointGrantExecuter,
+  PointGrantResult,
+} from "src/modules/point/port/point-grant-executer.interface";
 
 /**
  * 외부 API의 간헐적 실패를 시뮬레이션하는 Flaky Mock.
@@ -64,6 +67,28 @@ export class FlakyPointGrantExecuter extends PointGrantExecuter {
       { event: "flaky.promotion.executed", userKey, key, amount },
       "Flaky 프로모션 지급 완료",
     );
+  }
+
+  async getPromotionResult(
+    userKey: number,
+    key: string,
+  ): Promise<PointGrantResult | null> {
+    await this.delay();
+
+    if (Math.random() < this.failureRate) {
+      this.logger.debug(
+        { event: "flaky.promotion.result_transport_failed", userKey, key },
+        "Flaky 프로모션 결과 조회 네트워크 실패 시뮬레이션",
+      );
+      throw new ExternalTransportError("flaky: 결과 조회 타임아웃 시뮬레이션");
+    }
+
+    const result = this.grantedKeys.has(key) ? "SUCCESS" : null;
+    this.logger.debug(
+      { event: "flaky.promotion.result_fetched", userKey, key, result },
+      "Flaky 프로모션 결과 조회 완료",
+    );
+    return result;
   }
 
   private delay(): Promise<void> {
