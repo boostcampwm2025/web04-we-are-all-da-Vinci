@@ -132,4 +132,5 @@ export enum PointGrantStatus {
   RETRY = "retry",
   FAILED = "failed",
   SUCCEEDED = "succeeded",
+  SUSPENDED = "suspended",
 }
