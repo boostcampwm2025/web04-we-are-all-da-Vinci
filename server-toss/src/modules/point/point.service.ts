@@ -173,12 +173,14 @@ export class PointService {
       case "FAILED":
         // 포인트 회수되었기 때문에 다시 포인트 지급해야 한다.
         // 그대로 진행해서 키를 재발급한다.
+        await this.clearKey(request);
         await this.issueAndGrant(request);
         break;
       case "NOT_FOUND":
         // 포인트 지급 내역 존재하지 않음.
         // ex) 키 발급 후 지급 요청 중 오류난 경우
         // 그대로 진행해서 키를 재발급한다.
+        await this.clearKey(request);
         await this.issueAndGrant(request);
         break;
     }
@@ -243,6 +245,12 @@ export class PointService {
   async clearKeyAndRetry(request: PointGrantRequest) {
     request.clearKey();
     request.retry();
+    await this.em.flush();
+  }
+
+  @Transactional()
+  async clearKey(request: PointGrantRequest) {
+    request.clearKey();
     await this.em.flush();
   }
 
