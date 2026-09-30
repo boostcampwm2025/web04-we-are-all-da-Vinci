@@ -128,6 +128,10 @@ export class PointGrantRequest extends BaseEntity {
     this.pointIdempotencyKey = key;
   }
 
+  isSuspended() {
+    return this.status === PointGrantStatus.SUSPENDED;
+  }
+
   private calculateBackOff(attemptCount: number) {
     const delays = [0, 5_000, 30_000, 60_000, 300_000];
     return delays[Math.min(attemptCount, delays.length - 1)];

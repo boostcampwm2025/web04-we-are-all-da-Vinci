@@ -120,6 +120,46 @@ describe("포인트 서비스", () => {
       expect(result).toEqual(requests);
     });
 
+    it("프로모션 종료 오류가 발생하면 요청을 격리하고 현재 배치의 나머지 지급을 중단한다", async () => {
+      const { service, repository, executor, keyIssuer, em } = setup();
+      const request = createRequest({
+        id: 1n,
+        status: PointGrantStatus.PENDING,
+        attemptCount: 2,
+      });
+      const nextRequest = createRequest({
+        id: 2n,
+        status: PointGrantStatus.PENDING,
+        user: Object.assign(new User(), { userKey: 5678 }),
+      });
+      repository.findEligibleGrantsWithLock.mockResolvedValue([
+        request,
+        nextRequest,
+      ]);
+      executor.executePromotion.mockRejectedValueOnce(
+        new ExternalPromotionError("4105", "promotion ended"),
+      );
+
+      // 중단 신호를 반환하든 전파하든 이후 요청의 외부 지급은 실행하지 않아야 한다.
+      await Promise.allSettled([service.settleGrantRequests()]);
+
+      expect(request.status).toBe(PointGrantStatus.SUSPENDED);
+      expect(request.pointIdempotencyKey).toBe("promotion-key");
+      expect(request.attemptCount).toBe(2);
+      expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+      expect(executor.executePromotion).toHaveBeenCalledWith(
+        1234,
+        "promotion-key",
+        2,
+      );
+      expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(1);
+      expect(keyIssuer.getPromotionKey).toHaveBeenCalledWith(1234);
+      expect(nextRequest.pointIdempotencyKey).toBeUndefined();
+      expect(nextRequest.attemptCount).toBe(0);
+      expect(executor.getPromotionResult).not.toHaveBeenCalled();
+      expect(em.persist).not.toHaveBeenCalled();
+    });
+
     describe("characterization: 현재 DB 오류 후처리", () => {
       it("현재 동작: 개별 요청의 DB 오류 이후에도 다음 요청 처리를 계속한다", async () => {
         const { service, repository, executor, em } = setup();
@@ -644,6 +684,26 @@ describe("포인트 서비스", () => {
     });
 
     describe("운영 오류 처리", () => {
+      it("지급 요청의 데이터 구조 오류(HTTP 400)는 키와 재시도 횟수를 보존하고 SUSPENDED로 격리한다", async () => {
+        const { service, executor, em } = setup();
+        const request = createRequest({ attemptCount: 2 });
+        executor.executePromotion.mockRejectedValueOnce(
+          new ExternalApiError(400, "invalid request structure"),
+        );
+
+        // 워커 중단 신호의 전달 방식과 무관하게 요청은 재처리 가능하도록 보존한다.
+        await Promise.allSettled([service.settleGrantRequest(request)]);
+
+        expect(request.status).toBe(PointGrantStatus.SUSPENDED);
+        expect(request.pointIdempotencyKey).toBe("promotion-key");
+        expect(request.attemptCount).toBe(2);
+        expect(request.nextRetryAt).toBeUndefined();
+        expect(request.processedAt).toBeUndefined();
+        expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+        expect(executor.getPromotionResult).not.toHaveBeenCalled();
+        expect(em.persist).not.toHaveBeenCalled();
+      });
+
       it("프로모션이 종료되면 키와 재시도 횟수를 보존하고 SUSPENDED로 격리한다", async () => {
         const { service, executor, em } = setup();
         const request = createRequest({ attemptCount: 2 });

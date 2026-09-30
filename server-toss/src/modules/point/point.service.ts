@@ -116,7 +116,10 @@ export class PointService {
 
     for (const request of requests) {
       try {
-        await this.settleGrantRequest(request);
+        const settledRequest = await this.settleGrantRequest(request);
+        if (settledRequest.isSuspended()) {
+          break;
+        }
       } catch (err) {
         this.logger.error(
           {
@@ -152,8 +155,8 @@ export class PointService {
         return request;
       }
       if (err instanceof ExternalApiError && err.statusCode >= 400) {
-        // 데이터 구조 오류
-        // TODO: SUSPENDED + 워커 중단
+        await this.recordGrantSuspended(request);
+        return request;
       }
       if (err instanceof ExternalPromotionError) {
         switch (err.errorCode) {
@@ -165,6 +168,7 @@ export class PointService {
           case TossBusinessErrorCode.WORKSPACE_NOT_FOUND_OR_FORBIDDEN.errorCode:
           case TossBusinessErrorCode.REWARD_AMOUNT_EXCEEDED.errorCode:
           case TossBusinessErrorCode.INSUFFICIENT_PROMOTION_MONEY.errorCode:
+          case TossBusinessErrorCode.BAD_REQUEST.errorCode:
             await this.recordGrantSuspended(request);
             break;
           case TossBusinessErrorCode.REWARD_PROCESS_FAILED.errorCode:
