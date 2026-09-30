@@ -27,6 +27,7 @@ import {
   PointGrantResult,
 } from "./port/point-grant-executer.interface";
 import { PointGrantKeyIssuer } from "./port/point-grant-key-issuer.interface";
+import { TossBusinessErrorCode } from "src/external/toss/common/toss.errors";
 
 @Injectable()
 export class PointService {
@@ -154,7 +155,27 @@ export class PointService {
         // 데이터 구조 오류
         // TODO: SUSPENDED + 워커 중단
       }
-      await this.recordGrantOutcomeFromError(request, err);
+      if (err instanceof ExternalPromotionError) {
+        switch (err.errorCode) {
+          case TossBusinessErrorCode.PROMOTION_ENDED.errorCode:
+          case TossBusinessErrorCode.PROMOTION_NOT_APPROVED.errorCode:
+          case TossBusinessErrorCode.PROMOTION_NOT_FOUND.errorCode:
+          case TossBusinessErrorCode.PROMOTION_NOT_RUNNING.errorCode:
+          case TossBusinessErrorCode.AUTHENTICATION_NOT_FOUND.errorCode:
+          case TossBusinessErrorCode.WORKSPACE_NOT_FOUND_OR_FORBIDDEN.errorCode:
+          case TossBusinessErrorCode.REWARD_AMOUNT_EXCEEDED.errorCode:
+          case TossBusinessErrorCode.INSUFFICIENT_PROMOTION_MONEY.errorCode:
+            await this.recordGrantSuspended(request);
+            break;
+          case TossBusinessErrorCode.REWARD_PROCESS_FAILED.errorCode:
+            await this.recordGrantRetry(request);
+            break;
+          case TossBusinessErrorCode.ALREADY_PROCESSED.errorCode:
+            await this.recordGrantRetry(request);
+            break;
+        }
+        return request;
+      }
       return request;
     }
   }
@@ -239,6 +260,12 @@ export class PointService {
     const { user } = request;
 
     return await this.pointGrantKeyIssuer.getPromotionKey(user.userKey);
+  }
+
+  @Transactional()
+  async recordGrantSuspended(request: PointGrantRequest) {
+    request.suspend();
+    await this.em.flush();
   }
 
   @Transactional()

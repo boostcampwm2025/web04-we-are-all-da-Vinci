@@ -665,24 +665,6 @@ describe("포인트 서비스", () => {
       });
     });
 
-    describe("characterization: 현재 알려진 결함", () => {
-      it("현재 동작: 프로모션 미실행 오류는 격리가 아니라 최종 실패로 기록한다", async () => {
-        const { service, executor, em } = setup();
-        const request = createRequest();
-        executor.executePromotion.mockRejectedValueOnce(
-          new ExternalPromotionError("4109", "promotion not running"),
-        );
-
-        await service.settleGrantRequest(request);
-
-        expect(request.status).toBe(PointGrantStatus.FAILED);
-        expect(request.failedMessage).toBe("promotion not running");
-        expect(request.attemptCount).toBe(0);
-        expect(request.pointIdempotencyKey).toBe("promotion-key");
-        expect(em.persist).not.toHaveBeenCalled();
-      });
-    });
-
     describe("향후 TDD backlog", () => {
       // 실제 failing test는 해당 요구사항의 TDD를 시작할 때 작성한다.
       it.todo("신규 지급 요청 후 결과가 SUCCESS인 경우에만 성공 처리한다");
