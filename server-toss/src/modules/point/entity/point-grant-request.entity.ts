@@ -133,7 +133,7 @@ export class PointGrantRequest extends BaseEntity {
   }
 
   private calculateBackOff(attemptCount: number) {
-    const delays = [0, 5_000, 30_000, 60_000, 300_000];
+    const delays = [5_000, 5_000, 30_000, 60_000, 300_000];
     return delays[Math.min(attemptCount, delays.length - 1)];
   }
 }

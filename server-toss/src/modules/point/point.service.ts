@@ -154,6 +154,11 @@ export class PointService {
         await this.recordGrantRetry(request);
         return request;
       }
+      if (err instanceof ExternalApiError && err.statusCode == 429) {
+        // Too Many Requests
+        await this.recordGrantWait(request);
+        return request;
+      }
       if (err instanceof ExternalApiError && err.statusCode >= 400) {
         await this.recordGrantSuspended(request);
         return request;
@@ -176,6 +181,9 @@ export class PointService {
             break;
           case TossBusinessErrorCode.ALREADY_PROCESSED.errorCode:
             await this.recordGrantRetry(request);
+            break;
+          case TossBusinessErrorCode.RATE_LIMIT_EXCEEDED.errorCode:
+            await this.recordGrantWait(request);
             break;
         }
         return request;

@@ -160,6 +160,42 @@ describe("포인트 서비스", () => {
       expect(em.persist).not.toHaveBeenCalled();
     });
 
+    it("기존 지급 결과가 PENDING이어도 현재 배치의 다음 요청은 지급한다", async () => {
+      const { service, repository, executor, keyIssuer, em } = setup();
+      const request = createRequest({
+        id: 1n,
+        status: PointGrantStatus.PENDING,
+        pointIdempotencyKey: "existing-key",
+      });
+      const nextRequest = createRequest({
+        id: 2n,
+        status: PointGrantStatus.PENDING,
+        user: Object.assign(new User(), { userKey: 5678 }),
+      });
+      repository.findEligibleGrantsWithLock.mockResolvedValue([
+        request,
+        nextRequest,
+      ]);
+      executor.getPromotionResult.mockResolvedValueOnce({ type: "PENDING" });
+
+      await service.settleGrantRequests();
+
+      expect(request.status).toBe(PointGrantStatus.RETRY);
+      expect(request.pointIdempotencyKey).toBe("existing-key");
+      expect(request.attemptCount).toBe(0);
+      expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+      expect(executor.executePromotion).toHaveBeenCalledWith(
+        5678,
+        "promotion-key",
+        2,
+      );
+      expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(1);
+      expect(keyIssuer.getPromotionKey).toHaveBeenCalledWith(5678);
+      expect(nextRequest.status).toBe(PointGrantStatus.SUCCEEDED);
+      expect(em.persist).toHaveBeenCalledTimes(1);
+      expect(em.persist).toHaveBeenCalledWith(expect.any(PointLog));
+    });
+
     describe("characterization: 현재 DB 오류 후처리", () => {
       it("현재 동작: 개별 요청의 DB 오류 이후에도 다음 요청 처리를 계속한다", async () => {
         const { service, repository, executor, em } = setup();
@@ -684,6 +720,34 @@ describe("포인트 서비스", () => {
     });
 
     describe("운영 오류 처리", () => {
+      it.each([
+        ["4095", 0, new ExternalPromotionError("4095", "rate limit exceeded")],
+        ["HTTP 429", 0, new ExternalApiError(429, "too many requests")],
+        ["4095", 2, new ExternalPromotionError("4095", "rate limit exceeded")],
+        ["HTTP 429", 2, new ExternalApiError(429, "too many requests")],
+      ] as const)(
+        "요청 한도 초과(%s, attemptCount=%i)는 키와 재시도 횟수를 보존하고 재처리 가능한 대기 상태로 남긴다",
+        async (_label, attemptCount, error) => {
+          const { service, executor, em } = setup();
+          const request = createRequest({ attemptCount });
+          executor.executePromotion.mockRejectedValueOnce(error);
+
+          await service.settleGrantRequest(request);
+
+          expect(request.status).toBe(PointGrantStatus.RETRY);
+          expect(request.pointIdempotencyKey).toBe("promotion-key");
+          expect(request.attemptCount).toBe(attemptCount);
+          expect(request.nextRetryAt).toBeInstanceOf(Date);
+          expect(request.nextRetryAt!.getTime()).toBeGreaterThan(
+            FIXED_NOW.getTime(),
+          );
+          expect(request.processedAt).toBeUndefined();
+          expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+          expect(executor.getPromotionResult).not.toHaveBeenCalled();
+          expect(em.persist).not.toHaveBeenCalled();
+        },
+      );
+
       it("지급 요청의 데이터 구조 오류(HTTP 400)는 키와 재시도 횟수를 보존하고 SUSPENDED로 격리한다", async () => {
         const { service, executor, em } = setup();
         const request = createRequest({ attemptCount: 2 });
@@ -734,6 +798,7 @@ describe("포인트 서비스", () => {
       it.todo(
         "프로모션 설정 및 인증 오류면 요청을 SUSPENDED로 보존하고 워커를 중단한다",
       );
+      it.todo("요청 한도 초과 시 워커를 일시 중단하고 대기 후 자동 재개한다");
       it.todo(
         "DB 오류는 PROCESSING lease 복구에 맡기고 재시도 횟수를 추가 소모하지 않는다",
       );
