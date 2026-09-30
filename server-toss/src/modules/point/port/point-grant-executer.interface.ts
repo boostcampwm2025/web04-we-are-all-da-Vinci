@@ -1,4 +1,8 @@
-export type PointGrantResult = "PENDING" | "SUCCESS" | "FAILED";
+export type PointGrantResult =
+  | { type: "PENDING" }
+  | { type: "SUCCESS" }
+  | { type: "FAILED" }
+  | { type: "NOT_FOUND" };
 
 export abstract class PointGrantExecuter {
   abstract executePromotion(
@@ -10,5 +14,5 @@ export abstract class PointGrantExecuter {
   abstract getPromotionResult(
     userKey: number,
     key: string,
-  ): Promise<PointGrantResult | null>;
+  ): Promise<PointGrantResult>;
 }

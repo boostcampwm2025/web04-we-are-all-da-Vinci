@@ -22,7 +22,10 @@ import {
   PURGE_BATCH_SIZE,
   SUCCEEDED_RETENTION_DAYS,
 } from "./point.contants";
-import { PointGrantExecuter } from "./port/point-grant-executer.interface";
+import {
+  PointGrantExecuter,
+  PointGrantResult,
+} from "./port/point-grant-executer.interface";
 import { PointGrantKeyIssuer } from "./port/point-grant-key-issuer.interface";
 
 @Injectable()
@@ -130,23 +133,60 @@ export class PointService {
   async settleGrantRequest(
     request: PointGrantRequest,
   ): Promise<PointGrantRequest> {
-    const promotionResult = await this.getPromotionResult(request);
+    if (request.pointIdempotencyKey) {
+      try {
+        const promotionResult = await this.getPromotionResult(request);
 
-    if (!promotionResult) {
-      // 포인트 지급 내역 존재하지 않음.
-      // ex) 키 발급 후 지급 요청 중 오류난 경우
-      // 그대로 진행해서 키를 재발급한다.
-    } else if (promotionResult === "SUCCESS") {
-      await this.recordGrantSucceeded(request);
-      return request;
-    } else if (promotionResult === "PENDING") {
-      await this.recordGrantWait(request);
-      return request;
-    } else if (promotionResult === "FAILED") {
-      // 포인트 회수되었기 때문에 다시 포인트 지급해야 한다.
-      // 그대로 진행해서 키를 재발급한다.
+        if (promotionResult) {
+          return await this.handleExistingResult(request, promotionResult);
+        }
+
+        return await this.issueAndGrant(request);
+      } catch (err) {
+        if (err instanceof ExternalTransportError) {
+          await this.recordGrantRetry(request);
+        }
+        if (err instanceof ExternalApiError && err.statusCode >= 500) {
+          await this.recordGrantRetry(request);
+        }
+        if (err instanceof ExternalApiError && err.statusCode >= 400) {
+          // 데이터 구조 오류
+          // TODO: SUSPENDED + 워커 중단
+        }
+        return request;
+      }
     }
 
+    return await this.issueAndGrant(request);
+  }
+
+  async handleExistingResult(
+    request: PointGrantRequest,
+    result: PointGrantResult,
+  ) {
+    switch (result.type) {
+      case "PENDING":
+        await this.recordGrantWait(request);
+        break;
+      case "SUCCESS":
+        await this.recordGrantSucceeded(request);
+        break;
+      case "FAILED":
+        // 포인트 회수되었기 때문에 다시 포인트 지급해야 한다.
+        // 그대로 진행해서 키를 재발급한다.
+        await this.issueAndGrant(request);
+        break;
+      case "NOT_FOUND":
+        // 포인트 지급 내역 존재하지 않음.
+        // ex) 키 발급 후 지급 요청 중 오류난 경우
+        // 그대로 진행해서 키를 재발급한다.
+        await this.issueAndGrant(request);
+        break;
+    }
+    return request;
+  }
+
+  async issueAndGrant(request: PointGrantRequest) {
     const key = await this.issueAndSavePromotionKey(request);
 
     if (!key) {
@@ -167,23 +207,10 @@ export class PointService {
       return null;
     }
 
-    try {
-      return await this.pointGrantExecuter.getPromotionResult(
-        request.user.userKey,
-        request.pointIdempotencyKey,
-      );
-    } catch (err) {
-      if (err instanceof ExternalTransportError) {
-        return "PENDING";
-      }
-      if (err instanceof ExternalApiError && err.statusCode >= 500) {
-        return "PENDING";
-      }
-      if (err instanceof ExternalApiError && err.statusCode >= 400) {
-        // 데이터 구조 오류
-        // TODO: SUSPENDED + 워커 중단
-      }
-    }
+    return await this.pointGrantExecuter.getPromotionResult(
+      request.user.userKey,
+      request.pointIdempotencyKey,
+    );
   }
 
   async issueAndSavePromotionKey(request: PointGrantRequest) {

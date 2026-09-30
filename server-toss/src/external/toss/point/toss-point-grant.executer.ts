@@ -62,7 +62,7 @@ export class TossPointGrantExecuter implements PointGrantExecuter {
   async getPromotionResult(
     userKey: number,
     key: string,
-  ): Promise<PointGrantResult | null> {
+  ): Promise<PointGrantResult> {
     const data = await this.tossHttpClient.request<TossPromotionResultResponse>(
       "POST",
       TOSS_API_ENDPOINTS.GET_PROMOTION_RESULT,
@@ -79,7 +79,7 @@ export class TossPointGrantExecuter implements PointGrantExecuter {
         data.error?.errorCode ===
         TossBusinessErrorCode.REWARD_PROCESS_NOT_FOUND.errorCode
       ) {
-        return null;
+        return { type: "NOT_FOUND" };
       }
       throw new TossPromotionError(
         data.error?.errorCode ?? "UNKNOWN",
@@ -87,6 +87,6 @@ export class TossPointGrantExecuter implements PointGrantExecuter {
       );
     }
 
-    return data.success;
+    return { type: data.success };
   }
 }

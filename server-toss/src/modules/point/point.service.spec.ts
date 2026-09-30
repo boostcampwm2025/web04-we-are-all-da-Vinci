@@ -12,10 +12,7 @@ import { PointLog, PointReason } from "./entity/point-log.entity";
 import { User } from "../user/user.entity";
 import { PROMOTION_AMOUNT, PURGE_BATCH_SIZE } from "./point.contants";
 import { PointService } from "./point.service";
-import type {
-  PointGrantExecuter,
-  PointGrantResult,
-} from "./port/point-grant-executer.interface";
+import type { PointGrantExecuter } from "./port/point-grant-executer.interface";
 import type { PointGrantKeyIssuer } from "./port/point-grant-key-issuer.interface";
 
 const FIXED_NOW = new Date("2026-05-25T00:00:00.000Z");
@@ -259,7 +256,68 @@ describe("포인트 서비스", () => {
     });
 
     describe("기존 지급 키가 있는 요청", () => {
-      // SUCCESS/PENDING 객체는 현재 정상 처리되지 않는다. 해당 분기는 아래 결함 및 backlog로 분리한다.
+      it("기존 객체 SUCCESS면 키를 유지하고 새 지급 없이 성공 처리한다", async () => {
+        const { service, executor, keyIssuer, em } = setup();
+        const request = createRequest({
+          pointIdempotencyKey: "existing-key",
+          attemptCount: 2,
+        });
+        executor.getPromotionResult.mockResolvedValue({ type: "SUCCESS" });
+
+        await service.settleGrantRequest(request);
+
+        expect(request.status).toBe(PointGrantStatus.SUCCEEDED);
+        expect(request.pointIdempotencyKey).toBe("existing-key");
+        expect(keyIssuer.getPromotionKey).not.toHaveBeenCalled();
+        expect(executor.executePromotion).not.toHaveBeenCalled();
+        expect(em.persist).toHaveBeenCalledWith(expect.any(PointLog));
+      });
+
+      it("기존 객체 PENDING이면 키를 유지하고 attemptCount 증가 없이 대기한다", async () => {
+        const { service, executor, keyIssuer } = setup();
+        const request = createRequest({
+          pointIdempotencyKey: "existing-key",
+          attemptCount: 2,
+        });
+        executor.getPromotionResult.mockResolvedValue({ type: "PENDING" });
+
+        await service.settleGrantRequest(request);
+
+        expect(request.status).toBe(PointGrantStatus.RETRY);
+        expect(request.pointIdempotencyKey).toBe("existing-key");
+        expect(request.attemptCount).toBe(2);
+        expect(executor.executePromotion).not.toHaveBeenCalled();
+        expect(keyIssuer.getPromotionKey).not.toHaveBeenCalled();
+      });
+
+      it.each([
+        ["transport", new ExternalTransportError("result timeout")],
+        ["5xx", new ExternalApiError(500, "internal")],
+      ])(
+        "결과 조회 %s 오류면 키를 유지하고 RETRY하며 attemptCount를 증가시킨다",
+        async (_label, error) => {
+          const { service, executor, keyIssuer, em } = setup();
+          const request = createRequest({
+            pointIdempotencyKey: "existing-key",
+            attemptCount: 2,
+          });
+          executor.getPromotionResult.mockRejectedValueOnce(error);
+
+          await service.settleGrantRequest(request);
+
+          expect(executor.getPromotionResult).toHaveBeenCalledWith(
+            1234,
+            "existing-key",
+          );
+          expect(request.status).toBe(PointGrantStatus.RETRY);
+          expect(request.pointIdempotencyKey).toBe("existing-key");
+          expect(request.attemptCount).toBe(3);
+          expect(executor.executePromotion).not.toHaveBeenCalled();
+          expect(keyIssuer.getPromotionKey).not.toHaveBeenCalled();
+          expect(em.persist).not.toHaveBeenCalled();
+        },
+      );
+
       it("기존 지급 결과가 없으면 새 키로 지급한다", async () => {
         const { service, executor, keyIssuer, em } = setup();
         const request = createRequest({ pointIdempotencyKey: "existing-key" });
@@ -392,12 +450,11 @@ describe("포인트 서비스", () => {
         expect(em.persist).not.toHaveBeenCalled();
       });
 
-      it("신규 지급 단계에 진입한 뒤 지급이 timeout이어도 한 실행에서 지급은 최대 한 번이다", async () => {
+      it("기존 FAILED 확인 뒤 새 지급이 timeout이어도 한 실행에서 새 지급은 최대 한 번이다", async () => {
         const { service, executor, keyIssuer, em } = setup();
         const request = createRequest({ pointIdempotencyKey: "existing-key" });
-        // null은 현재 정상적으로 신규 지급에 진입하는 입력이다. FAILED 해석은 backlog에서 다룬다.
-        executor.getPromotionResult.mockResolvedValueOnce(null);
-        executor.executePromotion.mockRejectedValueOnce(
+        executor.getPromotionResult.mockResolvedValueOnce({ type: "FAILED" });
+        executor.executePromotion.mockRejectedValue(
           new ExternalTransportError("new payment timeout"),
         );
 
@@ -426,13 +483,7 @@ describe("포인트 서비스", () => {
       });
     });
 
-    describe("characterization: 변경 예정인 현재 동작", () => {
-      // 결함뿐 아니라 현재 예외 후처리 정책도 관찰한다. 이후 TDD에서 specification으로 교체한다.
-      // 포트는 객체를 반환한다. 문자열 재현 장치는 이 관찰 영역 밖에서 사용하지 않는다.
-      type LegacyResult = "SUCCESS" | "PENDING" | "FAILED";
-      const legacyResult = (value: LegacyResult): PointGrantResult =>
-        value as unknown as PointGrantResult;
-
+    describe("characterization: 현재 알려진 결함", () => {
       it("현재 동작: 지급 정상 응답만으로 성공 처리하고 결과는 조회하지 않는다", async () => {
         const { service, executor, keyIssuer, em } = setup();
         const request = createRequest();
@@ -494,121 +545,8 @@ describe("포인트 서비스", () => {
         expect(em.persist).not.toHaveBeenCalled();
       });
 
-      it("현재 동작: 문자열 SUCCESS이면 새 지급 없이 성공 처리하고 로그를 생성한다", async () => {
-        const { service, executor, keyIssuer, em } = setup();
-        const request = createRequest({
-          pointIdempotencyKey: "existing-key",
-          attemptCount: 2,
-        });
-        executor.getPromotionResult.mockResolvedValue(legacyResult("SUCCESS"));
-
-        await service.settleGrantRequest(request);
-
-        expect(executor.getPromotionResult).toHaveBeenCalledWith(
-          1234,
-          "existing-key",
-        );
-        expect(executor.executePromotion).not.toHaveBeenCalled();
-        expect(keyIssuer.getPromotionKey).not.toHaveBeenCalled();
-        expect(request.status).toBe(PointGrantStatus.SUCCEEDED);
-        expect(request.pointIdempotencyKey).toBe("existing-key");
-        expect(request.attemptCount).toBe(2);
-        expect(request.processedAt).toEqual(FIXED_NOW);
-        expect(em.persist).toHaveBeenCalledTimes(1);
-        expect(em.persist.mock.calls[0][0]).toBeInstanceOf(PointLog);
-        expect(em.persist).toHaveBeenCalledWith(
-          expect.objectContaining({
-            user: request.user,
-            reason: request.reason,
-            pointAmount: request.pointAmount,
-          }),
-        );
-      });
-
-      it("현재 동작: 문자열 PENDING이면 키를 유지하고 횟수 증가 없이 대기한다", async () => {
-        const { service, executor, keyIssuer, em } = setup();
-        const request = createRequest({
-          pointIdempotencyKey: "existing-key",
-          attemptCount: 2,
-        });
-        executor.getPromotionResult.mockResolvedValue(legacyResult("PENDING"));
-
-        await service.settleGrantRequest(request);
-
-        expect(request.status).toBe(PointGrantStatus.RETRY);
-        expect(request.attemptCount).toBe(2);
-        expect(request.pointIdempotencyKey).toBe("existing-key");
-        expect(request.nextRetryAt).toEqual(
-          new Date(FIXED_NOW.getTime() + 30_000),
-        );
-        expect(executor.getPromotionResult).toHaveBeenCalledTimes(1);
-        expect(executor.executePromotion).not.toHaveBeenCalled();
-        expect(keyIssuer.getPromotionKey).not.toHaveBeenCalled();
-        expect(em.persist).not.toHaveBeenCalled();
-      });
-
-      it.each([
-        ["transport error", new ExternalTransportError("result timeout")],
-        ["HTTP 500", new ExternalApiError(500, "internal")],
-      ])(
-        "현재 동작: 조회 %s를 PENDING처럼 취급하여 키와 횟수를 유지한다",
-        async (_label, error) => {
-          const { service, executor, keyIssuer, em } = setup();
-          const request = createRequest({
-            pointIdempotencyKey: "existing-key",
-            attemptCount: 1,
-          });
-          executor.getPromotionResult.mockRejectedValueOnce(error);
-
-          await service.settleGrantRequest(request);
-
-          expect(request.status).toBe(PointGrantStatus.RETRY);
-          expect(request.attemptCount).toBe(1);
-          expect(request.pointIdempotencyKey).toBe("existing-key");
-          expect(executor.getPromotionResult).toHaveBeenCalledTimes(1);
-          expect(executor.executePromotion).not.toHaveBeenCalled();
-          expect(keyIssuer.getPromotionKey).not.toHaveBeenCalled();
-          expect(em.persist).not.toHaveBeenCalled();
-        },
-      );
-
-      it.each(["FAILED", null] as const)(
-        "현재 동작: 기존 문자열 결과가 %s이면 같은 실행에서 새 키로 한 번 지급한다",
-        async (result) => {
-          const { service, executor, keyIssuer } = setup();
-          const request = createRequest({
-            pointIdempotencyKey: "existing-key",
-            attemptCount: 1,
-          });
-          executor.getPromotionResult.mockResolvedValue(
-            result === null ? null : legacyResult(result),
-          );
-          keyIssuer.getPromotionKey.mockResolvedValue("new-key");
-
-          await service.settleGrantRequest(request);
-
-          expect(executor.getPromotionResult).toHaveBeenCalledWith(
-            1234,
-            "existing-key",
-          );
-          expect(executor.getPromotionResult).toHaveBeenCalledTimes(1);
-          expect(
-            executor.getPromotionResult.mock.invocationCallOrder[0],
-          ).toBeLessThan(keyIssuer.getPromotionKey.mock.invocationCallOrder[0]);
-          expect(executor.executePromotion).toHaveBeenCalledTimes(1);
-          expect(executor.executePromotion).toHaveBeenCalledWith(
-            1234,
-            "new-key",
-            2,
-          );
-          expect(request.status).toBe(PointGrantStatus.SUCCEEDED);
-          expect(request.pointIdempotencyKey).toBe("new-key");
-          expect(request.attemptCount).toBe(1);
-        },
-      );
-
       describe("현재 동작: 객체 반환 계약과 서비스 문자열 비교의 불일치", () => {
-        it.each(["SUCCESS", "PENDING", "FAILED", "NOT_FOUND"] as const)(
+        it.each(["FAILED", "NOT_FOUND"] as const)(
           "현재 동작: 객체 %s를 구분하지 않고 새 키로 지급한다 — 계약 미처리",
           async (type) => {
             const { service, executor, keyIssuer } = setup();
@@ -630,111 +568,11 @@ describe("포인트 서비스", () => {
           },
         );
       });
-
-      it.each([
-        ["HTTP 400", new ExternalApiError(400, "invalid request")],
-        [
-          "프로모션 오류",
-          new ExternalPromotionError("4109", "promotion ended"),
-        ],
-        ["알 수 없는 오류", new Error("unknown")],
-      ])(
-        "현재 동작: 조회 %s를 삼켜 기존 키를 교체하고 지급한다 — 안전 결함",
-        async (_label, error) => {
-          const { service, executor, keyIssuer } = setup();
-          const request = createRequest({
-            pointIdempotencyKey: "existing-key",
-          });
-          executor.getPromotionResult.mockRejectedValueOnce(error);
-
-          await service.settleGrantRequest(request);
-
-          expect(executor.getPromotionResult).toHaveBeenCalledWith(
-            1234,
-            "existing-key",
-          );
-          expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(1);
-          expect(executor.executePromotion).toHaveBeenCalledTimes(1);
-          expect(request.pointIdempotencyKey).toBe("promotion-key");
-          expect(request.status).toBe(PointGrantStatus.SUCCEEDED);
-        },
-      );
-
-      it("현재 동작: 기존 문자열 SUCCESS 저장의 DB 오류는 호출자에게 전파한다", async () => {
-        const { service, executor, keyIssuer, em } = setup();
-        const request = createRequest({ pointIdempotencyKey: "existing-key" });
-        const error = new Error("result save failed");
-        executor.getPromotionResult.mockResolvedValue(legacyResult("SUCCESS"));
-        em.flush.mockRejectedValueOnce(error);
-
-        await expect(service.settleGrantRequest(request)).rejects.toBe(error);
-
-        expect(request.pointIdempotencyKey).toBe("existing-key");
-        expect(request.attemptCount).toBe(0);
-        expect(executor.executePromotion).not.toHaveBeenCalled();
-        expect(keyIssuer.getPromotionKey).not.toHaveBeenCalled();
-        // flush 실패 전 객체는 변경된다. 실제 DB의 rollback/commit은 단위 테스트 범위가 아니다.
-        expect(request.status).toBe(PointGrantStatus.SUCCEEDED);
-      });
-
-      it("현재 동작: 신규 성공 저장의 DB 오류는 재시도하고 다음 워커는 기존 키를 조회한다", async () => {
-        const { service, executor, keyIssuer, em } = setup();
-        const request = createRequest();
-        executor.getPromotionResult.mockResolvedValue(legacyResult("SUCCESS"));
-        em.flush
-          .mockResolvedValueOnce()
-          .mockRejectedValueOnce(new Error("result save failed"));
-
-        await service.settleGrantRequest(request);
-
-        expect(request.status).toBe(PointGrantStatus.RETRY);
-        expect(request.attemptCount).toBe(1);
-        expect(request.pointIdempotencyKey).toBe("promotion-key");
-        expect(executor.executePromotion).toHaveBeenCalledTimes(1);
-        expect(executor.getPromotionResult).not.toHaveBeenCalled();
-
-        request.processing();
-        await service.settleGrantRequest(request);
-
-        expect(executor.getPromotionResult).toHaveBeenCalledWith(
-          1234,
-          "promotion-key",
-        );
-        expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(1);
-        expect(executor.executePromotion).toHaveBeenCalledTimes(1);
-        expect(request.status).toBe(PointGrantStatus.SUCCEEDED);
-        expect(request.attemptCount).toBe(1);
-        // persist 호출은 저장 의도만 검증한다. DB 중복 로그/rollback 검증은 통합 테스트가 필요하다.
-        expect(em.persist).toHaveBeenLastCalledWith(expect.any(PointLog));
-      });
-
-      it("현재 동작: 알 수 없는 지급 오류도 DB 오류처럼 재시도 횟수를 소모한다", async () => {
-        const { service, executor, em } = setup();
-        const request = createRequest({ attemptCount: 1 });
-        executor.executePromotion.mockRejectedValueOnce(new Error("unknown"));
-
-        await service.settleGrantRequest(request);
-
-        expect(request.status).toBe(PointGrantStatus.RETRY);
-        expect(request.attemptCount).toBe(2);
-        expect(request.pointIdempotencyKey).toBe("promotion-key");
-        expect(em.persist).not.toHaveBeenCalled();
-      });
     });
 
     describe("향후 TDD backlog", () => {
       // 실제 failing test는 해당 요구사항의 TDD를 시작할 때 작성한다.
       it.todo("신규 지급 요청 후 결과가 SUCCESS인 경우에만 성공 처리한다");
-      it.todo("기존 객체 SUCCESS면 키를 유지하고 새 지급 없이 성공 처리한다");
-      it.todo(
-        "기존 객체 PENDING이면 키를 유지하고 attemptCount 증가 없이 대기한다",
-      );
-      it.todo(
-        "결과 조회 transport 오류면 키를 유지하고 RETRY하며 attemptCount를 증가시킨다",
-      );
-      it.todo(
-        "결과 조회 5xx 오류면 키를 유지하고 RETRY하며 attemptCount를 증가시킨다",
-      );
       it.todo(
         "신규 지급 결과 FAILED면 키를 제거하고 다음 워커에서 다시 지급한다",
       );

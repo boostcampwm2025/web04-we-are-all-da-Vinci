@@ -116,6 +116,14 @@ export class PointGrantRequest extends BaseEntity {
     this.lockedAt = getSeoulDateTime();
   }
 
+  clearKey() {
+    this.pointIdempotencyKey = undefined;
+  }
+
+  suspend() {
+    this.status = PointGrantStatus.SUSPENDED;
+  }
+
   setPointIdempotencyKey(key: string) {
     this.pointIdempotencyKey = key;
   }
