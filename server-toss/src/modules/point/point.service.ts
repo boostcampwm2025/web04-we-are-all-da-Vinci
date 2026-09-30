@@ -61,7 +61,7 @@ export class PointService {
   }
 
   // 받은 포인트 합(전체 누적 / KST 오늘).
-  // = 지급 성공분(point_logs) + 진행 중 지급(point_grant_requests: PENDING·PROCESSING·RETRY).
+  // = 지급 성공분(point_logs) + 진행 중 지급(point_grant_requests: PENDING·PROCESSING·RETRY·SUSPENDED).
   // 진행 중을 포함해 적립 직후(아직 Cron 미처리) 시점에도 즉시 반영하고,
   // 성공 시 한 트랜잭션에서 request→SUCCEEDED(진행중 제외) + PointLog 생성(성공 포함)으로 합계가 정합된다.
   async getPointSummary(
@@ -78,6 +78,7 @@ export class PointService {
             PointGrantStatus.PENDING,
             PointGrantStatus.PROCESSING,
             PointGrantStatus.RETRY,
+            PointGrantStatus.SUSPENDED,
           ],
         },
       }),

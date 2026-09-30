@@ -87,6 +87,41 @@ const setup = () => {
 };
 
 describe("포인트 서비스", () => {
+  describe("포인트 요약 조회", () => {
+    it("SUSPENDED 요청도 누적 포인트에 포함하고 오늘 생성된 요청만 오늘 포인트에 포함한다", async () => {
+      const { service, em } = setup();
+      const requests = [
+        createRequest({ status: PointGrantStatus.SUSPENDED, pointAmount: 2 }),
+        createRequest({
+          id: 2n,
+          status: PointGrantStatus.SUSPENDED,
+          pointAmount: 3,
+          createdAt: new Date(FIXED_DAY_RANGE.start.getTime() - 1),
+        }),
+      ];
+      em.find.mockImplementation((entity, where) => {
+        if (entity !== PointGrantRequest) return Promise.resolve([]);
+
+        // 조회 조건을 적용해야 SUSPENDED 누락을 단순 반환 mock이 숨기지 않는다.
+        const filter = where as {
+          user: number;
+          status: { $in: PointGrantStatus[] };
+        };
+        return Promise.resolve(
+          requests.filter(
+            (request) =>
+              request.user.userKey === filter.user &&
+              filter.status.$in.includes(request.status),
+          ),
+        );
+      });
+
+      const summary = await service.getPointSummary(1234);
+
+      expect(summary).toEqual({ totalPoints: 5, todayPoints: 2 });
+    });
+  });
+
   describe("지급 요청 일괄 처리", () => {
     it("선점한 요청을 순서대로 처리하고 반환한다", async () => {
       const { service, repository, executor } = setup();
