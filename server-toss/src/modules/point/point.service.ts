@@ -185,10 +185,12 @@ export class PointService {
           case TossBusinessErrorCode.RATE_LIMIT_EXCEEDED.errorCode:
             await this.recordGrantWait(request);
             break;
+          default:
+            throw err;
         }
         return request;
       }
-      return request;
+      throw err;
     }
   }
 
@@ -322,29 +324,6 @@ export class PointService {
   @Transactional()
   async recordGrantWait(request: PointGrantRequest) {
     request.wait();
-    await this.em.flush();
-  }
-
-  @Transactional()
-  async recordGrantOutcomeFromError(request: PointGrantRequest, err: unknown) {
-    if (err instanceof ExternalPromotionError && err.errorCode === "4113") {
-      request.retry();
-    } else if (
-      err instanceof ExternalTransportError ||
-      (err instanceof ExternalPromotionError && err.errorCode === "4110")
-    ) {
-      request.retry();
-    } else if (err instanceof ExternalPromotionError) {
-      request.failed(err.message);
-
-      this.logger.warn(
-        `프로모션 지급 실패 (재시도 불필요): ${err instanceof Error ? err.message : String(err)}`,
-      );
-    } else {
-      // DB 에러
-      request.retry();
-    }
-
     await this.em.flush();
   }
 

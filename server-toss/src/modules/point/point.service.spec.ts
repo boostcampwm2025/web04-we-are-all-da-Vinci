@@ -196,6 +196,62 @@ describe("포인트 서비스", () => {
       expect(em.persist).toHaveBeenCalledWith(expect.any(PointLog));
     });
 
+    it.each([
+      ["4095", new ExternalPromotionError("4095", "rate limit exceeded")],
+      ["HTTP 429", new ExternalApiError(429, "too many requests")],
+    ])(
+      "요청 한도 초과(%s)는 해당 요청만 대기시키고 현재 배치의 다음 요청은 지급한다",
+      async (_label, error) => {
+        const { service, repository, executor, keyIssuer, em } = setup();
+        const request = createRequest({
+          id: 1n,
+          status: PointGrantStatus.PENDING,
+        });
+        const nextRequest = createRequest({
+          id: 2n,
+          status: PointGrantStatus.PENDING,
+          user: Object.assign(new User(), { userKey: 5678 }),
+        });
+        repository.findEligibleGrantsWithLock.mockResolvedValue([
+          request,
+          nextRequest,
+        ]);
+        executor.executePromotion.mockRejectedValueOnce(error);
+
+        await service.settleGrantRequests();
+
+        expect(request.status).toBe(PointGrantStatus.RETRY);
+        expect(request.pointIdempotencyKey).toBe("promotion-key");
+        expect(request.attemptCount).toBe(0);
+        expect(executor.executePromotion).toHaveBeenCalledTimes(2);
+        expect(executor.executePromotion).toHaveBeenNthCalledWith(
+          1,
+          1234,
+          "promotion-key",
+          2,
+        );
+        expect(executor.executePromotion).toHaveBeenNthCalledWith(
+          2,
+          5678,
+          "promotion-key",
+          2,
+        );
+        expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(2);
+        expect(keyIssuer.getPromotionKey).toHaveBeenNthCalledWith(1, 1234);
+        expect(keyIssuer.getPromotionKey).toHaveBeenNthCalledWith(2, 5678);
+        expect(nextRequest.status).toBe(PointGrantStatus.SUCCEEDED);
+        expect(nextRequest.pointIdempotencyKey).toBe("promotion-key");
+        expect(nextRequest.attemptCount).toBe(0);
+        expect(executor.getPromotionResult).toHaveBeenCalledTimes(1);
+        expect(executor.getPromotionResult).toHaveBeenCalledWith(
+          5678,
+          "promotion-key",
+        );
+        expect(em.persist).toHaveBeenCalledTimes(1);
+        expect(em.persist).toHaveBeenCalledWith(expect.any(PointLog));
+      },
+    );
+
     describe("characterization: 현재 DB 오류 후처리", () => {
       it("현재 동작: 개별 요청의 DB 오류 이후에도 다음 요청 처리를 계속한다", async () => {
         const { service, repository, executor, em } = setup();
@@ -719,6 +775,70 @@ describe("포인트 서비스", () => {
       });
     });
 
+    describe("기술적 예외 전파", () => {
+      it("미분류 프로모션 오류는 키와 재시도 횟수를 유지하고 그대로 전파한다", async () => {
+        const { service, executor, keyIssuer, em } = setup();
+        const request = createRequest({
+          pointIdempotencyKey: "existing-key",
+          attemptCount: 2,
+        });
+        const error = new ExternalPromotionError(
+          "UNKNOWN_CODE",
+          "unclassified promotion error",
+        );
+        executor.getPromotionResult.mockRejectedValueOnce(error);
+
+        await expect(service.settleGrantRequest(request)).rejects.toBe(error);
+
+        expect(request.status).toBe(PointGrantStatus.PROCESSING);
+        expect(request.pointIdempotencyKey).toBe("existing-key");
+        expect(request.attemptCount).toBe(2);
+        expect(keyIssuer.getPromotionKey).not.toHaveBeenCalled();
+        expect(executor.executePromotion).not.toHaveBeenCalled();
+        expect(em.flush).not.toHaveBeenCalled();
+        expect(em.persist).not.toHaveBeenCalled();
+      });
+
+      it("기존 결과 조회의 알 수 없는 예외는 요청을 RETRY로 변경하지 않고 그대로 전파한다", async () => {
+        const { service, executor, keyIssuer, em } = setup();
+        const request = createRequest({
+          pointIdempotencyKey: "existing-key",
+          attemptCount: 2,
+        });
+        const error = new TypeError("unexpected result error");
+        executor.getPromotionResult.mockRejectedValueOnce(error);
+
+        await expect(service.settleGrantRequest(request)).rejects.toBe(error);
+
+        expect(request.status).toBe(PointGrantStatus.PROCESSING);
+        expect(request.attemptCount).toBe(2);
+        expect(request.pointIdempotencyKey).toBe("existing-key");
+        expect(request.nextRetryAt).toBeUndefined();
+        expect(keyIssuer.getPromotionKey).not.toHaveBeenCalled();
+        expect(executor.executePromotion).not.toHaveBeenCalled();
+        expect(em.flush).not.toHaveBeenCalled();
+        expect(em.persist).not.toHaveBeenCalled();
+      });
+
+      it("키 저장의 DB 예외는 재시도 상태를 추가 저장하지 않고 그대로 전파하며 지급하지 않는다", async () => {
+        const { service, executor, em } = setup();
+        const request = createRequest({ attemptCount: 2 });
+        const error = new Error("key save failed");
+        em.flush.mockRejectedValueOnce(error);
+
+        await expect(service.settleGrantRequest(request)).rejects.toBe(error);
+
+        // 실제 DB rollback과 영속화된 PROCESSING의 lease 복구는 DB 통합 테스트에서 검증한다.
+        expect(request.status).toBe(PointGrantStatus.PROCESSING);
+        expect(request.attemptCount).toBe(2);
+        expect(request.nextRetryAt).toBeUndefined();
+        expect(em.flush).toHaveBeenCalledTimes(1);
+        expect(executor.executePromotion).not.toHaveBeenCalled();
+        expect(executor.getPromotionResult).not.toHaveBeenCalled();
+        expect(em.persist).not.toHaveBeenCalled();
+      });
+    });
+
     describe("운영 오류 처리", () => {
       it.each([
         ["4095", 0, new ExternalPromotionError("4095", "rate limit exceeded")],
@@ -798,7 +918,7 @@ describe("포인트 서비스", () => {
       it.todo(
         "프로모션 설정 및 인증 오류면 요청을 SUSPENDED로 보존하고 워커를 중단한다",
       );
-      it.todo("요청 한도 초과 시 워커를 일시 중단하고 대기 후 자동 재개한다");
+      it.todo("요청 한도 초과 대응을 위한 호출량 제어 정책을 별도로 적용한다");
       it.todo(
         "DB 오류는 PROCESSING lease 복구에 맡기고 재시도 횟수를 추가 소모하지 않는다",
       );
