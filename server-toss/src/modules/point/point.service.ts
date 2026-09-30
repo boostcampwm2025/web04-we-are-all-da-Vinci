@@ -133,31 +133,30 @@ export class PointService {
   async settleGrantRequest(
     request: PointGrantRequest,
   ): Promise<PointGrantRequest> {
-    if (request.pointIdempotencyKey) {
-      try {
-        const promotionResult = await this.getPromotionResult(request);
+    try {
+      const promotionResult = await this.getPromotionResult(request);
 
-        if (promotionResult) {
-          return await this.handleExistingResult(request, promotionResult);
-        }
+      if (promotionResult) {
+        return await this.handleExistingResult(request, promotionResult);
+      }
 
-        return await this.issueAndGrant(request);
-      } catch (err) {
-        if (err instanceof ExternalTransportError) {
-          await this.recordGrantRetry(request);
-        }
-        if (err instanceof ExternalApiError && err.statusCode >= 500) {
-          await this.recordGrantRetry(request);
-        }
-        if (err instanceof ExternalApiError && err.statusCode >= 400) {
-          // 데이터 구조 오류
-          // TODO: SUSPENDED + 워커 중단
-        }
+      return await this.issueAndGrant(request);
+    } catch (err) {
+      if (err instanceof ExternalTransportError) {
+        await this.recordGrantRetry(request);
         return request;
       }
+      if (err instanceof ExternalApiError && err.statusCode >= 500) {
+        await this.recordGrantRetry(request);
+        return request;
+      }
+      if (err instanceof ExternalApiError && err.statusCode >= 400) {
+        // 데이터 구조 오류
+        // TODO: SUSPENDED + 워커 중단
+      }
+      await this.recordGrantOutcomeFromError(request, err);
+      return request;
     }
-
-    return await this.issueAndGrant(request);
   }
 
   async handleExistingResult(
@@ -186,19 +185,40 @@ export class PointService {
     return request;
   }
 
+  async handleNewResult(request: PointGrantRequest, result: PointGrantResult) {
+    switch (result.type) {
+      case "PENDING":
+        await this.recordGrantWait(request);
+        break;
+      case "SUCCESS":
+        await this.recordGrantSucceeded(request);
+        break;
+      case "FAILED":
+        // 포인트 회수되었기 때문에 다시 포인트 지급해야 한다.
+        // 키를 초기화하고 다음 워커에서 재처리하도록 한다.
+        await this.clearKeyAndRetry(request);
+        break;
+      case "NOT_FOUND":
+        // 포인트 지급 내역 존재하지 않음.
+        // ex) 키 발급 후 지급 요청 중 오류난 경우
+        // 키를 초기화해서 다음 워커에서 재처리하도록 한다.
+        await this.clearKeyAndRetry(request);
+        break;
+    }
+    return request;
+  }
+
   async issueAndGrant(request: PointGrantRequest) {
-    const key = await this.issueAndSavePromotionKey(request);
+    const key = await this.issueKey(request);
+    await this.savePointIdempotencyKey(request, key);
 
-    if (!key) {
-      return request;
-    }
+    await this.grantPromotion(request, key);
+    const result = await this.getPromotionResult(request);
 
-    try {
-      await this.grantPromotion(request, key);
-      await this.recordGrantSucceeded(request);
-    } catch (err) {
-      await this.recordGrantOutcomeFromError(request, err);
+    if (result) {
+      return await this.handleNewResult(request, result);
     }
+    await this.recordGrantRetry(request);
     return request;
   }
 
@@ -213,26 +233,17 @@ export class PointService {
     );
   }
 
-  async issueAndSavePromotionKey(request: PointGrantRequest) {
+  async issueKey(request: PointGrantRequest) {
     const { user } = request;
 
-    try {
-      const key = await this.pointGrantKeyIssuer.getPromotionKey(user.userKey);
+    return await this.pointGrantKeyIssuer.getPromotionKey(user.userKey);
+  }
 
-      await this.savePointIdempotencyKey(request, key);
-      return key;
-    } catch (err) {
-      this.logger.warn(
-        {
-          event: "point_grant.key_issue.failed",
-          requestId: request.id,
-          reason: "key_issue_error",
-          error: err instanceof Error ? err.message : String(err),
-        },
-        "프로모션 지급 키 발급 실패 (재시도)",
-      );
-      await this.recordGrantRetry(request);
-    }
+  @Transactional()
+  async clearKeyAndRetry(request: PointGrantRequest) {
+    request.clearKey();
+    request.retry();
+    await this.em.flush();
   }
 
   @Transactional()
