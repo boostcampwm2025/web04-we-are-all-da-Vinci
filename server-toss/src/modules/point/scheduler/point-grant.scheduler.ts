@@ -39,6 +39,6 @@ export class PointGrantScheduler implements OnApplicationBootstrap {
 
   @CreateRequestContext((self: PointGrantScheduler) => self.em)
   private async initialize() {
-    await this.pointService.resumeSuspended();
+    await this.pointService.recoverSuspended();
   }
 }

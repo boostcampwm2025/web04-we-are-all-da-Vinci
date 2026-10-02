@@ -424,7 +424,7 @@ export class PointService {
   }
 
   @Transactional()
-  async resumeSuspended() {
+  async recoverSuspended() {
     const exist =
       await this.pointGrantRequestRepository.existSuspendedRequests();
     if (!exist) {

@@ -182,7 +182,7 @@ describe("포인트 서비스", () => {
         return targets.length;
       });
 
-      await service.resumeSuspended();
+      await service.recoverSuspended();
 
       expect([...storedStatuses.values()]).toEqual([
         PointGrantStatus.PENDING,
