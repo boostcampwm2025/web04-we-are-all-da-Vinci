@@ -1,4 +1,5 @@
 import { describe, expect, it, jest } from "@jest/globals";
+import { Logger } from "@nestjs/common";
 import {
   ExternalApiError,
   ExternalPromotionError,
@@ -12,6 +13,7 @@ import { PointLog, PointReason } from "./entity/point-log.entity";
 import { User } from "../user/user.entity";
 import { PROMOTION_AMOUNT, PURGE_BATCH_SIZE } from "./point.contants";
 import { PointService } from "./point.service";
+import { PointGrantRequestRepository } from "./point-grant-request.repository";
 import type { PointGrantExecuter } from "./port/point-grant-executer.interface";
 import type { PointGrantKeyIssuer } from "./port/point-grant-key-issuer.interface";
 
@@ -58,11 +60,22 @@ const createRequest = (overrides: Partial<PointGrantRequest> = {}) =>
 
 const setup = () => {
   const em = buildEntityManager();
-  const repository = {
-    findEligibleGrantsWithLock: jest
-      .fn<() => Promise<PointGrantRequest[]>>()
-      .mockResolvedValue([]),
-  };
+  const repository = Object.assign(
+    new PointGrantRequestRepository({} as never, PointGrantRequest),
+    {
+      findEligibleGrantsWithLock: jest
+        .fn<() => Promise<PointGrantRequest[]>>()
+        .mockResolvedValue([]),
+      count: jest
+        .fn<(where: unknown) => Promise<number>>()
+        .mockResolvedValue(0),
+      nativeUpdate: jest
+        .fn<
+          (where: unknown, data: Record<string, unknown>) => Promise<number>
+        >()
+        .mockResolvedValue(0),
+    },
+  );
   const keyIssuer = {
     getPromotionKey: jest
       .fn<PointGrantKeyIssuer["getPromotionKey"]>()
@@ -122,8 +135,73 @@ describe("포인트 서비스", () => {
     });
   });
 
+  describe("중단된 지급 요청 복구", () => {
+    it("SUSPENDED 요청만 PENDING으로 저장하고 키와 재시도 횟수를 보존한다", async () => {
+      const { service, repository, executor, keyIssuer } = setup();
+      const requests = [
+        createRequest({
+          status: PointGrantStatus.SUSPENDED,
+          pointIdempotencyKey: "existing-key",
+          attemptCount: 2,
+        }),
+        createRequest({ id: 2n, status: PointGrantStatus.PENDING }),
+        createRequest({ id: 3n, status: PointGrantStatus.RETRY }),
+        createRequest({ id: 4n, status: PointGrantStatus.PROCESSING }),
+        createRequest({ id: 5n, status: PointGrantStatus.SUCCEEDED }),
+        createRequest({ id: 6n, status: PointGrantStatus.FAILED }),
+      ];
+      const storedStatuses = new Map(
+        requests.map((request) => [request.id, request.status]),
+      );
+      const matchesStatus = (
+        request: PointGrantRequest,
+        where: { status?: PointGrantStatus | { $in: PointGrantStatus[] } },
+      ) =>
+        !where.status ||
+        (typeof where.status === "string"
+          ? request.status === where.status
+          : where.status.$in.includes(request.status));
+      // Repository의 실제 복구 쿼리를 실행하고 count/nativeUpdate DB 경계만 대체한다.
+      repository.count.mockImplementation(
+        async (where) =>
+          requests.filter((request) =>
+            matchesStatus(
+              request,
+              where as Parameters<typeof matchesStatus>[1],
+            ),
+          ).length,
+      );
+      repository.nativeUpdate.mockImplementation(async (where, data) => {
+        const targets = requests.filter((request) =>
+          matchesStatus(request, where as Parameters<typeof matchesStatus>[1]),
+        );
+        targets.forEach((request) => {
+          Object.assign(request, data);
+          storedStatuses.set(request.id, request.status);
+        });
+        return targets.length;
+      });
+
+      await service.resumeSuspended();
+
+      expect([...storedStatuses.values()]).toEqual([
+        PointGrantStatus.PENDING,
+        PointGrantStatus.PENDING,
+        PointGrantStatus.RETRY,
+        PointGrantStatus.PROCESSING,
+        PointGrantStatus.SUCCEEDED,
+        PointGrantStatus.FAILED,
+      ]);
+      expect(requests[0].pointIdempotencyKey).toBe("existing-key");
+      expect(requests[0].attemptCount).toBe(2);
+      expect(keyIssuer.getPromotionKey).not.toHaveBeenCalled();
+      expect(executor.executePromotion).not.toHaveBeenCalled();
+      expect(executor.getPromotionResult).not.toHaveBeenCalled();
+    });
+  });
+
   describe("지급 요청 일괄 처리", () => {
-    it("선점한 요청을 순서대로 처리하고 반환한다", async () => {
+    it("선점한 요청을 순서대로 처리하고 중단 여부를 반환한다", async () => {
       const { service, repository, executor } = setup();
       const requests = [
         createRequest({ id: 1n }),
@@ -152,7 +230,7 @@ describe("포인트 서비스", () => {
         PointGrantStatus.SUCCEEDED,
         PointGrantStatus.SUCCEEDED,
       ]);
-      expect(result).toEqual(requests);
+      expect(result).toEqual(false);
     });
 
     it("프로모션 종료 오류가 발생하면 요청을 격리하고 현재 배치의 나머지 지급을 중단한다", async () => {
@@ -193,6 +271,131 @@ describe("포인트 서비스", () => {
       expect(nextRequest.attemptCount).toBe(0);
       expect(executor.getPromotionResult).not.toHaveBeenCalled();
       expect(em.persist).not.toHaveBeenCalled();
+    });
+
+    it("SUSPENDED가 발생하면 미처리 선점 요청만 PENDING으로 반환하고 키와 재시도 횟수를 보존한다", async () => {
+      const { service, repository, executor, keyIssuer, em } = setup();
+      const completedRequest = createRequest({
+        id: 1n,
+        status: PointGrantStatus.PENDING,
+      });
+      const suspendedRequest = createRequest({
+        id: 2n,
+        status: PointGrantStatus.PENDING,
+      });
+      const remainingRequests = [
+        createRequest({ id: 3n, status: PointGrantStatus.PENDING }),
+        createRequest({
+          id: 4n,
+          status: PointGrantStatus.RETRY,
+          pointIdempotencyKey: "existing-key",
+          attemptCount: 2,
+        }),
+      ];
+      const requests = [
+        completedRequest,
+        suspendedRequest,
+        ...remainingRequests,
+      ];
+      const flushedStatuses: PointGrantStatus[][] = [];
+      repository.findEligibleGrantsWithLock.mockResolvedValue(requests);
+      em.flush.mockImplementation(async () => {
+        flushedStatuses.push(requests.map(({ status }) => status));
+      });
+      executor.executePromotion
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(
+          new ExternalPromotionError("4105", "promotion ended"),
+        );
+
+      await service.settleGrantRequests();
+
+      expect(flushedStatuses[0]).toEqual([
+        PointGrantStatus.PROCESSING,
+        PointGrantStatus.PROCESSING,
+        PointGrantStatus.PROCESSING,
+        PointGrantStatus.PROCESSING,
+      ]);
+      expect(requests.map(({ status }) => status)).toEqual([
+        PointGrantStatus.SUCCEEDED,
+        PointGrantStatus.SUSPENDED,
+        PointGrantStatus.PENDING,
+        PointGrantStatus.PENDING,
+      ]);
+      // 메모리 변경뿐 아니라 반환 상태를 DB 경계로 전달했는지도 확인한다.
+      expect(flushedStatuses).toContainEqual([
+        PointGrantStatus.SUCCEEDED,
+        PointGrantStatus.SUSPENDED,
+        PointGrantStatus.PENDING,
+        PointGrantStatus.PENDING,
+      ]);
+      expect(remainingRequests[0].pointIdempotencyKey).toBeUndefined();
+      expect(remainingRequests[0].attemptCount).toBe(0);
+      expect(remainingRequests[1].pointIdempotencyKey).toBe("existing-key");
+      expect(remainingRequests[1].attemptCount).toBe(2);
+      expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(2);
+      expect(executor.executePromotion).toHaveBeenCalledTimes(2);
+      expect(executor.getPromotionResult).toHaveBeenCalledTimes(1);
+    });
+
+    it("미처리 요청 반환 저장이 실패해도 오류를 기록하고 워커 중단 신호를 반환한다", async () => {
+      const { service, repository, executor, keyIssuer, em } = setup();
+      const request = createRequest({ status: PointGrantStatus.PENDING });
+      const remainingRequest = createRequest({
+        id: 2n,
+        status: PointGrantStatus.RETRY,
+        pointIdempotencyKey: "existing-key",
+        attemptCount: 2,
+      });
+      const requests = [request, remainingRequest];
+      const storedStatuses = new Map(
+        requests.map(({ id, status }) => [id, status]),
+      );
+      const error = new Error("release save failed");
+      repository.findEligibleGrantsWithLock.mockResolvedValue(requests);
+      executor.executePromotion.mockRejectedValueOnce(
+        new ExternalPromotionError("4105", "promotion ended"),
+      );
+      em.flush.mockImplementation(async () => {
+        if (
+          request.isSuspended() &&
+          remainingRequest.status === PointGrantStatus.PENDING
+        ) {
+          throw error;
+        }
+        requests.forEach(({ id, status }) => storedStatuses.set(id, status));
+      });
+      const errorLog = jest
+        .spyOn(Logger.prototype, "error")
+        .mockImplementation(() => undefined);
+
+      try {
+        await expect(service.settleGrantRequests()).resolves.toBe(true);
+
+        // 메모리 객체는 변경됐어도 실패한 저장을 영속화 성공으로 판단하지 않는다.
+        expect(storedStatuses.get(request.id)).toBe(PointGrantStatus.SUSPENDED);
+        expect(storedStatuses.get(remainingRequest.id)).toBe(
+          PointGrantStatus.PROCESSING,
+        );
+        expect(request.pointIdempotencyKey).toBe("promotion-key");
+        expect(request.attemptCount).toBe(0);
+        expect(remainingRequest.pointIdempotencyKey).toBe("existing-key");
+        expect(remainingRequest.attemptCount).toBe(2);
+        expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+        expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(1);
+        expect(executor.getPromotionResult).not.toHaveBeenCalled();
+        expect(em.persist).not.toHaveBeenCalled();
+        expect(errorLog).toHaveBeenCalledWith(
+          {
+            event: "point_grant.release.failed",
+            requestIds: [remainingRequest.id],
+            err: error,
+          },
+          "미처리 포인트 지급 요청 반환 실패; 재시작 후 lease 복구 필요",
+        );
+      } finally {
+        errorLog.mockRestore();
+      }
     });
 
     it("기존 지급 결과가 PENDING이어도 현재 배치의 다음 요청은 지급한다", async () => {

@@ -132,6 +132,10 @@ export class PointGrantRequest extends BaseEntity {
     return this.status === PointGrantStatus.SUSPENDED;
   }
 
+  pending() {
+    this.status = PointGrantStatus.PENDING;
+  }
+
   private calculateBackOff(attemptCount: number) {
     const delays = [5_000, 5_000, 30_000, 60_000, 300_000];
     return delays[Math.min(attemptCount, delays.length - 1)];

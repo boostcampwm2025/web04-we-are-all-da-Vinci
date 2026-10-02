@@ -65,4 +65,19 @@ export class PointGrantRequestRepository extends EntityRepository<PointGrantRequ
 
     return [...staleRequests, ...retryRequests, ...pendingRequests];
   }
+
+  async existSuspendedRequests() {
+    return (
+      (await this.count({
+        status: PointGrantStatus.SUSPENDED,
+      })) > 0
+    );
+  }
+
+  async updateSuspendedToPending() {
+    return await this.nativeUpdate(
+      { status: PointGrantStatus.SUSPENDED },
+      { status: PointGrantStatus.PENDING, lockedAt: null },
+    );
+  }
 }

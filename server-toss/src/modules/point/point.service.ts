@@ -112,13 +112,21 @@ export class PointService {
     return requests;
   }
 
-  async settleGrantRequests(): Promise<PointGrantRequest[]> {
+  async settleGrantRequests(): Promise<boolean> {
     const requests = await this.lockAndFetchEligibleGrants();
 
-    for (const request of requests) {
+    let isSuspended = false;
+    const processing = [];
+    for (let i = 0; i < requests.length; ++i) {
+      const request = requests[i];
+
       try {
         const settledRequest = await this.settleGrantRequest(request);
+
         if (settledRequest.isSuspended()) {
+          // SUSPENDED 발생하면 워커를 중단하고 선점 요청 반환
+          isSuspended = true;
+          processing.push(...requests.slice(i + 1));
           break;
         }
       } catch (err) {
@@ -132,7 +140,21 @@ export class PointService {
         );
       }
     }
-    return requests;
+    if (isSuspended) {
+      try {
+        await this.releaseRequests(processing);
+      } catch (err) {
+        this.logger.error(
+          {
+            event: "point_grant.release.failed",
+            requestIds: processing.map(({ id }) => id),
+            err,
+          },
+          "미처리 포인트 지급 요청 반환 실패; 재시작 후 lease 복구 필요",
+        );
+      }
+    }
+    return isSuspended;
   }
 
   async settleGrantRequest(
@@ -399,5 +421,24 @@ export class PointService {
     if (ids.length === 0) return 0;
 
     return this.em.nativeDelete(PointGrantRequest, { id: { $in: ids } });
+  }
+
+  @Transactional()
+  async resumeSuspended() {
+    const exist =
+      await this.pointGrantRequestRepository.existSuspendedRequests();
+    if (!exist) {
+      return;
+    }
+    await this.pointGrantRequestRepository.updateSuspendedToPending();
+  }
+
+  @Transactional()
+  async releaseRequests(requests: PointGrantRequest[]) {
+    for (const request of requests) {
+      request.pending();
+    }
+
+    await this.em.flush();
   }
 }
