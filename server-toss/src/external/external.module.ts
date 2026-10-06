@@ -15,6 +15,7 @@ import { TossNotificationSender } from "./toss/messenger/toss-messenger.client";
 import { TossPointGrantKeyIssuer } from "./toss/point/toss-point-grant-key.issuer";
 import { TossPointGrantExecuter } from "./toss/point/toss-point-grant.executer";
 import { TossModule } from "./toss/toss.module";
+import { RateLimiterModule } from "./rate-limiter/rate-limiter.module";
 
 @Module({})
 export class ExternalModule {
@@ -45,7 +46,7 @@ export class ExternalModule {
     return {
       module: ExternalModule,
       global: true,
-      imports: useToss ? [TossModule] : [MockModule],
+      imports: [RateLimiterModule, ...(useToss ? [TossModule] : [MockModule])],
       providers,
       exports: [
         AuthClient,

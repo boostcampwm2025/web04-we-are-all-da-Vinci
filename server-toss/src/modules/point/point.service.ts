@@ -5,6 +5,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import {
   ExternalApiError,
   ExternalPromotionError,
+  ExternalRateLimitError,
   ExternalTransportError,
 } from "src/common/errors/external.errors";
 import { getSeoulDateTime, getSeoulDayRange } from "src/common/util/time.util";
@@ -169,6 +170,10 @@ export class PointService {
 
       return await this.issueAndGrant(request);
     } catch (err) {
+      if (err instanceof ExternalRateLimitError) {
+        await this.recordGrantWait(request, err.msBeforeNext);
+        return request;
+      }
       if (err instanceof ExternalTransportError) {
         await this.recordGrantRetry(request);
         return request;
@@ -345,8 +350,8 @@ export class PointService {
   }
 
   @Transactional()
-  async recordGrantWait(request: PointGrantRequest) {
-    request.wait();
+  async recordGrantWait(request: PointGrantRequest, waitUntil?: number) {
+    request.wait(waitUntil);
     await this.em.flush();
   }
 

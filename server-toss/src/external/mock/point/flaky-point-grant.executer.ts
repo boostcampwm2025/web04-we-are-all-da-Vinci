@@ -72,7 +72,7 @@ export class FlakyPointGrantExecuter extends PointGrantExecuter {
   async getPromotionResult(
     userKey: number,
     key: string,
-  ): Promise<PointGrantResult | null> {
+  ): Promise<PointGrantResult> {
     await this.delay();
 
     if (Math.random() < this.failureRate) {
@@ -83,12 +83,12 @@ export class FlakyPointGrantExecuter extends PointGrantExecuter {
       throw new ExternalTransportError("flaky: 결과 조회 타임아웃 시뮬레이션");
     }
 
-    const result = this.grantedKeys.has(key) ? "SUCCESS" : null;
+    const result = this.grantedKeys.has(key) ? "SUCCESS" : "FAILED";
     this.logger.debug(
       { event: "flaky.promotion.result_fetched", userKey, key, result },
       "Flaky 프로모션 결과 조회 완료",
     );
-    return result;
+    return { type: result };
   }
 
   private delay(): Promise<void> {

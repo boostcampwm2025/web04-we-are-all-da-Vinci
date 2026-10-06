@@ -98,10 +98,11 @@ export class PointGrantRequest extends BaseEntity {
     );
   }
 
-  wait() {
+  wait(waitUntil?: number) {
     this.status = PointGrantStatus.RETRY;
     this.nextRetryAt = new Date(
-      getSeoulDateTime().getTime() + this.calculateBackOff(this.attemptCount),
+      getSeoulDateTime().getTime() +
+        (waitUntil ?? this.calculateBackOff(this.attemptCount)),
     );
   }
 

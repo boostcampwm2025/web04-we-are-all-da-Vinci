@@ -3,6 +3,7 @@ import { Logger } from "@nestjs/common";
 import {
   ExternalApiError,
   ExternalPromotionError,
+  ExternalRateLimitError,
   ExternalTransportError,
 } from "src/common/errors/external.errors";
 import {
@@ -461,6 +462,7 @@ describe("포인트 서비스", () => {
     it.each([
       ["4095", new ExternalPromotionError("4095", "rate limit exceeded")],
       ["HTTP 429", new ExternalApiError(429, "too many requests")],
+      ["로컬 RL", new ExternalRateLimitError(3000, "rate limit exceeded")],
     ])(
       "요청 한도 초과(%s)는 해당 요청만 대기시키고 현재 배치의 다음 요청은 지급한다",
       async (_label, error) => {
@@ -480,7 +482,7 @@ describe("포인트 서비스", () => {
         ]);
         executor.executePromotion.mockRejectedValueOnce(error);
 
-        await service.settleGrantRequests();
+        await expect(service.settleGrantRequests()).resolves.toBe(false);
 
         expect(request.status).toBe(PointGrantStatus.RETRY);
         expect(request.pointIdempotencyKey).toBe("promotion-key");
@@ -1188,6 +1190,94 @@ describe("포인트 서비스", () => {
     });
 
     describe("운영 오류 처리", () => {
+      describe.each([0, 2])(
+        "로컬 호출량 제한(attemptCount=%i)",
+        (attemptCount) => {
+          it.each([
+            "키 발급",
+            "지급",
+            "기존 결과 조회",
+            "신규 결과 조회",
+          ] as const)(
+            "%s 제한이면 지정 시간 대기하고 다음 워커는 보존된 키에 맞춰 처리한다",
+            async (stage) => {
+              const { service, executor, keyIssuer, em } = setup();
+              const request = createRequest({
+                attemptCount,
+                pointIdempotencyKey:
+                  stage === "기존 결과 조회" ? "existing-key" : undefined,
+              });
+              const delay = 3000;
+              const error = new ExternalRateLimitError(
+                delay,
+                "rate limit exceeded",
+              );
+              if (stage === "키 발급") {
+                keyIssuer.getPromotionKey.mockRejectedValueOnce(error);
+              } else if (stage === "지급") {
+                executor.executePromotion.mockRejectedValueOnce(error);
+              } else {
+                executor.getPromotionResult.mockRejectedValueOnce(error);
+              }
+
+              await service.settleGrantRequest(request);
+
+              const expectedKey =
+                stage === "키 발급"
+                  ? undefined
+                  : stage === "기존 결과 조회"
+                    ? "existing-key"
+                    : "promotion-key";
+              expect(request.status).toBe(PointGrantStatus.RETRY);
+              expect(request.pointIdempotencyKey).toBe(expectedKey);
+              expect(request.attemptCount).toBe(attemptCount);
+              expect(request.nextRetryAt).toEqual(
+                new Date(FIXED_NOW.getTime() + delay),
+              );
+              expect(request.processedAt).toBeUndefined();
+              expect(executor.executePromotion).toHaveBeenCalledTimes(
+                stage === "지급" || stage === "신규 결과 조회" ? 1 : 0,
+              );
+              expect(executor.getPromotionResult).toHaveBeenCalledTimes(
+                stage === "기존 결과 조회" || stage === "신규 결과 조회"
+                  ? 1
+                  : 0,
+              );
+              expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(
+                stage === "기존 결과 조회" ? 0 : 1,
+              );
+              expect(em.persist).not.toHaveBeenCalled();
+
+              keyIssuer.getPromotionKey.mockClear();
+              executor.executePromotion.mockClear();
+              executor.getPromotionResult.mockClear();
+              request.processing();
+
+              await service.settleGrantRequest(request);
+
+              expect(request.status).toBe(PointGrantStatus.SUCCEEDED);
+              expect(request.attemptCount).toBe(attemptCount);
+              expect(request.pointIdempotencyKey).toBe(
+                expectedKey ?? "promotion-key",
+              );
+              expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(
+                stage === "키 발급" ? 1 : 0,
+              );
+              expect(executor.executePromotion).toHaveBeenCalledTimes(
+                stage === "키 발급" ? 1 : 0,
+              );
+              expect(executor.getPromotionResult).toHaveBeenCalledTimes(1);
+              expect(executor.getPromotionResult).toHaveBeenCalledWith(
+                1234,
+                expectedKey ?? "promotion-key",
+              );
+              expect(em.persist).toHaveBeenCalledTimes(1);
+              expect(em.persist).toHaveBeenCalledWith(expect.any(PointLog));
+            },
+          );
+        },
+      );
+
       it.each([
         ["4095", 0, new ExternalPromotionError("4095", "rate limit exceeded")],
         ["HTTP 429", 0, new ExternalApiError(429, "too many requests")],

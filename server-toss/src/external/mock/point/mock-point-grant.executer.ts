@@ -30,13 +30,13 @@ export class MockPointGrantExecuter extends PointGrantExecuter {
   async getPromotionResult(
     userKey: number,
     key: string,
-  ): Promise<PointGrantResult | null> {
+  ): Promise<PointGrantResult> {
     await this.delay();
     this.logger.debug(
       { event: "mock.promotion.get_result", userKey, key },
       "Mock 프로모션 결과 조회 완료",
     );
-    return "SUCCESS";
+    return { type: "SUCCESS" };
   }
 
   private delay(): Promise<void> {

@@ -13,7 +13,12 @@ import { TossHttpClient } from "../common/toss-http.client";
 import {
   TossBusinessErrorCode,
   TossPromotionError,
+  TossRateLimitError,
 } from "../common/toss.errors";
+import {
+  KEY_PREFIX,
+  PromotionRateLimiter,
+} from "src/external/rate-limiter/promotion-rate-limiter";
 
 @Injectable()
 export class TossPointGrantExecuter implements PointGrantExecuter {
@@ -23,6 +28,7 @@ export class TossPointGrantExecuter implements PointGrantExecuter {
   constructor(
     private readonly tossHttpClient: TossHttpClient,
     private readonly configService: ConfigService,
+    private readonly rateLimiter: PromotionRateLimiter,
   ) {
     this.apiKey = this.configService.getOrThrow<string>("TOSS_API_KEY");
 
@@ -39,6 +45,17 @@ export class TossPointGrantExecuter implements PointGrantExecuter {
     key: string,
     amount: number,
   ): Promise<void> {
+    let rlRes = await this.rateLimiter.acquireApi(KEY_PREFIX.EXECUTE_PROMOTION);
+    if (rlRes.success !== "SUCCESS") {
+      throw new TossRateLimitError(rlRes.msBeforeNext, "요청 한도 초과");
+    }
+
+    rlRes = await this.rateLimiter.acquireUser(String(userKey));
+    if (rlRes.success !== "SUCCESS") {
+      await this.rateLimiter.recoverApi(KEY_PREFIX.EXECUTE_PROMOTION);
+      throw new TossRateLimitError(rlRes.msBeforeNext, "요청 한도 초과");
+    }
+
     const data =
       await this.tossHttpClient.request<TossPromotionExecuteResponse>(
         "POST",
@@ -63,6 +80,10 @@ export class TossPointGrantExecuter implements PointGrantExecuter {
     userKey: number,
     key: string,
   ): Promise<PointGrantResult> {
+    const rlRes = await this.rateLimiter.acquireApi(KEY_PREFIX.RESULT);
+    if (rlRes.success !== "SUCCESS") {
+      throw new TossRateLimitError(rlRes.msBeforeNext, "요청 한도 초과");
+    }
     const data = await this.tossHttpClient.request<TossPromotionResultResponse>(
       "POST",
       TOSS_API_ENDPOINTS.GET_PROMOTION_RESULT,

@@ -27,3 +27,12 @@ export class ExternalPromotionError extends Error {
     this.name = "ExternalPromotionError";
   }
 }
+
+export class ExternalRateLimitError extends Error {
+  constructor(
+    public readonly msBeforeNext: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}

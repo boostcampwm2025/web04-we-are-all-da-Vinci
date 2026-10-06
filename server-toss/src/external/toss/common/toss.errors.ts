@@ -1,6 +1,7 @@
 import {
   ExternalApiError,
   ExternalPromotionError,
+  ExternalRateLimitError,
   ExternalTransportError,
 } from "src/common/errors/external.errors";
 
@@ -31,6 +32,15 @@ export class TossPromotionError extends ExternalPromotionError {
   ) {
     super(errorCode, message);
     this.name = "TossPromotionError";
+  }
+}
+
+export class TossRateLimitError extends ExternalRateLimitError {
+  constructor(
+    public readonly msBeforeNext: number,
+    message: string,
+  ) {
+    super(msBeforeNext, message);
   }
 }
 
