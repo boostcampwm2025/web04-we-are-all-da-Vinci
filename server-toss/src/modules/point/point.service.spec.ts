@@ -460,7 +460,7 @@ describe("포인트 서비스", () => {
     });
 
     it.each([
-      ["4095", new ExternalPromotionError("4095", "rate limit exceeded")],
+      ["4095", new ExternalRateLimitError(undefined, "rate limit exceeded")],
       ["HTTP 429", new ExternalApiError(429, "too many requests")],
       ["로컬 RL", new ExternalRateLimitError(3000, "rate limit exceeded")],
     ])(
@@ -1190,6 +1190,35 @@ describe("포인트 서비스", () => {
     });
 
     describe("운영 오류 처리", () => {
+      it.each([
+        [0, 5000],
+        [2, 30000],
+      ])(
+        "기존 결과 조회의 RL 오류에 대기 시간이 없으면 backoff로 대기하고 키와 횟수(%i)를 보존한다",
+        async (attemptCount, delay) => {
+          const { service, executor, keyIssuer, em } = setup();
+          const request = createRequest({
+            attemptCount,
+            pointIdempotencyKey: "existing-key",
+          });
+          executor.getPromotionResult.mockRejectedValueOnce(
+            new ExternalRateLimitError(undefined, "rate limit exceeded"),
+          );
+
+          await service.settleGrantRequest(request);
+
+          expect(request.status).toBe(PointGrantStatus.RETRY);
+          expect(request.pointIdempotencyKey).toBe("existing-key");
+          expect(request.attemptCount).toBe(attemptCount);
+          expect(request.nextRetryAt).toEqual(
+            new Date(FIXED_NOW.getTime() + delay),
+          );
+          expect(executor.executePromotion).not.toHaveBeenCalled();
+          expect(keyIssuer.getPromotionKey).not.toHaveBeenCalled();
+          expect(em.persist).not.toHaveBeenCalled();
+        },
+      );
+
       describe.each([0, 2])(
         "로컬 호출량 제한(attemptCount=%i)",
         (attemptCount) => {
@@ -1279,9 +1308,17 @@ describe("포인트 서비스", () => {
       );
 
       it.each([
-        ["4095", 0, new ExternalPromotionError("4095", "rate limit exceeded")],
+        [
+          "4095",
+          0,
+          new ExternalRateLimitError(undefined, "rate limit exceeded"),
+        ],
         ["HTTP 429", 0, new ExternalApiError(429, "too many requests")],
-        ["4095", 2, new ExternalPromotionError("4095", "rate limit exceeded")],
+        [
+          "4095",
+          2,
+          new ExternalRateLimitError(undefined, "rate limit exceeded"),
+        ],
         ["HTTP 429", 2, new ExternalApiError(429, "too many requests")],
       ] as const)(
         "요청 한도 초과(%s, attemptCount=%i)는 키와 재시도 횟수를 보존하고 재처리 가능한 대기 상태로 남긴다",

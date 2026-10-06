@@ -1,7 +1,10 @@
 import { ConfigService } from "@nestjs/config";
 import { PromotionRateLimiter } from "../../rate-limiter/promotion-rate-limiter";
 import { TOSS_API_ENDPOINTS } from "../common/toss-api.constants";
-import { TossRateLimitError } from "../common/toss.errors";
+import {
+  TossBusinessErrorCode,
+  TossRateLimitError,
+} from "../common/toss.errors";
 import { TossPointGrantKeyIssuer } from "./toss-point-grant-key.issuer";
 
 describe("토스 포인트 지급 키 발급 호출량 제한", () => {
@@ -43,6 +46,24 @@ describe("토스 포인트 지급 키 발급 호출량 제한", () => {
         "x-toss-user-key": "1234",
       }),
     );
+  });
+
+  it("Toss 키 발급 응답의 4095를 대기 시간이 없는 호출 제한 오류로 변환한다", async () => {
+    const { issuer, request } = setup();
+    const { errorCode, description } =
+      TossBusinessErrorCode.RATE_LIMIT_EXCEEDED;
+    request.mockResolvedValue({
+      resultType: "FAIL",
+      error: { errorCode, reason: description },
+    });
+
+    const result = issuer.getPromotionKey(1234);
+    await expect(result).rejects.toBeInstanceOf(TossRateLimitError);
+    await expect(result).rejects.toMatchObject({
+      msBeforeNext: undefined,
+      message: description,
+    });
+    expect(request).toHaveBeenCalledTimes(1);
   });
 
   it("키 발급 API 한도 초과면 추가 HTTP 요청 없이 대기 시간을 전달한다", async () => {

@@ -30,7 +30,7 @@ export class ExternalPromotionError extends Error {
 
 export class ExternalRateLimitError extends Error {
   constructor(
-    public readonly msBeforeNext: number,
+    public readonly msBeforeNext: number | undefined,
     message: string,
   ) {
     super(message);

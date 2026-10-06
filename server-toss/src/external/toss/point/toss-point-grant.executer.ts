@@ -12,7 +12,7 @@ import { TOSS_API_ENDPOINTS } from "../common/toss-api.constants";
 import { TossHttpClient } from "../common/toss-http.client";
 import {
   TossBusinessErrorCode,
-  TossPromotionError,
+  createTossPromotionError,
   TossRateLimitError,
 } from "../common/toss.errors";
 import {
@@ -69,7 +69,7 @@ export class TossPointGrantExecuter implements PointGrantExecuter {
       );
 
     if (data.resultType !== "SUCCESS" || !data.success) {
-      throw new TossPromotionError(
+      throw createTossPromotionError(
         data.error?.errorCode ?? "UNKNOWN",
         data.error?.reason ?? "프로모션 지급에 실패했어요.",
       );
@@ -102,7 +102,7 @@ export class TossPointGrantExecuter implements PointGrantExecuter {
       ) {
         return { type: "NOT_FOUND" };
       }
-      throw new TossPromotionError(
+      throw createTossPromotionError(
         data.error?.errorCode ?? "UNKNOWN",
         data.error?.reason ?? "프로모션 지급 결과 조회에 실패했어요.",
       );

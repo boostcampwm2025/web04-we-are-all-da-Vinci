@@ -210,9 +210,6 @@ export class PointService {
           case TossBusinessErrorCode.ALREADY_PROCESSED.errorCode:
             await this.recordGrantRetry(request);
             break;
-          case TossBusinessErrorCode.RATE_LIMIT_EXCEEDED.errorCode:
-            await this.recordGrantWait(request);
-            break;
           default:
             throw err;
         }

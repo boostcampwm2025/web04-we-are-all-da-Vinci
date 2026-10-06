@@ -37,11 +37,18 @@ export class TossPromotionError extends ExternalPromotionError {
 
 export class TossRateLimitError extends ExternalRateLimitError {
   constructor(
-    public readonly msBeforeNext: number,
+    public readonly msBeforeNext: number | undefined,
     message: string,
   ) {
     super(msBeforeNext, message);
   }
+}
+
+export function createTossPromotionError(errorCode: string, message: string) {
+  if (errorCode === TossBusinessErrorCode.RATE_LIMIT_EXCEEDED.errorCode) {
+    return new TossRateLimitError(undefined, message);
+  }
+  return new TossPromotionError(errorCode, message);
 }
 
 type ErrorCodeValue = {

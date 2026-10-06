@@ -41,6 +41,30 @@ afterEach(() => {
 });
 
 describe("토스 포인트 지급 호출량 제한", () => {
+  it("Toss 지급 응답의 4095를 대기 시간이 없는 호출 제한 오류로 변환하고 API quota는 복구하지 않는다", async () => {
+    const { executer, request } = setup();
+    const { errorCode, description } =
+      TossBusinessErrorCode.RATE_LIMIT_EXCEEDED;
+    request.mockResolvedValueOnce({
+      resultType: "FAIL",
+      error: { errorCode, reason: description },
+    });
+
+    const result = executer.executePromotion(1234, "limited-key", 2);
+    await expect(result).rejects.toBeInstanceOf(TossRateLimitError);
+    await expect(result).rejects.toMatchObject({
+      msBeforeNext: undefined,
+      message: description,
+    });
+    expect(request).toHaveBeenCalledTimes(1);
+
+    await executer.executePromotion(5678, "next-key", 2);
+    await expect(
+      executer.executePromotion(9012, "exhausted-key", 2),
+    ).rejects.toEqual(new TossRateLimitError(60000, "요청 한도 초과"));
+    expect(request).toHaveBeenCalledTimes(2);
+  });
+
   it.each([
     ["지급", KEY_PREFIX.EXECUTE_PROMOTION],
     ["결과 조회", KEY_PREFIX.RESULT],
@@ -96,6 +120,24 @@ describe("토스 포인트 지급 호출량 제한", () => {
 });
 
 describe("토스 포인트 지급 결과 조회", () => {
+  it("Toss 결과 조회 응답의 4095를 대기 시간이 없는 호출 제한 오류로 변환한다", async () => {
+    const { executer, request } = setup();
+    const { errorCode, description } =
+      TossBusinessErrorCode.RATE_LIMIT_EXCEEDED;
+    request.mockResolvedValue({
+      resultType: "FAIL",
+      error: { errorCode, reason: description },
+    });
+
+    const result = executer.getPromotionResult(1234, "key");
+    await expect(result).rejects.toBeInstanceOf(TossRateLimitError);
+    await expect(result).rejects.toMatchObject({
+      msBeforeNext: undefined,
+      message: description,
+    });
+    expect(request).toHaveBeenCalledTimes(1);
+  });
+
   it.each(["PENDING", "SUCCESS", "FAILED"] as const)(
     "지급 결과가 %s이면 객체 계약으로 반환한다",
     async (result) => {

@@ -4,7 +4,10 @@ import { TossPromotionKeyResponse } from "src/external/toss/common/toss-api.type
 import { PointGrantKeyIssuer } from "src/modules/point/port/point-grant-key-issuer.interface";
 import { TOSS_API_ENDPOINTS } from "../common/toss-api.constants";
 import { TossHttpClient } from "../common/toss-http.client";
-import { TossPromotionError, TossRateLimitError } from "../common/toss.errors";
+import {
+  createTossPromotionError,
+  TossRateLimitError,
+} from "../common/toss.errors";
 import {
   KEY_PREFIX,
   PromotionRateLimiter,
@@ -38,7 +41,7 @@ export class TossPointGrantKeyIssuer implements PointGrantKeyIssuer {
     );
 
     if (data.resultType !== "SUCCESS" || !data.success) {
-      throw new TossPromotionError(
+      throw createTossPromotionError(
         data.error?.errorCode ?? "UNKNOWN",
         data.error?.reason ?? "프로모션 키 발급에 실패했어요.",
       );
