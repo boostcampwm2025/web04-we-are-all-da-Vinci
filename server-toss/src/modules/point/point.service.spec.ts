@@ -1386,7 +1386,6 @@ describe("포인트 서비스", () => {
 
     describe("향후 TDD backlog", () => {
       // 실제 failing test는 해당 요구사항의 TDD를 시작할 때 작성한다.
-      it.todo("요청 한도 초과 대응을 위한 호출량 제어 정책을 별도로 적용한다");
       it.todo(
         "DB 오류는 PROCESSING lease 복구에 맡기고 재시도 횟수를 추가 소모하지 않는다",
       );
