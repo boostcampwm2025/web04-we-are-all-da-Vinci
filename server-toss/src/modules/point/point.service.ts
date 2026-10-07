@@ -170,52 +170,7 @@ export class PointService {
 
       return await this.issueAndGrant(request);
     } catch (err) {
-      if (err instanceof ExternalRateLimitError) {
-        await this.recordGrantWait(request, err.msBeforeNext);
-        return request;
-      }
-      if (err instanceof ExternalTransportError) {
-        await this.recordGrantRetry(request);
-        return request;
-      }
-      if (err instanceof ExternalApiError && err.statusCode >= 500) {
-        await this.recordGrantRetry(request);
-        return request;
-      }
-      if (err instanceof ExternalApiError && err.statusCode == 429) {
-        // Too Many Requests
-        await this.recordGrantWait(request);
-        return request;
-      }
-      if (err instanceof ExternalApiError && err.statusCode >= 400) {
-        await this.recordGrantSuspended(request);
-        return request;
-      }
-      if (err instanceof ExternalPromotionError) {
-        switch (err.errorCode) {
-          case TossBusinessErrorCode.PROMOTION_ENDED.errorCode:
-          case TossBusinessErrorCode.PROMOTION_NOT_APPROVED.errorCode:
-          case TossBusinessErrorCode.PROMOTION_NOT_FOUND.errorCode:
-          case TossBusinessErrorCode.PROMOTION_NOT_RUNNING.errorCode:
-          case TossBusinessErrorCode.AUTHENTICATION_NOT_FOUND.errorCode:
-          case TossBusinessErrorCode.WORKSPACE_NOT_FOUND_OR_FORBIDDEN.errorCode:
-          case TossBusinessErrorCode.REWARD_AMOUNT_EXCEEDED.errorCode:
-          case TossBusinessErrorCode.INSUFFICIENT_PROMOTION_MONEY.errorCode:
-          case TossBusinessErrorCode.BAD_REQUEST.errorCode:
-            await this.recordGrantSuspended(request);
-            break;
-          case TossBusinessErrorCode.REWARD_PROCESS_FAILED.errorCode:
-            await this.recordGrantRetry(request);
-            break;
-          case TossBusinessErrorCode.ALREADY_PROCESSED.errorCode:
-            await this.recordGrantRetry(request);
-            break;
-          default:
-            throw err;
-        }
-        return request;
-      }
-      throw err;
+      return await this.handleGrantError(err, request);
     }
   }
 
@@ -231,12 +186,11 @@ export class PointService {
         await this.recordGrantSucceeded(request);
         break;
       case "FAILED":
+      case "NOT_FOUND":
+        // FAILED:
         // 포인트 회수되었기 때문에 다시 포인트 지급해야 한다.
         // 그대로 진행해서 키를 재발급한다.
-        await this.clearKey(request);
-        await this.issueAndGrant(request);
-        break;
-      case "NOT_FOUND":
+        // NOT_FOUND:
         // 포인트 지급 내역 존재하지 않음.
         // ex) 키 발급 후 지급 요청 중 오류난 경우
         // 그대로 진행해서 키를 재발급한다.
@@ -256,11 +210,11 @@ export class PointService {
         await this.recordGrantSucceeded(request);
         break;
       case "FAILED":
+      case "NOT_FOUND":
+        // FAILED:
         // 포인트 회수되었기 때문에 다시 포인트 지급해야 한다.
         // 키를 초기화하고 다음 워커에서 재처리하도록 한다.
-        await this.clearKeyAndRetry(request);
-        break;
-      case "NOT_FOUND":
+        // NOT_FOUND:
         // 포인트 지급 내역 존재하지 않음.
         // ex) 키 발급 후 지급 요청 중 오류난 경우
         // 키를 초기화해서 다음 워커에서 재처리하도록 한다.
@@ -268,6 +222,50 @@ export class PointService {
         break;
     }
     return request;
+  }
+
+  private async handleGrantError(err: unknown, request: PointGrantRequest) {
+    if (err instanceof ExternalRateLimitError) {
+      await this.recordGrantWait(request, err.msBeforeNext);
+      return request;
+    } else if (err instanceof ExternalTransportError) {
+      await this.recordGrantRetry(request);
+      return request;
+    } else if (err instanceof ExternalApiError) {
+      if (err.statusCode >= 500) {
+        await this.recordGrantRetry(request);
+        return request;
+      } else if (err.statusCode == 429) {
+        // Too Many Requests
+        await this.recordGrantWait(request);
+        return request;
+      } else if (err.statusCode >= 400) {
+        await this.recordGrantSuspended(request);
+        return request;
+      }
+    } else if (err instanceof ExternalPromotionError) {
+      switch (err.errorCode) {
+        case TossBusinessErrorCode.PROMOTION_ENDED.errorCode:
+        case TossBusinessErrorCode.PROMOTION_NOT_APPROVED.errorCode:
+        case TossBusinessErrorCode.PROMOTION_NOT_FOUND.errorCode:
+        case TossBusinessErrorCode.PROMOTION_NOT_RUNNING.errorCode:
+        case TossBusinessErrorCode.AUTHENTICATION_NOT_FOUND.errorCode:
+        case TossBusinessErrorCode.WORKSPACE_NOT_FOUND_OR_FORBIDDEN.errorCode:
+        case TossBusinessErrorCode.REWARD_AMOUNT_EXCEEDED.errorCode:
+        case TossBusinessErrorCode.INSUFFICIENT_PROMOTION_MONEY.errorCode:
+        case TossBusinessErrorCode.BAD_REQUEST.errorCode:
+          await this.recordGrantSuspended(request);
+          break;
+        case TossBusinessErrorCode.REWARD_PROCESS_FAILED.errorCode:
+        case TossBusinessErrorCode.ALREADY_PROCESSED.errorCode:
+          await this.recordGrantRetry(request);
+          break;
+        default:
+          throw err;
+      }
+      return request;
+    }
+    throw err;
   }
 
   async issueAndGrant(request: PointGrantRequest) {
