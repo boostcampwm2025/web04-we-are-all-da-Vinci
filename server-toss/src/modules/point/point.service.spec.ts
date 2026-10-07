@@ -1383,13 +1383,6 @@ describe("포인트 서비스", () => {
         expect(em.persist).not.toHaveBeenCalled();
       });
     });
-
-    describe("향후 TDD backlog", () => {
-      // 실제 failing test는 해당 요구사항의 TDD를 시작할 때 작성한다.
-      it.todo(
-        "DB 오류는 PROCESSING lease 복구에 맡기고 재시도 횟수를 추가 소모하지 않는다",
-      );
-    });
   });
 
   describe("지급 요청 선점", () => {
