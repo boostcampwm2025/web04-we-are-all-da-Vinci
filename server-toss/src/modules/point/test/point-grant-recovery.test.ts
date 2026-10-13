@@ -76,7 +76,7 @@ describe("포인트 지급 DB rollback과 lease 복구", () => {
       keyIssuer,
       executor,
     );
-    return { service, executor, keyIssuer };
+    return { service, executor, keyIssuer, em };
   }
 
   async function createRequest(overrides: Partial<PointGrantRequest> = {}) {
@@ -153,6 +153,53 @@ describe("포인트 지급 DB rollback과 lease 복구", () => {
     expect(saved.pointIdempotencyKey).toBe("existing-key");
     expect(saved.attemptCount).toBe(2);
   });
+
+  it.each([
+    PointGrantStatus.PENDING,
+    PointGrantStatus.RETRY,
+    PointGrantStatus.PROCESSING,
+  ])(
+    "두 워커가 동시에 선점할 때 %s 요청은 한 워커만 가져간다",
+    async (status) => {
+      const expiredAt = new Date(getSeoulDateTime().getTime() - 4 * 60_000);
+      const id = await createRequest({
+        status,
+        pointIdempotencyKey: "existing-key",
+        nextRetryAt: expiredAt,
+        lockedAt: expiredAt,
+      });
+      const firstWorker = createWorker();
+      const secondWorker = createWorker();
+
+      // 첫 선점의 잠금을 유지해 두 트랜잭션이 반드시 겹치게 한다.
+      await firstWorker.em.begin();
+      try {
+        const firstClaims =
+          await firstWorker.service.lockAndFetchEligibleGrants();
+        expect(firstClaims.map(({ id }) => id)).toEqual([id]);
+        expect(firstWorker.em.isInTransaction()).toBe(true);
+
+        const secondClaims =
+          await secondWorker.service.lockAndFetchEligibleGrants();
+        expect(secondClaims).toEqual([]);
+
+        await firstWorker.em.commit();
+      } finally {
+        if (firstWorker.em.isInTransaction()) {
+          await firstWorker.em.rollback();
+        }
+      }
+
+      const saved = await readRequest(id);
+      expect(saved.status).toBe(PointGrantStatus.PROCESSING);
+      expect(saved.pointIdempotencyKey).toBe("existing-key");
+      expect(saved.attemptCount).toBe(2);
+      expect(saved.lockedAt!.getTime()).toBeGreaterThan(expiredAt.getTime());
+      expect(await secondWorker.service.lockAndFetchEligibleGrants()).toEqual(
+        [],
+      );
+    },
+  );
 
   it("PROCESSING lease 만료 후 재선점은 키·횟수를 보존하고 lockedAt을 갱신한다", async () => {
     const expiredAt = new Date(getSeoulDateTime().getTime() - 4 * 60_000);

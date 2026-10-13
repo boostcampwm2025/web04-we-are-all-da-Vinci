@@ -963,7 +963,9 @@ describe("포인트 서비스", () => {
       it("기존 지급 결과가 없으면 새 키로 지급한다", async () => {
         const { service, executor, keyIssuer, em } = setup();
         const request = createRequest({ pointIdempotencyKey: "existing-key" });
-        executor.getPromotionResult.mockResolvedValueOnce(null);
+        executor.getPromotionResult.mockResolvedValueOnce({
+          type: "NOT_FOUND",
+        });
         keyIssuer.getPromotionKey.mockResolvedValue("new-key");
 
         await service.settleGrantRequest(request);
@@ -989,7 +991,9 @@ describe("포인트 서비스", () => {
       it("기존 키가 있으면 새 지급 전에 기존 결과를 먼저 확인한다", async () => {
         const { service, executor, keyIssuer } = setup();
         const request = createRequest({ pointIdempotencyKey: "existing-key" });
-        executor.getPromotionResult.mockResolvedValueOnce(null);
+        executor.getPromotionResult.mockResolvedValueOnce({
+          type: "NOT_FOUND",
+        });
 
         await service.settleGrantRequest(request);
 
