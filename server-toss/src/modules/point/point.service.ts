@@ -329,6 +329,7 @@ export class PointService {
     request.succeeded();
 
     const pointLog = this.em.create(PointLog, {
+      pointGrantRequestId: request.id,
       user: request.user,
       reason: request.reason,
       pointAmount: request.pointAmount,

@@ -266,5 +266,75 @@ describe("포인트 지급 DB rollback과 lease 복구", () => {
     expect(logs[0].user.userKey).toBe(1234);
     expect(logs[0].pointAmount).toBe(10);
     expect(logs[0].reason).toBe(PointReason.AD);
+    expect(logs[0].pointGrantRequestId).toBe(id);
+  });
+
+  it("lease 복구 워커가 성공 저장한 뒤 이전 워커가 완료해도 PointLog는 하나만 생성한다", async () => {
+    const id = await createRequest();
+    const firstWorker = createWorker();
+    const [request] = await firstWorker.service.lockAndFetchEligibleGrants();
+    const resultQueryStarted = Promise.withResolvers<void>();
+    const resumeResultQuery = Promise.withResolvers<void>();
+    firstWorker.executor.getPromotionResult.mockImplementationOnce(async () => {
+      resultQueryStarted.resolve();
+      await resumeResultQuery.promise;
+      return { type: "SUCCESS" };
+    });
+
+    // 이전 워커의 결과 조회만 지연시키고, 선점·키 저장 트랜잭션은 커밋한다.
+    const firstSettlement = Promise.allSettled([
+      firstWorker.service.settleGrantRequest(request),
+    ]);
+    const nextWorker = createWorker();
+    try {
+      await resultQueryStarted.promise;
+      expect(firstWorker.executor.executePromotion).toHaveBeenCalledTimes(1);
+      expect((await readRequest(id)).pointIdempotencyKey).toBe("saved-key");
+      await orm.em
+        .fork()
+        .nativeUpdate(
+          PointGrantRequest,
+          { id },
+          { lockedAt: new Date(getSeoulDateTime().getTime() - 4 * 60_000) },
+        );
+
+      const [recovered] = await nextWorker.service.lockAndFetchEligibleGrants();
+      expect(recovered.id).toBe(id);
+      await nextWorker.service.settleGrantRequest(recovered);
+      expect((await readRequest(id)).status).toBe(PointGrantStatus.SUCCEEDED);
+      expect(await orm.em.fork().count(PointLog, {})).toBe(1);
+    } finally {
+      // 이전 워커의 완료 거부/무시 방식은 고정하지 않고 영속 결과만 검증한다.
+      resumeResultQuery.resolve();
+      await firstSettlement;
+    }
+
+    expect(nextWorker.executor.getPromotionResult).toHaveBeenCalledWith(
+      1234,
+      "saved-key",
+    );
+    expect(nextWorker.keyIssuer.getPromotionKey).not.toHaveBeenCalled();
+    expect(nextWorker.executor.executePromotion).not.toHaveBeenCalled();
+    const saved = await readRequest(id);
+    expect(saved.status).toBe(PointGrantStatus.SUCCEEDED);
+    expect(saved.pointIdempotencyKey).toBe("saved-key");
+    expect(saved.attemptCount).toBe(2);
+    expect(await orm.em.fork().count(PointLog, {})).toBe(1);
+  });
+
+  it("완료 요청을 삭제해도 지급 로그와 요청 식별자는 유지한다", async () => {
+    const id = await createRequest();
+    const worker = createWorker();
+    const [request] = await worker.service.lockAndFetchEligibleGrants();
+    await worker.service.settleGrantRequest(request);
+
+    await orm.em.fork().nativeDelete(PointGrantRequest, { id });
+
+    expect(await orm.em.fork().count(PointGrantRequest, { id })).toBe(0);
+    const logs = await orm.em
+      .fork()
+      .find(PointLog, { pointGrantRequestId: id });
+    expect(logs).toHaveLength(1);
+    expect(logs[0].pointAmount).toBe(10);
   });
 });

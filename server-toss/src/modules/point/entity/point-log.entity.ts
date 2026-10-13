@@ -1,4 +1,4 @@
-import type { Rel } from "@mikro-orm/core";
+import type { Opt, Rel } from "@mikro-orm/core";
 import {
   Entity,
   Enum,
@@ -13,6 +13,15 @@ import { User } from "src/modules/user/user.entity";
 export class PointLog extends BaseEntity {
   @PrimaryKey({ type: "bigint" })
   id!: bigint;
+
+  // 기존 로그는 연결할 요청이 없고, 요청 purge 후에도 식별자를 보존한다.
+  @Property({
+    fieldName: "point_grant_request_id",
+    type: "bigint",
+    nullable: true,
+    unique: true,
+  })
+  pointGrantRequestId?: Opt<bigint>;
 
   @Enum({ items: () => PointReason, fieldName: "point_reason" })
   reason!: PointReason;
