@@ -195,6 +195,56 @@ describe("포인트 지급 DB rollback과 lease 복구", () => {
     expect(executor.executePromotion).toHaveBeenCalledTimes(1);
   });
 
+  it("성공 저장 rollback 후 배치를 종료하여 다음 요청의 flush가 로그 없는 성공 상태를 저장하지 않는다", async () => {
+    const firstId = await createRequest({ pointIdempotencyKey: "first-key" });
+    const seedEm = orm.em.fork();
+    const first = await seedEm.findOneOrFail(PointGrantRequest, firstId);
+    const second = seedEm.create(PointGrantRequest, {
+      user: first.user,
+      reason: PointReason.AD,
+      pointAmount: 10,
+      status: PointGrantStatus.PENDING,
+      attemptCount: 2,
+      maxAttemptCount: 5,
+      pointIdempotencyKey: "second-key",
+    });
+    seedEm.persist(second);
+    await seedEm.flush();
+    await rejectSuccessSave();
+
+    const worker = createWorker();
+    worker.executor.getPromotionResult.mockImplementation(async (_, key) => {
+      // 다음 요청 시 DB 장애가 해소되어도 이전 요청의 변경을 저장하면 안 된다.
+      if (key === "second-key") {
+        await orm.em
+          .getConnection()
+          .execute("drop trigger reject_grant_success");
+      }
+      return { type: "SUCCESS" };
+    });
+
+    await expect(worker.service.settleGrantRequests()).resolves.toBe(false);
+
+    for (const id of [firstId, second.id]) {
+      const saved = await readRequest(id);
+      expect(saved.status).toBe(PointGrantStatus.PROCESSING);
+      expect(saved.attemptCount).toBe(2);
+      expect(saved.processedAt).toBeNull();
+      expect(saved.lockedAt).not.toBeNull();
+    }
+    expect((await readRequest(firstId)).pointIdempotencyKey).toBe("first-key");
+    expect((await readRequest(second.id)).pointIdempotencyKey).toBe(
+      "second-key",
+    );
+    expect(await orm.em.fork().count(PointLog, {})).toBe(0);
+    expect(worker.executor.getPromotionResult).toHaveBeenCalledTimes(1);
+    expect(worker.executor.getPromotionResult).toHaveBeenCalledWith(
+      1234,
+      "first-key",
+    );
+    expect(worker.executor.executePromotion).not.toHaveBeenCalled();
+  });
+
   it("PROCESSING lease 만료 전에는 다음 워커가 재선점하지 않는다", async () => {
     const id = await createRequest({
       status: PointGrantStatus.PROCESSING,

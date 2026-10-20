@@ -516,8 +516,8 @@ describe("포인트 서비스", () => {
       },
     );
 
-    describe("characterization: 현재 DB 오류 후처리", () => {
-      it("현재 동작: 개별 요청의 DB 오류 이후에도 다음 요청 처리를 계속한다", async () => {
+    describe("DB 오류 발생 시 배치 종료", () => {
+      it("저장 오류가 전파되면 추가 flush 없이 배치를 종료하고 남은 요청을 선점 상태로 둔다", async () => {
         const { service, repository, executor, em } = setup();
         const requests = [createRequest({ id: 1n }), createRequest({ id: 2n })];
         repository.findEligibleGrantsWithLock.mockResolvedValue(requests);
@@ -529,10 +529,13 @@ describe("포인트 서비스", () => {
           .mockResolvedValueOnce()
           .mockRejectedValueOnce(new Error("retry save failed"));
 
-        await service.settleGrantRequests();
+        await expect(service.settleGrantRequests()).resolves.toBe(false);
 
-        expect(executor.executePromotion).toHaveBeenCalledTimes(2);
-        expect(requests[1].status).toBe(PointGrantStatus.SUCCEEDED);
+        expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+        expect(em.flush).toHaveBeenCalledTimes(3);
+        expect(requests[1].status).toBe(PointGrantStatus.PROCESSING);
+        expect(requests[1].attemptCount).toBe(0);
+        expect(requests[1].pointIdempotencyKey).toBeUndefined();
       });
     });
   });

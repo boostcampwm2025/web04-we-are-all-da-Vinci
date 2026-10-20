@@ -137,8 +137,10 @@ export class PointService {
             requestId: request.id,
             err,
           },
-          "개별 포인트 지급 실패",
+          "포인트 지급 실패로 현재 배치 종료; PROCESSING 요청은 lease 만료 후 복구",
         );
+        // rollback은 공유 엔티티 상태를 되돌리지 않으므로 같은 EM으로 추가 flush하지 않는다.
+        break;
       }
     }
     if (isSuspended) {
