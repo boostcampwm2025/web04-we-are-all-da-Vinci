@@ -8,6 +8,8 @@ import {
   jest,
 } from "@jest/globals";
 import { MikroORM } from "@mikro-orm/mysql";
+import { Migrator } from "@mikro-orm/migrations";
+import { ExternalApiError } from "src/common/errors/external.errors";
 import { ExternalTransportError } from "src/common/errors/external.errors";
 import { getSeoulDateTime } from "src/common/util/time.util";
 import { User } from "src/modules/user/user.entity";
@@ -33,9 +35,16 @@ describe("포인트 지급 DB rollback과 lease 복구", () => {
       port: 3306,
       user: "root",
       password: "",
+      logger: () => undefined,
+      extensions: [Migrator],
+      migrations: {
+        path: "src/migrations",
+        snapshot: false,
+        transactional: false,
+        allOrNothing: false,
+      },
     });
-    await orm.schema.ensureDatabase();
-    await orm.schema.create();
+    await orm.migrator.up();
   }, 30_000);
 
   afterAll(async () => {
@@ -117,6 +126,50 @@ describe("포인트 지급 DB rollback과 lease 복구", () => {
       end
     `);
   }
+
+  it("전체 마이그레이션을 적용한 DB에서 설정 오류 요청을 SUSPENDED로 보존하고 재시작 시 PENDING으로 복구한다", async () => {
+    const id = await createRequest();
+    const worker = createWorker();
+    const [request] = await worker.service.lockAndFetchEligibleGrants();
+    worker.keyIssuer.getPromotionKey.mockRejectedValueOnce(
+      new ExternalApiError(401, "인증 오류"),
+    );
+
+    await worker.service.settleGrantRequest(request);
+
+    const suspended = await readRequest(id);
+    expect(suspended.status).toBe(PointGrantStatus.SUSPENDED);
+    expect(suspended.attemptCount).toBe(2);
+    expect(worker.executor.executePromotion).not.toHaveBeenCalled();
+
+    await createWorker().service.recoverSuspended();
+
+    const recovered = await readRequest(id);
+    expect(recovered.status).toBe(PointGrantStatus.PENDING);
+    expect(recovered.attemptCount).toBe(2);
+    expect(recovered.lockedAt).toBeNull();
+  });
+
+  it("SUSPENDED 요청이 남아 있으면 상태 ENUM 축소를 거부하고 복구 후에는 down/up할 수 있다", async () => {
+    const id = await createRequest({ status: PointGrantStatus.SUSPENDED });
+    try {
+      await expect(
+        orm.migrator.down({ migrations: ["Migration20261020010000"] }),
+      ).rejects.toThrow("SUSPENDED 요청을 명시적으로 복구한 후");
+      expect((await readRequest(id)).status).toBe(PointGrantStatus.SUSPENDED);
+
+      await createWorker().service.recoverSuspended();
+      await orm.migrator.down({ migrations: ["Migration20261020010000"] });
+      expect((await readRequest(id)).status).toBe(PointGrantStatus.PENDING);
+    } finally {
+      await orm.migrator.up();
+    }
+    const em = orm.em.fork();
+    const request = await em.findOneOrFail(PointGrantRequest, { id });
+    request.suspend();
+    await em.flush();
+    expect((await readRequest(id)).status).toBe(PointGrantStatus.SUSPENDED);
+  });
 
   it("성공 저장 DB 오류는 성공 상태와 PointLog를 rollback하고 선점 상태·키·횟수를 보존한다", async () => {
     const id = await createRequest();

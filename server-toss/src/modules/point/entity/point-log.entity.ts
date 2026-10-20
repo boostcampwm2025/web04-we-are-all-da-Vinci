@@ -18,6 +18,7 @@ export class PointLog extends BaseEntity {
   @Property({
     fieldName: "point_grant_request_id",
     type: "bigint",
+    unsigned: true,
     nullable: true,
     unique: true,
   })
