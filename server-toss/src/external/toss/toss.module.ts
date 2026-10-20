@@ -4,8 +4,10 @@ import { TossHttpClient } from "./common/toss-http.client";
 import { TossNotificationSender } from "./messenger/toss-messenger.client";
 import { TossPointGrantKeyIssuer } from "./point/toss-point-grant-key.issuer";
 import { TossPointGrantExecuter } from "./point/toss-point-grant.executer";
+import { RateLimiterModule } from "../rate-limiter/rate-limiter.module";
 
 @Module({
+  imports: [RateLimiterModule],
   providers: [
     TossHttpClient,
     TossAuthClient,

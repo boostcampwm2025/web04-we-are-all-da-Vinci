@@ -1,10 +1,24 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { TossPromotionExecuteResponse } from "src/external/toss/common/toss-api.types";
-import { PointGrantExecuter } from "src/modules/point/port/point-grant-executer.interface";
+import {
+  TossPromotionExecuteResponse,
+  TossPromotionResultResponse,
+} from "src/external/toss/common/toss-api.types";
+import {
+  PointGrantExecuter,
+  PointGrantResult,
+} from "src/modules/point/port/point-grant-executer.interface";
 import { TOSS_API_ENDPOINTS } from "../common/toss-api.constants";
 import { TossHttpClient } from "../common/toss-http.client";
-import { TossPromotionError } from "../common/toss.errors";
+import {
+  TossBusinessErrorCode,
+  createTossPromotionError,
+  TossRateLimitError,
+} from "../common/toss.errors";
+import {
+  KEY_PREFIX,
+  PromotionRateLimiter,
+} from "src/external/rate-limiter/promotion-rate-limiter";
 
 @Injectable()
 export class TossPointGrantExecuter implements PointGrantExecuter {
@@ -14,6 +28,7 @@ export class TossPointGrantExecuter implements PointGrantExecuter {
   constructor(
     private readonly tossHttpClient: TossHttpClient,
     private readonly configService: ConfigService,
+    private readonly rateLimiter: PromotionRateLimiter,
   ) {
     this.apiKey = this.configService.getOrThrow<string>("TOSS_API_KEY");
 
@@ -30,6 +45,17 @@ export class TossPointGrantExecuter implements PointGrantExecuter {
     key: string,
     amount: number,
   ): Promise<void> {
+    let rlRes = await this.rateLimiter.acquireApi(KEY_PREFIX.EXECUTE_PROMOTION);
+    if (rlRes.success !== "SUCCESS") {
+      throw new TossRateLimitError(rlRes.msBeforeNext, "요청 한도 초과");
+    }
+
+    rlRes = await this.rateLimiter.acquireUser(String(userKey));
+    if (rlRes.success !== "SUCCESS") {
+      await this.rateLimiter.recoverApi(KEY_PREFIX.EXECUTE_PROMOTION);
+      throw new TossRateLimitError(rlRes.msBeforeNext, "요청 한도 초과");
+    }
+
     const data =
       await this.tossHttpClient.request<TossPromotionExecuteResponse>(
         "POST",
@@ -43,10 +69,45 @@ export class TossPointGrantExecuter implements PointGrantExecuter {
       );
 
     if (data.resultType !== "SUCCESS" || !data.success) {
-      throw new TossPromotionError(
+      throw createTossPromotionError(
         data.error?.errorCode ?? "UNKNOWN",
         data.error?.reason ?? "프로모션 지급에 실패했어요.",
       );
     }
+  }
+
+  async getPromotionResult(
+    userKey: number,
+    key: string,
+  ): Promise<PointGrantResult> {
+    const rlRes = await this.rateLimiter.acquireApi(KEY_PREFIX.RESULT);
+    if (rlRes.success !== "SUCCESS") {
+      throw new TossRateLimitError(rlRes.msBeforeNext, "요청 한도 초과");
+    }
+    const data = await this.tossHttpClient.request<TossPromotionResultResponse>(
+      "POST",
+      TOSS_API_ENDPOINTS.GET_PROMOTION_RESULT,
+      {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+        "x-toss-user-key": String(userKey),
+      },
+      JSON.stringify({ promotionCode: this.promotionCode, key }),
+    );
+
+    if (data.resultType !== "SUCCESS" || !data.success) {
+      if (
+        data.error?.errorCode ===
+        TossBusinessErrorCode.REWARD_PROCESS_NOT_FOUND.errorCode
+      ) {
+        return { type: "NOT_FOUND" };
+      }
+      throw createTossPromotionError(
+        data.error?.errorCode ?? "UNKNOWN",
+        data.error?.reason ?? "프로모션 지급 결과 조회에 실패했어요.",
+      );
+    }
+
+    return { type: data.success };
   }
 }

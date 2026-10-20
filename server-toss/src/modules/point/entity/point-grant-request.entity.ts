@@ -43,6 +43,9 @@ export class PointGrantRequest extends BaseEntity {
   @PrimaryKey({ type: "bigint" })
   id!: bigint;
 
+  @Property({ type: "int", version: true })
+  version!: Opt<number>;
+
   @ManyToOne(() => User, { joinColumn: "user_key" })
   user!: Rel<User>;
 
@@ -98,6 +101,14 @@ export class PointGrantRequest extends BaseEntity {
     );
   }
 
+  wait(waitUntil?: number) {
+    this.status = PointGrantStatus.RETRY;
+    this.nextRetryAt = new Date(
+      getSeoulDateTime().getTime() +
+        (waitUntil ?? this.calculateBackOff(this.attemptCount)),
+    );
+  }
+
   failed(errorMessage?: string) {
     this.status = PointGrantStatus.FAILED;
     this.failedMessage = errorMessage;
@@ -109,12 +120,28 @@ export class PointGrantRequest extends BaseEntity {
     this.lockedAt = getSeoulDateTime();
   }
 
+  clearKey() {
+    this.pointIdempotencyKey = undefined;
+  }
+
+  suspend() {
+    this.status = PointGrantStatus.SUSPENDED;
+  }
+
   setPointIdempotencyKey(key: string) {
     this.pointIdempotencyKey = key;
   }
 
+  isSuspended() {
+    return this.status === PointGrantStatus.SUSPENDED;
+  }
+
+  pending() {
+    this.status = PointGrantStatus.PENDING;
+  }
+
   private calculateBackOff(attemptCount: number) {
-    const delays = [0, 5_000, 30_000, 60_000, 300_000];
+    const delays = [5_000, 5_000, 30_000, 60_000, 300_000];
     return delays[Math.min(attemptCount, delays.length - 1)];
   }
 }
@@ -125,4 +152,5 @@ export enum PointGrantStatus {
   RETRY = "retry",
   FAILED = "failed",
   SUCCEEDED = "succeeded",
+  SUSPENDED = "suspended",
 }

@@ -6,7 +6,8 @@ import {
 import { getSeoulDateTime } from "src/common/util/time.util";
 
 export class PointGrantRequestRepository extends EntityRepository<PointGrantRequest> {
-  private readonly LEASE_TIMEOUT: number = 3 * 60 * 1000;
+  // 20건 순차 처리 × 최대 4회 API × 전체 timeout 10초(800초)에 여유를 둔다.
+  private readonly LEASE_TIMEOUT: number = 15 * 60 * 1000;
 
   async findEligibleGrantsWithLock(
     batchSize: number = 20,
@@ -64,5 +65,20 @@ export class PointGrantRequestRepository extends EntityRepository<PointGrantRequ
     );
 
     return [...staleRequests, ...retryRequests, ...pendingRequests];
+  }
+
+  async existSuspendedRequests() {
+    return (
+      (await this.count({
+        status: PointGrantStatus.SUSPENDED,
+      })) > 0
+    );
+  }
+
+  async updateSuspendedToPending() {
+    return await this.nativeUpdate(
+      { status: PointGrantStatus.SUSPENDED },
+      { status: PointGrantStatus.PENDING, lockedAt: null },
+    );
   }
 }

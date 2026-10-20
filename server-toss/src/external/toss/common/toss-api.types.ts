@@ -43,3 +43,7 @@ export interface TossPromotionKeyResponse extends TossBaseResponse {
 export interface TossPromotionExecuteResponse extends TossBaseResponse {
   success?: { key: string };
 }
+
+export interface TossPromotionResultResponse extends TossBaseResponse {
+  success?: "SUCCESS" | "PENDING" | "FAILED";
+}

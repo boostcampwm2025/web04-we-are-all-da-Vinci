@@ -1,11 +1,22 @@
 import { describe, expect, it, jest } from "@jest/globals";
+import { Logger } from "@nestjs/common";
 import {
+  ExternalApiError,
   ExternalPromotionError,
+  ExternalRateLimitError,
   ExternalTransportError,
 } from "src/common/errors/external.errors";
-import { PointReason } from "./entity/point-log.entity";
-import { PROMOTION_AMOUNT } from "./point.contants";
+import {
+  PointGrantRequest,
+  PointGrantStatus,
+} from "./entity/point-grant-request.entity";
+import { PointLog, PointReason } from "./entity/point-log.entity";
+import { User } from "../user/user.entity";
+import { PROMOTION_AMOUNT, PURGE_BATCH_SIZE } from "./point.contants";
 import { PointService } from "./point.service";
+import { PointGrantRequestRepository } from "./point-grant-request.repository";
+import type { PointGrantExecuter } from "./port/point-grant-executer.interface";
+import type { PointGrantKeyIssuer } from "./port/point-grant-key-issuer.interface";
 
 const FIXED_NOW = new Date("2026-05-25T00:00:00.000Z");
 const FIXED_DAY_RANGE = {
@@ -18,334 +29,1426 @@ jest.mock("src/common/util/time.util", () => ({
   getSeoulDayRange: jest.fn(() => FIXED_DAY_RANGE),
 }));
 
-const buildEntityManager = (countResult: number | number[] = 0) => {
-  const queue = Array.isArray(countResult) ? [...countResult] : null;
-
-  return {
-    count: jest.fn(async () => {
-      if (queue) return queue.length > 0 ? (queue.shift() as number) : 0;
-      return countResult;
-    }),
-    create: jest.fn((_entity, data) => data),
-    persist: jest.fn(),
-    flush: jest.fn(async () => undefined),
-    getReference: jest.fn(),
-    find: jest.fn().mockResolvedValue([] as unknown[]),
-    nativeDelete: jest.fn().mockResolvedValue(0 as number),
-  };
-};
-
-const buildPointGrantRequestRepository = () => ({
-  findEligibleGrantsWithLock: jest
-    .fn<() => Promise<unknown[]>>()
+const buildEntityManager = () => ({
+  // DB 경계만 대체한다. 트랜잭션 데코레이터는 전역 테스트 설정에서 비활성화된다.
+  create: jest.fn((entity: new () => object, data: Record<string, unknown>) =>
+    Object.assign(new entity(), data),
+  ),
+  persist: jest.fn(),
+  flush: jest.fn<() => Promise<void>>().mockResolvedValue(),
+  getReference: jest.fn((_entity: unknown, userKey: number) => ({ userKey })),
+  find: jest
+    .fn<(...args: unknown[]) => Promise<Array<{ id: bigint }>>>()
     .mockResolvedValue([]),
+  nativeDelete: jest
+    .fn<(...args: unknown[]) => Promise<number>>()
+    .mockResolvedValue(0),
 });
 
-const buildPointGrantKeyIssuer = () => ({
-  getPromotionKey: jest.fn(async () => "promotion-key"),
-});
-const buildPointGrantExectuer = () => ({
-  executePromotion: jest.fn(async () => undefined),
-});
+const createRequest = (overrides: Partial<PointGrantRequest> = {}) =>
+  Object.assign(new PointGrantRequest(), {
+    id: 1n,
+    user: Object.assign(new User(), { userKey: 1234, name: "테스트유저" }),
+    reason: PointReason.DRAWING,
+    pointAmount: 2,
+    status: PointGrantStatus.PROCESSING,
+    attemptCount: 0,
+    maxAttemptCount: 5,
+    createdAt: FIXED_NOW,
+    lockedAt: FIXED_NOW,
+    ...overrides,
+  });
 
-const buildUser = (userKey = 1234) =>
-  ({ userKey, name: "테스트유저" }) as never;
-
-const buildRequest = ({
-  id = BigInt(1),
-  userKey = 1234,
-  reason = PointReason.DRAWING,
-  pointIdempotencyKey,
-  pointAmount = 2,
-}: {
-  id?: bigint;
-  userKey?: number;
-  reason?: PointReason;
-  pointIdempotencyKey?: string;
-  pointAmount?: number;
-} = {}) => ({
-  id,
-  user: buildUser(userKey),
-  reason,
-  pointAmount,
-  pointIdempotencyKey,
-  failed: jest.fn(),
-  retry: jest.fn(),
-  succeeded: jest.fn(),
-  setPointIdempotencyKey: jest.fn(),
-});
-
-const buildService = ({
-  entityManager = buildEntityManager(),
-  pointGrantRequestRepository = buildPointGrantRequestRepository(),
-  pointGrantExectuer = buildPointGrantExectuer(),
-  pointKeyIssuer = buildPointGrantKeyIssuer(),
-}: {
-  entityManager?: ReturnType<typeof buildEntityManager>;
-  pointGrantRequestRepository?: ReturnType<
-    typeof buildPointGrantRequestRepository
-  >;
-  pointGrantExectuer?: ReturnType<typeof buildPointGrantExectuer>;
-  pointKeyIssuer?: ReturnType<typeof buildPointGrantKeyIssuer>;
-} = {}) =>
-  new PointService(
-    pointGrantRequestRepository as never,
-    entityManager as never,
-    pointKeyIssuer as never,
-    pointGrantExectuer as never,
+const setup = () => {
+  const em = buildEntityManager();
+  const repository = Object.assign(
+    new PointGrantRequestRepository({} as never, PointGrantRequest),
+    {
+      findEligibleGrantsWithLock: jest
+        .fn<() => Promise<PointGrantRequest[]>>()
+        .mockResolvedValue([]),
+      count: jest
+        .fn<(where: unknown) => Promise<number>>()
+        .mockResolvedValue(0),
+      nativeUpdate: jest
+        .fn<
+          (where: unknown, data: Record<string, unknown>) => Promise<number>
+        >()
+        .mockResolvedValue(0),
+    },
+  );
+  const keyIssuer = {
+    getPromotionKey: jest
+      .fn<PointGrantKeyIssuer["getPromotionKey"]>()
+      .mockResolvedValue("promotion-key"),
+  };
+  const executor = {
+    executePromotion: jest
+      .fn<PointGrantExecuter["executePromotion"]>()
+      .mockResolvedValue(undefined),
+    getPromotionResult: jest
+      .fn<PointGrantExecuter["getPromotionResult"]>()
+      .mockResolvedValue({ type: "SUCCESS" }),
+  };
+  const service = new PointService(
+    repository as never,
+    em as never,
+    keyIssuer as never,
+    executor as never,
   );
 
-describe("PointService", () => {
-  describe("settleGrantRequests", () => {
-    describe("처리 가능한 요청이 여러 개 있는 경우", () => {
-      it("요청마다 settleGrantRequest를 순차 호출한다", async () => {
-        const service = buildService();
-        const req1 = {} as never;
-        const req2 = {} as never;
-        jest
-          .spyOn(service, "lockAndFetchEligibleGrants")
-          .mockResolvedValue([req1, req2]);
-        const settleSpy = jest
-          .spyOn(service, "settleGrantRequest")
-          .mockResolvedValue(undefined);
+  return { service, em, repository, keyIssuer, executor };
+};
 
-        await service.settleGrantRequests();
+describe("포인트 서비스", () => {
+  describe("포인트 요약 조회", () => {
+    it("SUSPENDED 요청도 누적 포인트에 포함하고 오늘 생성된 요청만 오늘 포인트에 포함한다", async () => {
+      const { service, em } = setup();
+      const requests = [
+        createRequest({ status: PointGrantStatus.SUSPENDED, pointAmount: 2 }),
+        createRequest({
+          id: 2n,
+          status: PointGrantStatus.SUSPENDED,
+          pointAmount: 3,
+          createdAt: new Date(FIXED_DAY_RANGE.start.getTime() - 1),
+        }),
+      ];
+      em.find.mockImplementation((entity, where) => {
+        if (entity !== PointGrantRequest) return Promise.resolve([]);
 
-        expect(settleSpy).toHaveBeenCalledTimes(2);
+        // 조회 조건을 적용해야 SUSPENDED 누락을 단순 반환 mock이 숨기지 않는다.
+        const filter = where as {
+          user: number;
+          status: { $in: PointGrantStatus[] };
+        };
+        return Promise.resolve(
+          requests.filter(
+            (request) =>
+              request.user.userKey === filter.user &&
+              filter.status.$in.includes(request.status),
+          ),
+        );
       });
+
+      const summary = await service.getPointSummary(1234);
+
+      expect(summary).toEqual({ totalPoints: 5, todayPoints: 2 });
     });
   });
 
-  describe("purgeProcessedGrantRequests", () => {
-    describe("purge를 실행하는 경우", () => {
-      it("SUCCEEDED/FAILED를 각각 100건 배치로 정리한다", async () => {
-        const em = buildEntityManager();
-        (em.find as jest.Mock)
-          .mockResolvedValueOnce(
-            Array.from({ length: 10 }, (_, i) => ({ id: BigInt(i + 1) })),
-          )
-          .mockResolvedValueOnce(
-            Array.from({ length: 20 }, (_, i) => ({ id: BigInt(i + 100) })),
-          );
-        (em.nativeDelete as jest.Mock)
-          .mockResolvedValueOnce(10)
-          .mockResolvedValueOnce(20);
-        const service = buildService({ entityManager: em });
-
-        const result = await service.purgeProcessedGrantRequests();
-
-        expect(result).toEqual({ succeededDeleted: 10, failedDeleted: 20 });
-        expect(em.find).toHaveBeenCalledTimes(2);
-        expect(em.nativeDelete).toHaveBeenCalledTimes(2);
+  describe("중단된 지급 요청 복구", () => {
+    it("SUSPENDED 요청만 PENDING으로 저장하고 키와 재시도 횟수를 보존한다", async () => {
+      const { service, repository, executor, keyIssuer } = setup();
+      const requests = [
+        createRequest({
+          status: PointGrantStatus.SUSPENDED,
+          pointIdempotencyKey: "existing-key",
+          attemptCount: 2,
+        }),
+        createRequest({ id: 2n, status: PointGrantStatus.PENDING }),
+        createRequest({ id: 3n, status: PointGrantStatus.RETRY }),
+        createRequest({ id: 4n, status: PointGrantStatus.PROCESSING }),
+        createRequest({ id: 5n, status: PointGrantStatus.SUCCEEDED }),
+        createRequest({ id: 6n, status: PointGrantStatus.FAILED }),
+      ];
+      const storedStatuses = new Map(
+        requests.map((request) => [request.id, request.status]),
+      );
+      const matchesStatus = (
+        request: PointGrantRequest,
+        where: { status?: PointGrantStatus | { $in: PointGrantStatus[] } },
+      ) =>
+        !where.status ||
+        (typeof where.status === "string"
+          ? request.status === where.status
+          : where.status.$in.includes(request.status));
+      // Repository의 실제 복구 쿼리를 실행하고 count/nativeUpdate DB 경계만 대체한다.
+      repository.count.mockImplementation(
+        async (where) =>
+          requests.filter((request) =>
+            matchesStatus(
+              request,
+              where as Parameters<typeof matchesStatus>[1],
+            ),
+          ).length,
+      );
+      repository.nativeUpdate.mockImplementation(async (where, data) => {
+        const targets = requests.filter((request) =>
+          matchesStatus(request, where as Parameters<typeof matchesStatus>[1]),
+        );
+        targets.forEach((request) => {
+          Object.assign(request, data);
+          storedStatuses.set(request.id, request.status);
+        });
+        return targets.length;
       });
+
+      await service.recoverSuspended();
+
+      expect([...storedStatuses.values()]).toEqual([
+        PointGrantStatus.PENDING,
+        PointGrantStatus.PENDING,
+        PointGrantStatus.RETRY,
+        PointGrantStatus.PROCESSING,
+        PointGrantStatus.SUCCEEDED,
+        PointGrantStatus.FAILED,
+      ]);
+      expect(requests[0].pointIdempotencyKey).toBe("existing-key");
+      expect(requests[0].attemptCount).toBe(2);
+      expect(keyIssuer.getPromotionKey).not.toHaveBeenCalled();
+      expect(executor.executePromotion).not.toHaveBeenCalled();
+      expect(executor.getPromotionResult).not.toHaveBeenCalled();
     });
   });
 
-  describe("settleGrantRequest", () => {
-    describe("PROCEED 결정이고 외부 지급이 성공한 경우", () => {
-      it("성공 처리 메서드를 호출한다", async () => {
-        const service = buildService();
-        const request = buildRequest();
+  describe("지급 요청 일괄 처리", () => {
+    it("선점한 요청을 순서대로 처리하고 중단 여부를 반환한다", async () => {
+      const { service, repository, executor } = setup();
+      const requests = [
+        createRequest({ id: 1n }),
+        createRequest({
+          id: 2n,
+          user: Object.assign(new User(), { userKey: 5678 }),
+        }),
+      ];
+      repository.findEligibleGrantsWithLock.mockResolvedValue(requests);
 
-        jest.spyOn(service, "grantPromotion").mockResolvedValue();
-        const succeededSpy = jest
-          .spyOn(service, "recordGrantSucceeded")
-          .mockResolvedValue(undefined);
-        const failedSpy = jest
-          .spyOn(service, "recordGrantOutcomeFromError")
-          .mockResolvedValue(undefined);
+      const result = await service.settleGrantRequests();
 
-        await service.settleGrantRequest(request as never);
-
-        expect(succeededSpy).toHaveBeenCalledTimes(1);
-        expect(failedSpy).not.toHaveBeenCalled();
-      });
+      expect(executor.executePromotion).toHaveBeenNthCalledWith(
+        1,
+        1234,
+        "promotion-key",
+        2,
+      );
+      expect(executor.executePromotion).toHaveBeenNthCalledWith(
+        2,
+        5678,
+        "promotion-key",
+        2,
+      );
+      expect(requests.map(({ status }) => status)).toEqual([
+        PointGrantStatus.SUCCEEDED,
+        PointGrantStatus.SUCCEEDED,
+      ]);
+      expect(result).toEqual(false);
     });
 
-    describe("PROCEED 결정이고 외부 지급이 실패한 경우", () => {
-      it("실패/재시도 처리 메서드를 호출한다", async () => {
-        const service = buildService();
-        const request = buildRequest();
-        const error = new Error("external failed");
+    it.each([
+      ["요청 구조 오류", new ExternalPromotionError("4000", "bad request")],
+      ["프로모션 정보 없음", new ExternalPromotionError("4100", "not found")],
+      ["프로모션 미승인", new ExternalPromotionError("4108", "not approved")],
+      ["프로모션 미실행", new ExternalPromotionError("4109", "not running")],
+      ["지급 금액 초과", new ExternalPromotionError("4114", "amount exceeded")],
+      [
+        "프로모션 머니 부족",
+        new ExternalPromotionError("4112", "insufficient money"),
+      ],
+      ["프로모션 종료", new ExternalPromotionError("4105", "promotion ended")],
+      [
+        "인증 정보 없음",
+        new ExternalPromotionError("4010", "authentication not found"),
+      ],
+      [
+        "워크스페이스 접근 불가",
+        new ExternalPromotionError("4034", "workspace forbidden"),
+      ],
+      ["HTTP 400", new ExternalApiError(400, "invalid request structure")],
+      ["HTTP 401", new ExternalApiError(401, "unauthorized")],
+      ["HTTP 403", new ExternalApiError(403, "forbidden")],
+    ] as const)(
+      "운영 오류(%s)가 발생하면 요청을 SUSPENDED로 보존하고 현재 배치의 나머지 지급을 중단한다",
+      async (_label, error) => {
+        const { service, repository, executor, keyIssuer, em } = setup();
+        const request = createRequest({
+          id: 1n,
+          status: PointGrantStatus.PENDING,
+          attemptCount: 2,
+        });
+        const nextRequest = createRequest({
+          id: 2n,
+          status: PointGrantStatus.PENDING,
+          user: Object.assign(new User(), { userKey: 5678 }),
+        });
+        repository.findEligibleGrantsWithLock.mockResolvedValue([
+          request,
+          nextRequest,
+        ]);
+        executor.executePromotion.mockRejectedValueOnce(error);
 
-        jest.spyOn(service, "grantPromotion").mockRejectedValue(error);
-        const succeededSpy = jest
-          .spyOn(service, "recordGrantSucceeded")
-          .mockResolvedValue(undefined);
-        const failedSpy = jest
-          .spyOn(service, "recordGrantOutcomeFromError")
-          .mockResolvedValue(undefined);
+        await expect(service.settleGrantRequests()).resolves.toBe(true);
 
-        await service.settleGrantRequest(request as never);
+        expect(request.status).toBe(PointGrantStatus.SUSPENDED);
+        expect(request.pointIdempotencyKey).toBe("promotion-key");
+        expect(request.attemptCount).toBe(2);
+        expect(request.processedAt).toBeUndefined();
+        expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+        expect(executor.executePromotion).toHaveBeenCalledWith(
+          1234,
+          "promotion-key",
+          2,
+        );
+        expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(1);
+        expect(keyIssuer.getPromotionKey).toHaveBeenCalledWith(1234);
+        expect(nextRequest.status).toBe(PointGrantStatus.PENDING);
+        expect(nextRequest.pointIdempotencyKey).toBeUndefined();
+        expect(nextRequest.attemptCount).toBe(0);
+        expect(executor.getPromotionResult).not.toHaveBeenCalled();
+        expect(em.persist).not.toHaveBeenCalled();
+      },
+    );
 
-        expect(succeededSpy).not.toHaveBeenCalled();
-        expect(failedSpy).toHaveBeenCalledTimes(1);
+    it("SUSPENDED가 발생하면 미처리 선점 요청만 PENDING으로 반환하고 키와 재시도 횟수를 보존한다", async () => {
+      const { service, repository, executor, keyIssuer, em } = setup();
+      const completedRequest = createRequest({
+        id: 1n,
+        status: PointGrantStatus.PENDING,
       });
-    });
-  });
-
-  describe("recordGrantSucceeded", () => {
-    describe("지급 성공 상태를 반영하는 경우", () => {
-      it("request.succeeded 후 PointLog를 persist한다", async () => {
-        const em = buildEntityManager();
-        const service = buildService({ entityManager: em });
-        const request = buildRequest();
-        const createdLog = { id: 1 };
-        em.create.mockReturnValue(createdLog);
-
-        await service.recordGrantSucceeded(request as never);
-
-        expect(request.succeeded).toHaveBeenCalledTimes(1);
-        expect(em.create).toHaveBeenCalledTimes(1);
-        expect(em.persist).toHaveBeenCalledTimes(1);
-        expect(em.flush).toHaveBeenCalledTimes(1);
+      const suspendedRequest = createRequest({
+        id: 2n,
+        status: PointGrantStatus.PENDING,
       });
-    });
-  });
-
-  describe("recordGrantOutcomeFromError", () => {
-    describe("ExternalPromotionError 4113이 발생한 경우", () => {
-      it("지급 성공으로 처리한다", async () => {
-        const service = buildService();
-        const request = buildRequest();
-        const succeededSpy = jest
-          .spyOn(service, "recordGrantSucceeded")
-          .mockResolvedValue(undefined);
-
-        await service.recordGrantOutcomeFromError(
-          request as never,
-          new ExternalPromotionError("4113", "이미 지급됨"),
+      const remainingRequests = [
+        createRequest({ id: 3n, status: PointGrantStatus.PENDING }),
+        createRequest({
+          id: 4n,
+          status: PointGrantStatus.RETRY,
+          pointIdempotencyKey: "existing-key",
+          attemptCount: 2,
+        }),
+      ];
+      const requests = [
+        completedRequest,
+        suspendedRequest,
+        ...remainingRequests,
+      ];
+      const flushedStatuses: PointGrantStatus[][] = [];
+      repository.findEligibleGrantsWithLock.mockResolvedValue(requests);
+      em.flush.mockImplementation(async () => {
+        flushedStatuses.push(requests.map(({ status }) => status));
+      });
+      executor.executePromotion
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(
+          new ExternalPromotionError("4105", "promotion ended"),
         );
 
-        expect(succeededSpy).toHaveBeenCalledTimes(1);
-      });
+      await service.settleGrantRequests();
+
+      expect(flushedStatuses[0]).toEqual([
+        PointGrantStatus.PROCESSING,
+        PointGrantStatus.PROCESSING,
+        PointGrantStatus.PROCESSING,
+        PointGrantStatus.PROCESSING,
+      ]);
+      expect(requests.map(({ status }) => status)).toEqual([
+        PointGrantStatus.SUCCEEDED,
+        PointGrantStatus.SUSPENDED,
+        PointGrantStatus.PENDING,
+        PointGrantStatus.PENDING,
+      ]);
+      // 메모리 변경뿐 아니라 반환 상태를 DB 경계로 전달했는지도 확인한다.
+      expect(flushedStatuses).toContainEqual([
+        PointGrantStatus.SUCCEEDED,
+        PointGrantStatus.SUSPENDED,
+        PointGrantStatus.PENDING,
+        PointGrantStatus.PENDING,
+      ]);
+      expect(remainingRequests[0].pointIdempotencyKey).toBeUndefined();
+      expect(remainingRequests[0].attemptCount).toBe(0);
+      expect(remainingRequests[1].pointIdempotencyKey).toBe("existing-key");
+      expect(remainingRequests[1].attemptCount).toBe(2);
+      expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(2);
+      expect(executor.executePromotion).toHaveBeenCalledTimes(2);
+      expect(executor.getPromotionResult).toHaveBeenCalledTimes(1);
     });
 
-    describe("ExternalTransportError가 발생한 경우", () => {
-      it("retry를 호출한다", async () => {
-        const em = buildEntityManager();
-        const service = buildService({ entityManager: em });
-        const request = buildRequest();
+    it("미처리 요청 반환 저장이 실패해도 오류를 기록하고 워커 중단 신호를 반환한다", async () => {
+      const { service, repository, executor, keyIssuer, em } = setup();
+      const request = createRequest({ status: PointGrantStatus.PENDING });
+      const remainingRequest = createRequest({
+        id: 2n,
+        status: PointGrantStatus.RETRY,
+        pointIdempotencyKey: "existing-key",
+        attemptCount: 2,
+      });
+      const requests = [request, remainingRequest];
+      const storedStatuses = new Map(
+        requests.map(({ id, status }) => [id, status]),
+      );
+      const error = new Error("release save failed");
+      repository.findEligibleGrantsWithLock.mockResolvedValue(requests);
+      executor.executePromotion.mockRejectedValueOnce(
+        new ExternalPromotionError("4105", "promotion ended"),
+      );
+      em.flush.mockImplementation(async () => {
+        if (
+          request.isSuspended() &&
+          remainingRequest.status === PointGrantStatus.PENDING
+        ) {
+          throw error;
+        }
+        requests.forEach(({ id, status }) => storedStatuses.set(id, status));
+      });
+      const errorLog = jest
+        .spyOn(Logger.prototype, "error")
+        .mockImplementation(() => undefined);
 
-        await service.recordGrantOutcomeFromError(
-          request as never,
+      try {
+        await expect(service.settleGrantRequests()).resolves.toBe(true);
+
+        // 메모리 객체는 변경됐어도 실패한 저장을 영속화 성공으로 판단하지 않는다.
+        expect(storedStatuses.get(request.id)).toBe(PointGrantStatus.SUSPENDED);
+        expect(storedStatuses.get(remainingRequest.id)).toBe(
+          PointGrantStatus.PROCESSING,
+        );
+        expect(request.pointIdempotencyKey).toBe("promotion-key");
+        expect(request.attemptCount).toBe(0);
+        expect(remainingRequest.pointIdempotencyKey).toBe("existing-key");
+        expect(remainingRequest.attemptCount).toBe(2);
+        expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+        expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(1);
+        expect(executor.getPromotionResult).not.toHaveBeenCalled();
+        expect(em.persist).not.toHaveBeenCalled();
+        expect(errorLog).toHaveBeenCalledWith(
+          {
+            event: "point_grant.release.failed",
+            requestIds: [remainingRequest.id],
+            err: error,
+          },
+          "미처리 포인트 지급 요청 반환 실패; 재시작 후 lease 복구 필요",
+        );
+      } finally {
+        errorLog.mockRestore();
+      }
+    });
+
+    it("기존 지급 결과가 PENDING이어도 현재 배치의 다음 요청은 지급한다", async () => {
+      const { service, repository, executor, keyIssuer, em } = setup();
+      const request = createRequest({
+        id: 1n,
+        status: PointGrantStatus.PENDING,
+        pointIdempotencyKey: "existing-key",
+      });
+      const nextRequest = createRequest({
+        id: 2n,
+        status: PointGrantStatus.PENDING,
+        user: Object.assign(new User(), { userKey: 5678 }),
+      });
+      repository.findEligibleGrantsWithLock.mockResolvedValue([
+        request,
+        nextRequest,
+      ]);
+      executor.getPromotionResult.mockResolvedValueOnce({ type: "PENDING" });
+
+      await service.settleGrantRequests();
+
+      expect(request.status).toBe(PointGrantStatus.RETRY);
+      expect(request.pointIdempotencyKey).toBe("existing-key");
+      expect(request.attemptCount).toBe(0);
+      expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+      expect(executor.executePromotion).toHaveBeenCalledWith(
+        5678,
+        "promotion-key",
+        2,
+      );
+      expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(1);
+      expect(keyIssuer.getPromotionKey).toHaveBeenCalledWith(5678);
+      expect(nextRequest.status).toBe(PointGrantStatus.SUCCEEDED);
+      expect(em.persist).toHaveBeenCalledTimes(1);
+      expect(em.persist).toHaveBeenCalledWith(expect.any(PointLog));
+    });
+
+    it.each([
+      ["4095", new ExternalRateLimitError(undefined, "rate limit exceeded")],
+      ["HTTP 429", new ExternalApiError(429, "too many requests")],
+      ["로컬 RL", new ExternalRateLimitError(3000, "rate limit exceeded")],
+    ])(
+      "요청 한도 초과(%s)는 해당 요청만 대기시키고 현재 배치의 다음 요청은 지급한다",
+      async (_label, error) => {
+        const { service, repository, executor, keyIssuer, em } = setup();
+        const request = createRequest({
+          id: 1n,
+          status: PointGrantStatus.PENDING,
+        });
+        const nextRequest = createRequest({
+          id: 2n,
+          status: PointGrantStatus.PENDING,
+          user: Object.assign(new User(), { userKey: 5678 }),
+        });
+        repository.findEligibleGrantsWithLock.mockResolvedValue([
+          request,
+          nextRequest,
+        ]);
+        executor.executePromotion.mockRejectedValueOnce(error);
+
+        await expect(service.settleGrantRequests()).resolves.toBe(false);
+
+        expect(request.status).toBe(PointGrantStatus.RETRY);
+        expect(request.pointIdempotencyKey).toBe("promotion-key");
+        expect(request.attemptCount).toBe(0);
+        expect(executor.executePromotion).toHaveBeenCalledTimes(2);
+        expect(executor.executePromotion).toHaveBeenNthCalledWith(
+          1,
+          1234,
+          "promotion-key",
+          2,
+        );
+        expect(executor.executePromotion).toHaveBeenNthCalledWith(
+          2,
+          5678,
+          "promotion-key",
+          2,
+        );
+        expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(2);
+        expect(keyIssuer.getPromotionKey).toHaveBeenNthCalledWith(1, 1234);
+        expect(keyIssuer.getPromotionKey).toHaveBeenNthCalledWith(2, 5678);
+        expect(nextRequest.status).toBe(PointGrantStatus.SUCCEEDED);
+        expect(nextRequest.pointIdempotencyKey).toBe("promotion-key");
+        expect(nextRequest.attemptCount).toBe(0);
+        expect(executor.getPromotionResult).toHaveBeenCalledTimes(1);
+        expect(executor.getPromotionResult).toHaveBeenCalledWith(
+          5678,
+          "promotion-key",
+        );
+        expect(em.persist).toHaveBeenCalledTimes(1);
+        expect(em.persist).toHaveBeenCalledWith(expect.any(PointLog));
+      },
+    );
+
+    describe("DB 오류 발생 시 배치 종료", () => {
+      it("저장 오류가 전파되면 추가 flush 없이 배치를 종료하고 남은 요청을 선점 상태로 둔다", async () => {
+        const { service, repository, executor, em } = setup();
+        const requests = [createRequest({ id: 1n }), createRequest({ id: 2n })];
+        repository.findEligibleGrantsWithLock.mockResolvedValue(requests);
+        executor.executePromotion.mockRejectedValueOnce(
           new ExternalTransportError("timeout"),
         );
+        em.flush
+          .mockResolvedValueOnce()
+          .mockResolvedValueOnce()
+          .mockRejectedValueOnce(new Error("retry save failed"));
 
-        expect(request.retry).toHaveBeenCalledTimes(1);
-        expect(request.failed).not.toHaveBeenCalled();
-        expect(em.flush).toHaveBeenCalledTimes(1);
-      });
-    });
+        await expect(service.settleGrantRequests()).resolves.toBe(false);
 
-    describe("재시도 가능한 ExternalPromotionError(4110)가 발생한 경우", () => {
-      it("retry를 호출한다", async () => {
-        const em = buildEntityManager();
-        const service = buildService({ entityManager: em });
-        const request = buildRequest();
-
-        await service.recordGrantOutcomeFromError(
-          request as never,
-          new ExternalPromotionError("4110", "internal"),
-        );
-
-        expect(request.retry).toHaveBeenCalledTimes(1);
-        expect(request.failed).not.toHaveBeenCalled();
-        expect(em.flush).toHaveBeenCalledTimes(1);
-      });
-    });
-
-    describe("재시도 불가능한 ExternalPromotionError가 발생한 경우", () => {
-      it("failed를 호출한다", async () => {
-        const em = buildEntityManager();
-        const service = buildService({ entityManager: em });
-        const request = buildRequest();
-
-        await service.recordGrantOutcomeFromError(
-          request as never,
-          new ExternalPromotionError("4109", "promotion ended"),
-        );
-
-        expect(request.retry).not.toHaveBeenCalled();
-        expect(request.failed).toHaveBeenCalledTimes(1);
-        expect(em.flush).toHaveBeenCalledTimes(1);
-      });
-    });
-
-    describe("DB 에러가 발생한 경우", () => {
-      it("재시도 처리한다", async () => {
-        const em = buildEntityManager();
-        const service = buildService({ entityManager: em });
-        const request = buildRequest();
-
-        await service.recordGrantOutcomeFromError(
-          request as never,
-          new Error("unknown"),
-        );
-
-        expect(request.retry).toHaveBeenCalledTimes(1);
-        expect(request.failed).not.toHaveBeenCalled();
-        expect(em.flush).toHaveBeenCalledTimes(1);
+        expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+        expect(em.flush).toHaveBeenCalledTimes(3);
+        expect(requests[1].status).toBe(PointGrantStatus.PROCESSING);
+        expect(requests[1].attemptCount).toBe(0);
+        expect(requests[1].pointIdempotencyKey).toBeUndefined();
       });
     });
   });
 
-  describe("lockAndFetchEligibleGrants", () => {
-    describe("대상 요청을 선점하는 경우", () => {
-      it("각 요청을 processing 상태로 바꾸고 flush한다", async () => {
-        const em = buildEntityManager();
-        const repository = buildPointGrantRequestRepository();
-        const request1 = { processing: jest.fn() };
-        const request2 = { processing: jest.fn() };
-        repository.findEligibleGrantsWithLock.mockResolvedValue([
-          request1,
-          request2,
-        ]);
-        const service = buildService({
-          entityManager: em,
-          pointGrantRequestRepository: repository,
-        });
+  describe("처리된 지급 요청 정리", () => {
+    it("성공과 실패 요청을 각각 제한된 배치로 삭제한다", async () => {
+      const { service, em } = setup();
+      const succeededTargets = Array.from({ length: 10 }, (_, index) => ({
+        id: BigInt(index + 1),
+      }));
+      const failedTargets = Array.from({ length: 20 }, (_, index) => ({
+        id: BigInt(index + 100),
+      }));
+      em.find
+        .mockResolvedValueOnce(succeededTargets)
+        .mockResolvedValueOnce(failedTargets);
+      em.nativeDelete.mockResolvedValueOnce(10).mockResolvedValueOnce(20);
 
-        const result = await service.lockAndFetchEligibleGrants();
+      const result = await service.purgeProcessedGrantRequests();
 
-        expect(request1.processing).toHaveBeenCalledTimes(1);
-        expect(request2.processing).toHaveBeenCalledTimes(1);
-        expect(em.flush).toHaveBeenCalledTimes(1);
-        expect(result).toEqual([request1, request2]);
+      expect(em.find).toHaveBeenNthCalledWith(
+        1,
+        expect.anything(),
+        expect.objectContaining({ status: PointGrantStatus.SUCCEEDED }),
+        expect.objectContaining({ limit: PURGE_BATCH_SIZE }),
+      );
+      expect(em.find).toHaveBeenNthCalledWith(
+        2,
+        expect.anything(),
+        expect.objectContaining({ status: PointGrantStatus.FAILED }),
+        expect.objectContaining({ limit: PURGE_BATCH_SIZE }),
+      );
+      expect(em.nativeDelete).toHaveBeenNthCalledWith(1, expect.anything(), {
+        id: { $in: succeededTargets.map(({ id }) => id) },
       });
+      expect(em.nativeDelete).toHaveBeenNthCalledWith(2, expect.anything(), {
+        id: { $in: failedTargets.map(({ id }) => id) },
+      });
+      expect(result).toEqual({ succeededDeleted: 10, failedDeleted: 20 });
     });
   });
 
-  describe("enqueueGrant", () => {
-    describe("지급 금액을 명시한 경우", () => {
-      it("전달한 pointAmount로 요청을 생성한다", () => {
-        const em = buildEntityManager();
-        const service = buildService({ entityManager: em });
+  describe("단일 지급 요청 처리", () => {
+    describe("기존 지급 키가 없는 요청", () => {
+      it("신규 지급 요청 후 결과가 SUCCESS인 경우에만 성공 처리한다", async () => {
+        const { service, executor, keyIssuer, em } = setup();
+        const request = createRequest();
+        executor.getPromotionResult.mockResolvedValueOnce({ type: "SUCCESS" });
 
-        service.enqueueGrant(1234, PointReason.MISSION, 7);
+        await service.settleGrantRequest(request);
 
-        expect(em.create).toHaveBeenCalledWith(
-          expect.anything(),
+        expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(1);
+        expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+        expect(executor.executePromotion).toHaveBeenCalledWith(
+          1234,
+          "promotion-key",
+          2,
+        );
+        expect(executor.getPromotionResult).toHaveBeenCalledTimes(1);
+        expect(executor.getPromotionResult).toHaveBeenCalledWith(
+          1234,
+          "promotion-key",
+        );
+        expect(
+          executor.executePromotion.mock.invocationCallOrder[0],
+        ).toBeLessThan(executor.getPromotionResult.mock.invocationCallOrder[0]);
+        expect(
+          executor.getPromotionResult.mock.invocationCallOrder[0],
+        ).toBeLessThan(em.persist.mock.invocationCallOrder[0]);
+        expect(request.status).toBe(PointGrantStatus.SUCCEEDED);
+        expect(request.pointIdempotencyKey).toBe("promotion-key");
+        expect(request.attemptCount).toBe(0);
+        expect(request.processedAt).toEqual(FIXED_NOW);
+        expect(em.persist).toHaveBeenCalledTimes(1);
+        expect(em.persist).toHaveBeenCalledWith(
           expect.objectContaining({
-            reason: PointReason.MISSION,
-            pointAmount: 7,
+            user: request.user,
+            reason: request.reason,
+            pointAmount: request.pointAmount,
           }),
         );
       });
+
+      it("신규 지급 결과 PENDING이면 키와 재시도 횟수를 유지하고 다음 워커에서 재지급 없이 성공을 확인한다", async () => {
+        const { service, executor, keyIssuer, em } = setup();
+        const request = createRequest();
+        executor.getPromotionResult
+          .mockResolvedValueOnce({ type: "PENDING" })
+          .mockResolvedValueOnce({ type: "SUCCESS" });
+
+        await service.settleGrantRequest(request);
+
+        expect(request.status).toBe(PointGrantStatus.RETRY);
+        expect(request.pointIdempotencyKey).toBe("promotion-key");
+        expect(request.attemptCount).toBe(0);
+        expect(request.nextRetryAt!.getTime()).toBeGreaterThan(
+          FIXED_NOW.getTime(),
+        );
+        expect(request.processedAt).toBeUndefined();
+        expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(1);
+        expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+        expect(executor.executePromotion).toHaveBeenCalledWith(
+          1234,
+          "promotion-key",
+          2,
+        );
+        expect(executor.getPromotionResult).toHaveBeenCalledTimes(1);
+        expect(executor.getPromotionResult).toHaveBeenCalledWith(
+          1234,
+          "promotion-key",
+        );
+        expect(em.persist).not.toHaveBeenCalled();
+
+        request.processing(); // 다음 워커에서 선점한 상태로 재진입한다.
+        await service.settleGrantRequest(request);
+
+        expect(executor.getPromotionResult).toHaveBeenCalledTimes(2);
+        expect(executor.getPromotionResult).toHaveBeenLastCalledWith(
+          1234,
+          "promotion-key",
+        );
+        expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(1);
+        expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+        expect(request.status).toBe(PointGrantStatus.SUCCEEDED);
+        expect(request.pointIdempotencyKey).toBe("promotion-key");
+        expect(request.attemptCount).toBe(0);
+        expect(em.persist).toHaveBeenCalledTimes(1);
+        expect(em.persist).toHaveBeenCalledWith(expect.any(PointLog));
+      });
+
+      it.each(["FAILED", "NOT_FOUND"] as const)(
+        "신규 지급 결과 %s면 키를 제거하고 다음 워커에서 다시 지급한다",
+        async (type) => {
+          const { service, executor, keyIssuer, em } = setup();
+          const request = createRequest();
+          keyIssuer.getPromotionKey
+            .mockResolvedValueOnce("first-key")
+            .mockResolvedValueOnce("second-key");
+          executor.getPromotionResult
+            .mockResolvedValueOnce({ type })
+            .mockResolvedValueOnce({ type: "SUCCESS" });
+
+          await service.settleGrantRequest(request);
+
+          expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+          expect(executor.executePromotion).toHaveBeenCalledWith(
+            1234,
+            "first-key",
+            2,
+          );
+          expect(executor.getPromotionResult).toHaveBeenCalledWith(
+            1234,
+            "first-key",
+          );
+          expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(1);
+          expect(request.status).toBe(PointGrantStatus.RETRY);
+          expect(request.pointIdempotencyKey).toBeUndefined();
+          expect(request.attemptCount).toBe(1);
+          expect(em.persist).not.toHaveBeenCalled();
+
+          request.processing(); // 다음 워커에서 선점한 상태로 재진입한다.
+          await service.settleGrantRequest(request);
+
+          expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(2);
+          expect(executor.executePromotion).toHaveBeenCalledTimes(2);
+          expect(executor.executePromotion).toHaveBeenLastCalledWith(
+            1234,
+            "second-key",
+            2,
+          );
+          expect(executor.getPromotionResult).toHaveBeenLastCalledWith(
+            1234,
+            "second-key",
+          );
+          expect(request.status).toBe(PointGrantStatus.SUCCEEDED);
+          expect(request.pointIdempotencyKey).toBe("second-key");
+          expect(request.attemptCount).toBe(1);
+          expect(em.persist).toHaveBeenCalledTimes(1);
+          expect(em.persist).toHaveBeenCalledWith(expect.any(PointLog));
+        },
+      );
+
+      it("키 발급에 실패하면 지급하지 않고 다음 워커에서 다시 발급한다", async () => {
+        const { service, executor, keyIssuer, em } = setup();
+        const request = createRequest();
+        keyIssuer.getPromotionKey
+          .mockRejectedValueOnce(new ExternalTransportError("key timeout"))
+          .mockResolvedValueOnce("reissued-key");
+
+        await service.settleGrantRequest(request);
+
+        expect(request.status).toBe(PointGrantStatus.RETRY);
+        expect(request.attemptCount).toBe(1);
+        expect(request.pointIdempotencyKey).toBeUndefined();
+        expect(request.nextRetryAt).toEqual(
+          new Date(FIXED_NOW.getTime() + 5_000),
+        );
+        expect(executor.executePromotion).not.toHaveBeenCalled();
+        expect(executor.getPromotionResult).not.toHaveBeenCalled();
+        expect(em.persist).not.toHaveBeenCalled();
+
+        request.processing(); // 다음 워커에서 선점한 상태로 진입한다.
+        await service.settleGrantRequest(request);
+
+        expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(2);
+        expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+        expect(executor.executePromotion).toHaveBeenCalledWith(
+          1234,
+          "reissued-key",
+          2,
+        );
+        expect(request.status).toBe(PointGrantStatus.SUCCEEDED);
+        expect(request.attemptCount).toBe(1);
+      });
+
+      it.each([
+        ["timeout", new ExternalTransportError("timeout")],
+        ["connection reset", new ExternalTransportError("connection reset")],
+        ["4110", new ExternalPromotionError("4110", "internal")],
+        ["4113", new ExternalPromotionError("4113", "이미 처리됨")],
+        ["HTTP 500", new ExternalApiError(500, "internal")],
+      ])(
+        "지급 중 %s가 발생하면 키를 유지하고 재시도 횟수를 증가시킨다",
+        async (_label, error) => {
+          const { service, executor, em } = setup();
+          const request = createRequest({ attemptCount: 1 });
+          executor.executePromotion.mockRejectedValueOnce(error);
+
+          await service.settleGrantRequest(request);
+
+          expect(request.status).toBe(PointGrantStatus.RETRY);
+          expect(request.attemptCount).toBe(2);
+          expect(request.pointIdempotencyKey).toBe("promotion-key");
+          expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+          expect(em.persist).not.toHaveBeenCalled();
+        },
+      );
+
+      it("재시도 한도에 도달하면 키를 보존한 최종 실패가 된다", async () => {
+        const { service, executor, em } = setup();
+        const request = createRequest({ attemptCount: 4 });
+        executor.executePromotion.mockRejectedValueOnce(
+          new ExternalTransportError("timeout"),
+        );
+
+        await service.settleGrantRequest(request);
+
+        expect(request.status).toBe(PointGrantStatus.FAILED);
+        expect(request.attemptCount).toBe(5);
+        expect(request.failedMessage).toBe("재시도 횟수 초과");
+        expect(request.pointIdempotencyKey).toBe("promotion-key");
+        expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+        expect(em.persist).not.toHaveBeenCalled();
+      });
     });
 
-    describe("지급 금액을 생략한 경우", () => {
-      it("PROMOTION_AMOUNT로 폴백한다", () => {
-        const em = buildEntityManager();
-        const service = buildService({ entityManager: em });
+    describe("기존 지급 키가 있는 요청", () => {
+      it.each(["FAILED", "NOT_FOUND"] as const)(
+        "기존 결과가 %s이면 같은 실행에서 새 키로 한 번 지급한다",
+        async (type) => {
+          const { service, executor, keyIssuer, em } = setup();
+          const request = createRequest({
+            pointIdempotencyKey: "existing-key",
+            attemptCount: 2,
+          });
+          executor.getPromotionResult
+            .mockResolvedValueOnce({ type })
+            .mockResolvedValueOnce({ type: "SUCCESS" });
+          keyIssuer.getPromotionKey.mockResolvedValueOnce("new-key");
 
-        service.enqueueGrant(1234, PointReason.MISSION);
+          await service.settleGrantRequest(request);
 
-        expect(em.create).toHaveBeenCalledWith(
-          expect.anything(),
-          expect.objectContaining({ pointAmount: PROMOTION_AMOUNT }),
-        );
+          expect(executor.getPromotionResult).toHaveBeenCalledTimes(2);
+          expect(executor.getPromotionResult).toHaveBeenNthCalledWith(
+            1,
+            1234,
+            "existing-key",
+          );
+          expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(1);
+          expect(keyIssuer.getPromotionKey).toHaveBeenCalledWith(1234);
+          expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+          expect(executor.executePromotion).toHaveBeenCalledWith(
+            1234,
+            "new-key",
+            2,
+          );
+          expect(executor.getPromotionResult).toHaveBeenNthCalledWith(
+            2,
+            1234,
+            "new-key",
+          );
+          expect(
+            executor.getPromotionResult.mock.invocationCallOrder[0],
+          ).toBeLessThan(keyIssuer.getPromotionKey.mock.invocationCallOrder[0]);
+          expect(
+            executor.executePromotion.mock.invocationCallOrder[0],
+          ).toBeLessThan(
+            executor.getPromotionResult.mock.invocationCallOrder[1],
+          );
+          expect(request.status).toBe(PointGrantStatus.SUCCEEDED);
+          expect(request.pointIdempotencyKey).toBe("new-key");
+          expect(request.attemptCount).toBe(2);
+          expect(em.persist).toHaveBeenCalledTimes(1);
+          expect(em.persist).toHaveBeenCalledWith(expect.any(PointLog));
+        },
+      );
+
+      it.each(["FAILED", "NOT_FOUND"] as const)(
+        "기존 결과가 %s이면 새 키 발급 실패에도 기존 키를 제거하고 다음 워커에서 다시 조회하지 않는다",
+        async (type) => {
+          const { service, executor, keyIssuer, em } = setup();
+          const request = createRequest({
+            pointIdempotencyKey: "existing-key",
+            attemptCount: 2,
+          });
+          let keyAtIssuance: string | undefined;
+          executor.getPromotionResult
+            .mockResolvedValueOnce({ type })
+            .mockResolvedValue({ type: "SUCCESS" });
+          keyIssuer.getPromotionKey
+            .mockImplementationOnce(() => {
+              keyAtIssuance = request.pointIdempotencyKey;
+              return Promise.reject(new ExternalTransportError("key timeout"));
+            })
+            .mockResolvedValueOnce("new-key");
+
+          await service.settleGrantRequest(request);
+
+          expect(request.status).toBe(PointGrantStatus.RETRY);
+          expect(request.attemptCount).toBe(3);
+          expect(request.pointIdempotencyKey).toBeUndefined();
+          expect(keyAtIssuance).toBeUndefined();
+          expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(1);
+          expect(executor.getPromotionResult).toHaveBeenCalledTimes(1);
+          expect(executor.getPromotionResult).toHaveBeenCalledWith(
+            1234,
+            "existing-key",
+          );
+          expect(executor.executePromotion).not.toHaveBeenCalled();
+          expect(em.persist).not.toHaveBeenCalled();
+
+          request.processing(); // 다음 워커에서는 무효화된 기존 키를 재조회하지 않는다.
+          await service.settleGrantRequest(request);
+
+          expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(2);
+          expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+          expect(executor.executePromotion).toHaveBeenCalledWith(
+            1234,
+            "new-key",
+            2,
+          );
+          expect(executor.getPromotionResult).toHaveBeenCalledTimes(2);
+          expect(executor.getPromotionResult).toHaveBeenNthCalledWith(
+            2,
+            1234,
+            "new-key",
+          );
+          expect(request.status).toBe(PointGrantStatus.SUCCEEDED);
+          expect(request.pointIdempotencyKey).toBe("new-key");
+          expect(request.attemptCount).toBe(3);
+          expect(em.persist).toHaveBeenCalledTimes(1);
+          expect(em.persist).toHaveBeenCalledWith(expect.any(PointLog));
+        },
+      );
+
+      it("기존 객체 SUCCESS면 키를 유지하고 새 지급 없이 성공 처리한다", async () => {
+        const { service, executor, keyIssuer, em } = setup();
+        const request = createRequest({
+          pointIdempotencyKey: "existing-key",
+          attemptCount: 2,
+        });
+        executor.getPromotionResult.mockResolvedValue({ type: "SUCCESS" });
+
+        await service.settleGrantRequest(request);
+
+        expect(request.status).toBe(PointGrantStatus.SUCCEEDED);
+        expect(request.pointIdempotencyKey).toBe("existing-key");
+        expect(keyIssuer.getPromotionKey).not.toHaveBeenCalled();
+        expect(executor.executePromotion).not.toHaveBeenCalled();
+        expect(em.persist).toHaveBeenCalledWith(expect.any(PointLog));
       });
+
+      it("기존 객체 PENDING이면 키를 유지하고 attemptCount 증가 없이 대기한다", async () => {
+        const { service, executor, keyIssuer } = setup();
+        const request = createRequest({
+          pointIdempotencyKey: "existing-key",
+          attemptCount: 2,
+        });
+        executor.getPromotionResult.mockResolvedValue({ type: "PENDING" });
+
+        await service.settleGrantRequest(request);
+
+        expect(request.status).toBe(PointGrantStatus.RETRY);
+        expect(request.pointIdempotencyKey).toBe("existing-key");
+        expect(request.attemptCount).toBe(2);
+        expect(executor.executePromotion).not.toHaveBeenCalled();
+        expect(keyIssuer.getPromotionKey).not.toHaveBeenCalled();
+      });
+
+      it.each([
+        ["transport", new ExternalTransportError("result timeout")],
+        ["5xx", new ExternalApiError(500, "internal")],
+      ])(
+        "결과 조회 %s 오류면 키를 유지하고 RETRY하며 attemptCount를 증가시킨다",
+        async (_label, error) => {
+          const { service, executor, keyIssuer, em } = setup();
+          const request = createRequest({
+            pointIdempotencyKey: "existing-key",
+            attemptCount: 2,
+          });
+          executor.getPromotionResult.mockRejectedValueOnce(error);
+
+          await service.settleGrantRequest(request);
+
+          expect(executor.getPromotionResult).toHaveBeenCalledWith(
+            1234,
+            "existing-key",
+          );
+          expect(request.status).toBe(PointGrantStatus.RETRY);
+          expect(request.pointIdempotencyKey).toBe("existing-key");
+          expect(request.attemptCount).toBe(3);
+          expect(executor.executePromotion).not.toHaveBeenCalled();
+          expect(keyIssuer.getPromotionKey).not.toHaveBeenCalled();
+          expect(em.persist).not.toHaveBeenCalled();
+        },
+      );
+
+      it("기존 지급 결과가 없으면 새 키로 지급한다", async () => {
+        const { service, executor, keyIssuer, em } = setup();
+        const request = createRequest({ pointIdempotencyKey: "existing-key" });
+        executor.getPromotionResult.mockResolvedValueOnce({
+          type: "NOT_FOUND",
+        });
+        keyIssuer.getPromotionKey.mockResolvedValue("new-key");
+
+        await service.settleGrantRequest(request);
+
+        expect(executor.getPromotionResult).toHaveBeenCalledWith(
+          1234,
+          "existing-key",
+        );
+        expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+        expect(executor.executePromotion).toHaveBeenCalledWith(
+          1234,
+          "new-key",
+          2,
+        );
+        expect(request.pointIdempotencyKey).toBe("new-key");
+        expect(request.status).toBe(PointGrantStatus.SUCCEEDED);
+        expect(em.persist).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe("지급 안전 invariant", () => {
+      // 외부 API 경계의 호출 순서/횟수만 고정한다. 오류별 count/WAIT 정책은 별도로 관찰한다.
+      it("기존 키가 있으면 새 지급 전에 기존 결과를 먼저 확인한다", async () => {
+        const { service, executor, keyIssuer } = setup();
+        const request = createRequest({ pointIdempotencyKey: "existing-key" });
+        executor.getPromotionResult.mockResolvedValueOnce({
+          type: "NOT_FOUND",
+        });
+
+        await service.settleGrantRequest(request);
+
+        expect(executor.getPromotionResult).toHaveBeenCalledWith(
+          1234,
+          "existing-key",
+        );
+        expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+        expect(
+          executor.getPromotionResult.mock.invocationCallOrder[0],
+        ).toBeLessThan(keyIssuer.getPromotionKey.mock.invocationCallOrder[0]);
+        expect(
+          executor.getPromotionResult.mock.invocationCallOrder[0],
+        ).toBeLessThan(executor.executePromotion.mock.invocationCallOrder[0]);
+      });
+
+      it.each([
+        ["transport", new ExternalTransportError("result timeout")],
+        ["5xx", new ExternalApiError(500, "internal")],
+      ])(
+        "결과 조회가 %s로 불확실한 동안 다음 워커도 같은 키를 유지하며 지급하지 않는다",
+        async (_label, error) => {
+          const { service, executor, keyIssuer, em } = setup();
+          const request = createRequest({
+            pointIdempotencyKey: "existing-key",
+          });
+          executor.getPromotionResult.mockRejectedValue(error);
+
+          await service.settleGrantRequest(request);
+
+          expect(executor.getPromotionResult).toHaveBeenCalledWith(
+            1234,
+            "existing-key",
+          );
+          expect(request.pointIdempotencyKey).toBe("existing-key");
+          expect(executor.executePromotion).not.toHaveBeenCalled();
+
+          executor.getPromotionResult.mockClear();
+          request.processing();
+          await service.settleGrantRequest(request);
+
+          expect(executor.getPromotionResult).toHaveBeenCalledWith(
+            1234,
+            "existing-key",
+          );
+          expect(request.pointIdempotencyKey).toBe("existing-key");
+          expect(executor.executePromotion).not.toHaveBeenCalled();
+          expect(keyIssuer.getPromotionKey).not.toHaveBeenCalled();
+          expect(em.persist).not.toHaveBeenCalled();
+        },
+      );
+
+      it.each([
+        ["timeout", new ExternalTransportError("timeout")],
+        ["4110", new ExternalPromotionError("4110", "internal")],
+        ["4113", new ExternalPromotionError("4113", "이미 처리됨")],
+      ])(
+        "지급 %s 후 다음 워커는 기존 키를 조회하고 결과가 불확실하면 재지급하지 않는다",
+        async (_label, error) => {
+          const { service, executor, keyIssuer, em } = setup();
+          const request = createRequest();
+          executor.executePromotion.mockRejectedValueOnce(error);
+          executor.getPromotionResult.mockRejectedValue(
+            new ExternalTransportError("result timeout"),
+          );
+
+          await service.settleGrantRequest(request);
+
+          expect(request.pointIdempotencyKey).toBe("promotion-key");
+          expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+          expect(em.persist).not.toHaveBeenCalled();
+
+          executor.getPromotionResult.mockClear();
+          request.processing();
+          await service.settleGrantRequest(request);
+
+          expect(executor.getPromotionResult).toHaveBeenCalledWith(
+            1234,
+            "promotion-key",
+          );
+          expect(request.pointIdempotencyKey).toBe("promotion-key");
+          expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(1);
+          expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+          expect(em.persist).not.toHaveBeenCalled();
+        },
+      );
+
+      it("한 실행에서 신규 지급이 timeout이어도 새 지급은 최대 한 번이다", async () => {
+        const { service, executor, keyIssuer, em } = setup();
+        const request = createRequest();
+        executor.executePromotion.mockRejectedValue(
+          new ExternalTransportError("timeout"),
+        );
+
+        await service.settleGrantRequest(request);
+
+        expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+        expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(1);
+        expect(request.pointIdempotencyKey).toBe("promotion-key");
+        expect(em.persist).not.toHaveBeenCalled();
+      });
+
+      it("기존 FAILED 확인 뒤 새 지급이 timeout이어도 한 실행에서 새 지급은 최대 한 번이다", async () => {
+        const { service, executor, keyIssuer, em } = setup();
+        const request = createRequest({ pointIdempotencyKey: "existing-key" });
+        executor.getPromotionResult.mockResolvedValueOnce({ type: "FAILED" });
+        executor.executePromotion.mockRejectedValue(
+          new ExternalTransportError("new payment timeout"),
+        );
+
+        await service.settleGrantRequest(request);
+
+        expect(executor.getPromotionResult).toHaveBeenCalledWith(
+          1234,
+          "existing-key",
+        );
+        expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+        expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(1);
+        expect(request.pointIdempotencyKey).toBe("promotion-key");
+        expect(em.persist).not.toHaveBeenCalled();
+      });
+
+      it("키를 DB에 저장하지 못하면 지급하지 않는다", async () => {
+        const { service, executor, em } = setup();
+        const request = createRequest();
+        em.flush.mockRejectedValueOnce(new Error("key save failed"));
+
+        // DB 오류를 전파하든 lease 복구에 맡기든 외부 지급이 발생하지 않아야 한다.
+        await Promise.allSettled([service.settleGrantRequest(request)]);
+
+        expect(executor.executePromotion).not.toHaveBeenCalled();
+        expect(em.persist).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("기술적 예외 전파", () => {
+      it("미분류 프로모션 오류는 키와 재시도 횟수를 유지하고 그대로 전파한다", async () => {
+        const { service, executor, keyIssuer, em } = setup();
+        const request = createRequest({
+          pointIdempotencyKey: "existing-key",
+          attemptCount: 2,
+        });
+        const error = new ExternalPromotionError(
+          "UNKNOWN_CODE",
+          "unclassified promotion error",
+        );
+        executor.getPromotionResult.mockRejectedValueOnce(error);
+
+        await expect(service.settleGrantRequest(request)).rejects.toBe(error);
+
+        expect(request.status).toBe(PointGrantStatus.PROCESSING);
+        expect(request.pointIdempotencyKey).toBe("existing-key");
+        expect(request.attemptCount).toBe(2);
+        expect(keyIssuer.getPromotionKey).not.toHaveBeenCalled();
+        expect(executor.executePromotion).not.toHaveBeenCalled();
+        expect(em.flush).not.toHaveBeenCalled();
+        expect(em.persist).not.toHaveBeenCalled();
+      });
+
+      it("기존 결과 조회의 알 수 없는 예외는 요청을 RETRY로 변경하지 않고 그대로 전파한다", async () => {
+        const { service, executor, keyIssuer, em } = setup();
+        const request = createRequest({
+          pointIdempotencyKey: "existing-key",
+          attemptCount: 2,
+        });
+        const error = new TypeError("unexpected result error");
+        executor.getPromotionResult.mockRejectedValueOnce(error);
+
+        await expect(service.settleGrantRequest(request)).rejects.toBe(error);
+
+        expect(request.status).toBe(PointGrantStatus.PROCESSING);
+        expect(request.attemptCount).toBe(2);
+        expect(request.pointIdempotencyKey).toBe("existing-key");
+        expect(request.nextRetryAt).toBeUndefined();
+        expect(keyIssuer.getPromotionKey).not.toHaveBeenCalled();
+        expect(executor.executePromotion).not.toHaveBeenCalled();
+        expect(em.flush).not.toHaveBeenCalled();
+        expect(em.persist).not.toHaveBeenCalled();
+      });
+
+      it("키 저장의 DB 예외는 재시도 상태를 추가 저장하지 않고 그대로 전파하며 지급하지 않는다", async () => {
+        const { service, executor, em } = setup();
+        const request = createRequest({ attemptCount: 2 });
+        const error = new Error("key save failed");
+        em.flush.mockRejectedValueOnce(error);
+
+        await expect(service.settleGrantRequest(request)).rejects.toBe(error);
+
+        // 실제 DB rollback과 영속화된 PROCESSING의 lease 복구는 DB 통합 테스트에서 검증한다.
+        expect(request.status).toBe(PointGrantStatus.PROCESSING);
+        expect(request.attemptCount).toBe(2);
+        expect(request.nextRetryAt).toBeUndefined();
+        expect(em.flush).toHaveBeenCalledTimes(1);
+        expect(executor.executePromotion).not.toHaveBeenCalled();
+        expect(executor.getPromotionResult).not.toHaveBeenCalled();
+        expect(em.persist).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("운영 오류 처리", () => {
+      it.each([
+        [0, 5000],
+        [2, 30000],
+      ])(
+        "기존 결과 조회의 RL 오류에 대기 시간이 없으면 backoff로 대기하고 키와 횟수(%i)를 보존한다",
+        async (attemptCount, delay) => {
+          const { service, executor, keyIssuer, em } = setup();
+          const request = createRequest({
+            attemptCount,
+            pointIdempotencyKey: "existing-key",
+          });
+          executor.getPromotionResult.mockRejectedValueOnce(
+            new ExternalRateLimitError(undefined, "rate limit exceeded"),
+          );
+
+          await service.settleGrantRequest(request);
+
+          expect(request.status).toBe(PointGrantStatus.RETRY);
+          expect(request.pointIdempotencyKey).toBe("existing-key");
+          expect(request.attemptCount).toBe(attemptCount);
+          expect(request.nextRetryAt).toEqual(
+            new Date(FIXED_NOW.getTime() + delay),
+          );
+          expect(executor.executePromotion).not.toHaveBeenCalled();
+          expect(keyIssuer.getPromotionKey).not.toHaveBeenCalled();
+          expect(em.persist).not.toHaveBeenCalled();
+        },
+      );
+
+      describe.each([0, 2])(
+        "로컬 호출량 제한(attemptCount=%i)",
+        (attemptCount) => {
+          it.each([
+            "키 발급",
+            "지급",
+            "기존 결과 조회",
+            "신규 결과 조회",
+          ] as const)(
+            "%s 제한이면 지정 시간 대기하고 다음 워커는 보존된 키에 맞춰 처리한다",
+            async (stage) => {
+              const { service, executor, keyIssuer, em } = setup();
+              const request = createRequest({
+                attemptCount,
+                pointIdempotencyKey:
+                  stage === "기존 결과 조회" ? "existing-key" : undefined,
+              });
+              const delay = 3000;
+              const error = new ExternalRateLimitError(
+                delay,
+                "rate limit exceeded",
+              );
+              if (stage === "키 발급") {
+                keyIssuer.getPromotionKey.mockRejectedValueOnce(error);
+              } else if (stage === "지급") {
+                executor.executePromotion.mockRejectedValueOnce(error);
+              } else {
+                executor.getPromotionResult.mockRejectedValueOnce(error);
+              }
+
+              await service.settleGrantRequest(request);
+
+              const expectedKey =
+                stage === "키 발급"
+                  ? undefined
+                  : stage === "기존 결과 조회"
+                    ? "existing-key"
+                    : "promotion-key";
+              expect(request.status).toBe(PointGrantStatus.RETRY);
+              expect(request.pointIdempotencyKey).toBe(expectedKey);
+              expect(request.attemptCount).toBe(attemptCount);
+              expect(request.nextRetryAt).toEqual(
+                new Date(FIXED_NOW.getTime() + delay),
+              );
+              expect(request.processedAt).toBeUndefined();
+              expect(executor.executePromotion).toHaveBeenCalledTimes(
+                stage === "지급" || stage === "신규 결과 조회" ? 1 : 0,
+              );
+              expect(executor.getPromotionResult).toHaveBeenCalledTimes(
+                stage === "기존 결과 조회" || stage === "신규 결과 조회"
+                  ? 1
+                  : 0,
+              );
+              expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(
+                stage === "기존 결과 조회" ? 0 : 1,
+              );
+              expect(em.persist).not.toHaveBeenCalled();
+
+              keyIssuer.getPromotionKey.mockClear();
+              executor.executePromotion.mockClear();
+              executor.getPromotionResult.mockClear();
+              request.processing();
+
+              await service.settleGrantRequest(request);
+
+              expect(request.status).toBe(PointGrantStatus.SUCCEEDED);
+              expect(request.attemptCount).toBe(attemptCount);
+              expect(request.pointIdempotencyKey).toBe(
+                expectedKey ?? "promotion-key",
+              );
+              expect(keyIssuer.getPromotionKey).toHaveBeenCalledTimes(
+                stage === "키 발급" ? 1 : 0,
+              );
+              expect(executor.executePromotion).toHaveBeenCalledTimes(
+                stage === "키 발급" ? 1 : 0,
+              );
+              expect(executor.getPromotionResult).toHaveBeenCalledTimes(1);
+              expect(executor.getPromotionResult).toHaveBeenCalledWith(
+                1234,
+                expectedKey ?? "promotion-key",
+              );
+              expect(em.persist).toHaveBeenCalledTimes(1);
+              expect(em.persist).toHaveBeenCalledWith(expect.any(PointLog));
+            },
+          );
+        },
+      );
+
+      it.each([
+        [
+          "4095",
+          0,
+          new ExternalRateLimitError(undefined, "rate limit exceeded"),
+        ],
+        ["HTTP 429", 0, new ExternalApiError(429, "too many requests")],
+        [
+          "4095",
+          2,
+          new ExternalRateLimitError(undefined, "rate limit exceeded"),
+        ],
+        ["HTTP 429", 2, new ExternalApiError(429, "too many requests")],
+      ] as const)(
+        "요청 한도 초과(%s, attemptCount=%i)는 키와 재시도 횟수를 보존하고 재처리 가능한 대기 상태로 남긴다",
+        async (_label, attemptCount, error) => {
+          const { service, executor, em } = setup();
+          const request = createRequest({ attemptCount });
+          executor.executePromotion.mockRejectedValueOnce(error);
+
+          await service.settleGrantRequest(request);
+
+          expect(request.status).toBe(PointGrantStatus.RETRY);
+          expect(request.pointIdempotencyKey).toBe("promotion-key");
+          expect(request.attemptCount).toBe(attemptCount);
+          expect(request.nextRetryAt).toBeInstanceOf(Date);
+          expect(request.nextRetryAt!.getTime()).toBeGreaterThan(
+            FIXED_NOW.getTime(),
+          );
+          expect(request.processedAt).toBeUndefined();
+          expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+          expect(executor.getPromotionResult).not.toHaveBeenCalled();
+          expect(em.persist).not.toHaveBeenCalled();
+        },
+      );
+
+      it("지급 요청의 데이터 구조 오류(HTTP 400)는 키와 재시도 횟수를 보존하고 SUSPENDED로 격리한다", async () => {
+        const { service, executor, em } = setup();
+        const request = createRequest({ attemptCount: 2 });
+        executor.executePromotion.mockRejectedValueOnce(
+          new ExternalApiError(400, "invalid request structure"),
+        );
+
+        // 워커 중단 신호의 전달 방식과 무관하게 요청은 재처리 가능하도록 보존한다.
+        await Promise.allSettled([service.settleGrantRequest(request)]);
+
+        expect(request.status).toBe(PointGrantStatus.SUSPENDED);
+        expect(request.pointIdempotencyKey).toBe("promotion-key");
+        expect(request.attemptCount).toBe(2);
+        expect(request.nextRetryAt).toBeUndefined();
+        expect(request.processedAt).toBeUndefined();
+        expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+        expect(executor.getPromotionResult).not.toHaveBeenCalled();
+        expect(em.persist).not.toHaveBeenCalled();
+      });
+
+      it("프로모션이 종료되면 키와 재시도 횟수를 보존하고 SUSPENDED로 격리한다", async () => {
+        const { service, executor, em } = setup();
+        const request = createRequest({ attemptCount: 2 });
+        executor.executePromotion.mockRejectedValueOnce(
+          new ExternalPromotionError("4105", "promotion ended"),
+        );
+
+        // 워커 중단 신호의 전달 방식은 별도의 워커 정책 테스트에서 검증한다.
+        await Promise.allSettled([service.settleGrantRequest(request)]);
+
+        expect(request.status).toBe(PointGrantStatus.SUSPENDED);
+        expect(request.pointIdempotencyKey).toBe("promotion-key");
+        expect(request.attemptCount).toBe(2);
+        expect(request.nextRetryAt).toBeUndefined();
+        expect(request.processedAt).toBeUndefined();
+        expect(executor.executePromotion).toHaveBeenCalledTimes(1);
+        expect(executor.getPromotionResult).not.toHaveBeenCalled();
+        expect(em.persist).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe("지급 요청 선점", () => {
+    it("조회한 요청을 처리 중으로 바꾸고 반환한다", async () => {
+      const { service, em, repository } = setup();
+      const requests = [
+        createRequest({
+          id: 1n,
+          status: PointGrantStatus.PENDING,
+          lockedAt: undefined,
+        }),
+        createRequest({
+          id: 2n,
+          status: PointGrantStatus.RETRY,
+          lockedAt: undefined,
+        }),
+      ];
+      repository.findEligibleGrantsWithLock.mockResolvedValue(requests);
+
+      const result = await service.lockAndFetchEligibleGrants();
+
+      expect(repository.findEligibleGrantsWithLock).toHaveBeenCalledTimes(1);
+      expect(requests.map(({ status }) => status)).toEqual([
+        PointGrantStatus.PROCESSING,
+        PointGrantStatus.PROCESSING,
+      ]);
+      expect(requests.map(({ lockedAt }) => lockedAt)).toEqual([
+        FIXED_NOW,
+        FIXED_NOW,
+      ]);
+      expect(em.flush).toHaveBeenCalledTimes(1);
+      expect(result).toEqual(requests);
+    });
+  });
+
+  describe("지급 요청 생성", () => {
+    it("명시한 지급 금액으로 요청을 생성한다", () => {
+      const { service, em } = setup();
+
+      service.enqueueGrant(1234, PointReason.MISSION, 7);
+
+      expect(em.create).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          reason: PointReason.MISSION,
+          pointAmount: 7,
+        }),
+      );
+    });
+
+    it("지급 금액을 생략하면 기본 금액으로 요청을 생성한다", () => {
+      const { service, em } = setup();
+
+      service.enqueueGrant(1234, PointReason.MISSION);
+
+      expect(em.create).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ pointAmount: PROMOTION_AMOUNT }),
+      );
     });
   });
 });
