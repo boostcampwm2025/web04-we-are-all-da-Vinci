@@ -8,6 +8,7 @@ import {
   jest,
 } from "@jest/globals";
 import { MikroORM } from "@mikro-orm/mysql";
+import { ExternalTransportError } from "src/common/errors/external.errors";
 import { getSeoulDateTime } from "src/common/util/time.util";
 import { User } from "src/modules/user/user.entity";
 import {
@@ -134,14 +135,19 @@ describe("포인트 지급 DB rollback과 lease 복구", () => {
     expect(saved.pointIdempotencyKey).toBe("saved-key");
     expect(saved.attemptCount).toBe(2);
     expect(saved.lockedAt).toEqual(claimed.lockedAt);
+    // 키 저장은 커밋됐지만 실패한 성공 저장은 버전을 올리지 않는다.
+    expect(saved.version).toBe(claimed.version + 1);
     expect(saved.processedAt).toBeNull();
     expect(await orm.em.fork().count(PointLog, {})).toBe(0);
     expect(executor.executePromotion).toHaveBeenCalledTimes(1);
   });
 
   it("PROCESSING lease 만료 전에는 다음 워커가 재선점하지 않는다", async () => {
-    const id = await createRequest({ pointIdempotencyKey: "existing-key" });
-    await createWorker().service.lockAndFetchEligibleGrants();
+    const id = await createRequest({
+      status: PointGrantStatus.PROCESSING,
+      pointIdempotencyKey: "existing-key",
+      lockedAt: new Date(getSeoulDateTime().getTime() - 14 * 60_000),
+    });
     const claimed = await readRequest(id);
     const nextWorker = createWorker();
 
@@ -161,7 +167,7 @@ describe("포인트 지급 DB rollback과 lease 복구", () => {
   ])(
     "두 워커가 동시에 선점할 때 %s 요청은 한 워커만 가져간다",
     async (status) => {
-      const expiredAt = new Date(getSeoulDateTime().getTime() - 4 * 60_000);
+      const expiredAt = new Date(getSeoulDateTime().getTime() - 16 * 60_000);
       const id = await createRequest({
         status,
         pointIdempotencyKey: "existing-key",
@@ -202,12 +208,13 @@ describe("포인트 지급 DB rollback과 lease 복구", () => {
   );
 
   it("PROCESSING lease 만료 후 재선점은 키·횟수를 보존하고 lockedAt을 갱신한다", async () => {
-    const expiredAt = new Date(getSeoulDateTime().getTime() - 4 * 60_000);
+    const expiredAt = new Date(getSeoulDateTime().getTime() - 16 * 60_000);
     const id = await createRequest({
       status: PointGrantStatus.PROCESSING,
       pointIdempotencyKey: "existing-key",
       lockedAt: expiredAt,
     });
+    const beforeClaim = await readRequest(id);
 
     const requests = await createWorker().service.lockAndFetchEligibleGrants();
 
@@ -216,6 +223,7 @@ describe("포인트 지급 DB rollback과 lease 복구", () => {
     expect(saved.status).toBe(PointGrantStatus.PROCESSING);
     expect(saved.pointIdempotencyKey).toBe("existing-key");
     expect(saved.attemptCount).toBe(2);
+    expect(saved.version).toBe(beforeClaim.version + 1);
     expect(saved.lockedAt!.getTime()).toBeGreaterThan(expiredAt.getTime());
     expect(await createWorker().service.lockAndFetchEligibleGrants()).toEqual(
       [],
@@ -235,12 +243,12 @@ describe("포인트 지급 DB rollback과 lease 복구", () => {
     expect(await orm.em.fork().count(PointLog, {})).toBe(0);
 
     await orm.em.getConnection().execute("drop trigger reject_grant_success");
-    // 실제로 3분 기다리는 대신 DB의 lease 시각만 만료시킨다.
+    // 실제로 15분 기다리는 대신 DB의 lease 시각만 만료시킨다.
     await orm.em.fork().nativeUpdate(
       PointGrantRequest,
       { id },
       {
-        lockedAt: new Date(getSeoulDateTime().getTime() - 4 * 60_000),
+        lockedAt: new Date(getSeoulDateTime().getTime() - 16 * 60_000),
       },
     );
     const nextWorker = createWorker();
@@ -295,7 +303,7 @@ describe("포인트 지급 DB rollback과 lease 복구", () => {
         .nativeUpdate(
           PointGrantRequest,
           { id },
-          { lockedAt: new Date(getSeoulDateTime().getTime() - 4 * 60_000) },
+          { lockedAt: new Date(getSeoulDateTime().getTime() - 16 * 60_000) },
         );
 
       const [recovered] = await nextWorker.service.lockAndFetchEligibleGrants();
@@ -336,5 +344,102 @@ describe("포인트 지급 DB rollback과 lease 복구", () => {
       .find(PointLog, { pointGrantRequestId: id });
     expect(logs).toHaveLength(1);
     expect(logs[0].pointAmount).toBe(10);
+  });
+
+  it("재선점 워커가 성공 처리하면 이전 워커의 늦은 timeout이 성공 상태를 RETRY로 덮어쓰지 않는다", async () => {
+    const id = await createRequest({ pointIdempotencyKey: "existing-key" });
+    const firstWorker = createWorker();
+    const [request] = await firstWorker.service.lockAndFetchEligibleGrants();
+    const queryStarted = Promise.withResolvers<void>();
+    const resumeQuery = Promise.withResolvers<void>();
+    firstWorker.executor.getPromotionResult.mockImplementationOnce(async () => {
+      queryStarted.resolve();
+      await resumeQuery.promise;
+      throw new ExternalTransportError("timeout");
+    });
+
+    const firstSettlement = Promise.allSettled([
+      firstWorker.service.settleGrantRequest(request),
+    ]);
+    try {
+      await queryStarted.promise;
+      await orm.em
+        .fork()
+        .nativeUpdate(
+          PointGrantRequest,
+          { id },
+          { lockedAt: new Date(getSeoulDateTime().getTime() - 16 * 60_000) },
+        );
+      const nextWorker = createWorker();
+      const [recovered] = await nextWorker.service.lockAndFetchEligibleGrants();
+      expect(recovered.id).toBe(id);
+      await nextWorker.service.settleGrantRequest(recovered);
+      expect((await readRequest(id)).status).toBe(PointGrantStatus.SUCCEEDED);
+      expect(
+        await orm.em.fork().count(PointLog, { pointGrantRequestId: id }),
+      ).toBe(1);
+    } finally {
+      resumeQuery.resolve();
+      await firstSettlement;
+    }
+
+    const saved = await readRequest(id);
+    expect(saved.status).toBe(PointGrantStatus.SUCCEEDED);
+    expect(saved.attemptCount).toBe(2);
+    expect(saved.pointIdempotencyKey).toBe("existing-key");
+    expect(
+      await orm.em.fork().count(PointLog, { pointGrantRequestId: id }),
+    ).toBe(1);
+  });
+
+  it("키 발급 중 lease가 만료되어 다른 워커가 지급하면 이전 워커는 별도 키로 추가 지급하지 않는다", async () => {
+    const id = await createRequest();
+    const firstWorker = createWorker();
+    const [request] = await firstWorker.service.lockAndFetchEligibleGrants();
+    const keyIssueStarted = Promise.withResolvers<void>();
+    const resumeKeyIssue = Promise.withResolvers<void>();
+    firstWorker.keyIssuer.getPromotionKey.mockImplementationOnce(async () => {
+      keyIssueStarted.resolve();
+      await resumeKeyIssue.promise;
+      return "old-worker-key";
+    });
+    const nextWorker = createWorker();
+    nextWorker.keyIssuer.getPromotionKey.mockResolvedValue("new-worker-key");
+
+    const firstSettlement = Promise.allSettled([
+      firstWorker.service.settleGrantRequest(request),
+    ]);
+    try {
+      await keyIssueStarted.promise;
+      expect((await readRequest(id)).pointIdempotencyKey).toBeNull();
+      await orm.em
+        .fork()
+        .nativeUpdate(
+          PointGrantRequest,
+          { id },
+          { lockedAt: new Date(getSeoulDateTime().getTime() - 16 * 60_000) },
+        );
+      const [recovered] = await nextWorker.service.lockAndFetchEligibleGrants();
+      expect(recovered.id).toBe(id);
+      await nextWorker.service.settleGrantRequest(recovered);
+      expect(nextWorker.executor.executePromotion).toHaveBeenCalledTimes(1);
+      expect(nextWorker.executor.executePromotion).toHaveBeenCalledWith(
+        1234,
+        "new-worker-key",
+        10,
+      );
+      expect((await readRequest(id)).status).toBe(PointGrantStatus.SUCCEEDED);
+    } finally {
+      resumeKeyIssue.resolve();
+      await firstSettlement;
+    }
+
+    expect(firstWorker.executor.executePromotion).not.toHaveBeenCalled();
+    const saved = await readRequest(id);
+    expect(saved.status).toBe(PointGrantStatus.SUCCEEDED);
+    expect(saved.pointIdempotencyKey).toBe("new-worker-key");
+    expect(
+      await orm.em.fork().count(PointLog, { pointGrantRequestId: id }),
+    ).toBe(1);
   });
 });

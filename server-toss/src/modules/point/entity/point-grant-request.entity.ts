@@ -43,6 +43,9 @@ export class PointGrantRequest extends BaseEntity {
   @PrimaryKey({ type: "bigint" })
   id!: bigint;
 
+  @Property({ type: "int", version: true })
+  version!: Opt<number>;
+
   @ManyToOne(() => User, { joinColumn: "user_key" })
   user!: Rel<User>;
 

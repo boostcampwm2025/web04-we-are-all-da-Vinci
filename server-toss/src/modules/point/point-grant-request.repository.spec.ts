@@ -48,7 +48,7 @@ describe("포인트 지급 요청 저장소", () => {
     ]);
   });
 
-  it("3분 전에 선점된 PROCESSING과 재시도 시각이 된 RETRY를 복구 대상으로 조회한다", async () => {
+  it("15분 전에 선점된 PROCESSING과 재시도 시각이 된 RETRY를 복구 대상으로 조회한다", async () => {
     const { repository, find } = setup();
 
     await repository.findEligibleGrantsWithLock();
@@ -57,7 +57,7 @@ describe("포인트 지급 요청 저장소", () => {
       {
         $and: [
           { status: PointGrantStatus.PROCESSING },
-          { lockedAt: { $lte: new Date(FIXED_NOW.getTime() - 3 * 60_000) } },
+          { lockedAt: { $lte: new Date(FIXED_NOW.getTime() - 15 * 60_000) } },
         ],
       },
       expect.objectContaining({ lockMode: "pessimistic_partial_write" }),

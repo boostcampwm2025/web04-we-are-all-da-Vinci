@@ -43,6 +43,7 @@ export class TossHttpClient {
       const fail = (error: Error, statusCode?: number) => {
         if (settled) return;
         settled = true;
+        clearTimeout(deadline);
 
         const logObject = {
           event: "toss_api.request.failed",
@@ -65,6 +66,7 @@ export class TossHttpClient {
       const succeed = (data: T) => {
         if (settled) return;
         settled = true;
+        clearTimeout(deadline);
         resolve(data);
       };
 
@@ -75,7 +77,6 @@ export class TossHttpClient {
           method,
           headers,
           agent: this.httpsAgent,
-          timeout: 10000,
         },
         (res) => {
           let data = "";
@@ -93,13 +94,14 @@ export class TossHttpClient {
           });
         },
       );
-      req.on("timeout", () => {
+      // 소켓 비활동 시간이 아니라 연결·응답 본문 수신을 포함한 전체 시간을 제한한다.
+      const deadline = setTimeout(() => {
         const error = new TossTransportError(
           "Toss API 요청이 타임아웃됐습니다",
         );
         req.destroy(error);
         fail(error);
-      });
+      }, 10_000);
       req.on("error", (err) => fail(new TossTransportError(err.message)));
       if (body) req.write(body);
       req.end();
