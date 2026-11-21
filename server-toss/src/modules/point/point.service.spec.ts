@@ -3,8 +3,9 @@ import {
   ExternalPromotionError,
   ExternalTransportError,
 } from "src/common/errors/external.errors";
+import { PointGrantStatus } from "./entity/point-grant-request.entity";
 import { PointReason } from "./entity/point-log.entity";
-import { PROMOTION_AMOUNT } from "./point.contants";
+import { PROMOTION_AMOUNT, PURGE_BATCH_SIZE } from "./point.contants";
 import { PointService } from "./point.service";
 
 const FIXED_NOW = new Date("2026-05-25T00:00:00.000Z");
@@ -95,8 +96,8 @@ const buildService = ({
     pointGrantExectuer as never,
   );
 
-describe("PointService", () => {
-  describe("settleGrantRequests", () => {
+describe("포인트 서비스", () => {
+  describe("포인트 지급 일괄 처리", () => {
     describe("처리 가능한 요청이 여러 개 있는 경우", () => {
       it("요청마다 settleGrantRequest를 순차 호출한다", async () => {
         const service = buildService();
@@ -116,32 +117,37 @@ describe("PointService", () => {
     });
   });
 
-  describe("purgeProcessedGrantRequests", () => {
-    describe("purge를 실행하는 경우", () => {
-      it("SUCCEEDED/FAILED를 각각 100건 배치로 정리한다", async () => {
-        const em = buildEntityManager();
-        (em.find as jest.Mock)
-          .mockResolvedValueOnce(
-            Array.from({ length: 10 }, (_, i) => ({ id: BigInt(i + 1) })),
-          )
-          .mockResolvedValueOnce(
-            Array.from({ length: 20 }, (_, i) => ({ id: BigInt(i + 100) })),
-          );
-        (em.nativeDelete as jest.Mock)
-          .mockResolvedValueOnce(10)
-          .mockResolvedValueOnce(20);
-        const service = buildService({ entityManager: em });
+  describe("처리된 지급 요청 정리", () => {
+    it("실패 요청을 보존하고 보관 기간이 지난 성공 요청만 배치로 삭제한다", async () => {
+      const em = buildEntityManager();
+      const succeededIds = [1n, 2n];
+      const failedIds = [3n];
+      em.find.mockImplementation((_entity, where) => {
+        const { status } = where as { status: PointGrantStatus };
+        const ids =
+          status === PointGrantStatus.SUCCEEDED ? succeededIds : failedIds;
+        return Promise.resolve(ids.map((id) => ({ id })));
+      });
+      em.nativeDelete.mockResolvedValueOnce(succeededIds.length);
+      const service = buildService({ entityManager: em });
 
-        const result = await service.purgeProcessedGrantRequests();
+      const result = await service.purgeProcessedGrantRequests();
 
-        expect(result).toEqual({ succeededDeleted: 10, failedDeleted: 20 });
-        expect(em.find).toHaveBeenCalledTimes(2);
-        expect(em.nativeDelete).toHaveBeenCalledTimes(2);
+      expect(result).toEqual({ succeededDeleted: 2 });
+      expect(em.find).toHaveBeenCalledTimes(1);
+      expect(em.find).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ status: PointGrantStatus.SUCCEEDED }),
+        expect.objectContaining({ limit: PURGE_BATCH_SIZE }),
+      );
+      expect(em.nativeDelete).toHaveBeenCalledTimes(1);
+      expect(em.nativeDelete).toHaveBeenCalledWith(expect.anything(), {
+        id: { $in: succeededIds },
       });
     });
   });
 
-  describe("settleGrantRequest", () => {
+  describe("단건 포인트 지급", () => {
     describe("PROCEED 결정이고 외부 지급이 성공한 경우", () => {
       it("성공 처리 메서드를 호출한다", async () => {
         const service = buildService();
@@ -184,7 +190,7 @@ describe("PointService", () => {
     });
   });
 
-  describe("recordGrantSucceeded", () => {
+  describe("지급 성공 기록", () => {
     describe("지급 성공 상태를 반영하는 경우", () => {
       it("request.succeeded 후 PointLog를 persist한다", async () => {
         const em = buildEntityManager();
@@ -203,7 +209,7 @@ describe("PointService", () => {
     });
   });
 
-  describe("recordGrantOutcomeFromError", () => {
+  describe("지급 오류 처리", () => {
     describe("ExternalPromotionError 4113이 발생한 경우", () => {
       it("지급 성공으로 처리한다", async () => {
         const service = buildService();
@@ -290,7 +296,7 @@ describe("PointService", () => {
     });
   });
 
-  describe("lockAndFetchEligibleGrants", () => {
+  describe("지급 대상 요청 선점", () => {
     describe("대상 요청을 선점하는 경우", () => {
       it("각 요청을 processing 상태로 바꾸고 flush한다", async () => {
         const em = buildEntityManager();
@@ -316,7 +322,7 @@ describe("PointService", () => {
     });
   });
 
-  describe("enqueueGrant", () => {
+  describe("포인트 지급 요청 등록", () => {
     describe("지급 금액을 명시한 경우", () => {
       it("전달한 pointAmount로 요청을 생성한다", () => {
         const em = buildEntityManager();
