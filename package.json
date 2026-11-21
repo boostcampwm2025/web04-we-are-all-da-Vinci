@@ -24,6 +24,13 @@
   "license": "MIT",
   "packageManager": "pnpm@10.20.0",
   "pnpm": {
+    "packageExtensions": {
+      "boring-avatars": {
+        "peerDependencies": {
+          "react": "*"
+        }
+      }
+    },
     "peerDependencyRules": {
       "ignoreMissing": [
         "@react-navigation/native"

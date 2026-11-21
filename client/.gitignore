@@ -37,3 +37,6 @@ CLAUDE.md
 storybook-static
 
 stats.html
+# Mutation testing (Stryker)
+.stryker-tmp
+reports/mutation
