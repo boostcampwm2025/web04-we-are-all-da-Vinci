@@ -32,6 +32,7 @@ const CommonBtn = ({
   const navigate = useNavigate();
 
   const handleClick = () => {
+    // Stryker disable next-line ConditionalExpression: 네이티브 disabled 버튼은 onClick 자체가 발생하지 않아 변이해도 동작이 같은 방어 코드
     if (disabled) return;
     if (onClick) {
       onClick();

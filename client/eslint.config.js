@@ -7,7 +7,7 @@ import storybook from 'eslint-plugin-storybook';
 import { defineConfig, globalIgnores } from 'eslint/config';
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'coverage', 'reports', '.stryker-tmp']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
