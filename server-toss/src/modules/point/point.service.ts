@@ -15,7 +15,6 @@ import {
 import { PointLog, PointReason } from "./entity/point-log.entity";
 import { PointGrantRequestRepository } from "./point-grant-request.repository";
 import {
-  FAILED_RETENTION_DAYS,
   PROMOTION_AMOUNT,
   PROMOTION_MAX_RETRIES,
   PURGE_BATCH_SIZE,
@@ -221,26 +220,15 @@ export class PointService {
 
   async purgeProcessedGrantRequests(): Promise<{
     succeededDeleted: number;
-    failedDeleted: number;
   }> {
     const startedAt = Date.now();
     const now = getSeoulDateTime();
     const succeededCutoff = new Date(
       now.getTime() - SUCCEEDED_RETENTION_DAYS * 24 * 60 * 60 * 1000,
     );
-    const failedCutoff = new Date(
-      now.getTime() - FAILED_RETENTION_DAYS * 24 * 60 * 60 * 1000,
-    );
-
     const succeededDeleted = await this.purgeByStatusBefore(
       PointGrantStatus.SUCCEEDED,
       succeededCutoff,
-      PURGE_BATCH_SIZE,
-    );
-
-    const failedDeleted = await this.purgeByStatusBefore(
-      PointGrantStatus.FAILED,
-      failedCutoff,
       PURGE_BATCH_SIZE,
     );
 
@@ -248,13 +236,12 @@ export class PointService {
       {
         event: "point_grant.purge.succeeded",
         succeededDeleted,
-        failedDeleted,
         durationMs: Date.now() - startedAt,
       },
       "포인트 지급 요청 purge 완료",
     );
 
-    return { succeededDeleted, failedDeleted };
+    return { succeededDeleted };
   }
 
   private async purgeByStatusBefore(
